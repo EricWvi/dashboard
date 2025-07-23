@@ -1,10 +1,5 @@
-function App() {
-  return ( 
-    <div className="">
-      12 
-    </div>
-  )
-   
-}    
+import TabbedApp from "@/components/tabbed-app";
 
-export default App
+export default function App() {
+  return <TabbedApp />;
+}
