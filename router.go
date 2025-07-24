@@ -7,6 +7,7 @@ import (
 
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/handler/media"
+	"github.com/EricWvi/dashboard/handler/todo"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -64,6 +65,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back := g.Group(viper.GetString("route.back.base"))
 	back.Use(middleware.Logging)
 	back.POST("/media", media.DefaultHandler)
+	back.POST("/todo", todo.DefaultHandler)
 
 	return g
 }

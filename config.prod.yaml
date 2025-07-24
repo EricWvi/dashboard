@@ -1,0 +1,18 @@
+addr: :8765
+minio:
+  endpoint: minio.onlyquant.top
+  accessKeyID: EEp8KIkr012QqiR05c8
+  bucket: dashboard
+  secure: true
+  expiry: 120h
+route:
+  back:
+    base: "/api"
+  front:
+    dir: "dist"
+    index: "dist/index.html"
+db:
+  name: dashboard
+  host: postgres
+  port: 5432
+  username: onlyquant

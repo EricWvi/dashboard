@@ -7,9 +7,9 @@ import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 
 export default function TabbedApp() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("todo");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
-    new Set(["dashboard"]),
+    new Set(["todo"]),
   );
 
   const handleTabChange = (value: string) => {
@@ -38,10 +38,10 @@ export default function TabbedApp() {
                     value="dashboard"
                     className="flex items-center gap-2"
                   >
-                    <span className="hidden lg:inline">Dashboard</span>
+                    <span className="lg:inline">Dashboard</span>
                   </TabsTrigger>
                   <TabsTrigger value="todo" className="flex items-center gap-2">
-                    <span className="hidden lg:inline">Todo</span>
+                    <span className="lg:inline">Todo</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
