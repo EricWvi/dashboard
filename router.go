@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/EricWvi/dashboard/handler"
+	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/media"
 	"github.com/EricWvi/dashboard/handler/todo"
 	"github.com/EricWvi/dashboard/middleware"
@@ -66,6 +67,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.Use(middleware.Logging)
 	back.POST("/media", media.DefaultHandler)
 	back.POST("/todo", todo.DefaultHandler)
+	back.POST("/collection", collection.DefaultHandler)
 
 	return g
 }

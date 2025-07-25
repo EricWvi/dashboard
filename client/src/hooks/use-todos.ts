@@ -9,18 +9,26 @@ export type Todo = {
   difficulty: number;
 };
 
+const keyTodosOfCollection = (collectionId: number) => [
+  "/api/todos",
+  collectionId,
+];
+const keyTodo = (id: number) => ["/api/todo", id];
+const keyAllCollection = () => ["/api/collections"];
+const keyCollection = (id: number) => ["/api/collection", id];
+
 export function useTodos(collectionId: number) {
   const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: ["/api/collection", collectionId],
+    queryKey: keyTodosOfCollection(collectionId),
     queryFn: async () => {
       const response = await apiRequest("POST", "/api/todo?Action=ListTodos", {
         collectionId,
       });
       const data = await response.json();
       const ids = (data.message.todos as Todo[]).map((todo) => {
-        queryClient.setQueryData(["/api/todo", todo.id], todo);
+        queryClient.setQueryData(keyTodo(todo.id), todo);
         return todo.id;
       });
       return ids;
@@ -30,7 +38,7 @@ export function useTodos(collectionId: number) {
 
 export function useTodo(id: number) {
   return useQuery<Todo>({
-    queryKey: ["/api/todo", id],
+    queryKey: keyTodo(id),
     enabled: !!id,
     queryFn: async () => {
       const response = await apiRequest("POST", "/api/todo?Action=GetTodo", {
@@ -54,7 +62,22 @@ export function useCreateTodo() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/collection", variables.collectionId],
+        queryKey: keyTodosOfCollection(variables.collectionId),
+      });
+    },
+  });
+}
+
+export function useUpdateTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number } & Partial<Todo>) => {
+      await apiRequest("POST", "/api/todo?Action=UpdateTodo", { ...data });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodo(variables.id),
       });
     },
   });
@@ -69,7 +92,98 @@ export function useDeleteTodo(collectionId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["/api/collection", collectionId],
+        queryKey: keyTodosOfCollection(collectionId),
+      });
+    },
+  });
+}
+
+export type Collection = {
+  id: number;
+  name: string;
+};
+
+export function useCollections() {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: keyAllCollection(),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/collection?Action=ListCollections",
+        {},
+      );
+      const data = await response.json();
+      (data.message.collections as Collection[]).map((collection) => {
+        queryClient.setQueryData(keyCollection(collection.id), collection);
+      });
+      return data.message.collections as Collection[];
+    },
+  });
+}
+
+export function useCollection(id: number) {
+  return useQuery<Collection>({
+    queryKey: keyCollection(id),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/collection?Action=GetCollection",
+        {
+          id,
+        },
+      );
+      const data = await response.json();
+      return data.message as Collection;
+    },
+  });
+}
+
+export function useCreateCollection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Omit<Collection, "id">) => {
+      await apiRequest("POST", "/api/collection?Action=CreateCollection", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyAllCollection(),
+      });
+    },
+  });
+}
+
+export function useUpdateCollection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number } & Partial<Collection>) => {
+      await apiRequest("POST", "/api/collection?Action=UpdateCollection", {
+        ...data,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyCollection(variables.id),
+      });
+    },
+  });
+}
+
+export function useDeleteCollection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("POST", "/api/collection?Action=DeleteCollection", {
+        id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyAllCollection(),
       });
     },
   });

@@ -11,7 +11,8 @@ import (
 func (b Base) ListTodos(c *gin.Context, req *ListTodosRequest) *ListTodosResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
-	m.Eq(model.Todo_Completed, false) // Only list incomplete todos
+	m.Eq(model.Todo_CollectionId, req.CollectionId) // Filter by collection ID
+	m.Eq(model.Todo_Completed, false)               // Only list incomplete todos
 
 	todos, err := model.ListTodos(config.DB, m)
 	if err != nil {

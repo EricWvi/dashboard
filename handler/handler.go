@@ -26,7 +26,7 @@ func Dispatch(c *gin.Context, base any) {
 	} else {
 		ctx := reflect.ValueOf(c)
 		var ptr reflect.Value
-		if c.ContentType() == "application/json" {
+		if c.ContentType() == "application/json" || len(body) == 0 {
 			Type := method.Type()
 			param := Type.In(1).Elem()
 			p, err := parse(body, param)

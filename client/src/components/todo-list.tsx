@@ -4,13 +4,39 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, MoreVertical, Edit } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   type Todo,
+  useCollection,
   useCreateTodo,
+  useDeleteCollection,
   useDeleteTodo,
   useTodo,
   useTodos,
+  useUpdateCollection,
 } from "@/hooks/use-todos";
 
 const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
@@ -65,10 +91,23 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
   );
 };
 
-const TodoList = ({ collectionId = 0 }: { collectionId?: number }) => {
+const TodoList = ({
+  collectionId,
+  children,
+}: {
+  collectionId: number;
+} & { children?: React.ReactNode }) => {
   const { data: todos, isLoading } = useTodos(collectionId);
+  const { data: collection, isLoading: isCloading } =
+    useCollection(collectionId);
   const createTodoMutation = useCreateTodo();
+  const deleteCollectionMutation = useDeleteCollection();
+  const updateCollectionMutation = useUpdateCollection();
   const [newTodo, setNewTodo] = useState("");
+
+  const [editListDialogOpen, setEditListDialogOpen] = useState(false);
+  const [editListName, setEditListName] = useState("");
+  const [deleteListDialogOpen, setDeleteListDialogOpen] = useState(false);
 
   const addTodo = async () => {
     if (newTodo.trim() !== "") {
@@ -80,6 +119,19 @@ const TodoList = ({ collectionId = 0 }: { collectionId?: number }) => {
       });
       setNewTodo("");
     }
+  };
+
+  const onRename = async () => {
+    if (editListName.trim() !== "") {
+      await updateCollectionMutation.mutateAsync({
+        id: collectionId,
+        name: editListName,
+      });
+    }
+  };
+
+  const onDelete = async () => {
+    await deleteCollectionMutation.mutateAsync(collectionId);
   };
 
   //   const toggleTask = (id: number) => {
@@ -103,10 +155,41 @@ const TodoList = ({ collectionId = 0 }: { collectionId?: number }) => {
 
   return (
     <>
-      {!isLoading && todos && (
+      {!isLoading && !isCloading && todos && collection && (
         <Card className="gap-2">
           <CardHeader>
-            <CardTitle>📥 Inbox</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>{children ? children : collection.name}</CardTitle>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${collectionId !== 0 ? "" : "pointer-events-none opacity-0"}`}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditListName(collection.name);
+                      setEditListDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Rename List
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setDeleteListDialogOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete List
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </CardHeader>
           <CardContent>
             {/* Add new task */}
@@ -125,7 +208,7 @@ const TodoList = ({ collectionId = 0 }: { collectionId?: number }) => {
               />
               <Button
                 onClick={addTodo}
-                disabled={createTodoMutation.isPending}
+                disabled={!newTodo.trim() || createTodoMutation.isPending}
                 size="icon"
               >
                 <Plus className="h-4 w-4" />
@@ -149,7 +232,7 @@ const TodoList = ({ collectionId = 0 }: { collectionId?: number }) => {
           )} */}
 
             {/* Task list */}
-            <div className="space-y-2">
+            <div className="h-96 space-y-2 overflow-y-auto sm:h-58">
               {todos.length === 0 ? (
                 <div className="text-muted-foreground py-8 text-center">
                   All Done!
@@ -161,6 +244,83 @@ const TodoList = ({ collectionId = 0 }: { collectionId?: number }) => {
               )}
             </div>
           </CardContent>
+
+          {/* Edit List Dialog */}
+          <Dialog
+            open={editListDialogOpen}
+            onOpenChange={setEditListDialogOpen}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Rename Todo List</DialogTitle>
+                <DialogDescription>
+                  Enter a new name for your todo list.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Enter new name..."
+                  value={editListName}
+                  disabled={updateCollectionMutation.isPending}
+                  onChange={(e) => setEditListName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      onRename();
+                      setEditListDialogOpen(false);
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditListDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      onRename();
+                      setEditListDialogOpen(false);
+                    }}
+                    disabled={
+                      !editListName.trim() || updateCollectionMutation.isPending
+                    }
+                  >
+                    Rename
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete List Confirmation Dialog */}
+          <AlertDialog
+            open={deleteListDialogOpen}
+            onOpenChange={setDeleteListDialogOpen}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Todo List</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete [{collection.name}]? <br />
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    onDelete();
+                    setDeleteListDialogOpen(false);
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </Card>
       )}
     </>
