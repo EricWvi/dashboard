@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, MoreVertical, Edit } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  MoreHorizontal,
+  MoreVertical,
+  Edit,
+  Link,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,13 +43,24 @@ import {
   useTodo,
   useTodos,
   useUpdateCollection,
+  useUpdateTodo,
 } from "@/hooks/use-todos";
 
 const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
   const { data: todo, isLoading } = useTodo(id);
+  const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
+  const [editTodoName, setEditTodoName] = useState("");
   const deleteTodoMutation = useDeleteTodo(collectionId);
+  const updateTodoMutation = useUpdateTodo();
   const deleteTodo = async () => {
     await deleteTodoMutation.mutateAsync(id);
+  };
+  const renameTodo = async () => {
+    await updateTodoMutation.mutateAsync({ id, title: editTodoName });
+  };
+  const [difficultyLabel, setDifficultyLabel] = useState(0);
+  const updateDifficulty = async (difficulty: number) => {
+    await updateTodoMutation.mutateAsync({ id, difficulty });
   };
 
   return (
@@ -51,41 +68,164 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
     todo && (
       <Card
         key={todo.id}
-        className={`py-2 transition-all ${todo.completed ? "opacity-75" : ""}`}
+        className={`group relative rounded-sm py-2 transition-all ${todo.completed ? "opacity-75" : ""}`}
       >
+        {/* Difficulty indicator - left border stripe */}
+        <div
+          className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${
+            todo.difficulty === 1
+              ? "bg-green-400 dark:bg-green-500"
+              : todo.difficulty === 2
+                ? "bg-yellow-400 dark:bg-yellow-500"
+                : todo.difficulty === 3
+                  ? "bg-orange-400 dark:bg-orange-500"
+                  : "bg-red-400 dark:bg-red-500"
+          }`}
+        />
         <CardContent className="flex items-center gap-3">
-          <Checkbox
+          {/* <Checkbox
             id={`task-${todo.id}`}
             checked={todo.completed}
-            // onCheckedChange={() => toggleTask(todo.id)}
-          />
-          <div className="min-w-0 flex-1">
-            <label
-              htmlFor={`task-${todo.id}`}
-              className={`block cursor-pointer ${
+            onCheckedChange={() => toggleTask(todo.id)}
+          /> */}
+          <div className="min-w-0 flex-1 text-sm">
+            <div
+              className={`${
                 todo.completed
                   ? "text-muted-foreground line-through"
                   : "text-foreground"
               }`}
             >
               {todo.title}
-            </label>
+            </div>
+            {/* Difficulty dots indicator */}
+            <div className="mt-1 flex items-center gap-1">
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4].map((level) => (
+                  <button
+                    key={level}
+                    onMouseEnter={() => setDifficultyLabel(level)}
+                    onMouseLeave={() => setDifficultyLabel(0)}
+                    onClick={() => updateDifficulty(level)}
+                    className={`h-2 w-2 cursor-pointer rounded-full transition-all hover:scale-125 ${
+                      level <= todo.difficulty
+                        ? todo.difficulty === 1
+                          ? "bg-green-400 dark:bg-green-500"
+                          : todo.difficulty === 2
+                            ? "bg-yellow-400 dark:bg-yellow-500"
+                            : todo.difficulty === 3
+                              ? "bg-orange-400 dark:bg-orange-500"
+                              : "bg-red-400 dark:bg-red-500"
+                        : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                    }`}
+                  />
+                ))}
+              </div>
+              <span
+                className={`text-muted-foreground ml-1 text-xs opacity-0 ${difficultyLabel !== 0 ? "opacity-100" : ""}`}
+              >
+                {difficultyLabel === 1
+                  ? "Easy"
+                  : difficultyLabel === 2
+                    ? "Medium"
+                    : difficultyLabel === 3
+                      ? "Hard"
+                      : "Very Hard"}
+              </span>
+            </div>
           </div>
           {todo.completed && (
             <Badge variant="secondary" className="text-xs">
               Done
             </Badge>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={deleteTodo}
-            className="text-muted-foreground hover:text-destructive h-8 w-8"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete task</span>
-          </Button>
+
+          {/* todo menu  */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditTodoName(todo.title);
+                  setEditTodoDialogOpen(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditTodoName(todo.title);
+                  setEditTodoDialogOpen(true);
+                }}
+              >
+                <Link className="h-4 w-4" />
+                Link
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={deleteTodo}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardContent>
+
+        {/* Edit todo Dialog */}
+        <Dialog open={editTodoDialogOpen} onOpenChange={setEditTodoDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Rename Todo</DialogTitle>
+              <DialogDescription>
+                Enter a new name for your todo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Enter new name..."
+                value={editTodoName}
+                disabled={updateTodoMutation.isPending}
+                onChange={(e) => setEditTodoName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    renameTodo();
+                    setEditTodoDialogOpen(false);
+                  }
+                }}
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditTodoDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    renameTodo();
+                    setEditTodoDialogOpen(false);
+                  }}
+                  disabled={
+                    !editTodoName.trim() || updateTodoMutation.isPending
+                  }
+                >
+                  Rename
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </Card>
     )
   );
@@ -134,89 +274,71 @@ const TodoList = ({
     await deleteCollectionMutation.mutateAsync(collectionId);
   };
 
-  //   const toggleTask = (id: number) => {
-  //     setTasks(
-  //       tasks.map((task) =>
-  //         task.id === id ? { ...task, completed: !task.completed } : task,
-  //       ),
-  //     );
-  //   };
-
-  //   const deleteTask = (id: number) => {
-  //     setTasks(tasks.filter((task) => task.id !== id));
-  //   };
-
-  //   const clearCompleted = () => {
-  //     setTasks(tasks.filter((task) => !task.completed));
-  //   };
-
-  //   const completedCount = tasks.filter((task) => task.completed).length;
-  //   const totalCount = tasks.length;
-
   return (
     <>
       {!isLoading && !isCloading && todos && collection && (
-        <Card className="gap-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{children ? children : collection.name}</CardTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-8 w-8 ${collectionId !== 0 ? "" : "pointer-events-none opacity-0"}`}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setEditListName(collection.name);
-                      setEditListDialogOpen(true);
-                    }}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Rename List
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDeleteListDialogOpen(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete List
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Add new task */}
-            <div className="flex gap-2 space-y-4">
-              <Input
-                placeholder="Add a new task..."
-                value={newTodo}
-                disabled={createTodoMutation.isPending}
-                onChange={(e) => setNewTodo(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    addTodo();
-                  }
-                }}
-                className="flex-1"
-              />
-              <Button
-                onClick={addTodo}
-                disabled={!newTodo.trim() || createTodoMutation.isPending}
-                size="icon"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+        <div className="mx-auto w-full max-w-sm">
+          <Card className="gap-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{children ? children : collection.name}</CardTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-8 w-8 ${collectionId !== 0 ? "" : "pointer-events-none opacity-0"}`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setEditListName(collection.name);
+                        setEditListDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                      Rename List
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setDeleteListDialogOpen(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete List
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Add new task */}
+              <div className="flex gap-2 space-y-4">
+                <Input
+                  placeholder="Add a new task..."
+                  value={newTodo}
+                  disabled={createTodoMutation.isPending}
+                  onChange={(e) => setNewTodo(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      addTodo();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={addTodo}
+                  disabled={!newTodo.trim() || createTodoMutation.isPending}
+                  size="icon"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
 
-            {/* Task statistics */}
-            {/* {totalCount > 0 && (
+              {/* Task statistics */}
+              {/* {totalCount > 0 && (
             <div className="text-muted-foreground flex items-center justify-between text-sm">
               <div className="flex gap-4">
                 <span>Total: {totalCount}</span>
@@ -231,97 +353,99 @@ const TodoList = ({
             </div>
           )} */}
 
-            {/* Task list */}
-            <div className="h-96 space-y-2 overflow-y-auto sm:h-58">
-              {todos.length === 0 ? (
-                <div className="text-muted-foreground py-8 text-center">
-                  All Done!
-                </div>
-              ) : (
-                todos.map((todo: number) => (
-                  <Todo key={todo} id={todo} collectionId={collectionId} />
-                ))
-              )}
-            </div>
-          </CardContent>
-
-          {/* Edit List Dialog */}
-          <Dialog
-            open={editListDialogOpen}
-            onOpenChange={setEditListDialogOpen}
-          >
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Rename Todo List</DialogTitle>
-                <DialogDescription>
-                  Enter a new name for your todo list.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Enter new name..."
-                  value={editListName}
-                  disabled={updateCollectionMutation.isPending}
-                  onChange={(e) => setEditListName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      onRename();
-                      setEditListDialogOpen(false);
-                    }
-                  }}
-                  autoFocus
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setEditListDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      onRename();
-                      setEditListDialogOpen(false);
-                    }}
-                    disabled={
-                      !editListName.trim() || updateCollectionMutation.isPending
-                    }
-                  >
-                    Rename
-                  </Button>
-                </div>
+              {/* Task list */}
+              <div className="h-128 space-y-2 overflow-y-auto sm:h-72">
+                {todos.length === 0 ? (
+                  <div className="text-muted-foreground py-8 text-center">
+                    All Done!
+                  </div>
+                ) : (
+                  todos.map((todo: number) => (
+                    <Todo key={todo} id={todo} collectionId={collectionId} />
+                  ))
+                )}
               </div>
-            </DialogContent>
-          </Dialog>
+            </CardContent>
 
-          {/* Delete List Confirmation Dialog */}
-          <AlertDialog
-            open={deleteListDialogOpen}
-            onOpenChange={setDeleteListDialogOpen}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Todo List</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete [{collection.name}]? <br />
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    onDelete();
-                    setDeleteListDialogOpen(false);
-                  }}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </Card>
+            {/* Edit List Dialog */}
+            <Dialog
+              open={editListDialogOpen}
+              onOpenChange={setEditListDialogOpen}
+            >
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Rename Todo List</DialogTitle>
+                  <DialogDescription>
+                    Enter a new name for your todo list.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Enter new name..."
+                    value={editListName}
+                    disabled={updateCollectionMutation.isPending}
+                    onChange={(e) => setEditListName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        onRename();
+                        setEditListDialogOpen(false);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditListDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        onRename();
+                        setEditListDialogOpen(false);
+                      }}
+                      disabled={
+                        !editListName.trim() ||
+                        updateCollectionMutation.isPending
+                      }
+                    >
+                      Rename
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete List Confirmation Dialog */}
+            <AlertDialog
+              open={deleteListDialogOpen}
+              onOpenChange={setDeleteListDialogOpen}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Todo List</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete [{collection.name}]? <br />
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete();
+                      setDeleteListDialogOpen(false);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </Card>
+        </div>
       )}
     </>
   );

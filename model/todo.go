@@ -65,6 +65,14 @@ func (e *Todo) Delete(db *gorm.DB, where map[string]any) error {
 	return db.Where(where).Delete(e).Error
 }
 
+func MaxOrder(db *gorm.DB, where map[string]any) (int64, error) {
+	var maxOrder int64
+	if err := db.Model(&Todo{}).Where(where).Select("MAX(d_order)").Scan(&maxOrder).Error; err != nil {
+		return 0, err
+	}
+	return maxOrder, nil
+}
+
 func CountTodos(db *gorm.DB, where map[string]any) (int64, error) {
 	var count int64
 	if err := db.Model(&Todo{}).Where(where).Count(&count).Error; err != nil {

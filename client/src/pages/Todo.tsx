@@ -58,64 +58,47 @@ export default function Todo() {
     <div className="space-y-6 p-6">
       {/* Mobile Layout - Dropdown */}
       <div className="w-full sm:hidden">
-        <div className="mx-auto w-full max-w-sm">
-          <TodoList
-            collectionId={activeListId}
-            // onUpdateTasks={(tasks) => updateListTasks(activeList.id, tasks)}
-            // onRename={(newName) => renameList(activeList.id, newName)}
-            // onDelete={() => deleteList(activeList.id)}
-            // canDelete={todoLists.length > 1}
-          >
-            <DropdownMenu onOpenChange={(open) => setListDropdownOpen(open)}>
-              <DropdownMenuTrigger asChild>
-                <div className="flex h-auto items-center p-0 text-xl font-bold hover:bg-transparent">
-                  {collections[
-                    collections.findIndex(
-                      (collection) => collection.id === activeListId,
-                    )
-                  ]?.name || collections[0].name}
-                  <ChevronDown
-                    className={`ml-1 h-4 w-4 transition-transform duration-200 ${listDropdownOpen ? "rotate-180" : ""}`}
-                  />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {collections.map((collection) => (
-                  <DropdownMenuItem
-                    key={collection.id}
-                    onClick={() => setActiveListId(collection.id)}
-                    className={
-                      activeListId === collection.id ? "bg-accent" : ""
-                    }
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <span>{collection.name}</span>
-                      {/* {collection.tasks.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {collection.tasks.length}
-                      </Badge>
-                    )} */}
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setNewListDialogOpen(true)}>
-                  <FolderPlus className="h-4 w-4" />
-                  Create New List
+        <TodoList collectionId={activeListId}>
+          <DropdownMenu onOpenChange={(open) => setListDropdownOpen(open)}>
+            <DropdownMenuTrigger asChild>
+              <div className="flex h-auto items-center p-0 text-xl font-bold hover:bg-transparent">
+                {collections[
+                  collections.findIndex(
+                    (collection) => collection.id === activeListId,
+                  )
+                ]?.name || collections[0].name}
+                <ChevronDown
+                  className={`ml-1 h-4 w-4 transition-transform duration-200 ${listDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {collections.map((collection) => (
+                <DropdownMenuItem
+                  key={collection.id}
+                  onClick={() => setActiveListId(collection.id)}
+                  className={activeListId === collection.id ? "bg-accent" : ""}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span>{collection.name}</span>
+                  </div>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TodoList>
-        </div>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setNewListDialogOpen(true)}>
+                <FolderPlus className="h-4 w-4" />
+                Create New List
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TodoList>
       </div>
 
       {/* Desktop Layout - Grid */}
       <div className="mx-auto hidden max-w-7xl sm:block">
         <div className="grid grid-cols-1 gap-x-1 gap-y-6 lg:grid-cols-2 xl:grid-cols-3">
           {collections.map((collection) => (
-            <div className="mx-auto w-full max-w-sm" key={collection.id}>
-              <TodoList collectionId={collection.id} />
-            </div>
+            <TodoList key={collection.id} collectionId={collection.id} />
           ))}
 
           {/* Add New List Card */}
