@@ -15,8 +15,7 @@ func (b Base) GetCollection(c *gin.Context, req *GetCollectionRequest) *GetColle
 		m.Eq(model.CreatorId, middleware.GetUserId(c))
 		m.Eq(model.Id, req.Id)
 
-		err := collection.Get(config.DB, m)
-		if err != nil {
+		if err := collection.Get(config.DB, m); err != nil {
 			handler.Errorf(c, "%s", err.Error())
 			return nil
 		}

@@ -19,6 +19,18 @@ func GetAllMigrations() []MigrationStep {
 			Up:      CreateTodoTagCollectionTable,
 			Down:    DropTodoTagCollectionTable,
 		},
+		{
+			Version: "v0.3.0",
+			Name:    "Add link+draft column",
+			Up:      AddLinkDraftColumns,
+			Down:    RemoveLinkDraftColumns,
+		},
+		{
+			Version: "v0.4.0",
+			Name:    "Add schedule column",
+			Up:      AddScheduleColumn,
+			Down:    RemoveScheduleColumn,
+		},
 	}
 }
 
@@ -93,5 +105,35 @@ func DropTodoTagCollectionTable(db *gorm.DB) error {
 		DROP TABLE IF EXISTS public.d_todo CASCADE;
 		DROP TABLE IF EXISTS public.d_tag CASCADE;
 		DROP TABLE IF EXISTS public.d_collection CASCADE;
+	`).Error
+}
+
+func AddLinkDraftColumns(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		ADD COLUMN link VARCHAR(1024) DEFAULT NULL,
+		ADD COLUMN draft INTEGER DEFAULT 0;
+	`).Error
+}
+
+func RemoveLinkDraftColumns(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		DROP COLUMN IF EXISTS link,
+		DROP COLUMN IF EXISTS draft;
+	`).Error
+}
+
+func AddScheduleColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		ADD COLUMN schedule TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+	`).Error
+}
+
+func RemoveScheduleColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		DROP COLUMN IF EXISTS schedule;
 	`).Error
 }

@@ -7,6 +7,9 @@ export type Todo = {
   completed: boolean;
   collectionId: number;
   difficulty: number;
+  link: string;
+  draft: number;
+  schedule: Date | null;
 };
 
 const keyTodosOfCollection = (collectionId: number) => [
@@ -78,6 +81,37 @@ export function useUpdateTodo() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: keyTodo(variables.id),
+      });
+    },
+  });
+}
+
+export function useMoveTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      dst,
+    }: {
+      id: number;
+      src: number;
+      dst: number;
+    }) => {
+      await apiRequest("POST", "/api/todo?Action=MoveTodo", {
+        id,
+        dst,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodo(variables.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyTodosOfCollection(variables.src),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyTodosOfCollection(variables.dst),
       });
     },
   });
