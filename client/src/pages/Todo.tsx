@@ -24,8 +24,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, FolderPlus, Plus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Todo() {
+  const isMobile = useIsMobile();
   const { data } = useCollections();
   const [listDropdownOpen, setListDropdownOpen] = useState(false);
   const inbox = {
@@ -57,7 +59,7 @@ export default function Todo() {
   return (
     <div className="space-y-6 p-6">
       {/* Mobile Layout - Dropdown */}
-      <div className="w-full sm:hidden">
+      <div className={`w-full ${isMobile ? "block" : "hidden"}`}>
         <TodoList collectionId={activeListId}>
           <DropdownMenu onOpenChange={(open) => setListDropdownOpen(open)}>
             <DropdownMenuTrigger asChild>
@@ -95,7 +97,7 @@ export default function Todo() {
       </div>
 
       {/* Desktop Layout - Grid */}
-      <div className="mx-auto hidden max-w-7xl sm:block">
+      <div className={`mx-auto max-w-7xl ${isMobile ? "hidden" : "block"}`}>
         <div className="grid grid-cols-1 gap-x-1 gap-y-6 lg:grid-cols-2 xl:grid-cols-3">
           {collections.map((collection) => (
             <TodoList key={collection.id} collectionId={collection.id} />

@@ -31,6 +31,12 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddScheduleColumn,
 			Down:    RemoveScheduleColumn,
 		},
+		{
+			Version: "v0.5.0",
+			Name:    "Add tiptap table",
+			Up:      AddTiptapTable,
+			Down:    RemoveTiptapTable,
+		},
 	}
 }
 
@@ -135,5 +141,24 @@ func RemoveScheduleColumn(db *gorm.DB) error {
 	return db.Exec(`
 		ALTER TABLE public.d_todo
 		DROP COLUMN IF EXISTS schedule;
+	`).Error
+}
+
+func AddTiptapTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_tiptap (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			content jsonb DEFAULT '{}'::jsonb NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+		);
+	`).Error
+}
+
+func RemoveTiptapTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_tiptap CASCADE;
 	`).Error
 }

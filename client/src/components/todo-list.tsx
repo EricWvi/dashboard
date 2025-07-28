@@ -70,6 +70,9 @@ import {
   useUpdateTodo,
 } from "@/hooks/use-todos";
 import { formatDate, isSetDate, isSetToday, todayStart } from "@/lib/utils";
+import { useTTContext } from "@/components/editor";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useCreateTiptap } from "@/hooks/use-draft";
 
 const TodoView = ({ id }: { id: number }) => {
   const { data: todo, isLoading } = useTodo(id);
@@ -145,7 +148,10 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
     await updateTodoMutation.mutateAsync({ id, schedule: new Date(0) });
   };
   // editor state
-  const [editorDialogOpen, setEditorDialogOpen] = useState(false);
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const updateTodoDraft = async (draftId: number) => {
+    await updateTodoMutation.mutateAsync({ id, draft: draftId });
+  };
 
   return (
     !isLoading &&
@@ -252,7 +258,7 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
                   <CalendarDays className="h-4 w-4" />
                   Reset Date
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => unsetScheduleDate()}>
+                <ContextMenuItem onClick={unsetScheduleDate}>
                   <X className="h-4 w-4" />
                   Unset Date
                 </ContextMenuItem>
@@ -294,9 +300,16 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
               Link
             </ContextMenuItem>
             <ContextMenuItem
-              onClick={() => {
-                // setEditTodoName(todo.title);
-                setEditorDialogOpen(true);
+              onClick={async () => {
+                if (todo.draft !== 0) {
+                  setEditorId(todo.draft);
+                  setEditorDialogOpen(true);
+                } else {
+                  const draftId = await useCreateTiptap();
+                  setEditorId(draftId);
+                  setEditorDialogOpen(true);
+                  updateTodoDraft(draftId);
+                }
               }}
             >
               <NotepadText className="h-4 w-4" />
@@ -498,16 +511,6 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
             </div>
           </DialogContent>
         </Dialog>
-
-        {/* draft editor Dialog */}
-        <Dialog open={editorDialogOpen} onOpenChange={setEditorDialogOpen}>
-          <DialogContent className="max-h-[80vh] max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Edit Note</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 overflow-hidden">ssss</div>
-          </DialogContent>
-        </Dialog>
       </Card>
     )
   );
@@ -519,6 +522,7 @@ const TodoList = ({
 }: {
   collectionId: number;
 } & { children?: React.ReactNode }) => {
+  const isMobile = useIsMobile();
   const { data: todos, isLoading } = useTodos(collectionId);
   const { data: collection, isLoading: isCloading } =
     useCollection(collectionId);
@@ -650,7 +654,9 @@ const TodoList = ({
           )} */}
 
               {/* Task list */}
-              <div className="h-128 space-y-2 overflow-y-auto sm:h-72">
+              <div
+                className={`space-y-2 overflow-y-auto ${isMobile ? "h-128" : "h-72"}`}
+              >
                 {todos.length === 0 ? (
                   <div className="text-muted-foreground py-8 text-center">
                     All Done!

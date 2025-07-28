@@ -8,6 +8,7 @@ import (
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/media"
+	"github.com/EricWvi/dashboard/handler/tiptap"
 	"github.com/EricWvi/dashboard/handler/todo"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/gin-contrib/gzip"
@@ -68,6 +69,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.POST("/media", media.DefaultHandler)
 	back.POST("/todo", todo.DefaultHandler)
 	back.POST("/collection", collection.DefaultHandler)
+	back.POST("/tiptap", tiptap.DefaultHandler)
 
 	return g
 }

@@ -1,0 +1,39 @@
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+import { createContext, useContext, useState, type ReactNode } from "react";
+
+type TTEditorContext = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  id: number;
+  setId: (n: number) => void;
+};
+
+const TTContext = createContext<TTEditorContext | undefined>(undefined);
+
+export const TTProvider = ({ children }: { children: ReactNode }) => {
+  const [id, setId] = useState<number>(0);
+  const [open, setOpen] = useState<boolean>(false);
+
+  return (
+    <TTContext.Provider value={{ id, setId, open, setOpen }}>
+      {children}
+    </TTContext.Provider>
+  );
+};
+
+export const useTTContext = () => {
+  const context = useContext(TTContext);
+  if (!context) throw new Error("useTTContext must be used within TTProvider");
+  return context;
+};
+
+export const TTEditor = () => {
+  const { open } = useTTContext();
+  return (
+    <div
+      className={`bg-background fixed inset-0 z-50 overflow-scroll ${open ? "block" : "hidden"}`}
+    >
+      <SimpleEditor />
+    </div>
+  );
+};
