@@ -1,9 +1,9 @@
 package model
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -14,14 +14,14 @@ type Todo struct {
 }
 
 type TodoField struct {
-	Title        string    `gorm:"size:1024;not null" json:"title"`
-	Completed    bool      `gorm:"not null" json:"completed"`
-	CollectionId uint      `gorm:"column:collection_id;not null" json:"collectionId"`
-	Difficulty   int       `gorm:"default:1;not null" json:"difficulty"`
-	Order        int       `gorm:"column:d_order;default:1;not null" json:"order"`
-	Link         string    `gorm:"size:1024" json:"link"`
-	Draft        int       `gorm:"default:0;not null" json:"draft"`
-	Schedule     time.Time `gorm:"default:NULL" json:"schedule"`
+	Title        string   `gorm:"size:1024;not null" json:"title"`
+	Completed    bool     `gorm:"not null" json:"completed"`
+	CollectionId uint     `gorm:"column:collection_id;not null" json:"collectionId"`
+	Difficulty   int      `gorm:"default:1;not null" json:"difficulty"`
+	Order        int      `gorm:"column:d_order;default:1;not null" json:"order"`
+	Link         string   `gorm:"size:1024" json:"link"`
+	Draft        int      `gorm:"default:0;not null" json:"draft"`
+	Schedule     NullTime `gorm:"default:NULL;<-:update" json:"schedule"`
 	// CreatorId is inherited from MetaField
 }
 
@@ -78,12 +78,12 @@ func UnsetLink(db *gorm.DB, where map[string]any) error {
 	return nil
 }
 
-func MaxOrder(db *gorm.DB, where map[string]any) (int64, error) {
-	var maxOrder int64
-	if err := db.Model(&Todo{}).Where(where).Select("MAX(d_order)").Scan(&maxOrder).Error; err != nil {
+func MaxOrder(db *gorm.DB, where map[string]any) (int, error) {
+	var maxOrder sql.NullInt32
+	if err := db.Model(&Todo{}).Where(where).Where(Todo_Completed, false).Select("MAX(d_order)").Scan(&maxOrder).Error; err != nil {
 		return 0, err
 	}
-	return maxOrder, nil
+	return int(maxOrder.Int32), nil
 }
 
 func CountTodos(db *gorm.DB, where map[string]any) (int64, error) {

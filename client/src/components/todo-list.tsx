@@ -12,7 +12,7 @@ import {
   ListEnd,
   NotepadText,
   CircleCheckBig,
-  Calendar,
+  Calendar as CalendarIcon,
   X,
   CheckCheck,
   CalendarDays,
@@ -51,6 +51,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import {
   type Todo,
   useCollection,
   useCollections,
@@ -63,6 +69,7 @@ import {
   useUpdateCollection,
   useUpdateTodo,
 } from "@/hooks/use-todos";
+import { formatDate, isSetDate, isSetToday, todayStart } from "@/lib/utils";
 
 const TodoView = ({ id }: { id: number }) => {
   const { data: todo, isLoading } = useTodo(id);
@@ -122,6 +129,23 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
     }
     await updateTodoMutation.mutateAsync({ id, link });
   };
+  // date state
+  const [editDateDialogOpen, setEditDateDialogOpen] = useState(false);
+  const [openCalendar, setOpenCalendar] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined | null>(
+    undefined,
+  );
+  const updateScheduleDate = async (date: Date | undefined | null) => {
+    if (date === undefined) {
+      return;
+    }
+    await updateTodoMutation.mutateAsync({ id, schedule: date });
+  };
+  const unsetScheduleDate = async () => {
+    await updateTodoMutation.mutateAsync({ id, schedule: new Date(0) });
+  };
+  // editor state
+  const [editorDialogOpen, setEditorDialogOpen] = useState(false);
 
   return (
     !isLoading &&
@@ -144,13 +168,16 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
         />
         <ContextMenu>
           <ContextMenuTrigger>
-            <CardContent className="flex items-center gap-3">
+            <CardContent className="group flex items-center gap-3">
               <div className="min-w-0 flex-1 text-sm">
                 {todo.link === "" ? (
-                  <div>{todo.title}</div>
+                  <div className="line-clamp-1" title={todo.title}>
+                    {todo.title}
+                  </div>
                 ) : (
                   <a
-                    className="font-semibold underline decoration-dashed"
+                    className="line-clamp-1 font-semibold underline decoration-dashed"
+                    title={todo.title}
                     href={todo.link}
                     target="_blank"
                   >
@@ -194,47 +221,53 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
                   </span>
                 </div>
               </div>
-              {todo.schedule && todo.schedule > new Date() && (
-                <div className="text-muted-foreground text-xs">
-                  Scheduled: {new Date(todo.schedule).toLocaleDateString()}
-                </div>
-              )}
+
+              {/* Schedule date badge */}
               <Badge
                 variant="outline"
-                className="cursor-pointer border-blue-200 bg-blue-50 text-xs text-blue-700 transition-transform hover:scale-110 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                onClick={() => {
+                  if (todo.schedule && isSetToday(todo.schedule)) {
+                    unsetScheduleDate();
+                  } else if (!isSetDate(todo.schedule)) {
+                    updateScheduleDate(todayStart());
+                  }
+                }}
+                className={`cursor-pointer border-blue-200 bg-blue-50 text-xs text-blue-700 transition-transform hover:scale-110 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300 ${todo.schedule && isSetDate(todo.schedule) ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
               >
-                Today
+                {todo.schedule && isSetDate(todo.schedule)
+                  ? formatDate(todo.schedule)
+                  : "Today"}
               </Badge>
             </CardContent>
           </ContextMenuTrigger>
           <ContextMenuContent>
-            <ContextMenuItem
-              onClick={() => {
-                // setEditTodoName(todo.title);
-                // setEditTodoDialogOpen(true);
-              }}
-            >
-              <Calendar className="h-4 w-4" />
-              Set Date
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                // setEditTodoName(todo.title);
-                // setEditTodoDialogOpen(true);
-              }}
-            >
-              <CalendarDays className="h-4 w-4" />
-              Reset Date
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                // setEditTodoName(todo.title);
-                // setEditTodoDialogOpen(true);
-              }}
-            >
-              <X className="h-4 w-4" />
-              Unset Date
-            </ContextMenuItem>
+            {todo.schedule && isSetDate(todo.schedule) ? (
+              <>
+                <ContextMenuItem
+                  onClick={() => {
+                    setScheduleDate(todo.schedule);
+                    setEditDateDialogOpen(true);
+                  }}
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Reset Date
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => unsetScheduleDate()}>
+                  <X className="h-4 w-4" />
+                  Unset Date
+                </ContextMenuItem>
+              </>
+            ) : (
+              <ContextMenuItem
+                onClick={() => {
+                  setScheduleDate(todo.schedule);
+                  setEditDateDialogOpen(true);
+                }}
+              >
+                <CalendarIcon className="h-4 w-4" />
+                Set Date
+              </ContextMenuItem>
+            )}
             {collectionId !== 0 && (
               <ContextMenuItem onClick={completeTodo}>
                 <CircleCheckBig className="h-4 w-4" />
@@ -263,7 +296,7 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
             <ContextMenuItem
               onClick={() => {
                 // setEditTodoName(todo.title);
-                // setEditTodoDialogOpen(true);
+                setEditorDialogOpen(true);
               }}
             >
               <NotepadText className="h-4 w-4" />
@@ -388,6 +421,93 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit date Dialog */}
+        <Dialog open={editDateDialogOpen} onOpenChange={setEditDateDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Set Date</DialogTitle>
+              <DialogDescription>
+                Set a date for the todo item.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3">
+                <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-fit justify-normal font-normal"
+                    >
+                      {scheduleDate && isSetDate(scheduleDate) ? (
+                        <>
+                          <CalendarDays className="text-muted-foreground h-4 w-4" />
+                          {new Date(scheduleDate).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </>
+                      ) : (
+                        <>
+                          <CalendarIcon className="text-muted-foreground h-4 w-4" />
+                          Select date
+                        </>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto overflow-hidden p-0"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      disabled={(date) => date < todayStart()}
+                      selected={
+                        scheduleDate && isSetDate(scheduleDate)
+                          ? scheduleDate
+                          : undefined
+                      }
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        setScheduleDate(date);
+                        setOpenCalendar(false);
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditDateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    updateScheduleDate(scheduleDate);
+                    setEditDateDialogOpen(false);
+                  }}
+                  disabled={updateTodoMutation.isPending}
+                >
+                  Apply
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* draft editor Dialog */}
+        <Dialog open={editorDialogOpen} onOpenChange={setEditorDialogOpen}>
+          <DialogContent className="max-h-[80vh] max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Edit Note</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden">ssss</div>
+          </DialogContent>
+        </Dialog>
       </Card>
     )
   );
@@ -420,7 +540,7 @@ const TodoList = ({
         difficulty: 1, // Default difficulty
         link: "", // Default empty link
         draft: 0, // Default null draft
-        schedule: null, // Default to null date
+        schedule: undefined, // Default to null date
       });
       setNewTodo("");
     }

@@ -9,7 +9,7 @@ export type Todo = {
   difficulty: number;
   link: string;
   draft: number;
-  schedule: Date | null;
+  schedule: Date | undefined | null;
 };
 
 const keyTodosOfCollection = (collectionId: number) => [

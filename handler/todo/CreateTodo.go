@@ -17,10 +17,10 @@ func (b Base) CreateTodo(c *gin.Context, req *CreateTodoRequest) *CreateTodoResp
 		model.Todo_CollectionId: req.CollectionId,
 	})
 	if err != nil {
-		todo.Order = 1
-	} else {
-		todo.Order = int(maxOrder) + 1
+		handler.Errorf(c, "%s", err.Error())
+		return nil
 	}
+	todo.Order = maxOrder + 1
 
 	if err = todo.Create(config.DB); err != nil {
 		handler.Errorf(c, "%s", err.Error())

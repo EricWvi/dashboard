@@ -20,10 +20,10 @@ func (b Base) MoveTodo(c *gin.Context, req *MoveTodoRequest) *MoveTodoResponse {
 		model.Todo_CollectionId: req.Dst,
 	})
 	if err != nil {
-		todo.Order = 1
-	} else {
-		todo.Order = int(maxOrder) + 1
+		handler.Errorf(c, "%s", err.Error())
+		return nil
 	}
+	todo.Order = maxOrder + 1
 
 	if err = todo.Update(config.DB, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
