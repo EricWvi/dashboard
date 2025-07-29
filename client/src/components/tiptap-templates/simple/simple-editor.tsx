@@ -76,18 +76,27 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 import { useTTContext } from "@/components/editor";
 import { refetchDraft, useDraft, useSyncDraft } from "@/hooks/use-draft";
 import { useEffect, useRef, useState } from "react";
+import { Save } from "lucide-react";
 
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
   isMobile,
+  onSave,
 }: {
   onHighlighterClick: () => void;
   onLinkClick: () => void;
   isMobile: boolean;
+  onSave: () => void;
 }) => {
   return (
     <>
+      <ToolbarGroup>
+        <Button data-style="ghost" onClick={onSave}>
+          <Save className="h-4 w-4" />
+        </Button>
+      </ToolbarGroup>
+
       <Spacer />
 
       <ToolbarGroup>
@@ -232,7 +241,7 @@ export function SimpleEditor() {
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
-        limit: 3,
+        limit: 9,
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
@@ -265,7 +274,7 @@ export function SimpleEditor() {
     if (editor) {
       if (draft) {
         editor.commands.setContent(draft.content);
-        setIsDirty(false);
+        setTimeout(() => setIsDirty(false), 0);
         if (open) {
           // sync every 5 seconds
           const interval = setInterval(() => {
@@ -278,32 +287,27 @@ export function SimpleEditor() {
         }
       } else {
         editor.commands.clearContent();
-        setIsDirty(false);
+        setTimeout(() => setIsDirty(false), 0);
       }
     }
   }, [draft, editor]);
 
+  const handleSave = async () => {
+    if (editor && isDirtyRef.current) {
+      await syncDraftMutation.mutateAsync({
+        id,
+        content: editor.getJSON(),
+      });
+    }
+    refetchDraft(id);
+    setId(0);
+    setOpen(false);
+  };
+
   return (
     !isLoading &&
-    // draft &&
     editor && (
       <div className="simple-editor-wrapper">
-        <button
-          className="fixed z-60"
-          onClick={async () => {
-            if (isDirtyRef.current) {
-              await syncDraftMutation.mutateAsync({
-                id,
-                content: editor.getJSON(),
-              });
-            }
-            refetchDraft(id);
-            setId(0);
-            setOpen(false);
-          }}
-        >
-          Close
-        </button>
         <EditorContext.Provider value={{ editor }}>
           <Toolbar
             ref={toolbarRef}
@@ -323,6 +327,7 @@ export function SimpleEditor() {
                 onHighlighterClick={() => setMobileView("highlighter")}
                 onLinkClick={() => setMobileView("link")}
                 isMobile={isMobile}
+                onSave={handleSave}
               />
             ) : (
               <MobileToolbarContent

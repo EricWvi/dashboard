@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatMediaUrl(url: string): string {
+  if (url.startsWith("/api/m/")) {
+    return url;
+  }
+  return `/api/m/${url}`;
+}
+
 export const formatDate = (date: Date | string) => {
   const inDate = new Date(date);
   if (isSetToday(inDate)) {
