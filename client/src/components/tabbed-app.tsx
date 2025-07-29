@@ -8,9 +8,9 @@ import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 
 export default function TabbedApp() {
-  const [activeTab, setActiveTab] = useState("todo");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
-    new Set(["todo"]),
+    new Set(["dashboard"]),
   );
   const { open } = useTTContext();
 

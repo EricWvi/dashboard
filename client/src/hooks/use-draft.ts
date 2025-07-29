@@ -25,10 +25,12 @@ export function useDraft(id: number) {
       const data = await response.json();
       return data.message as Draft;
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 
-export async function useCreateTiptap() {
+export async function createTiptap() {
   const response = await apiRequest("POST", "/api/tiptap?Action=CreateTiptap", {
     content: {
       type: "doc",
@@ -39,14 +41,6 @@ export async function useCreateTiptap() {
   return rst.message.id;
 }
 
-export function refetchDraft(draftId: number) {
-  queryClient.refetchQueries({ queryKey: keyDraft(draftId) });
-}
-
-export function useSyncDraft() {
-  return useMutation({
-    mutationFn: async (data: Draft) => {
-      await apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
-    },
-  });
+export async function syncDraft(data: Draft) {
+  await apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
 }

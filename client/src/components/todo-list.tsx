@@ -72,7 +72,7 @@ import {
 import { formatDate, isSetDate, isSetToday, todayStart } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useCreateTiptap } from "@/hooks/use-draft";
+import { createTiptap } from "@/hooks/use-draft";
 
 const TodoView = ({ id }: { id: number }) => {
   const { data: todo, isLoading } = useTodo(id);
@@ -163,13 +163,15 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
         {/* Difficulty indicator - left border stripe */}
         <div
           className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${
-            todo.difficulty === 1
-              ? "bg-green-400 dark:bg-green-600"
-              : todo.difficulty === 2
-                ? "bg-yellow-400 dark:bg-yellow-600"
-                : todo.difficulty === 3
-                  ? "bg-orange-400 dark:bg-orange-600"
-                  : "bg-red-400 dark:bg-red-600"
+            todo.difficulty === 4
+              ? "bg-red-400 dark:bg-red-600"
+              : todo.difficulty === 1
+                ? "bg-green-400 dark:bg-green-600"
+                : todo.difficulty === 2
+                  ? "bg-yellow-400 dark:bg-yellow-600"
+                  : todo.difficulty === 3
+                    ? "bg-orange-400 dark:bg-orange-600"
+                    : "bg-gray-200 dark:bg-gray-700"
           }`}
         />
         <ContextMenu>
@@ -199,7 +201,11 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
                         key={level}
                         onMouseEnter={() => setDifficultyLabel(level)}
                         onMouseLeave={() => setDifficultyLabel(0)}
-                        onClick={() => updateDifficulty(level)}
+                        onClick={() =>
+                          updateDifficulty(
+                            level === todo.difficulty ? -1 : level,
+                          )
+                        }
                         className={`h-2 w-2 cursor-pointer rounded-full transition-all hover:scale-125 ${
                           level <= todo.difficulty
                             ? todo.difficulty === 1
@@ -238,10 +244,15 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
                     updateScheduleDate(todayStart());
                   }
                 }}
-                className={`cursor-pointer border-blue-200 bg-blue-50 text-xs text-blue-700 transition-transform hover:scale-110 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300 ${todo.schedule && isSetDate(todo.schedule) ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
+                className={`cursor-pointer text-xs transition-transform hover:scale-110 ${
+                  todo.schedule && isSetDate(todo.schedule)
+                    ? "opacity-100 " + formatDate(todo.schedule)[1]
+                    : "opacity-0 group-hover:opacity-50 " +
+                      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                }`}
               >
                 {todo.schedule && isSetDate(todo.schedule)
-                  ? formatDate(todo.schedule)
+                  ? formatDate(todo.schedule)[0]
                   : "Today"}
               </Badge>
             </CardContent>
@@ -305,7 +316,7 @@ const Todo = ({ id, collectionId }: { id: number; collectionId: number }) => {
                   setEditorId(todo.draft);
                   setEditorDialogOpen(true);
                 } else {
-                  const draftId = await useCreateTiptap();
+                  const draftId = await createTiptap();
                   setEditorId(draftId);
                   setEditorDialogOpen(true);
                   updateTodoDraft(draftId);
@@ -541,7 +552,7 @@ const TodoList = ({
         title: newTodo,
         completed: false,
         collectionId,
-        difficulty: 1, // Default difficulty
+        difficulty: -1, // Default difficulty
         link: "", // Default empty link
         draft: 0, // Default null draft
         schedule: undefined, // Default to null date

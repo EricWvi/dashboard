@@ -74,7 +74,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 // --- Context ---
 import { useTTContext } from "@/components/editor";
-import { refetchDraft, useDraft, useSyncDraft } from "@/hooks/use-draft";
+import { useDraft, syncDraft } from "@/hooks/use-draft";
 import { useEffect, useRef, useState } from "react";
 import { Save } from "lucide-react";
 
@@ -197,7 +197,6 @@ const MobileToolbarContent = ({
 export function SimpleEditor() {
   const { id, open, setId, setOpen } = useTTContext();
   const { data: draft, isLoading } = useDraft(id);
-  const syncDraftMutation = useSyncDraft();
   const [isDirty, setIsDirty] = useState(false);
   const isDirtyRef = useRef(isDirty);
 
@@ -279,7 +278,7 @@ export function SimpleEditor() {
           // sync every 5 seconds
           const interval = setInterval(() => {
             if (isDirtyRef.current) {
-              syncDraftMutation.mutateAsync({ id, content: editor.getJSON() });
+              syncDraft({ id, content: editor.getJSON() });
               setIsDirty(false);
             }
           }, 5000);
@@ -294,12 +293,8 @@ export function SimpleEditor() {
 
   const handleSave = async () => {
     if (editor && isDirtyRef.current) {
-      await syncDraftMutation.mutateAsync({
-        id,
-        content: editor.getJSON(),
-      });
+      syncDraft({ id, content: editor.getJSON() });
     }
-    refetchDraft(id);
     setId(0);
     setOpen(false);
   };

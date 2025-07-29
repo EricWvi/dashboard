@@ -17,7 +17,7 @@ type TodoField struct {
 	Title        string   `gorm:"size:1024;not null" json:"title"`
 	Completed    bool     `gorm:"not null" json:"completed"`
 	CollectionId uint     `gorm:"column:collection_id;not null" json:"collectionId"`
-	Difficulty   int      `gorm:"default:1;not null" json:"difficulty"`
+	Difficulty   int      `gorm:"default:-1;not null" json:"difficulty"`
 	Order        int      `gorm:"column:d_order;default:1;not null" json:"order"`
 	Link         string   `gorm:"size:1024" json:"link"`
 	Draft        int      `gorm:"default:0;not null" json:"draft"`
