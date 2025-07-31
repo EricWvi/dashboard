@@ -1,6 +1,8 @@
 package todo
 
 import (
+	"time"
+
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/middleware"
@@ -8,10 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (b Base) UpdateTodo(c *gin.Context, req *UpdateTodoRequest) *UpdateTodoResponse {
-	todo := &model.Todo{
-		TodoField: req.TodoField,
-	}
+func (b Base) CompleteTodo(c *gin.Context, req *CompleteTodoRequest) *CompleteTodoResponse {
+	todo := &model.Todo{}
+	todo.Completed = true
+	todo.CreatedAt = time.Now()
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
@@ -21,13 +23,12 @@ func (b Base) UpdateTodo(c *gin.Context, req *UpdateTodoRequest) *UpdateTodoResp
 		return nil
 	}
 
-	return &UpdateTodoResponse{}
+	return &CompleteTodoResponse{}
 }
 
-type UpdateTodoRequest struct {
+type CompleteTodoRequest struct {
 	Id uint `json:"id"`
-	model.TodoField
 }
 
-type UpdateTodoResponse struct {
+type CompleteTodoResponse struct {
 }

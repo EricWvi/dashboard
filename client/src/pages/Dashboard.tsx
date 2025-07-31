@@ -1,3 +1,4 @@
+import { TodayTodoList } from "@/components/todo/todo-list";
 import {
   Card,
   CardContent,
@@ -98,6 +99,10 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="group mx-auto w-full max-w-sm">
+        <TodayTodoList />
+      </div>
     </div>
   );
 }

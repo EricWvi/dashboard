@@ -10,18 +10,13 @@ import (
 
 func (b Base) GetCollection(c *gin.Context, req *GetCollectionRequest) *GetCollectionResponse {
 	collection := &model.Collection{}
-	if req.Id != 0 {
-		m := model.WhereMap{}
-		m.Eq(model.CreatorId, middleware.GetUserId(c))
-		m.Eq(model.Id, req.Id)
+	m := model.WhereMap{}
+	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq(model.Id, req.Id)
 
-		if err := collection.Get(config.DB, m); err != nil {
-			handler.Errorf(c, "%s", err.Error())
-			return nil
-		}
-	} else {
-		collection.Name = "📥 Inbox"
-		collection.CreatorId = middleware.GetUserId(c)
+	if err := collection.Get(config.DB, m); err != nil {
+		handler.Errorf(c, "%s", err.Error())
+		return nil
 	}
 
 	return &GetCollectionResponse{

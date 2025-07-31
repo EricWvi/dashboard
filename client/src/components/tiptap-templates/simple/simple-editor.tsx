@@ -93,7 +93,7 @@ const MainToolbarContent = ({
     <>
       <ToolbarGroup>
         <Button data-style="ghost" onClick={onSave}>
-          <Save className="h-4 w-4" />
+          <Save className="size-4" />
         </Button>
       </ToolbarGroup>
 

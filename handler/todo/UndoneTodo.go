@@ -8,26 +8,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (b Base) UpdateTodo(c *gin.Context, req *UpdateTodoRequest) *UpdateTodoResponse {
-	todo := &model.Todo{
-		TodoField: req.TodoField,
-	}
+func (b Base) UndoneTodo(c *gin.Context, req *UndoneTodoRequest) *UndoneTodoResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := todo.Update(config.DB, m); err != nil {
+	if err := model.UndoneTodo(config.DB, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
 
-	return &UpdateTodoResponse{}
+	return &UndoneTodoResponse{}
 }
 
-type UpdateTodoRequest struct {
+type UndoneTodoRequest struct {
 	Id uint `json:"id"`
-	model.TodoField
 }
 
-type UpdateTodoResponse struct {
+type UndoneTodoResponse struct {
 }

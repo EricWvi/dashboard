@@ -43,10 +43,31 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AlterDifficultyDefault,
 			Down:    DropDifficultyDefault,
 		},
+		{
+			Version: "v0.7.0",
+			Name:    "Add done+count column",
+			Up:      AddDoneCountColumns,
+			Down:    RemoveDoneCountColumns,
+		},
 	}
 }
 
 // ------------------- v0.7.0 -------------------
+func AddDoneCountColumns(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		ADD COLUMN done BOOLEAN DEFAULT FALSE,
+		ADD COLUMN d_count INTEGER DEFAULT 0;
+	`).Error
+}
+
+func RemoveDoneCountColumns(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		DROP COLUMN IF EXISTS done,
+		DROP COLUMN IF EXISTS d_count;
+	`).Error
+}
 
 // ------------------- v0.6.0 -------------------
 func AlterDifficultyDefault(db *gorm.DB) error {

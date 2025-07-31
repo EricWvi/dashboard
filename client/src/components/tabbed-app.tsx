@@ -66,13 +66,15 @@ export default function TabbedApp() {
               value="dashboard"
               className="flex h-full flex-col items-center gap-1"
             >
-              <Home className="h-5 w-5" />
+              <Home className="size-6" />
             </TabsTrigger>
             <TabsTrigger
               value="todo"
               className="flex h-full flex-col items-center gap-1"
             >
-              <CheckCircle2 className="h-5 w-5" />
+              <CheckCircle2
+                className={`${activeTab === "todo" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
+              />
             </TabsTrigger>
           </TabsList>
         </Tabs>

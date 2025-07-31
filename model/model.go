@@ -10,7 +10,7 @@ import (
 
 type MetaField struct {
 	ID        uint           `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time      `gorm:"<-:create" json:"createdAt"`
+	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `json:"deletedAt"`
 	CreatorId uint           `gorm:"column:creator_id;not null" json:"creatorId"`

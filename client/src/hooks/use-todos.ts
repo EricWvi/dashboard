@@ -5,20 +5,28 @@ export type Todo = {
   id: number;
   title: string;
   completed: boolean;
+  done: boolean;
+  count: number;
   collectionId: number;
   difficulty: number;
   link: string;
   draft: number;
   schedule: Date | undefined | null;
+  createdAt: Date;
 };
 
 const keyTodosOfCollection = (collectionId: number) => [
   "/api/todos",
   collectionId,
 ];
+const keyCompletedOfCollection = (collectionId: number) => [
+  "/api/completed",
+  collectionId,
+];
 const keyTodo = (id: number) => ["/api/todo", id];
 const keyAllCollection = () => ["/api/collections"];
 const keyCollection = (id: number) => ["/api/collection", id];
+const keyTodayTodo = () => ["/api/today"];
 
 export function useTodos(collectionId: number) {
   const queryClient = useQueryClient();
@@ -29,6 +37,50 @@ export function useTodos(collectionId: number) {
       const response = await apiRequest("POST", "/api/todo?Action=ListTodos", {
         collectionId,
       });
+      const data = await response.json();
+      const ids = (data.message.todos as Todo[]).map((todo) => {
+        queryClient.setQueryData(keyTodo(todo.id), todo);
+        return todo.id;
+      });
+      return ids;
+    },
+  });
+}
+
+export function useToday() {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: keyTodayTodo(),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/collection?Action=ListToday",
+        {},
+      );
+      const data = await response.json();
+      const ids = (data.message.todos as Todo[]).map((todo) => {
+        queryClient.setQueryData(keyTodo(todo.id), todo);
+        return todo.id;
+      });
+      return ids;
+    },
+  });
+}
+
+export function useCompleted(collectionId: number) {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: keyCompletedOfCollection(collectionId),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/todo?Action=ListCompleted",
+        {
+          collectionId,
+        },
+      );
       const data = await response.json();
       const ids = (data.message.todos as Todo[]).map((todo) => {
         queryClient.setQueryData(keyTodo(todo.id), todo);
@@ -57,7 +109,7 @@ export function useCreateTodo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Todo, "id">) => {
+    mutationFn: async (data: { title: string; collectionId: number }) => {
       const response = await apiRequest("POST", "/api/todo?Action=CreateTodo", {
         ...data,
       });
@@ -81,6 +133,111 @@ export function useUpdateTodo() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: keyTodo(variables.id),
+      });
+    },
+  });
+}
+
+export function useUpdateSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; schedule: Date }) => {
+      await apiRequest("POST", "/api/todo?Action=UpdateSchedule", { ...data });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodo(variables.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyTodayTodo(),
+      });
+    },
+  });
+}
+
+export function useUnsetLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number }) => {
+      await apiRequest("POST", "/api/todo?Action=UnsetLink", { ...data });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodo(variables.id),
+      });
+    },
+  });
+}
+
+export function useCompleteTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; collectionId: number }) => {
+      await apiRequest("POST", "/api/todo?Action=CompleteTodo", {
+        id: data.id,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodosOfCollection(variables.collectionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyCompletedOfCollection(variables.collectionId),
+      });
+    },
+  });
+}
+
+export function useDoneTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number }) => {
+      await apiRequest("POST", "/api/todo?Action=DoneTodo", {
+        id: data.id,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodo(variables.id),
+      });
+    },
+  });
+}
+
+export function useUndoneTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number }) => {
+      await apiRequest("POST", "/api/todo?Action=UndoneTodo", {
+        id: data.id,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodo(variables.id),
+      });
+    },
+  });
+}
+
+export function useRestoreTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; collectionId: number }) => {
+      await apiRequest("POST", "/api/todo?Action=RestoreTodo", { ...data });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodosOfCollection(variables.collectionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyCompletedOfCollection(variables.collectionId),
       });
     },
   });
@@ -117,7 +274,7 @@ export function useMoveTodo() {
   });
 }
 
-export function useDeleteTodo(collectionId: number) {
+export function useDeleteTodo(collectionId: number, completed = false) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -125,9 +282,15 @@ export function useDeleteTodo(collectionId: number) {
       await apiRequest("POST", "/api/todo?Action=DeleteTodo", { id });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: keyTodosOfCollection(collectionId),
-      });
+      if (completed) {
+        queryClient.invalidateQueries({
+          queryKey: keyCompletedOfCollection(collectionId),
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: keyTodosOfCollection(collectionId),
+        });
+      }
     },
   });
 }
@@ -135,6 +298,11 @@ export function useDeleteTodo(collectionId: number) {
 export type Collection = {
   id: number;
   name: string;
+};
+
+const inbox = {
+  id: 0,
+  name: "📥 Inbox",
 };
 
 export function useCollections() {
@@ -152,7 +320,7 @@ export function useCollections() {
       (data.message.collections as Collection[]).map((collection) => {
         queryClient.setQueryData(keyCollection(collection.id), collection);
       });
-      return data.message.collections as Collection[];
+      return [inbox, ...data.message.collections] as Collection[];
     },
   });
 }
@@ -161,6 +329,9 @@ export function useCollection(id: number) {
   return useQuery<Collection>({
     queryKey: keyCollection(id),
     queryFn: async () => {
+      if (id === 0) {
+        return inbox;
+      }
       const response = await apiRequest(
         "POST",
         "/api/collection?Action=GetCollection",
@@ -198,10 +369,8 @@ export function useUpdateCollection() {
         ...data,
       });
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: keyCollection(variables.id),
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keyAllCollection() });
     },
   });
 }
