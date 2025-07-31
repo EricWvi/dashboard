@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export type Draft = {
   id: number;
@@ -25,8 +25,6 @@ export function useDraft(id: number) {
       const data = await response.json();
       return data.message as Draft;
     },
-    staleTime: 0,
-    refetchOnMount: "always",
   });
 }
 
@@ -43,4 +41,11 @@ export async function createTiptap() {
 
 export async function syncDraft(data: Draft) {
   await apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
+}
+
+export function removeDraftQuery(id: number) {
+  queryClient.removeQueries({
+    queryKey: keyDraft(id),
+    exact: true,
+  });
 }

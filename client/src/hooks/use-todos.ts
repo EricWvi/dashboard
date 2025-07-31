@@ -5,6 +5,7 @@ export type Todo = {
   id: number;
   title: string;
   completed: boolean;
+  order: number;
   done: boolean;
   count: number;
   collectionId: number;
@@ -59,11 +60,10 @@ export function useToday() {
         {},
       );
       const data = await response.json();
-      const ids = (data.message.todos as Todo[]).map((todo) => {
-        queryClient.setQueryData(keyTodo(todo.id), todo);
-        return todo.id;
-      });
-      return ids;
+      (data.message.todos as Todo[]).forEach((todo) =>
+        queryClient.setQueryData(keyTodo(todo.id), todo),
+      );
+      return data.message.todos as Todo[];
     },
   });
 }

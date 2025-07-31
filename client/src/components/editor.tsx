@@ -30,15 +30,15 @@ export const useTTContext = () => {
 export const TTEditor = () => {
   const { open } = useTTContext();
   return (
-    <div
-      className={`bg-background fixed inset-0 z-50 ${open ? "block" : "hidden"}`}
-    >
-      {/* removing `overflow-auto` from the fixed overlay and instead 
+    open && (
+      <div className="bg-background fixed inset-0 z-50">
+        {/* removing `overflow-auto` from the fixed overlay and instead 
           constraining the editor’s height and making it scrollable 
           solves the mobile overlay + sticky toolbar problem */}
-      <div className="h-full w-full overflow-auto">
-        <SimpleEditor />
+        <div className="h-full w-full overflow-auto">
+          <SimpleEditor />
+        </div>
       </div>
-    </div>
+    )
   );
 };

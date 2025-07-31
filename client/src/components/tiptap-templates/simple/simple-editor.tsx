@@ -74,7 +74,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 // --- Context ---
 import { useTTContext } from "@/components/editor";
-import { useDraft, syncDraft } from "@/hooks/use-draft";
+import { useDraft, syncDraft, removeDraftQuery } from "@/hooks/use-draft";
 import { useEffect, useRef, useState } from "react";
 import { Save } from "lucide-react";
 
@@ -297,6 +297,7 @@ export function SimpleEditor() {
     }
     setId(0);
     setOpen(false);
+    removeDraftQuery(id);
   };
 
   return (
