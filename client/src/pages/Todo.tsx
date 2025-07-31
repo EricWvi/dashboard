@@ -1,12 +1,7 @@
 "use client";
-import TodoList from "@/components/todo-list";
-import {
-  useCollections,
-  useCreateCollection,
-  type Collection,
-} from "@/hooks/use-todos";
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import TodoList from "@/components/todo/todo-list";
+import { useCollections, useCreateCollection } from "@/hooks/use-todos";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,20 +18,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, FolderPlus, Plus } from "lucide-react";
+import { ChevronDown, FolderPlus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Todo() {
-  const { data } = useCollections();
+  const isMobile = useIsMobile();
+  const { data: collections } = useCollections();
   const [listDropdownOpen, setListDropdownOpen] = useState(false);
-  const inbox = {
-    id: 0,
-    name: "📥 Inbox",
-  };
-  const [collections, setCollections] = useState<Collection[]>([inbox]);
+  const [activeListId, setActiveListId] = useState<number>(0);
+
   const [newListName, setNewListName] = useState("");
   const [newListDialogOpen, setNewListDialogOpen] = useState(false);
   const createCollectionMutation = useCreateCollection();
-  const [activeListId, setActiveListId] = useState<number>(0);
 
   const createNewList = async () => {
     if (newListName.trim() !== "") {
@@ -48,95 +41,105 @@ export default function Todo() {
     }
   };
 
-  useEffect(() => {
-    if (data) {
-      setCollections([inbox, ...data]);
-    }
-  }, [data]);
+  const mobileView = collections && (
+    <div className="fixed top-2 bottom-16 w-full">
+      <TodoList
+        collectionId={activeListId}
+        headerContent={
+          <DropdownMenu onOpenChange={(open) => setListDropdownOpen(open)}>
+            <DropdownMenuTrigger asChild>
+              <div className="flex h-auto cursor-pointer items-center p-0 text-xl font-bold">
+                {collections[
+                  collections.findIndex(
+                    (collection) => collection.id === activeListId,
+                  )
+                ]?.name || collections[0].name}
+                <ChevronDown
+                  className={`ml-1 size-4 transition-transform duration-200 ${listDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-30">
+              {collections.map((collection) => (
+                <DropdownMenuItem
+                  key={collection.id}
+                  onClick={() => setActiveListId(collection.id)}
+                  className={activeListId === collection.id ? "bg-accent" : ""}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <span>{collection.name}</span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setNewListDialogOpen(true)}
+                className="gap-1"
+              >
+                <FolderPlus />
+                New List
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
+    </div>
+  );
+
+  const desktopView = collections && (
+    <div className="fixed top-16 bottom-16 w-full">
+      <div className="flex h-full">
+        <div className="xl:flex-1/8"></div>
+        <div className="flex h-full flex-1/1">
+          {/* Space Block */}
+          <div className="flex-1/20"></div>
+
+          {/* Sidebar - List Navigation */}
+          <div className="mt-16 flex-0">
+            <div className="h-full">
+              <div className="p-4">
+                <div className="space-y-2">
+                  {collections.map((collection) => (
+                    <Button
+                      key={collection.id}
+                      variant="ghost"
+                      className={`w-full justify-center ${
+                        activeListId === collection.id ? "bg-accent" : ""
+                      }`}
+                      onClick={() => setActiveListId(collection.id)}
+                    >
+                      {collection.name}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    className="hover:border-primary/50 text-muted-foreground gap-1 border-2 border-dashed transition-colors hover:bg-none"
+                    onClick={() => setNewListDialogOpen(true)}
+                  >
+                    <FolderPlus />
+                    New List
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Space Block */}
+          <div className="flex-1/20"></div>
+
+          {/* Main Content - Todo List */}
+          <div className="flex-1/1">
+            <TodoList collectionId={activeListId} />
+          </div>
+        </div>
+        <div className="flex-1/25"></div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Mobile Layout - Dropdown */}
-      <div className="w-full sm:hidden">
-        <div className="mx-auto w-full max-w-sm">
-          <TodoList
-            collectionId={activeListId}
-            // onUpdateTasks={(tasks) => updateListTasks(activeList.id, tasks)}
-            // onRename={(newName) => renameList(activeList.id, newName)}
-            // onDelete={() => deleteList(activeList.id)}
-            // canDelete={todoLists.length > 1}
-          >
-            <DropdownMenu onOpenChange={(open) => setListDropdownOpen(open)}>
-              <DropdownMenuTrigger asChild>
-                <div className="flex h-auto items-center p-0 text-xl font-bold hover:bg-transparent">
-                  {collections[
-                    collections.findIndex(
-                      (collection) => collection.id === activeListId,
-                    )
-                  ]?.name || collections[0].name}
-                  <ChevronDown
-                    className={`ml-1 h-4 w-4 transition-transform duration-200 ${listDropdownOpen ? "rotate-180" : ""}`}
-                  />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {collections.map((collection) => (
-                  <DropdownMenuItem
-                    key={collection.id}
-                    onClick={() => setActiveListId(collection.id)}
-                    className={
-                      activeListId === collection.id ? "bg-accent" : ""
-                    }
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <span>{collection.name}</span>
-                      {/* {collection.tasks.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {collection.tasks.length}
-                      </Badge>
-                    )} */}
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setNewListDialogOpen(true)}>
-                  <FolderPlus className="h-4 w-4" />
-                  Create New List
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TodoList>
-        </div>
-      </div>
-
-      {/* Desktop Layout - Grid */}
-      <div className="mx-auto hidden max-w-7xl sm:block">
-        <div className="grid grid-cols-1 gap-x-1 gap-y-6 lg:grid-cols-2 xl:grid-cols-3">
-          {collections.map((collection) => (
-            <div className="mx-auto w-full max-w-sm" key={collection.id}>
-              <TodoList collectionId={collection.id} />
-            </div>
-          ))}
-
-          {/* Add New List Card */}
-          <Card className="hover:border-primary/50 mx-auto h-fit w-full max-w-sm border-2 border-dashed transition-colors">
-            <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-              <FolderPlus className="text-muted-foreground mb-4 h-12 w-12" />
-              <h3 className="mb-2 font-semibold">Create New List</h3>
-              <p className="text-muted-foreground mb-4 text-sm">
-                Add another todo list to organize your tasks
-              </p>
-              <Button
-                onClick={() => setNewListDialogOpen(true)}
-                variant="outline"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New List
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+    <>
+      {isMobile ? mobileView : desktopView}
 
       {/* Create New List Dialog */}
       <Dialog open={newListDialogOpen} onOpenChange={setNewListDialogOpen}>
@@ -178,6 +181,6 @@ export default function Todo() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

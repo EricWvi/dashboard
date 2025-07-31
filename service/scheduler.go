@@ -31,7 +31,7 @@ func NewJobScheduler(minioService *MinIOUploader, db *gorm.DB) *JobScheduler {
 // Start begins the job scheduler
 func (js *JobScheduler) Start() {
 	// Schedule the media re-presigning job to run every day at 2:30 AM
-	_, err := js.cron.AddFunc("30 2 * * *", js.RePresignExpiredMedia)
+	_, err := js.cron.AddFunc("15 2 * * *", js.RePresignExpiredMedia)
 	if err != nil {
 		log.Errorf("Failed to schedule media re-presigning job: %v", err)
 		return

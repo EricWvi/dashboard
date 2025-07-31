@@ -12,7 +12,7 @@ func (b Base) CreateTodo(c *gin.Context, req *CreateTodoRequest) *CreateTodoResp
 	todo := &model.Todo{}
 	todo.CreatorId = middleware.GetUserId(c)
 	todo.TodoField = req.TodoField
-	count, err := model.CountTodos(config.DB, model.WhereMap{
+	maxOrder, err := model.MaxOrder(config.DB, model.WhereMap{
 		model.CreatorId:         middleware.GetUserId(c),
 		model.Todo_CollectionId: req.CollectionId,
 	})
@@ -20,10 +20,9 @@ func (b Base) CreateTodo(c *gin.Context, req *CreateTodoRequest) *CreateTodoResp
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
-	todo.Order = int(count) + 1
+	todo.Order = maxOrder + 1
 
-	err = todo.Create(config.DB)
-	if err != nil {
+	if err = todo.Create(config.DB); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

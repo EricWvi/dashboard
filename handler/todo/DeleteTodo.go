@@ -14,8 +14,7 @@ func (b Base) DeleteTodo(c *gin.Context, req *DeleteTodoRequest) *DeleteTodoResp
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	err := todo.Delete(config.DB, m)
-	if err != nil {
+	if err := todo.Delete(config.DB, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

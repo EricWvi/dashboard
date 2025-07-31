@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -13,17 +14,28 @@ type Todo struct {
 }
 
 type TodoField struct {
-	Title        string `gorm:"size:1024;not null" json:"title"`
-	Completed    bool   `gorm:"not null" json:"completed"`
-	CollectionId uint   `gorm:"column:collection_id;not null" json:"collectionId"`
-	Difficulty   int    `gorm:"default:1;not null" json:"difficulty"`
-	Order        int    `gorm:"column:d_order;default:1;not null" json:"order"`
+	Title        string   `gorm:"size:1024;not null" json:"title"`
+	Completed    bool     `gorm:"not null" json:"completed"`
+	CollectionId uint     `gorm:"column:collection_id;not null" json:"collectionId"`
+	Difficulty   int      `gorm:"default:-1;not null" json:"difficulty"`
+	Order        int      `gorm:"column:d_order;default:1;not null" json:"order"`
+	Link         string   `gorm:"size:1024" json:"link"`
+	Draft        int      `gorm:"default:0;not null" json:"draft"`
+	Schedule     NullTime `gorm:"default:NULL;<-:update" json:"schedule"`
+	Done         bool     `gorm:"default:false;not null" json:"done"`
+	Count        int      `gorm:"column:d_count;default:0;not null" json:"count"`
+	// CreatorId is inherited from MetaField
 }
 
 const (
 	Todo_Table        = "d_todo"
 	Todo_Completed    = "completed"
 	Todo_CollectionId = "collection_id"
+	Todo_Link         = "link"
+	Todo_Order        = "d_order"
+	Todo_Schedule     = "schedule"
+	Todo_Done         = "done"
+	Todo_Count        = "d_count"
 )
 
 const PageSize = 6
@@ -53,6 +65,25 @@ func ListTodos(db *gorm.DB, where map[string]any) ([]Todo, error) {
 	return todos, nil
 }
 
+func ListToday(db *gorm.DB, where map[string]any) ([]Todo, error) {
+	todos := make([]Todo, 0)
+	if err := db.Where(where).Where("schedule::date = CURRENT_DATE").
+		Find(&todos).Error; err != nil {
+		return nil, err
+	}
+	return todos, nil
+}
+
+func ListCompleted(db *gorm.DB, where map[string]any) ([]Todo, error) {
+	todos := make([]Todo, 0)
+	if err := db.Where(where).Where(Todo_Completed, true).
+		Order("created_at DESC").
+		Find(&todos).Error; err != nil {
+		return nil, err
+	}
+	return todos, nil
+}
+
 func (e *Todo) Create(db *gorm.DB) error {
 	return db.Create(e).Error
 }
@@ -63,6 +94,46 @@ func (e *Todo) Update(db *gorm.DB, where map[string]any) error {
 
 func (e *Todo) Delete(db *gorm.DB, where map[string]any) error {
 	return db.Where(where).Delete(e).Error
+}
+
+func (e *Todo) Restore(db *gorm.DB, where map[string]any) error {
+	return db.Where(where).Select(Todo_Order, Todo_Completed).Updates(e).Error
+}
+
+func DoneTodo(db *gorm.DB, where map[string]any) error {
+	return db.Model(&Todo{}).Where(where).UpdateColumns(map[string]any{
+		Todo_Done:  true,
+		Todo_Count: gorm.Expr(Todo_Count+" + ?", 1),
+	}).Error
+}
+
+func UndoneTodo(db *gorm.DB, where map[string]any) error {
+	return db.Model(&Todo{}).Where(where).UpdateColumns(map[string]any{
+		Todo_Done:  false,
+		Todo_Count: gorm.Expr(Todo_Count+" - ?", 1),
+	}).Error
+}
+
+func UpdateSchedule(db *gorm.DB, schedule NullTime, where map[string]any) error {
+	return db.Model(&Todo{}).Where(where).UpdateColumns(map[string]any{
+		Todo_Done:     false,
+		Todo_Schedule: schedule,
+	}).Error
+}
+
+func UnsetLink(db *gorm.DB, where map[string]any) error {
+	if err := db.Model(&Todo{}).Where(where).Update(Todo_Link, "").Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func MaxOrder(db *gorm.DB, where map[string]any) (int, error) {
+	var maxOrder sql.NullInt32
+	if err := db.Model(&Todo{}).Where(where).Where(Todo_Completed, false).Select("MAX(d_order)").Scan(&maxOrder).Error; err != nil {
+		return 0, err
+	}
+	return int(maxOrder.Int32), nil
 }
 
 func CountTodos(db *gorm.DB, where map[string]any) (int64, error) {

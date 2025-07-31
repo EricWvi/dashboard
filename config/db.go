@@ -26,12 +26,13 @@ func InitDB() {
 }
 
 func openDB(host, port, username, password, name string) *gorm.DB {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
 		host,
 		username,
 		password,
 		name,
-		port)
+		port,
+		time.Local)
 
 	newLogger := logger.New(
 		log.StandardLogger(),

@@ -13,8 +13,7 @@ func (b Base) CreateCollection(c *gin.Context, req *CreateCollectionRequest) *Cr
 	collection.CreatorId = middleware.GetUserId(c)
 	collection.CollectionField = req.CollectionField
 
-	err := collection.Create(config.DB)
-	if err != nil {
+	if err := collection.Create(config.DB); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

@@ -16,8 +16,7 @@ func (b Base) UpdateCollection(c *gin.Context, req *UpdateCollectionRequest) *Up
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	err := collection.Update(config.DB, m)
-	if err != nil {
+	if err := collection.Update(config.DB, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

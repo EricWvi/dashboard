@@ -16,8 +16,7 @@ func (b Base) UpdateTodo(c *gin.Context, req *UpdateTodoRequest) *UpdateTodoResp
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	err := todo.Update(config.DB, m)
-	if err != nil {
+	if err := todo.Update(config.DB, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

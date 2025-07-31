@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Home } from "lucide-react";
+import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 
 export default function TabbedApp() {
-  const [activeTab, setActiveTab] = useState("todo");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
-    new Set(["todo"]),
+    new Set(["dashboard"]),
   );
+  const { open } = useTTContext();
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -18,7 +20,9 @@ export default function TabbedApp() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      className={`bg-background min-h-screen ${open ? "pointer-events-none" : ""}`}
+    >
       {/* Desktop Tabs - Top Center with Hover Animation - Fixed Shadow Issue */}
       <div className="fixed top-0 left-1/2 z-50 hidden -translate-x-1/2 transform md:block">
         <div className="group">
@@ -62,13 +66,15 @@ export default function TabbedApp() {
               value="dashboard"
               className="flex h-full flex-col items-center gap-1"
             >
-              <Home className="h-5 w-5" />
+              <Home className="size-6" />
             </TabsTrigger>
             <TabsTrigger
               value="todo"
               className="flex h-full flex-col items-center gap-1"
             >
-              <CheckCircle2 className="h-5 w-5" />
+              <CheckCircle2
+                className={`${activeTab === "todo" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
+              />
             </TabsTrigger>
           </TabsList>
         </Tabs>
