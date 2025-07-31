@@ -351,7 +351,7 @@ export const TodayTodoList = () => {
               <div className="space-y-2">
                 {today.length === 0 ? (
                   <div className="text-muted-foreground py-8 text-center">
-                    No Completed Tasks...
+                    No Scheduled Tasks...
                   </div>
                 ) : (
                   today.map((todo: number) => (

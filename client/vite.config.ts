@@ -29,7 +29,8 @@ export default defineConfig({
         name: "Only Dashboard",
         short_name: "Only",
         description: "Only Dashboard",
-        background_color: "#0a0a0a",
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
         display: "standalone",
         icons: [
           {
