@@ -9,8 +9,8 @@ route:
   back:
     base: "/api"
   front:
-    dir: "dist"
-    index: "dist/index.html"
+    dir: "client/dist"
+    index: "client/dist/index.html"
 db:
   name: dashboard_test
   host: postgres
