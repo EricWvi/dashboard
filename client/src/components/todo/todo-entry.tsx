@@ -68,54 +68,230 @@ import { createTiptap } from "@/hooks/use-draft";
 export const TodayTodoView = ({ id }: { id: number }) => {
   const { data: todo } = useTodo(id);
 
+  // to-do state
+  const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
+  const [editTodoName, setEditTodoName] = useState("");
+  const updateTodoMutation = useUpdateTodo();
+  const undoneTodoMutation = useUndoneTodo();
+  const doneTodoMutation = useDoneTodo();
+  const unsetLinkMutation = useUnsetLink();
+  const renameTodo = async () => {
+    await updateTodoMutation.mutateAsync({ id, title: editTodoName });
+  };
+  const doneTodo = async () => {
+    await doneTodoMutation.mutateAsync({ id });
+  };
+  const undoneTodo = async () => {
+    await undoneTodoMutation.mutateAsync({ id });
+  };
+
+  // link state
+  const [editLinkDialogOpen, setEditLinkDialogOpen] = useState(false);
+  const [editLinkName, setEditLinkName] = useState("");
+  const changeLink = async (link: string) => {
+    if (link.trim() === "") {
+      await unsetLinkMutation.mutateAsync({ id });
+    } else {
+      await updateTodoMutation.mutateAsync({ id, link });
+    }
+  };
   // editor state
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const updateTodoDraft = async (draftId: number) => {
+    await updateTodoMutation.mutateAsync({ id, draft: draftId });
+  };
+
+  const TodayTodoMenuContent = () =>
+    todo && (
+      <ContextMenuContent>
+        {todo.done ? (
+          <ContextMenuItem onClick={undoneTodo}>
+            <Undo2 />
+            Undone
+          </ContextMenuItem>
+        ) : (
+          <ContextMenuItem onClick={doneTodo}>
+            <CircleCheckBig />
+            Done
+          </ContextMenuItem>
+        )}
+        <ContextMenuItem
+          onClick={() => {
+            setEditTodoName(todo.title);
+            setEditTodoDialogOpen(true);
+          }}
+        >
+          <Edit />
+          Rename
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => {
+            setEditLinkName(todo.link);
+            setEditLinkDialogOpen(true);
+          }}
+        >
+          <Link />
+          Link
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={async () => {
+            if (todo.draft !== 0) {
+              setEditorId(todo.draft);
+              setEditorDialogOpen(true);
+            } else {
+              const draftId = await createTiptap();
+              setEditorId(draftId);
+              setEditorDialogOpen(true);
+              updateTodoDraft(draftId);
+            }
+          }}
+        >
+          <NotepadText />
+          Draft
+        </ContextMenuItem>
+      </ContextMenuContent>
+    );
 
   return (
     todo && (
-      <Card
-        className={`group relative rounded-sm py-2 transition-all ${todo.done && "opacity-75"}`}
-      >
-        {/* Difficulty indicator - left border stripe */}
-        <div
-          className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${stripeColor(todo.difficulty)}`}
-        />
-        <CardContent className="group flex items-center gap-3 pr-2">
+      <>
+        <Card
+          className={`group relative rounded-sm py-2 transition-all ${todo.done && "opacity-75"}`}
+        >
+          {/* Difficulty indicator - left border stripe */}
           <div
-            className={`min-w-0 flex-1 text-sm ${todo.done && "text-muted-foreground line-through"}`}
-          >
-            {todo.link === "" ? (
-              <div className="line-clamp-1" title={todo.title}>
-                {todo.title}
-              </div>
-            ) : (
-              <a
-                className="line-clamp-1 font-semibold underline decoration-dashed"
-                title={todo.title}
-                href={todo.link}
-                target="_blank"
-              >
-                {todo.title}
-              </a>
-            )}
-          </div>
+            className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${stripeColor(todo.difficulty)}`}
+          />
+          <ContextMenu>
+            <ContextMenuTrigger>
+              <CardContent className="group flex items-center gap-3 pr-2">
+                <div
+                  className={`min-w-0 flex-1 text-sm ${todo.done && "text-muted-foreground line-through"}`}
+                >
+                  {todo.link === "" ? (
+                    <div className="line-clamp-1" title={todo.title}>
+                      {todo.title}
+                    </div>
+                  ) : (
+                    <a
+                      className="line-clamp-1 font-semibold underline decoration-dashed"
+                      title={todo.title}
+                      href={todo.link}
+                      target="_blank"
+                    >
+                      {todo.title}
+                    </a>
+                  )}
+                </div>
 
-          <span className="flex items-center gap-1">
-            {todo.draft !== 0 && (
-              <Button
-                variant="ghost"
-                className="size-8"
-                onClick={() => {
-                  setEditorId(todo.draft);
-                  setEditorDialogOpen(true);
+                <span className="flex items-center gap-1">
+                  {todo.draft !== 0 && (
+                    <Button
+                      variant="ghost"
+                      className="size-8"
+                      onClick={() => {
+                        setEditorId(todo.draft);
+                        setEditorDialogOpen(true);
+                      }}
+                    >
+                      <NotepadText className="text-muted-foreground" />
+                    </Button>
+                  )}
+                </span>
+              </CardContent>
+            </ContextMenuTrigger>
+            <TodayTodoMenuContent />
+          </ContextMenu>
+        </Card>
+
+        {/* Edit todo Dialog */}
+        <Dialog open={editTodoDialogOpen} onOpenChange={setEditTodoDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Rename Todo</DialogTitle>
+              <DialogDescription>
+                Enter a new name for your todo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Enter new name..."
+                value={editTodoName}
+                disabled={updateTodoMutation.isPending}
+                onChange={(e) => setEditTodoName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    renameTodo();
+                    setEditTodoDialogOpen(false);
+                  }
                 }}
-              >
-                <NotepadText className="text-muted-foreground" />
-              </Button>
-            )}
-          </span>
-        </CardContent>
-      </Card>
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditTodoDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    renameTodo();
+                    setEditTodoDialogOpen(false);
+                  }}
+                  disabled={
+                    !editTodoName.trim() || updateTodoMutation.isPending
+                  }
+                >
+                  Rename
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit link Dialog */}
+        <Dialog open={editLinkDialogOpen} onOpenChange={setEditLinkDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Change Link</DialogTitle>
+              <DialogDescription>Set a link to redirect.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Enter new link..."
+                value={editLinkName}
+                disabled={updateTodoMutation.isPending}
+                onChange={(e) => setEditLinkName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    changeLink(editLinkName);
+                    setEditLinkDialogOpen(false);
+                  }
+                }}
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditLinkDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    changeLink(editLinkName);
+                    setEditLinkDialogOpen(false);
+                  }}
+                  disabled={updateTodoMutation.isPending}
+                >
+                  Set
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     )
   );
 };
@@ -457,7 +633,7 @@ export const TodoEntry = ({
                 )}
 
                 {/* Difficulty dots indicator */}
-                <div className="pointer-events-none mt-1 flex items-center gap-1 lg:pointer-events-auto">
+                <div className="mt-1 hidden items-center gap-1 xl:flex">
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4].map((level) => (
                       <button
@@ -502,7 +678,7 @@ export const TodoEntry = ({
                         updateScheduleDate(todayStart());
                       }
                     }}
-                    className={`pointer-events-none mr-1 text-xs transition-transform lg:pointer-events-auto ${
+                    className={`pointer-events-none mr-1 text-xs transition-transform xl:pointer-events-auto ${
                       // hover effect only when not set date or set today and not done
                       (!isSetDate(todo.schedule) ||
                         (isSetToday(todo.schedule) && !todo.done)) &&
