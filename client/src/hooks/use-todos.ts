@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { msUntilMidnight } from "@/lib/utils";
 
 export type Todo = {
   id: number;
@@ -65,6 +66,7 @@ export function useToday() {
       );
       return data.message.todos as Todo[];
     },
+    refetchInterval: msUntilMidnight(),
   });
 }
 

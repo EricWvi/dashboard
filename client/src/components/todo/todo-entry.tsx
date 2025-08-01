@@ -188,7 +188,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                   {todo.draft !== 0 && (
                     <Button
                       variant="ghost"
-                      className="size-8"
+                      className="size-4"
                       onClick={() => {
                         setEditorId(todo.draft);
                         setEditorDialogOpen(true);

@@ -114,3 +114,11 @@ export const todayStart = () => {
   today.setHours(0, 0, 0, 0);
   return today;
 };
+
+export function msUntilMidnight() {
+  const now = new Date();
+  // Next midnight
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0); // sets to next midnight
+  return midnight.getTime() - now.getTime();
+}
