@@ -156,7 +156,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
     todo && (
       <>
         <Card
-          className={`group relative rounded-sm py-2 transition-all ${todo.done && "opacity-75"}`}
+          className={`group relative rounded-sm py-2 transition-all select-none xl:select-auto ${todo.done && "opacity-75"}`}
         >
           {/* Difficulty indicator - left border stripe */}
           <div
@@ -317,7 +317,7 @@ export const CompletedTodoView = ({
 
   return (
     todo && (
-      <Card className="group relative rounded-sm py-2 opacity-75 transition-all">
+      <Card className="group relative rounded-sm py-2 opacity-75 transition-all select-none xl:select-auto">
         {/* Difficulty indicator - left border stripe */}
         <div
           className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${stripeColor(todo.difficulty)}`}
@@ -608,7 +608,7 @@ export const TodoEntry = ({
 
   return (
     todo && (
-      <Card className="group relative rounded-sm py-2 transition-all">
+      <Card className="group relative rounded-sm py-2 transition-all select-none xl:select-auto">
         {/* Difficulty indicator - left border stripe */}
         <div
           className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${stripeColor(todo.difficulty)}`}
