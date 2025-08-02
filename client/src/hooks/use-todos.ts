@@ -264,7 +264,7 @@ export function useMoveTodo() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: keyTodo(variables.id),
+        queryKey: keyTodayTodo(),
       });
       queryClient.invalidateQueries({
         queryKey: keyTodosOfCollection(variables.src),

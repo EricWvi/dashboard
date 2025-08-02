@@ -53,6 +53,7 @@ import {
   useUnsetLink,
   useUpdateSchedule,
   useUpdateTodo,
+  type Todo,
 } from "@/hooks/use-todos";
 import {
   stripeColor,
@@ -64,6 +65,35 @@ import {
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
+
+const TodoTitle = ({
+  todo,
+  todayView,
+  children,
+}: { todo: Todo; todayView?: boolean } & { children?: React.ReactNode }) => {
+  return (
+    <div
+      className={`min-w-0 flex-1 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
+    >
+      {todo.link === "" ? (
+        <div className="line-clamp-1" title={todo.title}>
+          {todo.title}
+        </div>
+      ) : (
+        <a
+          className="line-clamp-1 font-semibold underline decoration-dashed"
+          title={todo.title}
+          href={todo.link}
+          target="_blank"
+        >
+          {todo.title}
+        </a>
+      )}
+
+      {children}
+    </div>
+  );
+};
 
 export const TodayTodoView = ({ id }: { id: number }) => {
   const [isComposing, setIsComposing] = useState(false);
@@ -157,7 +187,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
     todo && (
       <>
         <Card
-          className={`group relative rounded-sm py-2 transition-all select-none xl:select-auto ${todo.done && "opacity-75"}`}
+          className={`group relative rounded-sm py-2 transition-all select-none xl:select-auto ${todo.done ? "opacity-75" : ""}`}
         >
           {/* Difficulty indicator - left border stripe */}
           <div
@@ -165,31 +195,13 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           />
           <ContextMenu>
             <ContextMenuTrigger>
-              <CardContent className="group flex items-center gap-3 pr-2">
-                <div
-                  className={`min-w-0 flex-1 text-sm ${todo.done && "text-muted-foreground line-through"}`}
-                >
-                  {todo.link === "" ? (
-                    <div className="line-clamp-1" title={todo.title}>
-                      {todo.title}
-                    </div>
-                  ) : (
-                    <a
-                      className="line-clamp-1 font-semibold underline decoration-dashed"
-                      title={todo.title}
-                      href={todo.link}
-                      target="_blank"
-                    >
-                      {todo.title}
-                    </a>
-                  )}
-                </div>
-
+              <CardContent className="group flex items-center gap-3 pr-2 pl-4 lg:pl-6">
+                <TodoTitle todo={todo} todayView />
                 <span className="flex items-center gap-1">
                   {todo.draft !== 0 && (
                     <Button
                       variant="ghost"
-                      className="size-4"
+                      className="size-4 xl:size-6"
                       onClick={() => {
                         setEditorId(todo.draft);
                         setEditorDialogOpen(true);
@@ -329,23 +341,8 @@ export const CompletedTodoView = ({
         />
         <ContextMenu>
           <ContextMenuTrigger>
-            <CardContent className="group flex items-center gap-3 pr-2">
-              <div className="text-muted-foreground min-w-0 flex-1 text-sm line-through">
-                {todo.link === "" ? (
-                  <div className="line-clamp-1" title={todo.title}>
-                    {todo.title}
-                  </div>
-                ) : (
-                  <a
-                    className="line-clamp-1 font-semibold underline decoration-dashed"
-                    title={todo.title}
-                    href={todo.link}
-                    target="_blank"
-                  >
-                    {todo.title}
-                  </a>
-                )}
-              </div>
+            <CardContent className="group flex items-center gap-3 pr-2 pl-4 lg:pl-6">
+              <TodoTitle todo={todo} />
 
               <span className="flex items-center gap-1">
                 {/* Complete date badge */}
@@ -365,7 +362,7 @@ export const CompletedTodoView = ({
                 {todo.draft !== 0 && (
                   <Button
                     variant="ghost"
-                    className="size-8"
+                    className="size-4 xl:size-8"
                     onClick={() => {
                       setEditorId(todo.draft);
                       setEditorDialogOpen(true);
@@ -621,23 +618,8 @@ export const TodoEntry = ({
         />
         <ContextMenu>
           <ContextMenuTrigger>
-            <CardContent className="group flex items-center gap-3 pr-2">
-              <div className="min-w-0 flex-1 text-sm">
-                {todo.link === "" ? (
-                  <div className="line-clamp-1" title={todo.title}>
-                    {todo.title}
-                  </div>
-                ) : (
-                  <a
-                    className="line-clamp-1 font-semibold underline decoration-dashed"
-                    title={todo.title}
-                    href={todo.link}
-                    target="_blank"
-                  >
-                    {todo.title}
-                  </a>
-                )}
-
+            <CardContent className="group flex items-center gap-3 pr-2 pl-4 lg:pl-6">
+              <TodoTitle todo={todo}>
                 {/* Difficulty dots indicator */}
                 <div className="mt-1 hidden items-center gap-1 xl:flex">
                   <div className="flex gap-0.5">
@@ -656,7 +638,7 @@ export const TodoEntry = ({
                     ))}
                   </div>
                   <span
-                    className={`text-muted-foreground ml-1 text-xs opacity-0 ${difficultyLabel !== 0 && "opacity-100"}`}
+                    className={`text-muted-foreground ml-1 text-xs opacity-0 ${difficultyLabel !== 0 ? "opacity-100" : ""}`}
                   >
                     {difficultyLabel === 1
                       ? "Easy"
@@ -667,7 +649,7 @@ export const TodoEntry = ({
                           : "Very Hard"}
                   </span>
                 </div>
-              </div>
+              </TodoTitle>
 
               <span className="flex items-center">
                 {/* Schedule date badge */}
@@ -686,10 +668,11 @@ export const TodoEntry = ({
                     }}
                     className={`pointer-events-none mr-1 text-xs transition-transform xl:pointer-events-auto ${
                       // hover effect only when not set date or set today and not done
-                      (!isSetDate(todo.schedule) ||
-                        (isSetToday(todo.schedule) && !todo.done)) &&
-                      "cursor-pointer hover:scale-110"
-                    } ${formatDate(todo.schedule, todo.done).color}`}
+                      !isSetDate(todo.schedule) ||
+                      (isSetToday(todo.schedule) && !todo.done)
+                        ? "cursor-pointer hover:scale-110"
+                        : ""
+                    } ${!isSetDate(todo.schedule) ? "hidden xl:inline" : "inline"} ${formatDate(todo.schedule, todo.done).color}`}
                   >
                     {formatDate(todo.schedule, todo.done).label}
                   </Badge>
@@ -697,7 +680,7 @@ export const TodoEntry = ({
                 {todo.draft !== 0 && (
                   <Button
                     variant="ghost"
-                    className="size-8"
+                    className="size-4 xl:size-8"
                     onClick={() => {
                       setEditorId(todo.draft);
                       setEditorDialogOpen(true);

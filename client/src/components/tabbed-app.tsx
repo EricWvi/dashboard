@@ -21,7 +21,7 @@ export default function TabbedApp() {
 
   return (
     <div
-      className={`bg-background min-h-screen ${open ? "pointer-events-none" : ""}`}
+      className={`bg-background h-full w-full ${open ? "pointer-events-none touch-none" : ""}`}
     >
       {/* Desktop Tabs - Top Center with Hover Animation - Fixed Shadow Issue */}
       <div className="fixed top-0 left-1/2 z-50 hidden -translate-x-1/2 transform md:block">
@@ -81,7 +81,7 @@ export default function TabbedApp() {
       </div>
 
       {/* Tab Content - Lazy rendered but persistent */}
-      <div className="pt-6 pb-20 md:pb-6">
+      <div className="scroll-area h-full w-full pt-6 pb-20 md:pb-6">
         {/* Dashboard - lazy render but keep mounted */}
         <div className={`${activeTab === "dashboard" ? "block" : "hidden"}`}>
           {visitedTabs.has("dashboard") && <Dashboard />}

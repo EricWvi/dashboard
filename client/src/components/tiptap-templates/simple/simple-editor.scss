@@ -187,11 +187,11 @@ body,
   height: 100%;
 }
 
-::-webkit-scrollbar {
+.dashboard-editor::-webkit-scrollbar {
   width: 0.25rem;
 }
 
-* {
+.dashboard-editor {
   scrollbar-width: thin;
   scrollbar-color: var(--tt-scrollbar-color) transparent;
 }

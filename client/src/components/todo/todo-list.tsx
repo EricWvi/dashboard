@@ -27,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useCollection,
   useCollections,
@@ -91,7 +90,7 @@ const TodoList = ({
     <div className={`mx-auto flex h-full w-full flex-col gap-6 xl:flex-row`}>
       <div className="min-h-0 flex-1/1">
         <Card
-          className={`h-full max-w-4xl gap-4 ${isMobile && "border-none bg-transparent pt-6 pb-0 shadow-none"}`}
+          className={`h-full max-w-4xl gap-4 ${isMobile ? "border-none bg-transparent pt-6 pb-0 shadow-none" : ""}`}
         >
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -170,7 +169,7 @@ const TodoList = ({
 
             {/* Task list */}
             <div
-              className={`flex min-h-0 flex-1 flex-col ${!isMobile && "overflow-hidden rounded-sm"}`}
+              className={`scroll-area flex min-h-0 flex-1 flex-col ${!isMobile ? "rounded-sm" : ""}`}
             >
               {todos &&
                 (todos.length === 0 ? (
@@ -181,8 +180,8 @@ const TodoList = ({
                     <div className="min-h-0 flex-1"></div>
                   </div>
                 ) : (
-                  <ScrollArea className="min-h-0 w-full flex-1">
-                    <div className="mb-6">
+                  <div className="min-h-0 w-full flex-1">
+                    <div className="pb-6">
                       {
                         <div className="space-y-2">
                           {todos.map((todo: number) => (
@@ -200,7 +199,7 @@ const TodoList = ({
                         <CompletedList collectionId={collectionId} />
                       )}
                     </div>
-                  </ScrollArea>
+                  </div>
                 ))}
             </div>
           </CardContent>
@@ -303,7 +302,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
     <Card
       className={`max-w-4xl gap-4 ${isMobile ? "border-none bg-transparent shadow-none" : "h-full"}`}
     >
-      <CardHeader className={`${isMobile && "px-0"}`}>
+      <CardHeader className={`${isMobile ? "px-0" : ""}`}>
         <CardTitle>
           <div className="flex items-end justify-between">
             <div className="text-muted-foreground h-8 text-xl">Completed</div>
@@ -325,11 +324,11 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
       </CardHeader>
 
       <CardContent
-        className={`flex min-h-0 flex-1 flex-col ${isMobile ? "px-0" : "overflow-hidden rounded-sm"}`}
+        className={`scroll-area flex min-h-0 flex-1 flex-col ${isMobile ? "px-0" : "rounded-sm"}`}
       >
         {completed &&
           (completed.length > 0 ? (
-            <ScrollArea className="min-h-0 w-full flex-1">
+            <div className="min-h-0 w-full flex-1">
               <div className="space-y-2">
                 {completed.map((todo: number) => (
                   <CompletedTodoView
@@ -339,7 +338,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
                   />
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           ) : (
             <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
               <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -382,7 +381,7 @@ export const TodayTodoList = () => {
       <CardContent>
         {/* desktop fixed height, mobile full height */}
         <div
-          className={`flex flex-col overflow-hidden rounded-sm ${!isMobile && "h-100"}`}
+          className={`flex flex-col rounded-sm ${isMobile ? "" : "h-100 overflow-scroll"}`}
         >
           {/* 1. UI library components have complex nested DOM structures that make `h-full` problematic. */}
           {/* 2. min-h-0 lets flex items shrink as needed, fixing overflow and scrolling issues in flex layouts. */}
@@ -395,7 +394,7 @@ export const TodayTodoList = () => {
                 <div className="min-h-0 flex-1"></div>
               </div>
             ) : (
-              <ScrollArea className="min-h-0 w-full flex-1">
+              <div className="min-h-0 w-full flex-1">
                 {Object.entries(
                   today
                     .sort((a, b) => b.order - a.order)
@@ -423,7 +422,7 @@ export const TodayTodoList = () => {
                     </div>
                   </div>
                 ))}
-              </ScrollArea>
+              </div>
             ))}
         </div>
       </CardContent>

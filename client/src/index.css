@@ -119,10 +119,32 @@
 }
 
 @layer base {
+  ::-webkit-scrollbar {
+    width: 0.25rem;
+  }
+
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--tt-scrollbar-color) transparent;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  @media (width < 80rem) {
+    .scroll-area::-webkit-scrollbar {
+      display: none;
+    }
+    .scroll-area {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+
+  .scroll-area {
+    overflow: scroll;
   }
 }

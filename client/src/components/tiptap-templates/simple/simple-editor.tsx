@@ -194,9 +194,9 @@ const MobileToolbarContent = ({
   </>
 );
 
-export function SimpleEditor() {
+export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
   const { id, open, setId, setOpen } = useTTContext();
-  const { data: draft, isLoading } = useDraft(id);
+  const { data: draft } = useDraft(id);
   const [isDirty, setIsDirty] = useState(false);
   const isDirtyRef = useRef(isDirty);
 
@@ -253,7 +253,6 @@ export function SimpleEditor() {
     },
   });
 
-  const isScrolling = useScrolling();
   const rect = useCursorVisibility({
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
@@ -301,7 +300,6 @@ export function SimpleEditor() {
   };
 
   return (
-    !isLoading &&
     editor && (
       <div className="simple-editor-wrapper">
         <EditorContext.Provider value={{ editor }}>

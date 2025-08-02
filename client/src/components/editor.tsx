@@ -27,16 +27,21 @@ export const useTTContext = () => {
   return context;
 };
 
-export const TTEditor = () => {
+export const SimpleEditorWrapper = () => {
   const { open } = useTTContext();
+  const [isScrolling, setIsScrolling] = useState(false);
   return (
     open && (
       <div className="bg-background fixed inset-0 z-50">
         {/* removing `overflow-auto` from the fixed overlay and instead 
           constraining the editor’s height and making it scrollable 
           solves the mobile overlay + sticky toolbar problem */}
-        <div className="dashboard-editor h-full w-full overflow-auto">
-          <SimpleEditor />
+        <div
+          className="dashboard-editor h-full w-full overflow-auto"
+          onScroll={() => setIsScrolling(true)}
+          onScrollEnd={() => setIsScrolling(false)}
+        >
+          <SimpleEditor isScrolling={isScrolling} />
         </div>
       </div>
     )
