@@ -55,6 +55,7 @@ const TodoList = ({
   const isMobile = useIsMobile();
   const { data: todos } = useTodos(collectionId);
   const { data: collection } = useCollection(collectionId);
+  const [isComposing, setIsComposing] = useState(false);
 
   const createTodoMutation = useCreateTodo();
   const deleteCollectionMutation = useDeleteCollection();
@@ -149,8 +150,10 @@ const TodoList = ({
                 value={newTodo}
                 disabled={createTodoMutation.isPending}
                 onChange={(e) => setNewTodo(e.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === "Enter" && !isComposing) {
                     addTodo();
                   }
                 }}
@@ -220,8 +223,10 @@ const TodoList = ({
                   value={editListName}
                   disabled={updateCollectionMutation.isPending}
                   onChange={(e) => setEditListName(e.target.value)}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === "Enter" && !isComposing) {
                       onRename();
                       setEditListDialogOpen(false);
                     }
@@ -381,9 +386,6 @@ export const TodayTodoList = () => {
         >
           {/* 1. UI library components have complex nested DOM structures that make `h-full` problematic. */}
           {/* 2. min-h-0 lets flex items shrink as needed, fixing overflow and scrolling issues in flex layouts. */}
-          {/* 3. Apply rounded-sm to the ScrollArea, the browser creates a clipping context to ensure content 
-          stays within the rounded corners. This clipping can trigger several rendering behaviors that 
-          affect how emojis are displayed. */}
           {today &&
             (today.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
@@ -407,7 +409,11 @@ export const TodayTodoList = () => {
                     ),
                 ).map(([key, items]) => (
                   <div key={key}>
-                    <div className="text-muted-foreground mb-1 text-sm font-medium">
+                    {/* 3. Apply `rounded-sm` + `overflow-hidden`, the browser creates a clipping context 
+                          to ensure content stays within the rounded corners. This clipping can 
+                          trigger several rendering behaviors that affect how emojis are displayed.
+                          use `transform-gpu` (`transform: translateZ(0)`) to create a new layer */}
+                    <div className="text-muted-foreground mb-1 transform-gpu text-sm font-medium">
                       {collectionMap[key]}
                     </div>
                     <div className="mb-3 space-y-2">

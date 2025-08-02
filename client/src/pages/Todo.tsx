@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Todo() {
   const isMobile = useIsMobile();
+  const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
   const [listDropdownOpen, setListDropdownOpen] = useState(false);
   const [activeListId, setActiveListId] = useState<number>(0);
@@ -155,8 +156,10 @@ export default function Todo() {
               placeholder="Enter list name..."
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === "Enter" && !isComposing) {
                   createNewList();
                 }
               }}

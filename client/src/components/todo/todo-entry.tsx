@@ -66,6 +66,7 @@ import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
 
 export const TodayTodoView = ({ id }: { id: number }) => {
+  const [isComposing, setIsComposing] = useState(false);
   const { data: todo } = useTodo(id);
 
   // to-do state
@@ -219,8 +220,10 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                 value={editTodoName}
                 disabled={updateTodoMutation.isPending}
                 onChange={(e) => setEditTodoName(e.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === "Enter" && !isComposing) {
                     renameTodo();
                     setEditTodoDialogOpen(false);
                   }
@@ -263,8 +266,10 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                 value={editLinkName}
                 disabled={updateTodoMutation.isPending}
                 onChange={(e) => setEditLinkName(e.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === "Enter" && !isComposing) {
                     changeLink(editLinkName);
                     setEditLinkDialogOpen(false);
                   }
@@ -398,6 +403,7 @@ export const TodoEntry = ({
   id: number;
   collectionId: number;
 }) => {
+  const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
   const { data: todo } = useTodo(id);
   // to-do state
@@ -721,8 +727,10 @@ export const TodoEntry = ({
                 value={editTodoName}
                 disabled={updateTodoMutation.isPending}
                 onChange={(e) => setEditTodoName(e.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === "Enter" && !isComposing) {
                     renameTodo();
                     setEditTodoDialogOpen(false);
                   }
@@ -765,8 +773,10 @@ export const TodoEntry = ({
                 value={editLinkName}
                 disabled={updateTodoMutation.isPending}
                 onChange={(e) => setEditLinkName(e.target.value)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (e.key === "Enter" && !isComposing) {
                     changeLink(editLinkName);
                     setEditLinkDialogOpen(false);
                   }
