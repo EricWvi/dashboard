@@ -16,6 +16,7 @@ import {
   ArchiveRestore,
   Archive,
   Undo2,
+  CornerLeftUp,
 } from "lucide-react";
 import {
   Dialog,
@@ -49,6 +50,7 @@ import {
   useMoveTodo,
   useRestoreTodo,
   useTodo,
+  useTopTodo,
   useUndoneTodo,
   useUnsetLink,
   useUpdateSchedule,
@@ -62,6 +64,7 @@ import {
   isSetToday,
   todayStart,
   dotColor,
+  tomorrowStart,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
@@ -396,9 +399,11 @@ export const CompletedTodoView = ({
 export const TodoEntry = ({
   id,
   collectionId,
+  top,
 }: {
   id: number;
   collectionId: number;
+  top: boolean;
 }) => {
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
@@ -414,6 +419,7 @@ export const TodoEntry = ({
   const unsetLinkMutation = useUnsetLink();
   const completeTodoMutation = useCompleteTodo();
   const moveTodoMutation = useMoveTodo();
+  const topTodoMutation = useTopTodo();
   const deleteTodo = () => {
     setConfirmAction("delete");
     setAction(() => () => deleteTodoMutation.mutateAsync(id));
@@ -439,6 +445,9 @@ export const TodoEntry = ({
   };
   const moveTodo = async (dst: number) => {
     await moveTodoMutation.mutateAsync({ id, src: collectionId, dst });
+  };
+  const topTodo = async () => {
+    await topTodoMutation.mutateAsync({ id, collectionId });
   };
   // difficulty state
   const [difficultyLabel, setDifficultyLabel] = useState(0);
@@ -578,6 +587,12 @@ export const TodoEntry = ({
           Draft
         </ContextMenuItem>
         <ContextMenuSeparator />
+        {!top && (
+          <ContextMenuItem onClick={topTodo}>
+            <CornerLeftUp />
+            Top
+          </ContextMenuItem>
+        )}
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <div className="flex items-center gap-2">
@@ -797,7 +812,21 @@ export const TodoEntry = ({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <div className="flex gap-1">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setScheduleDate(todayStart())}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setScheduleDate(tomorrowStart())}
+                  >
+                    Tomorrow
+                  </Button>
+                </div>
                 <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
                   <PopoverTrigger asChild>
                     <Button

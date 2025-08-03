@@ -184,10 +184,11 @@ const TodoList = ({
                     <div className="pb-6">
                       {
                         <div className="space-y-2">
-                          {todos.map((todo: number) => (
+                          {todos.map((todo: number, idx: number) => (
                             <TodoEntry
                               key={todo}
                               id={todo}
+                              top={idx === 0}
                               collectionId={collectionId}
                             />
                           ))}
