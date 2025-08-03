@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Home, TrendingUp, Users, Activity } from "lucide-react";
 
 export default function Dashboard() {
@@ -21,6 +22,30 @@ export default function Dashboard() {
       <div className="mx-auto w-full max-w-sm">
         <TodayTodoList />
       </div>
+
+      <Sheet>
+        <SheetTrigger>Journal</SheetTrigger>
+        <SheetContent
+          side="left"
+          style={{
+            maxWidth: "1000px",
+            width: window.innerHeight * (390 / 844) + "px",
+          }}
+        >
+          <div style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+            <iframe
+              src={"https://journal.onlyquant.top/"}
+              title={"Journal"}
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+              allowFullScreen
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
