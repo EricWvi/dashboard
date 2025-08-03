@@ -56,7 +56,7 @@ export default function Todo() {
                   )
                 ]?.name || collections[0].name}
                 <ChevronDown
-                  className={`ml-1 size-5 !transition-transform ${listDropdownOpen ? "rotate-180" : ""}`}
+                  className={`ml-1 size-5 transition-transform ${listDropdownOpen ? "rotate-180" : ""}`}
                 />
               </div>
             </DropdownMenuTrigger>

@@ -19,6 +19,15 @@ func (b Base) DeleteCollection(c *gin.Context, req *DeleteCollectionRequest) *De
 		return nil
 	}
 
+	d := model.WhereMap{}
+	d.Eq(model.CreatorId, middleware.GetUserId(c))
+	d.Eq(model.Todo_CollectionId, req.Id)
+	todo := &model.Todo{}
+	if err := todo.Delete(config.DB, d); err != nil {
+		handler.Errorf(c, "%s", err.Error())
+		return nil
+	}
+
 	return &DeleteCollectionResponse{}
 }
 

@@ -24,6 +24,18 @@ export function stripeColor(difficulty: number): string {
           : "bg-gray-200 dark:bg-gray-700";
 }
 
+export function underlineColor(difficulty: number): string {
+  return difficulty === 4
+    ? "underline decoration-2 decoration-red-400 dark:decoration-red-600"
+    : difficulty === 1
+      ? "underline decoration-2 decoration-green-400 dark:decoration-green-600"
+      : difficulty === 2
+        ? "underline decoration-2 decoration-yellow-400 dark:decoration-yellow-600"
+        : difficulty === 3
+          ? "underline decoration-2 decoration-orange-400 dark:decoration-orange-600"
+          : "underline decoration-2 decoration-gray-200 dark:decoration-gray-700";
+}
+
 export function dotColor(level: number, difficulty: number): string {
   return level <= difficulty
     ? difficulty === 1

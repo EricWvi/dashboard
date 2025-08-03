@@ -65,9 +65,12 @@ import {
   todayStart,
   dotColor,
   tomorrowStart,
+  underlineColor,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const TodoTitle = ({
   todo,
@@ -98,6 +101,36 @@ const TodoTitle = ({
   );
 };
 
+export const PlanTodoView = ({
+  todo,
+  disabled,
+  handleCheck,
+}: {
+  todo: Todo;
+  disabled: boolean;
+  handleCheck: (id: number, checked: boolean) => void;
+}) => {
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        id={String(todo.id)}
+        defaultChecked={disabled}
+        disabled={disabled}
+        onCheckedChange={(checked: boolean) => handleCheck(todo.id, checked)}
+      />
+      <div className="min-w-0 flex-1">
+        <Label htmlFor={String(todo.id)}>
+          <div
+            className={`line-clamp-1 text-base ${underlineColor(todo.difficulty)}`}
+          >
+            {todo.title}
+          </div>
+        </Label>
+      </div>
+    </div>
+  );
+};
+
 export const TodayTodoView = ({ id }: { id: number }) => {
   const [isComposing, setIsComposing] = useState(false);
   const { data: todo } = useTodo(id);
@@ -109,6 +142,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   const undoneTodoMutation = useUndoneTodo();
   const doneTodoMutation = useDoneTodo();
   const unsetLinkMutation = useUnsetLink();
+  const updateScheduleMutation = useUpdateSchedule();
   const renameTodo = async () => {
     await updateTodoMutation.mutateAsync({ id, title: editTodoName });
   };
@@ -117,6 +151,9 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   };
   const undoneTodo = async () => {
     await undoneTodoMutation.mutateAsync({ id });
+  };
+  const unsetScheduleDate = async () => {
+    await updateScheduleMutation.mutateAsync({ id, schedule: new Date(0) });
   };
 
   // link state
@@ -183,6 +220,12 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           <NotepadText />
           Draft
         </ContextMenuItem>
+        {!todo.done && (
+          <ContextMenuItem onClick={unsetScheduleDate}>
+            <X />
+            Unset Date
+          </ContextMenuItem>
+        )}
       </ContextMenuContent>
     );
 

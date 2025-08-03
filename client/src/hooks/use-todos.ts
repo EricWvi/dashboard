@@ -312,6 +312,32 @@ export function useDeleteTodo(collectionId: number, completed = false) {
   });
 }
 
+export async function listAllTodos() {
+  const response = await apiRequest(
+    "POST",
+    "/api/collection?Action=ListAll",
+    {},
+  );
+  const data = await response.json();
+  return data.message.todos as Todo[];
+}
+
+export function usePlanToday() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { ids: number[] }) => {
+      await apiRequest("POST", "/api/collection?Action=PlanToday", { ...data });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: keyTodayTodo() });
+      variables.ids.forEach((id) => {
+        queryClient.invalidateQueries({ queryKey: keyTodo(id) });
+      });
+    },
+  });
+}
+
 export type Collection = {
   id: number;
   name: string;

@@ -55,6 +55,17 @@ func (e *Todo) Get(db *gorm.DB, where map[string]any) error {
 	return nil
 }
 
+func ListPlanTodos(db *gorm.DB, where WhereExpr) ([]Todo, error) {
+	todos := make([]Todo, 0)
+	for i := range where {
+		db = db.Where(where[i])
+	}
+	if err := db.Find(&todos).Error; err != nil {
+		return nil, err
+	}
+	return todos, nil
+}
+
 func ListTodos(db *gorm.DB, where map[string]any) ([]Todo, error) {
 	todos := make([]Todo, 0)
 	if err := db.Where(where).
@@ -82,6 +93,10 @@ func ListCompleted(db *gorm.DB, where map[string]any) ([]Todo, error) {
 		return nil, err
 	}
 	return todos, nil
+}
+
+func BatchSchedule(db *gorm.DB, schedule NullTime, where map[string]any) error {
+	return db.Model(&Todo{}).Where(where).Update(Todo_Schedule, schedule).Error
 }
 
 func (e *Todo) Create(db *gorm.DB) error {

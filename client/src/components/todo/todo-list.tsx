@@ -28,11 +28,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  listAllTodos,
   useCollection,
   useCollections,
   useCompleted,
   useCreateTodo,
   useDeleteCollection,
+  usePlanToday,
   useToday,
   useTodos,
   useUpdateCollection,
@@ -41,9 +43,11 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CompletedTodoView,
+  PlanTodoView,
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
+import { isSetToday } from "@/lib/utils";
 
 const TodoList = ({
   collectionId,
@@ -360,6 +364,33 @@ export const TodayTodoList = () => {
   const [collectionMap, setCollectionMap] = useState<Record<string, string>>(
     {},
   );
+  // plan today dialog
+  const [allTodos, setAllTodos] = useState<Todo[]>([]);
+  const [planTodayDialogOpen, setPlanTodayDialogOpen] = useState(false);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const planTodayMutation = usePlanToday();
+
+  const planSelectedIds = async () => {
+    const selectedIds = Array.from(checkedIds);
+    if (selectedIds.length !== 0) {
+      await planTodayMutation.mutateAsync({
+        ids: selectedIds,
+      });
+    }
+    planTodayClose();
+  };
+
+  const planTodayOpen = async () => {
+    setPlanTodayDialogOpen(true);
+    setAllTodos(await listAllTodos());
+    setCheckedIds(new Set());
+  };
+
+  const planTodayClose = () => {
+    setPlanTodayDialogOpen(false);
+    setAllTodos([]);
+    setCheckedIds(new Set());
+  };
 
   useEffect(() => {
     if (collections) {
@@ -375,7 +406,17 @@ export const TodayTodoList = () => {
     <Card className="max-w-4xl gap-1">
       <CardHeader>
         <CardTitle>
-          <div className="text-xl">Today</div>
+          <div className="flex justify-between">
+            <div className="text-xl">Today</div>
+            <Button
+              variant={"ghost"}
+              size="icon"
+              className="h-8 w-8 transition-transform hover:rotate-90"
+              onClick={planTodayOpen}
+            >
+              <Plus className="size-5" />
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
 
@@ -427,6 +468,82 @@ export const TodayTodoList = () => {
             ))}
         </div>
       </CardContent>
+
+      {/* Plan Today Dialog */}
+      <Dialog
+        open={planTodayDialogOpen}
+        onOpenChange={(open: boolean) => {
+          if (open) {
+            planTodayOpen();
+          } else {
+            planTodayClose();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <div className="flex items-start justify-between">
+            <DialogHeader>
+              <DialogTitle>My Day</DialogTitle>
+              <DialogDescription>
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </DialogDescription>
+            </DialogHeader>
+            <Button className="px-6" onClick={planSelectedIds}>
+              Plan
+            </Button>
+          </div>
+          <div className="h-160 space-y-6 overflow-scroll">
+            {Object.entries(
+              allTodos
+                .sort((a, b) => b.count - a.count)
+                .reduce(
+                  (acc, item) => {
+                    (acc[item.collectionId] =
+                      acc[item.collectionId] || []).push(item);
+                    return acc;
+                  },
+                  {} as Record<number, Todo[]>,
+                ),
+            ).map(([key, items]) => (
+              <div key={key}>
+                {/* 3. Apply `rounded-sm` + `overflow-hidden`, the browser creates a clipping context 
+                          to ensure content stays within the rounded corners. This clipping can 
+                          trigger several rendering behaviors that affect how emojis are displayed.
+                          use `transform-gpu` (`transform: translateZ(0)`) to create a new layer */}
+                <div className="text-muted-foreground mb-1 transform-gpu text-base font-medium">
+                  {collectionMap[key]}
+                </div>
+                <div className="mb-3 space-y-3">
+                  {items.map((todo) => (
+                    <PlanTodoView
+                      key={todo.id}
+                      todo={todo}
+                      disabled={isSetToday(todo.schedule)}
+                      handleCheck={(id: number, checked: boolean) => {
+                        setCheckedIds((prev) => {
+                          const newSet = new Set(prev);
+                          if (checked) {
+                            newSet.add(id);
+                          } else {
+                            newSet.delete(id);
+                          }
+                          console.log("Checked IDs:", newSet);
+                          return newSet;
+                        });
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
