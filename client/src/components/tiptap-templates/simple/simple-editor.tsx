@@ -75,18 +75,20 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 import { useTTContext } from "@/components/editor";
 import { useDraft, syncDraft, removeDraftQuery } from "@/hooks/use-draft";
 import { useEffect, useRef, useState } from "react";
-import { Save } from "lucide-react";
+import { Eraser, Save } from "lucide-react";
 
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
   isMobile,
   onSave,
+  dropChange,
 }: {
   onHighlighterClick: () => void;
   onLinkClick: () => void;
   isMobile: boolean;
   onSave: () => void;
+  dropChange: () => void;
 }) => {
   return (
     <>
@@ -158,6 +160,9 @@ const MainToolbarContent = ({
       {isMobile && <ToolbarSeparator />}
 
       <ToolbarGroup>
+        <Button data-style="ghost" onClick={dropChange}>
+          <Eraser className="size-4" />
+        </Button>
         <ThemeToggle />
       </ToolbarGroup>
     </>
@@ -298,6 +303,14 @@ export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
     removeDraftQuery(id);
   };
 
+  const handleDrop = async () => {
+    if (draft) {
+      syncDraft({ id, content: draft.content });
+    }
+    setId(0);
+    setOpen(false);
+  };
+
   return (
     editor && (
       <div className="simple-editor-wrapper">
@@ -321,6 +334,7 @@ export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
                 onLinkClick={() => setMobileView("link")}
                 isMobile={isMobile}
                 onSave={handleSave}
+                dropChange={handleDrop}
               />
             ) : (
               <MobileToolbarContent
