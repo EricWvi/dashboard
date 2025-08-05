@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  invalidToday,
   listAllTodos,
   useCollection,
   useCollections,
@@ -48,6 +49,7 @@ import {
   TodoEntry,
 } from "@/components/todo/todo-entry";
 import { isDisabledPlan, isSetToday } from "@/lib/utils";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 
 const TodoList = ({
   collectionId,
@@ -360,6 +362,15 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
 export const TodayTodoList = () => {
   const isMobile = useIsMobile();
   const { data: today } = useToday();
+  const [todayDate, setTodayDate] = useState(new Date().toDateString());
+  console.log("TodayTodoList rendered at:", todayDate);
+  usePageVisibility(() => {
+    if (new Date().toDateString() !== todayDate) {
+      setTodayDate(new Date().toDateString());
+      invalidToday();
+    }
+  });
+
   const { data: collections } = useCollections();
   const [collectionMap, setCollectionMap] = useState<Record<string, string>>(
     {},

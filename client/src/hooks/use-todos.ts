@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export type Todo = {
   id: number;
@@ -67,6 +67,10 @@ export function useToday() {
       return data.message.todos as Todo[];
     },
   });
+}
+
+export function invalidToday() {
+  queryClient.invalidateQueries({ queryKey: keyTodayTodo() });
 }
 
 export function useCompleted(collectionId: number) {
