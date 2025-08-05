@@ -47,7 +47,7 @@ import {
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import { isSetToday } from "@/lib/utils";
+import { isDisabledPlan, isSetToday } from "@/lib/utils";
 
 const TodoList = ({
   collectionId,
@@ -500,6 +500,7 @@ export const TodayTodoList = () => {
           <div className="h-160 space-y-6 overflow-scroll">
             {Object.entries(
               allTodos
+                .filter((todo) => !isDisabledPlan(todo.schedule))
                 .sort((a, b) => b.count - a.count)
                 .reduce(
                   (acc, item) => {

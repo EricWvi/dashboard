@@ -54,11 +54,11 @@ export default defineConfig({
           },
         ],
       },
-      devOptions: {
-        enabled: true, // Enable PWA in development
-        type: "module",
-        navigateFallback: "index.html",
-      },
+      // devOptions: {
+      //   enabled: true, // Enable PWA in development
+      //   type: "module",
+      //   navigateFallback: "index.html",
+      // },
     }),
   ],
   resolve: {

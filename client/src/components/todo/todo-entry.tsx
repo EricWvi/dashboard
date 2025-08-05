@@ -18,6 +18,8 @@ import {
   Undo2,
   CornerLeftUp,
   SquareKanban,
+  CalendarOff,
+  CalendarPlus,
 } from "lucide-react";
 import {
   Dialog,
@@ -67,6 +69,8 @@ import {
   dotColor,
   tomorrowStart,
   underlineColor,
+  noPlanStart,
+  isDisabledPlan,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { useKanbanContext } from "@/components/kanban";
@@ -567,15 +571,32 @@ export const TodoEntry = ({
               )}
             </>
           ) : (
-            <ContextMenuItem
-              onClick={() => {
-                setScheduleDate(todo.schedule);
-                setEditDateDialogOpen(true);
-              }}
-            >
-              <CalendarIcon />
-              Set Date
-            </ContextMenuItem>
+            <>
+              <ContextMenuItem
+                onClick={() => {
+                  setScheduleDate(todo.schedule);
+                  setEditDateDialogOpen(true);
+                }}
+              >
+                <CalendarIcon />
+                Set Date
+              </ContextMenuItem>
+              {!isDisabledPlan(todo.schedule) ? (
+                <ContextMenuItem
+                  onClick={() => {
+                    updateScheduleDate(noPlanStart());
+                  }}
+                >
+                  <CalendarOff />
+                  No Plan
+                </ContextMenuItem>
+              ) : (
+                <ContextMenuItem onClick={unsetScheduleDate}>
+                  <CalendarPlus />
+                  Use Plan
+                </ContextMenuItem>
+              )}
+            </>
           ))}
         {collectionId !== 0 &&
           (isSetToday(todo.schedule) ? (
@@ -743,18 +764,22 @@ export const TodoEntry = ({
                       if (isSetToday(todo.schedule) && !todo.done) {
                         // remove Today
                         unsetScheduleDate();
-                      } else if (!isSetDate(todo.schedule)) {
+                      } else if (
+                        !isSetDate(todo.schedule) &&
+                        !isDisabledPlan(todo.schedule)
+                      ) {
                         // set Today
                         updateScheduleDate(todayStart());
                       }
                     }}
                     className={`pointer-events-none mr-1 text-xs transition-transform xl:pointer-events-auto ${
                       // hover effect only when not set date or set today and not done
-                      !isSetDate(todo.schedule) ||
-                      (isSetToday(todo.schedule) && !todo.done)
+                      !isDisabledPlan(todo.schedule) &&
+                      (!isSetDate(todo.schedule) ||
+                        (isSetToday(todo.schedule) && !todo.done))
                         ? "cursor-pointer hover:scale-110"
                         : ""
-                    } ${!isSetDate(todo.schedule) ? "hidden xl:inline" : "inline"} ${formatDate(todo.schedule, todo.done).color}`}
+                    } ${!isSetDate(todo.schedule) && !isDisabledPlan(todo.schedule) ? "hidden xl:inline" : "inline"} ${formatDate(todo.schedule, todo.done).color}`}
                   >
                     {formatDate(todo.schedule, todo.done).label}
                   </Badge>

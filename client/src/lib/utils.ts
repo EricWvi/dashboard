@@ -92,6 +92,8 @@ export const formatDate = (
       });
       return { label: t, color: "opacity-100" };
     }
+  } else if (isDisabledPlan(inDate)) {
+    return { label: "No Plan", color: "opacity-100" };
   }
   return today_default;
 };
@@ -101,12 +103,13 @@ export const isSetDate = (date: Date | string | null | undefined) => {
   const today = new Date();
   const inputDate = new Date(date);
   return (
-    inputDate.getFullYear() > today.getFullYear() ||
-    (inputDate.getFullYear() === today.getFullYear() &&
-      inputDate.getMonth() > today.getMonth()) ||
-    (inputDate.getFullYear() === today.getFullYear() &&
-      inputDate.getMonth() === today.getMonth() &&
-      inputDate.getDate() >= today.getDate())
+    !isDisabledPlan(inputDate) &&
+    (inputDate.getFullYear() > today.getFullYear() ||
+      (inputDate.getFullYear() === today.getFullYear() &&
+        inputDate.getMonth() > today.getMonth()) ||
+      (inputDate.getFullYear() === today.getFullYear() &&
+        inputDate.getMonth() === today.getMonth() &&
+        inputDate.getDate() >= today.getDate()))
   );
 };
 
@@ -121,6 +124,12 @@ export const isSetToday = (date: Date | string | null | undefined) => {
   );
 };
 
+export const isDisabledPlan = (date: Date | string | null | undefined) => {
+  if (!date) return false;
+  const inputDate = new Date(date);
+  return inputDate.getTime() === noPlanStart().getTime();
+};
+
 export const todayStart = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -132,4 +141,10 @@ export const tomorrowStart = () => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
   return tomorrow;
+};
+
+export const noPlanStart = () => {
+  // Tue Oct 02 2096 15:06:40 GMT+0800
+  const noPlan = new Date(4000000000000);
+  return noPlan;
 };
