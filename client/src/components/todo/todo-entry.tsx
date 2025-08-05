@@ -17,6 +17,7 @@ import {
   Archive,
   Undo2,
   CornerLeftUp,
+  SquareKanban,
 } from "lucide-react";
 import {
   Dialog,
@@ -68,7 +69,8 @@ import {
   underlineColor,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
-import { createTiptap } from "@/hooks/use-draft";
+import { useKanbanContext } from "@/components/kanban";
+import { createKanban, createTiptap } from "@/hooks/use-draft";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -527,6 +529,12 @@ export const TodoEntry = ({
   const updateTodoDraft = async (draftId: number) => {
     await updateTodoMutation.mutateAsync({ id, draft: draftId });
   };
+  // kanban state
+  const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
+    useKanbanContext();
+  const updateTodoKanban = async (kanbanId: number) => {
+    await updateTodoMutation.mutateAsync({ id, kanban: kanbanId });
+  };
   // confirm dialog state
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState("");
@@ -628,6 +636,22 @@ export const TodoEntry = ({
         >
           <NotepadText />
           Draft
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={async () => {
+            if (todo.kanban !== 0) {
+              setKanbanId(todo.kanban);
+              setKanbanDialogOpen(true);
+            } else {
+              // const kanbanId = await createKanban();
+              // setKanbanId(kanbanId);
+              setKanbanDialogOpen(true);
+              // updateTodoKanban(kanbanId);
+            }
+          }}
+        >
+          <SquareKanban />
+          Kanban
         </ContextMenuItem>
         <ContextMenuSeparator />
         {!top && (
@@ -855,7 +879,7 @@ export const TodoEntry = ({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <div className="flex gap-1">
                   <Button
                     variant="secondary"

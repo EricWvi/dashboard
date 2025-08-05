@@ -173,7 +173,7 @@ const TodoList = ({
 
             {/* Task list */}
             <div
-              className={`scroll-area flex min-h-0 flex-1 flex-col ${!isMobile ? "rounded-sm" : ""}`}
+              className={`flex min-h-0 flex-1 flex-col overflow-scroll ${!isMobile ? "rounded-sm" : ""}`}
             >
               {todos &&
                 (todos.length === 0 ? (
@@ -329,7 +329,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
       </CardHeader>
 
       <CardContent
-        className={`scroll-area flex min-h-0 flex-1 flex-col ${isMobile ? "px-0" : "rounded-sm"}`}
+        className={`flex min-h-0 flex-1 flex-col overflow-scroll ${isMobile ? "px-0" : "rounded-sm"}`}
       >
         {completed &&
           (completed.length > 0 ? (

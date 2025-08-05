@@ -6,11 +6,12 @@ import { CheckCircle2, Home } from "lucide-react";
 import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
+import Journey from "@/pages/Journey";
 
 export default function TabbedApp() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("journey");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
-    new Set(["dashboard"]),
+    new Set(["journey"]),
   );
   const { open } = useTTContext();
 
@@ -47,6 +48,12 @@ export default function TabbedApp() {
                   <TabsTrigger value="todo" className="flex items-center gap-2">
                     <span className="lg:inline">Todo</span>
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="journey"
+                    className="flex items-center gap-2"
+                  >
+                    <span className="lg:inline">Journey</span>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -81,7 +88,7 @@ export default function TabbedApp() {
       </div>
 
       {/* Tab Content - Lazy rendered but persistent */}
-      <div className="scroll-area h-full w-full pt-6 pb-20 md:pb-6">
+      <div className="h-full w-full pt-6 pb-20 md:pb-6">
         {/* Dashboard - lazy render but keep mounted */}
         <div className={`${activeTab === "dashboard" ? "block" : "hidden"}`}>
           {visitedTabs.has("dashboard") && <Dashboard />}
@@ -90,6 +97,11 @@ export default function TabbedApp() {
         {/* Todo - lazy render but keep mounted */}
         <div className={`${activeTab === "todo" ? "block" : "hidden"}`}>
           {visitedTabs.has("todo") && <Todo />}
+        </div>
+
+        {/* Journey - lazy render but keep mounted */}
+        <div className={`${activeTab === "journey" ? "block" : "hidden"}`}>
+          {visitedTabs.has("journey") && <Journey />}
         </div>
       </div>
     </div>

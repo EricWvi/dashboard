@@ -49,7 +49,58 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddDoneCountColumns,
 			Down:    RemoveDoneCountColumns,
 		},
+		{
+			Version: "v0.8.0",
+			Name:    "Add kanban column",
+			Up:      AddKanbanColumn,
+			Down:    RemoveKanbanColumn,
+		},
+		{
+			Version: "v0.9.0",
+			Name:    "Add watch table",
+			Up:      AddWatchTable,
+			Down:    RemoveWatchTable,
+		},
 	}
+}
+
+// -------------------- v0.9.0 -------------------
+func AddWatchTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_watch (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			w_type VARCHAR(64) NOT NULL,
+			title VARCHAR(1024) NOT NULL,
+			status VARCHAR(64) NOT NULL DEFAULT 'To Watch',
+			year INTEGER DEFAULT 2099,
+			rate INTEGER DEFAULT 0,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+		);
+	`).Error
+}
+
+func RemoveWatchTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_watch CASCADE;
+	`).Error
+}
+
+// --------------------- v0.8.0 -------------------
+func AddKanbanColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		ADD COLUMN kanban INTEGER DEFAULT 0 NOT NULL;
+	`).Error
+}
+
+func RemoveKanbanColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_todo
+		DROP COLUMN IF EXISTS kanban;
+	`).Error
 }
 
 // ------------------- v0.7.0 -------------------

@@ -21,6 +21,7 @@ type TodoField struct {
 	Order        int      `gorm:"column:d_order;default:1;not null" json:"order"`
 	Link         string   `gorm:"size:1024" json:"link"`
 	Draft        int      `gorm:"default:0;not null" json:"draft"`
+	Kanban       int      `gorm:"default:0;not null" json:"kanban"`
 	Schedule     NullTime `gorm:"default:NULL;<-:update" json:"schedule"`
 	Done         bool     `gorm:"default:false;not null" json:"done"`
 	Count        int      `gorm:"column:d_count;default:0;not null" json:"count"`
@@ -93,10 +94,6 @@ func ListCompleted(db *gorm.DB, where map[string]any) ([]Todo, error) {
 		return nil, err
 	}
 	return todos, nil
-}
-
-func BatchSchedule(db *gorm.DB, schedule NullTime, where map[string]any) error {
-	return db.Model(&Todo{}).Where(where).Update(Todo_Schedule, schedule).Error
 }
 
 func (e *Todo) Create(db *gorm.DB) error {

@@ -133,11 +133,3 @@ export const tomorrowStart = () => {
   tomorrow.setHours(0, 0, 0, 0);
   return tomorrow;
 };
-
-export function msUntilMidnight() {
-  const now = new Date();
-  // Next midnight
-  const midnight = new Date(now);
-  midnight.setHours(24, 0, 0, 0); // sets to next midnight
-  return midnight.getTime() - now.getTime();
-}
