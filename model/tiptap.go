@@ -31,7 +31,7 @@ func (t *Tiptap) Get(db *gorm.DB, where map[string]any) error {
 		return rst.Error
 	}
 	if rst.RowsAffected == 0 {
-		return fmt.Errorf("can not find todo with id %d", t.ID)
+		return fmt.Errorf("can not find tiptap with id %d", t.ID)
 	}
 	return nil
 }
