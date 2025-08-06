@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { TTProvider, SimpleEditorWrapper } from "@/components/editor";
 import { KanbanProvider, KanbanWrapper } from "@/components/kanban";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <TabbedApp />
           <SimpleEditorWrapper />
           <KanbanWrapper />
+          <Toaster position="top-center" />
         </KanbanProvider>
       </TTProvider>
     </QueryClientProvider>

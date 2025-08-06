@@ -12,6 +12,18 @@ export function formatMediaUrl(url: string): string {
   return `/api/m/${url}`;
 }
 
+export function dateString(date: Date | string | null | undefined): string {
+  if (!date) return "";
+  const d = new Date(date);
+  const formatted =
+    d.getFullYear() +
+    "/" +
+    String(d.getMonth() + 1).padStart(2, "0") +
+    "/" +
+    String(d.getDate()).padStart(2, "0");
+  return formatted;
+}
+
 export function stripeColor(difficulty: number): string {
   return difficulty === 4
     ? "bg-red-400 dark:bg-red-600"

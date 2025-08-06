@@ -54,7 +54,7 @@ export function DataTable<TData, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: 25,
+        pageSize: 10,
       },
     },
     enableRowSelection: true,
@@ -80,7 +80,15 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{
+                        ...(header.column.columnDef.size
+                          ? { width: header.column.columnDef.size }
+                          : {}),
+                      }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(

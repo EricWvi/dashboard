@@ -1,4 +1,5 @@
 import { QueryClient, type QueryFunction } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -19,7 +20,11 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  await throwIfResNotOk(res);
+  if (!res.ok) {
+    toast("API Request failed", {
+      description: method + " " + url + " failed with status " + res.status,
+    });
+  }
   return res;
 }
 

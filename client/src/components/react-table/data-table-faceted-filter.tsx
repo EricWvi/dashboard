@@ -25,7 +25,6 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
   options: {
-    label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
@@ -71,7 +70,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >
-                        {option.label}
+                        {option.value}
                       </Badge>
                     ))
                 )}
@@ -86,6 +85,9 @@ export function DataTableFacetedFilter<TData, TValue>({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
+              {/* .filter(
+                  (option) => facets && (facets.get(option.value) ?? 0 > 0),
+                ) */}
               {options.map((option) => {
                 const isSelected = selectedValues.has(option.value);
                 return (
@@ -116,7 +118,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     {option.icon && (
                       <option.icon className="text-muted-foreground size-4" />
                     )}
-                    <span>{option.label}</span>
+                    <span>{option.value}</span>
                     {facets?.get(option.value) && (
                       <span className="text-muted-foreground ml-auto flex size-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}

@@ -13,7 +13,7 @@ func (b Base) CreateWatch(c *gin.Context, req *CreateWatchRequest) *CreateWatchR
 	watch.CreatorId = middleware.GetUserId(c)
 	watch.WatchField = req.WatchField
 
-	if err := watch.Create(config.DB); err != nil {
+	if err := watch.Create(config.DB, req.CreatedAt); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
@@ -24,6 +24,7 @@ func (b Base) CreateWatch(c *gin.Context, req *CreateWatchRequest) *CreateWatchR
 }
 
 type CreateWatchRequest struct {
+	CreatedAt model.NullTime `json:"createdAt"`
 	model.WatchField
 }
 

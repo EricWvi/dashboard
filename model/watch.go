@@ -21,7 +21,29 @@ type WatchField struct {
 }
 
 const (
-	Watch_Table = "d_watch"
+	Watch_Table  = "d_watch"
+	Watch_Type   = "w_type"
+	Watch_Status = "status"
+)
+
+type WatchType string
+
+const (
+	WatchTypeMovie       = "Movie"
+	WatchTypeSeries      = "Series"
+	WatchTypeDocumentary = "Documentary"
+	WatchTypeBook        = "Book"
+	WatchTypeGame        = "Game"
+	WatchTypeManga       = "Manga"
+)
+
+type WatchStatus string
+
+const (
+	WatchStatusWatching    = "Watching"
+	WatchStatusCompleted   = "Completed"
+	WatchStatusDropped     = "Dropped"
+	WatchStatusPlanToWatch = "Plan to Watch"
 )
 
 func (w *Watch) TableName() string {
@@ -39,7 +61,20 @@ func (w *Watch) Get(db *gorm.DB, where map[string]any) error {
 	return nil
 }
 
-func (w *Watch) Create(db *gorm.DB) error {
+func ListWatches(db *gorm.DB, where map[string]any) ([]Watch, error) {
+	watches := make([]Watch, 0)
+	if err := db.Where(where).
+		Order("created_at DESC").
+		Find(&watches).Error; err != nil {
+		return nil, err
+	}
+	return watches, nil
+}
+
+func (w *Watch) Create(db *gorm.DB, createdAt NullTime) error {
+	if createdAt.Valid {
+		w.CreatedAt = createdAt.Time
+	}
 	return db.Create(w).Error
 }
 

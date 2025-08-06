@@ -1,0 +1,122 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+export type Watch = {
+  id: number;
+  title: string;
+  type: WatchType;
+  status: WatchStatus;
+  year: number;
+  rate: number;
+  createdAt: Date;
+};
+
+export type WatchType =
+  | "Movie"
+  | "Series"
+  | "Documentary"
+  | "Book"
+  | "Game"
+  | "Manga";
+export const WatchType: {
+  MOVIE: WatchType;
+  SERIES: WatchType;
+  DOCUMENTARY: WatchType;
+  BOOK: WatchType;
+  GAME: WatchType;
+  MANGA: WatchType;
+} = {
+  MOVIE: "Movie",
+  SERIES: "Series",
+  DOCUMENTARY: "Documentary",
+  BOOK: "Book",
+  GAME: "Game",
+  MANGA: "Manga",
+};
+
+export type WatchStatus =
+  | "Watching"
+  | "Completed"
+  | "Dropped"
+  | "Plan to Watch";
+export const WatchStatus: {
+  WATCHING: WatchStatus;
+  COMPLETED: WatchStatus;
+  DROPPED: WatchStatus;
+  PLAN_TO_WATCH: WatchStatus;
+} = {
+  WATCHING: "Watching",
+  COMPLETED: "Completed",
+  DROPPED: "Dropped",
+  PLAN_TO_WATCH: "Plan to Watch",
+};
+
+export const Rating = {
+  Five: "Five Stars",
+  Four: "Four Stars",
+  Three: "Three Stars",
+  Two: "Two Stars",
+  One: "One Star",
+  Zero: "Zero Star",
+};
+
+const keyWatch = (id: number) => ["/api/watch", id];
+const keyWatchesOfStatus = (status: WatchStatus) => ["/api/watches", status];
+
+export function useWatches(status: WatchStatus) {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: keyWatchesOfStatus(status),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=ListWatches",
+        {
+          status,
+        },
+      );
+      const data = await response.json();
+      (data.message.watches as Watch[]).forEach((watch) => {
+        queryClient.setQueryData(keyWatch(watch.id), watch);
+      });
+      return data.message.watches as Watch[];
+    },
+  });
+}
+
+export function useWatch(id: number) {
+  return useQuery<Watch>({
+    queryKey: keyWatch(id),
+    enabled: !!id,
+    queryFn: async () => {
+      const response = await apiRequest("POST", "/api/watch?Action=GetWatch", {
+        id,
+      });
+      const data = await response.json();
+      return data.message as Watch;
+    },
+  });
+}
+
+export function useCreateWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Omit<Watch, "id">) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=CreateWatch",
+        {
+          ...data,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(variables.status),
+      });
+    },
+  });
+}

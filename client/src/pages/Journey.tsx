@@ -1,9 +1,9 @@
-import { columns } from "@/components/react-table/columns";
+import { columns } from "@/components/react-table/watched-columns";
 import { DataTable } from "@/components/react-table/data-table";
-import { tasksData } from "@/components/data/tasks";
+import { useWatches, WatchStatus } from "@/hooks/use-watches";
 
 export default function Journey() {
-  const tasks = tasksData;
+  const { data: watches } = useWatches(WatchStatus.COMPLETED);
 
   return (
     <div className="flex flex-col gap-8 p-8">
@@ -14,7 +14,7 @@ export default function Journey() {
           </h2>
         </div>
       </div>
-      <DataTable data={tasks} columns={columns} />
+      <DataTable data={watches ?? []} columns={columns} />
     </div>
   );
 }
