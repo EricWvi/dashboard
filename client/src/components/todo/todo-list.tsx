@@ -363,7 +363,6 @@ export const TodayTodoList = () => {
   const isMobile = useIsMobile();
   const { data: today } = useToday();
   const [todayDate, setTodayDate] = useState(new Date().toDateString());
-  console.log("TodayTodoList rendered at:", todayDate);
   usePageVisibility(() => {
     if (new Date().toDateString() !== todayDate) {
       setTodayDate(new Date().toDateString());
@@ -508,7 +507,7 @@ export const TodayTodoList = () => {
               Plan
             </Button>
           </div>
-          <div className="h-160 space-y-6 overflow-scroll">
+          <div className="h-140 space-y-6 overflow-scroll sm:h-180">
             {Object.entries(
               allTodos
                 .filter((todo) => !isDisabledPlan(todo.schedule))
