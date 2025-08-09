@@ -96,7 +96,7 @@ export default function TabbedApp() {
       </div>
 
       {/* Tab Content - Lazy rendered but persistent */}
-      <div className="h-full w-full pt-6 pb-20 md:pb-6">
+      <div className="h-full w-full pt-6 pb-16 md:pb-6">
         {/* Dashboard - lazy render but keep mounted */}
         <div className={`${activeTab === "dashboard" ? "block" : "hidden"}`}>
           {visitedTabs.has("dashboard") && <Dashboard />}

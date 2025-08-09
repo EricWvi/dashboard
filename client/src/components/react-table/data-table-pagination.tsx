@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -22,8 +23,12 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="flex items-center justify-end px-2">
+    <div
+      className={`items-center justify-end px-2 ${isMobile ? "fixed right-2 bottom-20" : "flex"}`}
+    >
       {/* <div className="text-muted-foreground flex-1 text-sm">
         {table.getFilteredSelectedRowModel().rows.length} of{" "}
         {table.getFilteredRowModel().rows.length} row(s) selected.
