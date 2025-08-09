@@ -1,4 +1,5 @@
-import KanbanRender from "@/components/ui/kanban-render";
+import KanbanRender from "@/components/kanban-render";
+import { useKanban } from "@/hooks/use-kanban";
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 type KanbanContext = {
@@ -29,12 +30,14 @@ export const useKanbanContext = () => {
 };
 
 export const KanbanWrapper = () => {
-  const { open } = useKanbanContext();
+  const { open, id } = useKanbanContext();
+  const { data: kanban } = useKanban(id);
   return (
-    open && (
+    open &&
+    kanban && (
       <div className="bg-background fixed inset-0 z-50">
         <div className="h-full w-full">
-          <KanbanRender />
+          <KanbanRender data={kanban} />
         </div>
       </div>
     )

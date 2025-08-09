@@ -94,7 +94,7 @@ const TodoList = ({
 
   return (
     <div className={`mx-auto flex h-full w-full flex-col gap-6 xl:flex-row`}>
-      <div className="min-h-0 flex-1/1">
+      <div className="min-h-0 min-w-0 flex-1/1">
         <Card
           className={`h-full max-w-4xl gap-4 ${isMobile ? "border-none bg-transparent pt-6 pb-0 shadow-none" : ""}`}
         >
@@ -293,7 +293,7 @@ const TodoList = ({
       </div>
 
       {!isMobile && completedTodoOpen && (
-        <div className="min-h-0 flex-1/2">
+        <div className="min-h-0 min-w-0 flex-1/2">
           <CompletedList collectionId={collectionId} />
         </div>
       )}
@@ -363,7 +363,6 @@ export const TodayTodoList = () => {
   const isMobile = useIsMobile();
   const { data: today } = useToday();
   const [todayDate, setTodayDate] = useState(new Date().toDateString());
-  console.log("TodayTodoList rendered at:", todayDate);
   usePageVisibility(() => {
     if (new Date().toDateString() !== todayDate) {
       setTodayDate(new Date().toDateString());
@@ -508,7 +507,7 @@ export const TodayTodoList = () => {
               Plan
             </Button>
           </div>
-          <div className="h-160 space-y-6 overflow-scroll">
+          <div className="h-140 space-y-6 overflow-scroll sm:h-180">
             {Object.entries(
               allTodos
                 .filter((todo) => !isDisabledPlan(todo.schedule))
@@ -544,7 +543,6 @@ export const TodayTodoList = () => {
                           } else {
                             newSet.delete(id);
                           }
-                          console.log("Checked IDs:", newSet);
                           return newSet;
                         });
                       }}

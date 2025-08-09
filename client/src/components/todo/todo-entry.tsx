@@ -74,9 +74,10 @@ import {
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { useKanbanContext } from "@/components/kanban";
-import { createKanban, createTiptap } from "@/hooks/use-draft";
+import { createTiptap } from "@/hooks/use-draft";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { createKanban } from "@/hooks/use-kanban";
 
 const TodoTitle = ({
   todo,
@@ -85,15 +86,13 @@ const TodoTitle = ({
 }: { todo: Todo; todayView?: boolean } & { children?: React.ReactNode }) => {
   return (
     <div
-      className={`min-w-0 flex-1 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
+      className={`line-clamp-1 min-w-0 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
     >
       {todo.link === "" ? (
-        <div className="line-clamp-1" title={todo.title}>
-          {todo.title}
-        </div>
+        <div title={todo.title}>{todo.title}</div>
       ) : (
         <a
-          className="line-clamp-1 font-semibold underline decoration-dashed"
+          className="font-semibold underline decoration-dashed"
           title={todo.title}
           href={todo.link}
           target="_blank"
@@ -172,6 +171,12 @@ export const TodayTodoView = ({ id }: { id: number }) => {
       await updateTodoMutation.mutateAsync({ id, link });
     }
   };
+  // kanban state
+  const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
+    useKanbanContext();
+  const updateTodoKanban = async (kanbanId: number) => {
+    await updateTodoMutation.mutateAsync({ id, kanban: kanbanId });
+  };
   // editor state
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const updateTodoDraft = async (draftId: number) => {
@@ -226,6 +231,22 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           <NotepadText />
           Draft
         </ContextMenuItem>
+        <ContextMenuItem
+          onClick={async () => {
+            if (todo.kanban !== 0) {
+              setKanbanId(todo.kanban);
+              setKanbanDialogOpen(true);
+            } else {
+              const kanbanId = await createKanban();
+              setKanbanId(kanbanId);
+              setKanbanDialogOpen(true);
+              updateTodoKanban(kanbanId);
+            }
+          }}
+        >
+          <SquareKanban />
+          Kanban
+        </ContextMenuItem>
         {!todo.done && (
           <ContextMenuItem onClick={unsetScheduleDate}>
             <X />
@@ -247,9 +268,21 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           />
           <ContextMenu>
             <ContextMenuTrigger>
-              <CardContent className="group flex items-center gap-3 pr-2 pl-4 lg:pl-6">
+              <CardContent className="group flex items-center justify-between pr-2 pl-4 lg:pl-6">
                 <TodoTitle todo={todo} todayView />
                 <span className="flex items-center gap-1">
+                  {todo.kanban !== 0 && (
+                    <Button
+                      variant="ghost"
+                      className="size-4 xl:size-6"
+                      onClick={() => {
+                        setKanbanId(todo.kanban);
+                        setKanbanDialogOpen(true);
+                      }}
+                    >
+                      <SquareKanban className="text-muted-foreground" />
+                    </Button>
+                  )}
                   {todo.draft !== 0 && (
                     <Button
                       variant="ghost"
@@ -381,6 +414,9 @@ export const CompletedTodoView = ({
   const restoreTodo = async () => {
     await restoreTodoMutation.mutateAsync({ id, collectionId });
   };
+  // kanban state
+  const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
+    useKanbanContext();
   // editor state
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
 
@@ -393,7 +429,7 @@ export const CompletedTodoView = ({
         />
         <ContextMenu>
           <ContextMenuTrigger>
-            <CardContent className="group flex items-center gap-3 pr-2 pl-4 lg:pl-6">
+            <CardContent className="group flex items-center justify-between pr-2 pl-4 lg:pl-6">
               <TodoTitle todo={todo} />
 
               <span className="flex items-center gap-1">
@@ -411,6 +447,18 @@ export const CompletedTodoView = ({
                     hour12: false,
                   })}
                 </Badge>
+                {todo.kanban !== 0 && (
+                  <Button
+                    variant="ghost"
+                    className="mx-1 size-4 xl:mx-0 xl:size-8"
+                    onClick={() => {
+                      setKanbanId(todo.kanban);
+                      setKanbanDialogOpen(true);
+                    }}
+                  >
+                    <SquareKanban className="text-muted-foreground" />
+                  </Button>
+                )}
                 {todo.draft !== 0 && (
                   <Button
                     variant="ghost"
@@ -664,10 +712,10 @@ export const TodoEntry = ({
               setKanbanId(todo.kanban);
               setKanbanDialogOpen(true);
             } else {
-              // const kanbanId = await createKanban();
-              // setKanbanId(kanbanId);
+              const kanbanId = await createKanban();
+              setKanbanId(kanbanId);
               setKanbanDialogOpen(true);
-              // updateTodoKanban(kanbanId);
+              updateTodoKanban(kanbanId);
             }
           }}
         >
@@ -721,7 +769,7 @@ export const TodoEntry = ({
         />
         <ContextMenu>
           <ContextMenuTrigger>
-            <CardContent className="group flex items-center gap-3 pr-2 pl-4 lg:pl-6">
+            <CardContent className="group flex items-center justify-between pr-2 pl-4 lg:pl-6">
               <TodoTitle todo={todo}>
                 {/* Difficulty dots indicator */}
                 <div className="mt-1 hidden items-center gap-1 xl:flex">
@@ -783,6 +831,18 @@ export const TodoEntry = ({
                   >
                     {formatDate(todo.schedule, todo.done).label}
                   </Badge>
+                )}
+                {todo.kanban !== 0 && (
+                  <Button
+                    variant="ghost"
+                    className="mx-1 size-4 xl:mx-0 xl:size-8"
+                    onClick={() => {
+                      setKanbanId(todo.kanban);
+                      setKanbanDialogOpen(true);
+                    }}
+                  >
+                    <SquareKanban className="text-muted-foreground" />
+                  </Button>
                 )}
                 {todo.draft !== 0 && (
                   <Button
@@ -990,8 +1050,8 @@ export const TodoEntry = ({
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Confirm Action</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to [{confirmAction}] {todo.title}?
+              <DialogDescription className="wrap-anywhere">
+                {`Are you sure you want to {${confirmAction}} [${todo.title}]`}
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2">

@@ -41,13 +41,13 @@ export default function Journey() {
       <div className={`${isMobile ? "px-6" : ""}`}>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className={`${isMobile ? "w-full" : ""}`}>
-            <TabsTrigger value="watching" className="flex items-center gap-2">
+            <TabsTrigger value="watching" className="px-4">
               Watching
             </TabsTrigger>
-            <TabsTrigger value="towatch" className="flex items-center gap-2">
+            <TabsTrigger value="towatch" className="px-4">
               To Watch
             </TabsTrigger>
-            <TabsTrigger value="watched" className="flex items-center gap-2">
+            <TabsTrigger value="watched" className="px-4">
               Watched
             </TabsTrigger>
           </TabsList>

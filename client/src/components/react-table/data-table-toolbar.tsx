@@ -100,7 +100,7 @@ export function DataTableToolbar<TData>({
                 table.getColumn("title")?.setFilterValue(searchTerm);
               }
             }}
-            className="h-8 w-[150px] lg:w-[250px]"
+            className="h-8 w-[283px]"
           />
         )}
 

@@ -39,16 +39,6 @@ export async function createTiptap() {
   return rst.message.id;
 }
 
-export async function createKanban() {
-  const response = await apiRequest(
-    "POST",
-    "/api/tiptap?Action=CreateKanban",
-    {},
-  );
-  const rst = await response.json();
-  return rst.message.id;
-}
-
 export async function syncDraft(data: Draft) {
   await apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
 }
