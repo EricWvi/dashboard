@@ -4,6 +4,7 @@ import {
   type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFacetedMinMaxValues,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -25,6 +26,7 @@ import {
 
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -35,6 +37,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const isMobile = useIsMobile();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -67,14 +70,20 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
+    getFacetedMinMaxValues: getFacetedMinMaxValues(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   return (
     <div className="flex flex-col gap-4">
-      <DataTableToolbar table={table} />
-      <div className="overflow-hidden rounded-md border">
-        <Table>
+      <div className={`${isMobile ? "px-6" : ""}`}>
+        <DataTableToolbar table={table} />
+      </div>
+
+      <div
+        className={`overflow-hidden rounded-md ${!isMobile ? "border" : ""}`}
+      >
+        <Table className={`${isMobile ? "mx-6" : ""}`}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

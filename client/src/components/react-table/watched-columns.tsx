@@ -4,7 +4,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 
 import { Rating, WatchType, type Watch } from "@/hooks/use-watches";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import { DataTableRowActions } from "./data-table-row-actions";
+import { WatchTableRowActions } from "./watch-table-row-actions";
 
 import {
   Brush,
@@ -150,6 +150,7 @@ export const columns: ColumnDef<Watch>[] = [
   },
   {
     accessorKey: "createdAt",
+    accessorFn: (row) => String(new Date(row.createdAt).getFullYear()),
     size: 300,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Mark" />
@@ -157,9 +158,12 @@ export const columns: ColumnDef<Watch>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex w-[100px] items-center gap-2">
-          <span>{dateString(row.getValue("createdAt"))}</span>
+          <span>{dateString(row.original.createdAt)}</span>
         </div>
       );
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
     },
     enableSorting: false,
     enableHiding: false,
@@ -167,6 +171,6 @@ export const columns: ColumnDef<Watch>[] = [
   {
     id: "actions",
     size: 20,
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <WatchTableRowActions row={row} />,
   },
 ];

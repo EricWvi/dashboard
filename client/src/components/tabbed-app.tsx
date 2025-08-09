@@ -83,6 +83,14 @@ export default function TabbedApp() {
                 className={`${activeTab === "todo" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
               />
             </TabsTrigger>
+            <TabsTrigger
+              value="journey"
+              className="flex h-full flex-col items-center gap-1"
+            >
+              <CheckCircle2
+                className={`${activeTab === "journey" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
+              />
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

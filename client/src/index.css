@@ -125,16 +125,6 @@
 }
 
 @layer base {
-  @media (width < 80rem) {
-    ::-webkit-scrollbar {
-      display: none;
-    }
-    * {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  }
-
   ::-webkit-scrollbar {
     width: 0.25rem;
   }
@@ -157,5 +147,15 @@
       "Helvetica Neue",
       Arial,
       sans-serif;
+  }
+
+  @media (width < 80rem) {
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   }
 }

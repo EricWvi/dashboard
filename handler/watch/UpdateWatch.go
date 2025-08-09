@@ -1,6 +1,8 @@
 package watch
 
 import (
+	"time"
+
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/middleware"
@@ -12,6 +14,7 @@ func (b Base) UpdateWatch(c *gin.Context, req *UpdateWatchRequest) *UpdateWatchR
 	watch := &model.Watch{
 		WatchField: req.WatchField,
 	}
+	watch.CreatedAt = req.CreatedAt
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
@@ -25,7 +28,8 @@ func (b Base) UpdateWatch(c *gin.Context, req *UpdateWatchRequest) *UpdateWatchR
 }
 
 type UpdateWatchRequest struct {
-	Id uint `json:"id"`
+	Id        uint      `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
 	model.WatchField
 }
 

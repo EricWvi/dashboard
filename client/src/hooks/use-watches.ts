@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 export type Watch = {
   id: number;
@@ -107,6 +107,50 @@ export function useCreateWatch() {
       const response = await apiRequest(
         "POST",
         "/api/watch?Action=CreateWatch",
+        {
+          ...data,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(variables.status),
+      });
+    },
+  });
+}
+
+export function useDeleteWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; status: WatchStatus }) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=DeleteWatch",
+        {
+          id: data.id,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(variables.status),
+      });
+    },
+  });
+}
+
+export function useUpdateWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Watch) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=UpdateWatch",
         {
           ...data,
         },

@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -35,16 +36,21 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
+  const isMobile = useIsMobile();
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button
+          variant={`${isMobile && selectedValues?.size > 0 ? "default" : "outline"}`}
+          size="sm"
+          className={`h-8 border-dashed ${isMobile && selectedValues?.size > 0 ? "border border-transparent" : ""}`}
+        >
           <PlusCircle />
           {title}
-          {selectedValues?.size > 0 && (
+          {selectedValues?.size > 0 && !isMobile && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge

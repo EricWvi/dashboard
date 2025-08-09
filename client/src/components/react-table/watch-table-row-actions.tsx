@@ -1,13 +1,16 @@
-import { type Table } from "@tanstack/react-table";
-import { CalendarIcon, Clapperboard, Plus, X } from "lucide-react";
+"use client";
 
+import { type Row } from "@tanstack/react-table";
+import { CalendarIcon, MoreHorizontal } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -21,153 +24,132 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { types, ratings } from "@/components/react-table/watched-columns";
-import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { types } from "@/components/react-table/watched-columns";
+import {
+  useDeleteWatch,
+  useUpdateWatch,
+  WatchStatus,
+  WatchType,
+  type Watch,
+} from "@/hooks/use-watches";
 import { useState } from "react";
-import { useCreateWatch, WatchStatus, WatchType } from "@/hooks/use-watches";
-import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { dateString, todayStart } from "@/lib/utils";
 
-interface DataTableToolbarProps<TData> {
-  table: Table<TData>;
+interface DataTableRowActionsProps<TData> {
+  row: Row<TData>;
 }
 
-export function DataTableToolbar<TData>({
-  table,
-}: DataTableToolbarProps<TData>) {
+export function WatchTableRowActions<TData>({
+  row,
+}: DataTableRowActionsProps<TData>) {
   const isMobile = useIsMobile();
-  const [isComposing, setIsComposing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const isFiltered = table.getState().columnFilters.length > 0;
-  const createEntryMutation = useCreateWatch();
-  const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false);
-  const [datepickerOpen, setDatepickerOpen] = useState(false);
+  const watch = row.original as Watch;
   const [entryName, setEntryName] = useState("");
-  const [entryType, setEntryType] = useState<WatchType>(WatchType.MOVIE);
+  const [entryType, setEntryType] = useState<WatchType | undefined>(undefined);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryRate, setEntryRate] = useState<number>(8);
   const [entryMarkInput, setEntryMarkInput] = useState("");
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
-
-  const handleAddEntryDialogOpen = () => {
-    setEntryName("");
-    setEntryType(WatchType.MOVIE);
-    setEntryYear(undefined);
-    setEntryRate(8);
-    setEntryMarkInput("");
-    setEntryMark(undefined);
-    setDatepickerOpen(false);
-    setAddEntryDialogOpen(true);
+  const [datepickerOpen, setDatepickerOpen] = useState(false);
+  const updateWatchMutation = useUpdateWatch();
+  const updateWatch = (watch: Watch) => {
+    updateWatchMutation.mutate(watch);
   };
 
-  const createEntry = async (
-    title: string,
-    type: WatchType,
-    status: WatchStatus,
-    year: number,
-    rate: number,
-    createdAt: Date,
-  ) => {
-    await createEntryMutation.mutateAsync({
-      title,
-      type,
-      status,
-      year,
-      rate: rate * 2, // Assuming rate is a value between 0 and 10, we double it for the API
-      createdAt,
-    });
+  const deleteWatchMutation = useDeleteWatch();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const deleteWatch = () => {
+    deleteWatchMutation.mutate({ id: watch.id, status: watch.status });
+  };
+
+  const [editEntryDialogOpen, setEditEntryDialogOpen] = useState(false);
+  const handleEditEntryDialogOpen = (open: boolean) => {
+    if (open) {
+      setEntryName(watch.title);
+      setEntryType(watch.type);
+      setEntryYear(watch.year);
+      setEntryRate(watch.rate / 2);
+      setEntryMarkInput(dateString(watch.createdAt));
+      setEntryMark(watch.createdAt);
+    }
+    setEditEntryDialogOpen(open);
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-wrap items-center gap-2">
-        {!isMobile && (
-          <Input
-            placeholder="Filter watches..."
-            value={searchTerm}
-            onCompositionStart={() => setIsComposing(true)}
-            onCompositionEnd={() => setIsComposing(false)}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !isComposing) {
-                table.getColumn("title")?.setFilterValue(searchTerm);
-              }
-            }}
-            className="h-8 w-[150px] lg:w-[250px]"
-          />
-        )}
-
-        {table.getColumn("type") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("type")}
-            title="Type"
-            options={types}
-          />
-        )}
-        {table.getColumn("rate") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("rate")}
-            title="Rate"
-            options={ratings}
-          />
-        )}
-        {table.getColumn("createdAt") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("createdAt")}
-            title="Year"
-            options={(() => {
-              const column = table.getColumn("createdAt");
-              const minMaxValues = column?.getFacetedMinMaxValues();
-              const minValue = minMaxValues?.[0];
-              return minValue
-                ? Array.from(
-                    { length: new Date().getFullYear() - minValue + 1 },
-                    (_, i) => ({ value: String(new Date().getFullYear() - i) }),
-                  )
-                : [];
-            })()}
-          />
-        )}
-        {isFiltered && (
-          <Button
-            variant={`${isMobile ? "secondary" : "ghost"}`}
-            size="sm"
-            onClick={() => {
-              setSearchTerm("");
-              table.resetColumnFilters();
-            }}
-          >
-            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
-            <X />
-          </Button>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-        {/* <DataTableViewOptions table={table} /> */}
-        <Button size="sm" className="px-4" onClick={handleAddEntryDialogOpen}>
-          {!isMobile ? (
-            <>
-              <Clapperboard />
-              Add
-            </>
-          ) : (
-            <Plus />
-          )}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="data-[state=open]:bg-muted size-8"
+        >
+          <MoreHorizontal />
         </Button>
-      </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem>Watch Again</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => setConfirmDialogOpen(true)}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
 
-      {/* add watch entry dialog */}
-      <Dialog open={addEntryDialogOpen} onOpenChange={setAddEntryDialogOpen}>
+      {/* confirm Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Watched Entry</DialogTitle>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete [{watch.title}]?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteWatch();
+                setConfirmDialogOpen(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* edit watch entry dialog */}
+      <Dialog
+        open={editEntryDialogOpen}
+        onOpenChange={handleEditEntryDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Watched Entry</DialogTitle>
             <DialogDescription>
               Stay up to date with the entries that matter most to you.
             </DialogDescription>
@@ -179,7 +161,7 @@ export function DataTableToolbar<TData>({
                 <Input
                   placeholder={!isMobile ? "Enter entry name..." : ""}
                   value={entryName}
-                  disabled={createEntryMutation.isPending}
+                  disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
@@ -191,7 +173,7 @@ export function DataTableToolbar<TData>({
                   min={1900}
                   max={2099}
                   value={entryYear}
-                  disabled={createEntryMutation.isPending}
+                  disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryYear(Number(e.target.value))}
                 />
               </div>
@@ -201,6 +183,7 @@ export function DataTableToolbar<TData>({
               <div className="flex flex-col gap-2">
                 <Label>Type</Label>
                 <Select
+                  value={entryType}
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
                 >
                   <SelectTrigger className="w-full">
@@ -226,7 +209,7 @@ export function DataTableToolbar<TData>({
                   <Input
                     placeholder={!isMobile ? "Enter completed date..." : ""}
                     value={entryMarkInput}
-                    disabled={createEntryMutation.isPending}
+                    disabled={updateWatchMutation.isPending}
                     onChange={(e) => {
                       setEntryMarkInput(e.target.value);
                       setEntryMark(new Date(e.target.value));
@@ -257,7 +240,9 @@ export function DataTableToolbar<TData>({
                         // month={month}
                         // onMonthChange={setMonth}
                         onSelect={(date) => {
-                          setEntryMark(date);
+                          if (date) {
+                            setEntryMark(date);
+                          }
                           setEntryMarkInput(dateString(date));
                           setDatepickerOpen(false);
                         }}
@@ -280,30 +265,31 @@ export function DataTableToolbar<TData>({
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                onClick={() => setAddEntryDialogOpen(false)}
+                onClick={() => handleEditEntryDialogOpen(false)}
               >
                 Cancel
               </Button>
               <Button
                 onClick={() => {
-                  createEntry(
-                    entryName,
-                    entryType,
-                    WatchStatus.COMPLETED,
-                    entryYear ?? new Date().getFullYear(),
-                    entryRate,
-                    entryMark ?? todayStart(),
-                  );
-                  setAddEntryDialogOpen(false);
+                  updateWatch({
+                    id: watch.id,
+                    title: entryName,
+                    type: entryType ?? WatchType.MOVIE,
+                    status: WatchStatus.COMPLETED,
+                    year: entryYear ?? new Date().getFullYear(),
+                    rate: entryRate * 2,
+                    createdAt: entryMark ?? todayStart(),
+                  });
+                  handleEditEntryDialogOpen(false);
                 }}
-                disabled={!entryName.trim() || createEntryMutation.isPending}
+                disabled={!entryName.trim() || updateWatchMutation.isPending}
               >
-                Create
+                Update
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </DropdownMenu>
   );
 }
