@@ -61,7 +61,29 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddWatchTable,
 			Down:    RemoveWatchTable,
 		},
+		{
+			Version: "v0.10.0",
+			Name:    "Add payload column",
+			Up:      AddPayloadColumn,
+			Down:    RemovePayloadColumn,
+		},
 	}
+}
+
+// -------------------- v0.10.0 -------------------
+
+func AddPayloadColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_watch
+		ADD COLUMN payload JSONB DEFAULT '{}'::jsonb NOT NULL;
+	`).Error
+}
+
+func RemovePayloadColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_watch
+		DROP COLUMN IF EXISTS payload;
+	`).Error
 }
 
 // -------------------- v0.9.0 -------------------

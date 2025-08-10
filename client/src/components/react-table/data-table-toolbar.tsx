@@ -87,6 +87,7 @@ export function WatchedTableToolbar<TData>({
       year,
       rate: rate * 2, // Assuming rate is a value between 0 and 10, we double it for the API
       createdAt,
+      payload: {},
     });
   };
 
@@ -434,28 +435,29 @@ export function ToWatchTableToolbar<TData>({
                 />
               </div>
             </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>Type</Label>
-              <Select
-                onValueChange={(v: string) => setEntryType(v as WatchType)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={!isMobile ? "Select entry type" : ""}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {types.map((type, idx) => (
-                      <SelectItem key={idx} value={type.value}>
-                        <type.icon />
-                        {type.value}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label>Type</Label>
+                <Select
+                  onValueChange={(v: string) => setEntryType(v as WatchType)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={!isMobile ? "Select entry type" : ""}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {types.map((type, idx) => (
+                        <SelectItem key={idx} value={type.value}>
+                          <type.icon />
+                          {type.value}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">

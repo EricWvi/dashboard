@@ -1,7 +1,7 @@
 "use client";
 
 import { type Row } from "@tanstack/react-table";
-import { CalendarIcon, MoreHorizontal } from "lucide-react";
+import { CalendarIcon, MoreHorizontal, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,18 +35,30 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 
 import { types } from "@/components/react-table/watch-columns";
 import {
   useDeleteWatch,
+  useStartWatch,
   useUpdateWatch,
+  WatchMeasure,
   WatchStatus,
   WatchType,
   type Watch,
 } from "@/hooks/use-watches";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { dateString, todayStart } from "@/lib/utils";
+import { dateString, formatMediaUrl, todayStart } from "@/lib/utils";
+import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
+
+const compressOptions = {
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+  preserveExif: true,
+  initialQuality: 0.8,
+};
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -157,8 +169,9 @@ export function WatchedTableRowActions<TData>({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label>Name</Label>
+                <Label htmlFor="edit-watch-name">Name</Label>
                 <Input
+                  id="edit-watch-name"
                   placeholder={!isMobile ? "Enter entry name..." : ""}
                   value={entryName}
                   disabled={updateWatchMutation.isPending}
@@ -166,8 +179,9 @@ export function WatchedTableRowActions<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Year</Label>
+                <Label htmlFor="edit-watch-year">Year</Label>
                 <Input
+                  id="edit-watch-year"
                   placeholder={!isMobile ? "Enter entry year..." : ""}
                   type="number"
                   min={1900}
@@ -181,13 +195,14 @@ export function WatchedTableRowActions<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label>Type</Label>
+                <Label htmlFor="edit-watch-type">Type</Label>
                 <Select
                   value={entryType}
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
+                      id="edit-watch-type"
                       placeholder={!isMobile ? "Select entry type" : ""}
                     />
                   </SelectTrigger>
@@ -204,9 +219,10 @@ export function WatchedTableRowActions<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Mark</Label>
+                <Label htmlFor="edit-watch-mark">Mark</Label>
                 <div className="relative">
                   <Input
+                    id="edit-watch-mark"
                     placeholder={!isMobile ? "Enter completed date..." : ""}
                     value={entryMarkInput}
                     disabled={updateWatchMutation.isPending}
@@ -253,8 +269,11 @@ export function WatchedTableRowActions<TData>({
               </div>
             </div>
             <div className="mb-6 flex flex-col gap-2">
-              <Label>Rating: {entryRate.toFixed(1)}</Label>
+              <Label htmlFor="edit-watch-rating">
+                Rating: {entryRate.toFixed(1)}
+              </Label>
               <Slider
+                id="edit-watch-rating"
                 defaultValue={[16]}
                 max={20}
                 step={1}
@@ -279,6 +298,7 @@ export function WatchedTableRowActions<TData>({
                     year: entryYear ?? new Date().getFullYear(),
                     rate: entryRate * 2,
                     createdAt: entryMark ?? todayStart(),
+                    payload: watch.payload,
                   });
                   handleEditEntryDialogOpen(false);
                 }}
@@ -302,20 +322,30 @@ export function ToWatchTableRowActions<TData>({
   const [entryName, setEntryName] = useState("");
   const [entryType, setEntryType] = useState<WatchType | undefined>(undefined);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
+  const [entryImg, setEntryImg] = useState<string | undefined>(undefined);
   const updateWatchMutation = useUpdateWatch(WatchStatus.PLAN_TO_WATCH);
+  const startWatchMutation = useStartWatch();
   const updateWatch = (watch: { id: number } & Partial<Watch>) => {
     updateWatchMutation.mutate(watch);
   };
 
   // start watching dialog
   const [startWatchingDialogOpen, setStartWatchingDialogOpen] = useState(false);
+  const [entryMeasure, setEntryMeasure] = useState<WatchMeasure | undefined>(
+    undefined,
+  );
+  const [measureRange, setMeasureRange] = useState<number | undefined>(
+    undefined,
+  );
   const handleStartWatchingDialogOpen = (open: boolean) => {
     if (open) {
-      setEntryName(watch.title);
-      setEntryType(watch.type);
-      setEntryYear(watch.year);
+      setEntryMeasure(undefined);
+      setMeasureRange(undefined);
     }
     setStartWatchingDialogOpen(open);
+  };
+  const startWatch = (watch: { id: number; payload: any }) => {
+    startWatchMutation.mutate(watch);
   };
 
   // confirm Dialog
@@ -326,14 +356,52 @@ export function ToWatchTableRowActions<TData>({
   };
 
   // edit watch entry dialog
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editEntryDialogOpen, setEditEntryDialogOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
   const handleEditEntryDialogOpen = (open: boolean) => {
     if (open) {
       setEntryName(watch.title);
       setEntryType(watch.type);
       setEntryYear(watch.year);
+      setProgress(0);
+      setEntryImg(watch.payload.img ?? undefined);
     }
     setEditEntryDialogOpen(open);
+  };
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const compressed = await imageCompression(files[0], compressOptions);
+
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append("photos", compressed, files[0].name);
+
+    xhr.open("POST", "/api/upload");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const progress = Math.round((event.loaded / event.total) * 100);
+        setProgress(progress);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        setEntryImg(formatMediaUrl(JSON.parse(xhr.responseText).photos[0]));
+        setProgress(0);
+      } else {
+        toast("Upload Failed");
+      }
+    };
+
+    xhr.onerror = () => toast("Network error");
+
+    xhr.send(formData);
   };
 
   return (
@@ -368,36 +436,64 @@ export function ToWatchTableRowActions<TData>({
         open={startWatchingDialogOpen}
         onOpenChange={handleStartWatchingDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="gap-1 sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Start {watch.title}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label>Type</Label>
+                <Label htmlFor="start-watch-measure">Measure</Label>
                 <Select
-                  value={entryType}
-                  onValueChange={(v: string) => setEntryType(v as WatchType)}
+                  value={entryMeasure}
+                  onValueChange={(v: string) => {
+                    if (v === WatchMeasure.NONE) {
+                      setMeasureRange(0);
+                    }
+                    setEntryMeasure(v as WatchMeasure);
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      id="start-watch-measure"
+                      placeholder={!isMobile ? "Select measure type" : ""}
                     />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {types.map((type, idx) => (
-                        <SelectItem key={idx} value={type.value}>
-                          <type.icon />
-                          {type.value}
-                        </SelectItem>
-                      ))}
+                      {Object.entries(WatchMeasure).map(
+                        ([_key, value], idx) => (
+                          <SelectItem key={idx} value={value}>
+                            {value}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="start-watch-range">Range</Label>
+                <Input
+                  id="start-watch-range"
+                  placeholder={!isMobile ? "Enter measure range..." : ""}
+                  value={measureRange}
+                  disabled={startWatchMutation.isPending}
+                  onChange={(e) => setMeasureRange(Number(e.target.value))}
+                />
+              </div>
             </div>
+
+            {entryImg && (
+              <div className="aspect-[16/9]">
+                <img
+                  src={entryImg}
+                  alt={entryName}
+                  className="size-full rounded-md object-cover"
+                />
+              </div>
+            )}
 
             <div className="flex justify-end gap-2">
               <Button
@@ -408,9 +504,18 @@ export function ToWatchTableRowActions<TData>({
               </Button>
               <Button
                 onClick={() => {
+                  startWatch({
+                    id: watch.id,
+                    payload: {
+                      ...watch.payload,
+                      measure: entryMeasure ?? WatchMeasure.NONE,
+                      range: measureRange ?? 0,
+                      progress: 0,
+                    },
+                  });
                   handleStartWatchingDialogOpen(false);
                 }}
-                disabled={updateWatchMutation.isPending}
+                disabled={startWatchMutation.isPending}
               >
                 Update
               </Button>
@@ -463,8 +568,9 @@ export function ToWatchTableRowActions<TData>({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label>Name</Label>
+                <Label htmlFor="edit-watch-name">Name</Label>
                 <Input
+                  id="edit-watch-name"
                   placeholder={!isMobile ? "Enter entry name..." : ""}
                   value={entryName}
                   disabled={updateWatchMutation.isPending}
@@ -472,8 +578,9 @@ export function ToWatchTableRowActions<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Year</Label>
+                <Label htmlFor="edit-watch-year">Year</Label>
                 <Input
+                  id="edit-watch-year"
                   placeholder={!isMobile ? "Enter entry year..." : ""}
                   type="number"
                   min={1900}
@@ -487,13 +594,14 @@ export function ToWatchTableRowActions<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label>Type</Label>
+                <Label htmlFor="edit-watch-type">Type</Label>
                 <Select
                   value={entryType}
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
+                      id="edit-watch-type"
                       placeholder={!isMobile ? "Select entry type" : ""}
                     />
                   </SelectTrigger>
@@ -511,6 +619,46 @@ export function ToWatchTableRowActions<TData>({
               </div>
             </div>
 
+            <div className="relative aspect-[16/9]">
+              {entryImg ? (
+                <>
+                  <img
+                    src={entryImg}
+                    alt={entryName}
+                    className="size-full rounded-md object-cover"
+                  />
+                  <Button
+                    variant="secondary"
+                    className="absolute top-1 right-1"
+                    onClick={() => setEntryImg(undefined)}
+                  >
+                    <X />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="size-full border-2 border-dashed"
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  {progress ? (
+                    <Progress value={progress} />
+                  ) : (
+                    <Plus className="text-muted-foreground size-8" />
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                  />
+                </Button>
+              )}
+            </div>
+
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
@@ -525,6 +673,10 @@ export function ToWatchTableRowActions<TData>({
                     title: entryName,
                     type: entryType ?? WatchType.MOVIE,
                     year: entryYear ?? new Date().getFullYear(),
+                    payload: {
+                      ...watch.payload,
+                      img: entryImg,
+                    },
                   });
                   handleEditEntryDialogOpen(false);
                 }}
