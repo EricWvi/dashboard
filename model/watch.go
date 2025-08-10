@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -12,11 +13,12 @@ type Watch struct {
 }
 
 type WatchField struct {
-	Title  string `gorm:"size:1024;not null" json:"title"`
-	Type   string `gorm:"column:w_type;size:64;not null" json:"type"`
-	Status string `gorm:"column:status;size:64;not null" json:"status"`
-	Year   int    `gorm:"default:2099;not null" json:"year"`
-	Rate   int    `gorm:"default:0;not null" json:"rate"`
+	Title   string         `gorm:"size:1024;not null" json:"title"`
+	Type    string         `gorm:"column:w_type;size:64;not null" json:"type"`
+	Status  string         `gorm:"column:status;size:64;not null" json:"status"`
+	Year    int            `gorm:"default:2099;not null" json:"year"`
+	Rate    int            `gorm:"default:0;not null" json:"rate"`
+	Payload datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	// CreatorId is inherited from MetaField
 }
 

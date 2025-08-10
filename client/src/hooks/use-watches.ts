@@ -9,6 +9,7 @@ export type Watch = {
   year: number;
   rate: number;
   createdAt: Date;
+  payload: any;
 };
 
 export type WatchType =
@@ -58,6 +59,29 @@ export const Rating = {
   Two: "Two Stars",
   One: "One Star",
   Zero: "Zero Star",
+};
+
+export type WatchMeasure =
+  | "Percentage"
+  | "Chapter"
+  | "Episode"
+  | "Volume"
+  | "Page"
+  | "None";
+export const WatchMeasure: {
+  PERCENTAGE: WatchMeasure;
+  CHAPTER: WatchMeasure;
+  EPISODE: WatchMeasure;
+  VOLUME: WatchMeasure;
+  PAGE: WatchMeasure;
+  NONE: WatchMeasure;
+} = {
+  PERCENTAGE: "Percentage",
+  CHAPTER: "Chapter",
+  EPISODE: "Episode",
+  VOLUME: "Volume",
+  PAGE: "Page",
+  NONE: "None",
 };
 
 const keyWatch = (id: number) => ["/api/watch", id];
@@ -182,6 +206,33 @@ export function useUpdateWatch(status: WatchStatus) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(status),
+      });
+    },
+  });
+}
+
+export function useStartWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; payload: any }) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=UpdateWatch",
+        {
+          id: data.id,
+          status: WatchStatus.WATCHING,
+          payload: data.payload,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.PLAN_TO_WATCH),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.WATCHING),
       });
     },
   });

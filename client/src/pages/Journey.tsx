@@ -13,7 +13,7 @@ import {
 } from "@/components/react-table/data-table-toolbar";
 
 function WatchingTab() {
-  const { data: watches } = useWatches(WatchStatus.WATCHING);
+  // const { data: watches } = useWatches(WatchStatus.WATCHING);
   return <></>;
 }
 
@@ -43,9 +43,9 @@ function WatchedTab() {
 
 export default function Journey() {
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState("towatch");
+  const [activeTab, setActiveTab] = useState("watching");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
-    new Set(["towatch"]),
+    new Set(["watching"]),
   );
 
   const handleTabChange = (value: string) => {
