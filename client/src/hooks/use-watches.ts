@@ -99,7 +99,7 @@ export function useWatch(id: number) {
   });
 }
 
-export function useCreateWatch() {
+export function useCreateWatched() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -113,9 +113,31 @@ export function useCreateWatch() {
       );
       return response.json();
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keyWatchesOfStatus(variables.status),
+        queryKey: keyWatchesOfStatus(WatchStatus.COMPLETED),
+      });
+    },
+  });
+}
+
+export function useCreateToWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Partial<Watch>) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=CreateWatch",
+        {
+          ...data,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.PLAN_TO_WATCH),
       });
     },
   });
@@ -143,11 +165,11 @@ export function useDeleteWatch() {
   });
 }
 
-export function useUpdateWatch() {
+export function useUpdateWatch(status: WatchStatus) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Watch) => {
+    mutationFn: async (data: { id: number } & Partial<Watch>) => {
       const response = await apiRequest(
         "POST",
         "/api/watch?Action=UpdateWatch",
@@ -157,9 +179,9 @@ export function useUpdateWatch() {
       );
       return response.json();
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: keyWatchesOfStatus(variables.status),
+        queryKey: keyWatchesOfStatus(status),
       });
     },
   });

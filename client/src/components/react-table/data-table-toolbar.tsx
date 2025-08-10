@@ -28,25 +28,30 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { types, ratings } from "@/components/react-table/watched-columns";
+import { types, ratings } from "@/components/react-table/watch-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { useState } from "react";
-import { useCreateWatch, WatchStatus, WatchType } from "@/hooks/use-watches";
+import {
+  useCreateToWatch,
+  useCreateWatched,
+  WatchStatus,
+  WatchType,
+} from "@/hooks/use-watches";
 import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface DataTableToolbarProps<TData> {
+export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTableToolbar<TData>({
+export function WatchedTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const isFiltered = table.getState().columnFilters.length > 0;
-  const createEntryMutation = useCreateWatch();
+  const createEntryMutation = useCreateWatched();
   const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false);
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const [entryName, setEntryName] = useState("");
@@ -293,6 +298,180 @@ export function DataTableToolbar<TData>({
                     entryYear ?? new Date().getFullYear(),
                     entryRate,
                     entryMark ?? todayStart(),
+                  );
+                  setAddEntryDialogOpen(false);
+                }}
+                disabled={!entryName.trim() || createEntryMutation.isPending}
+              >
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+export function ToWatchTableToolbar<TData>({
+  table,
+}: DataTableToolbarProps<TData>) {
+  const isMobile = useIsMobile();
+  const [isComposing, setIsComposing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const isFiltered = table.getState().columnFilters.length > 0;
+  const createEntryMutation = useCreateToWatch();
+  const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false);
+  const [entryName, setEntryName] = useState("");
+  const [entryType, setEntryType] = useState<WatchType>(WatchType.MOVIE);
+  const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
+
+  const handleAddEntryDialogOpen = () => {
+    setEntryName("");
+    setEntryType(WatchType.MOVIE);
+    setEntryYear(undefined);
+    setAddEntryDialogOpen(true);
+  };
+
+  const createEntry = async (
+    title: string,
+    type: WatchType,
+    status: WatchStatus,
+    year: number,
+  ) => {
+    await createEntryMutation.mutateAsync({
+      title,
+      type,
+      status,
+      year,
+    });
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2">
+        {!isMobile && (
+          <Input
+            placeholder="Filter watches..."
+            value={searchTerm}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isComposing) {
+                table.getColumn("title")?.setFilterValue(searchTerm);
+              }
+            }}
+            className="h-8 w-[283px]"
+          />
+        )}
+
+        {table.getColumn("type") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("type")}
+            title="Type"
+            options={types}
+          />
+        )}
+        {isFiltered && (
+          <Button
+            variant={`${isMobile ? "secondary" : "ghost"}`}
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              table.resetColumnFilters();
+            }}
+          >
+            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
+            <X />
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {/* <DataTableViewOptions table={table} /> */}
+        <Button size="sm" className="px-4" onClick={handleAddEntryDialogOpen}>
+          {!isMobile ? (
+            <>
+              <Clapperboard />
+              Add
+            </>
+          ) : (
+            <Plus />
+          )}
+        </Button>
+      </div>
+
+      {/* add watch entry dialog */}
+      <Dialog open={addEntryDialogOpen} onOpenChange={setAddEntryDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add ToWatch Entry</DialogTitle>
+            <DialogDescription>
+              Stay up to date with the entries that matter most to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label>Name</Label>
+                <Input
+                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  value={entryName}
+                  disabled={createEntryMutation.isPending}
+                  onChange={(e) => setEntryName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Year</Label>
+                <Input
+                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  type="number"
+                  min={1900}
+                  max={2099}
+                  value={entryYear}
+                  disabled={createEntryMutation.isPending}
+                  onChange={(e) => setEntryYear(Number(e.target.value))}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Type</Label>
+              <Select
+                onValueChange={(v: string) => setEntryType(v as WatchType)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={!isMobile ? "Select entry type" : ""}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {types.map((type, idx) => (
+                      <SelectItem key={idx} value={type.value}>
+                        <type.icon />
+                        {type.value}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setAddEntryDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  createEntry(
+                    entryName,
+                    entryType,
+                    WatchStatus.PLAN_TO_WATCH,
+                    entryYear ?? 0,
                   );
                   setAddEntryDialogOpen(false);
                 }}

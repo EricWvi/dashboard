@@ -36,7 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
-import { types } from "@/components/react-table/watched-columns";
+import { types } from "@/components/react-table/watch-columns";
 import {
   useDeleteWatch,
   useUpdateWatch,
@@ -52,7 +52,7 @@ interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
 }
 
-export function WatchTableRowActions<TData>({
+export function WatchedTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   const isMobile = useIsMobile();
@@ -64,7 +64,7 @@ export function WatchTableRowActions<TData>({
   const [entryMarkInput, setEntryMarkInput] = useState("");
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
   const [datepickerOpen, setDatepickerOpen] = useState(false);
-  const updateWatchMutation = useUpdateWatch();
+  const updateWatchMutation = useUpdateWatch(WatchStatus.COMPLETED);
   const updateWatch = (watch: Watch) => {
     updateWatchMutation.mutate(watch);
   };
@@ -279,6 +279,252 @@ export function WatchTableRowActions<TData>({
                     year: entryYear ?? new Date().getFullYear(),
                     rate: entryRate * 2,
                     createdAt: entryMark ?? todayStart(),
+                  });
+                  handleEditEntryDialogOpen(false);
+                }}
+                disabled={!entryName.trim() || updateWatchMutation.isPending}
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </DropdownMenu>
+  );
+}
+
+export function ToWatchTableRowActions<TData>({
+  row,
+}: DataTableRowActionsProps<TData>) {
+  const isMobile = useIsMobile();
+  const watch = row.original as Watch;
+  const [entryName, setEntryName] = useState("");
+  const [entryType, setEntryType] = useState<WatchType | undefined>(undefined);
+  const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
+  const updateWatchMutation = useUpdateWatch(WatchStatus.PLAN_TO_WATCH);
+  const updateWatch = (watch: { id: number } & Partial<Watch>) => {
+    updateWatchMutation.mutate(watch);
+  };
+
+  // start watching dialog
+  const [startWatchingDialogOpen, setStartWatchingDialogOpen] = useState(false);
+  const handleStartWatchingDialogOpen = (open: boolean) => {
+    if (open) {
+      setEntryName(watch.title);
+      setEntryType(watch.type);
+      setEntryYear(watch.year);
+    }
+    setStartWatchingDialogOpen(open);
+  };
+
+  // confirm Dialog
+  const deleteWatchMutation = useDeleteWatch();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const deleteWatch = () => {
+    deleteWatchMutation.mutate({ id: watch.id, status: watch.status });
+  };
+
+  // edit watch entry dialog
+  const [editEntryDialogOpen, setEditEntryDialogOpen] = useState(false);
+  const handleEditEntryDialogOpen = (open: boolean) => {
+    if (open) {
+      setEntryName(watch.title);
+      setEntryType(watch.type);
+      setEntryYear(watch.year);
+    }
+    setEditEntryDialogOpen(open);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="data-[state=open]:bg-muted size-8"
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleStartWatchingDialogOpen(true)}>
+          Start to Watch
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => setConfirmDialogOpen(true)}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+
+      {/* start watching dialog */}
+      <Dialog
+        open={startWatchingDialogOpen}
+        onOpenChange={handleStartWatchingDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Start {watch.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label>Type</Label>
+                <Select
+                  value={entryType}
+                  onValueChange={(v: string) => setEntryType(v as WatchType)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={!isMobile ? "Select entry type" : ""}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {types.map((type, idx) => (
+                        <SelectItem key={idx} value={type.value}>
+                          <type.icon />
+                          {type.value}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleStartWatchingDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  handleStartWatchingDialogOpen(false);
+                }}
+                disabled={updateWatchMutation.isPending}
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* confirm Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete [{watch.title}]?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteWatch();
+                setConfirmDialogOpen(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* edit watch entry dialog */}
+      <Dialog
+        open={editEntryDialogOpen}
+        onOpenChange={handleEditEntryDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit ToWatch Entry</DialogTitle>
+            <DialogDescription>
+              Stay up to date with the entries that matter most to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label>Name</Label>
+                <Input
+                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  value={entryName}
+                  disabled={updateWatchMutation.isPending}
+                  onChange={(e) => setEntryName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Year</Label>
+                <Input
+                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  type="number"
+                  min={1900}
+                  max={2099}
+                  value={entryYear}
+                  disabled={updateWatchMutation.isPending}
+                  onChange={(e) => setEntryYear(Number(e.target.value))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label>Type</Label>
+                <Select
+                  value={entryType}
+                  onValueChange={(v: string) => setEntryType(v as WatchType)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={!isMobile ? "Select entry type" : ""}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {types.map((type, idx) => (
+                        <SelectItem key={idx} value={type.value}>
+                          <type.icon />
+                          {type.value}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleEditEntryDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  updateWatch({
+                    id: watch.id,
+                    title: entryName,
+                    type: entryType ?? WatchType.MOVIE,
+                    year: entryYear ?? new Date().getFullYear(),
                   });
                   handleEditEntryDialogOpen(false);
                 }}

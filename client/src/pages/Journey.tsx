@@ -1,18 +1,44 @@
-import { columns } from "@/components/react-table/watched-columns";
+import {
+  towatchColumns,
+  watchedColumns,
+} from "@/components/react-table/watch-columns";
 import { DataTable } from "@/components/react-table/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWatches, WatchStatus } from "@/hooks/use-watches";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
+import {
+  WatchedTableToolbar,
+  ToWatchTableToolbar,
+} from "@/components/react-table/data-table-toolbar";
+
+function WatchingTab() {
+  const { data: watches } = useWatches(WatchStatus.WATCHING);
+  return <></>;
+}
 
 function ToWatchTab() {
-  return <></>;
+  const { data: watches } = useWatches(WatchStatus.PLAN_TO_WATCH);
+
+  return (
+    <DataTable
+      data={watches ?? []}
+      columns={towatchColumns}
+      toolbar={ToWatchTableToolbar}
+    />
+  );
 }
 
 function WatchedTab() {
   const { data: watches } = useWatches(WatchStatus.COMPLETED);
 
-  return <DataTable data={watches ?? []} columns={columns} />;
+  return (
+    <DataTable
+      data={watches ?? []}
+      columns={watchedColumns}
+      toolbar={WatchedTableToolbar}
+    />
+  );
 }
 
 export default function Journey() {
@@ -34,7 +60,7 @@ export default function Journey() {
       >
         <div className="flex flex-col gap-1">
           <h2 className="text-3xl font-semibold tracking-tight">
-            Dive and Explore!
+            Dive and Explore !
           </h2>
         </div>
       </div>
@@ -56,12 +82,12 @@ export default function Journey() {
 
       {/* Tab Content - Lazy rendered but persistent */}
       <div>
-        {/* Dashboard - lazy render but keep mounted */}
-        {/* <div className={`${activeTab === "dashboard" ? "block" : "hidden"}`}>
-                        {visitedTabs.has("dashboard") && <Dashboard />}
-                      </div> */}
+        {/* Watching Tab - lazy render but keep mounted */}
+        <div className={`${activeTab === "watching" ? "block" : "hidden"}`}>
+          {visitedTabs.has("watching") && <WatchingTab />}
+        </div>
 
-        {/* Todo - lazy render but keep mounted */}
+        {/* ToWatch Tab - lazy render but keep mounted */}
         <div className={`${activeTab === "towatch" ? "block" : "hidden"}`}>
           {visitedTabs.has("towatch") && <ToWatchTab />}
         </div>

@@ -25,17 +25,19 @@ import {
 } from "@/components/ui/table";
 
 import { DataTablePagination } from "./data-table-pagination";
-import { DataTableToolbar } from "./data-table-toolbar";
+import { type DataTableToolbarProps } from "./data-table-toolbar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  toolbar: ({ table }: DataTableToolbarProps<TData>) => React.JSX.Element;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  toolbar,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
   const [rowSelection, setRowSelection] = React.useState({});
@@ -76,9 +78,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${isMobile ? "px-6" : ""}`}>
-        <DataTableToolbar table={table} />
-      </div>
+      <div className={`${isMobile ? "px-6" : ""}`}>{toolbar({ table })}</div>
 
       <div
         className={`overflow-hidden rounded-md ${!isMobile ? "border" : ""}`}

@@ -4,7 +4,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 
 import { Rating, WatchType, type Watch } from "@/hooks/use-watches";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import { WatchTableRowActions } from "./watch-table-row-actions";
+import {
+  ToWatchTableRowActions,
+  WatchedTableRowActions,
+} from "./watch-table-row-actions";
 
 import {
   Brush,
@@ -74,7 +77,7 @@ export const types = [
   },
 ];
 
-export const columns: ColumnDef<Watch>[] = [
+export const watchedColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "type",
     size: 300,
@@ -171,6 +174,66 @@ export const columns: ColumnDef<Watch>[] = [
   {
     id: "actions",
     size: 20,
-    cell: ({ row }) => <WatchTableRowActions row={row} />,
+    cell: ({ row }) => <WatchedTableRowActions row={row} />,
+  },
+];
+
+export const towatchColumns: ColumnDef<Watch>[] = [
+  {
+    accessorKey: "type",
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Type" className="ml-2" />
+    ),
+    cell: ({ row }) => {
+      const type = types.find((type) => type.value === row.getValue("type"));
+
+      if (!type) {
+        return null;
+      }
+
+      return (
+        <div className="ml-2 flex items-center gap-2">
+          <type.icon className="text-muted-foreground size-4" />
+          <span>{type.value}</span>
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "title",
+    size: 200,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Title" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
+          <span
+            className="max-w-[600px] truncate font-medium"
+            title={row.getValue("title") + " (" + row.original.year + ")"}
+          >
+            {row.getValue("title")}{" "}
+            {row.original.year !== 2099 && (
+              <span className="text-muted-foreground">
+                {"(" + row.original.year + ")"}
+              </span>
+            )}
+          </span>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    id: "actions",
+    size: 20,
+    cell: ({ row }) => <ToWatchTableRowActions row={row} />,
   },
 ];
