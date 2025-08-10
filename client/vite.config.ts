@@ -8,6 +8,7 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
   server: {
     host: "0.0.0.0",
+    port: 5273,
     proxy: {
       "/api": {
         target: "http://localhost:8765",
@@ -54,11 +55,11 @@ export default defineConfig({
           },
         ],
       },
-      devOptions: {
-        enabled: true, // Enable PWA in development
-        type: "module",
-        navigateFallback: "index.html",
-      },
+      // devOptions: {
+      //   enabled: true, // Enable PWA in development
+      //   type: "module",
+      //   navigateFallback: "index.html",
+      // },
     }),
   ],
   resolve: {

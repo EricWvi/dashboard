@@ -91,7 +91,7 @@ export default function Todo() {
     <div className="fixed top-16 bottom-16 w-full">
       <div className="flex h-full">
         <div className="xl:flex-1/8"></div>
-        <div className="flex h-full flex-1/1">
+        <div className="flex h-full min-w-0 flex-1/1">
           {/* Space Block */}
           <div className="flex-1/20"></div>
 
@@ -129,7 +129,7 @@ export default function Todo() {
           <div className="flex-1/20"></div>
 
           {/* Main Content - Todo List */}
-          <div className="flex-1/1">
+          <div className="min-w-0 flex-1/1">
             <TodoList collectionId={activeListId} />
           </div>
         </div>

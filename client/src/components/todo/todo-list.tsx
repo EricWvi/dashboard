@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  invalidToday,
   listAllTodos,
   useCollection,
   useCollections,
@@ -47,7 +48,8 @@ import {
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import { isSetToday } from "@/lib/utils";
+import { isDisabledPlan, isSetToday } from "@/lib/utils";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
 
 const TodoList = ({
   collectionId,
@@ -92,7 +94,7 @@ const TodoList = ({
 
   return (
     <div className={`mx-auto flex h-full w-full flex-col gap-6 xl:flex-row`}>
-      <div className="min-h-0 flex-1/1">
+      <div className="min-h-0 min-w-0 flex-1/1">
         <Card
           className={`h-full max-w-4xl gap-4 ${isMobile ? "border-none bg-transparent pt-6 pb-0 shadow-none" : ""}`}
         >
@@ -173,7 +175,7 @@ const TodoList = ({
 
             {/* Task list */}
             <div
-              className={`scroll-area flex min-h-0 flex-1 flex-col ${!isMobile ? "rounded-sm" : ""}`}
+              className={`flex min-h-0 flex-1 flex-col overflow-scroll ${!isMobile ? "rounded-sm" : ""}`}
             >
               {todos &&
                 (todos.length === 0 ? (
@@ -291,7 +293,7 @@ const TodoList = ({
       </div>
 
       {!isMobile && completedTodoOpen && (
-        <div className="min-h-0 flex-1/2">
+        <div className="min-h-0 min-w-0 flex-1/2">
           <CompletedList collectionId={collectionId} />
         </div>
       )}
@@ -329,7 +331,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
       </CardHeader>
 
       <CardContent
-        className={`scroll-area flex min-h-0 flex-1 flex-col ${isMobile ? "px-0" : "rounded-sm"}`}
+        className={`flex min-h-0 flex-1 flex-col overflow-scroll ${isMobile ? "px-0" : "rounded-sm"}`}
       >
         {completed &&
           (completed.length > 0 ? (
@@ -360,6 +362,14 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
 export const TodayTodoList = () => {
   const isMobile = useIsMobile();
   const { data: today } = useToday();
+  const [todayDate, setTodayDate] = useState(new Date().toDateString());
+  usePageVisibility(() => {
+    if (new Date().toDateString() !== todayDate) {
+      setTodayDate(new Date().toDateString());
+      invalidToday();
+    }
+  });
+
   const { data: collections } = useCollections();
   const [collectionMap, setCollectionMap] = useState<Record<string, string>>(
     {},
@@ -497,9 +507,10 @@ export const TodayTodoList = () => {
               Plan
             </Button>
           </div>
-          <div className="h-160 space-y-6 overflow-scroll">
+          <div className="h-140 space-y-6 overflow-scroll sm:h-180">
             {Object.entries(
               allTodos
+                .filter((todo) => !isDisabledPlan(todo.schedule))
                 .sort((a, b) => b.count - a.count)
                 .reduce(
                   (acc, item) => {
@@ -532,7 +543,6 @@ export const TodayTodoList = () => {
                           } else {
                             newSet.delete(id);
                           }
-                          console.log("Checked IDs:", newSet);
                           return newSet;
                         });
                       }}

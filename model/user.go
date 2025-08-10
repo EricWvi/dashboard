@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -30,6 +32,13 @@ func CreateEmailToIDMap(db *gorm.DB) (map[string]uint, error) {
 	return emailToID, nil
 }
 
-func (u *User) Get(db *gorm.DB) error {
-	return db.First(u).Error
+func (u *User) Get(db *gorm.DB, where map[string]any) error {
+	rst := db.Where(where).Find(&u)
+	if rst.Error != nil {
+		return rst.Error
+	}
+	if rst.RowsAffected == 0 {
+		return fmt.Errorf("can not find user with id %d", u.ID)
+	}
+	return nil
 }

@@ -74,12 +74,20 @@ func Logging(c *gin.Context) {
 	if err := json.Unmarshal(blw.body.Bytes(), &rsp); err != nil {
 		log.Errorf("response body can not unmarshal to handler.Response struct, body: `%s`", blw.body.Bytes())
 	} else {
-		log.WithFields(log.Fields{
-			"requestId": rsp.RequestId,
-			"code":      rsp.Code,
-			"message":   rsp.Message,
-			"latency":   latency,
-		}).Info()
+		if rsp.Code >= 400 {
+			log.WithFields(log.Fields{
+				"requestId": rsp.RequestId,
+				"code":      rsp.Code,
+				"message":   rsp.Message,
+				"latency":   latency,
+			}).Info()
+		} else {
+			log.WithFields(log.Fields{
+				"requestId": rsp.RequestId,
+				"code":      rsp.Code,
+				"latency":   latency,
+			}).Info()
+		}
 	}
 	log.Info("------------------------------------------------------------------")
 }

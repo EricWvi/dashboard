@@ -12,6 +12,21 @@ export function formatMediaUrl(url: string): string {
   return `/api/m/${url}`;
 }
 
+export function dateString(
+  date: Date | string | null | undefined,
+  sep: string = "/",
+): string {
+  if (!date) return "";
+  const d = new Date(date);
+  const formatted =
+    d.getFullYear() +
+    sep +
+    String(d.getMonth() + 1).padStart(2, "0") +
+    sep +
+    String(d.getDate()).padStart(2, "0");
+  return formatted;
+}
+
 export function stripeColor(difficulty: number): string {
   return difficulty === 4
     ? "bg-red-400 dark:bg-red-600"
@@ -92,6 +107,8 @@ export const formatDate = (
       });
       return { label: t, color: "opacity-100" };
     }
+  } else if (isDisabledPlan(inDate)) {
+    return { label: "No Plan", color: "opacity-100" };
   }
   return today_default;
 };
@@ -101,12 +118,13 @@ export const isSetDate = (date: Date | string | null | undefined) => {
   const today = new Date();
   const inputDate = new Date(date);
   return (
-    inputDate.getFullYear() > today.getFullYear() ||
-    (inputDate.getFullYear() === today.getFullYear() &&
-      inputDate.getMonth() > today.getMonth()) ||
-    (inputDate.getFullYear() === today.getFullYear() &&
-      inputDate.getMonth() === today.getMonth() &&
-      inputDate.getDate() >= today.getDate())
+    !isDisabledPlan(inputDate) &&
+    (inputDate.getFullYear() > today.getFullYear() ||
+      (inputDate.getFullYear() === today.getFullYear() &&
+        inputDate.getMonth() > today.getMonth()) ||
+      (inputDate.getFullYear() === today.getFullYear() &&
+        inputDate.getMonth() === today.getMonth() &&
+        inputDate.getDate() >= today.getDate()))
   );
 };
 
@@ -119,6 +137,12 @@ export const isSetToday = (date: Date | string | null | undefined) => {
     inputDate.getMonth() === today.getMonth() &&
     inputDate.getDate() === today.getDate()
   );
+};
+
+export const isDisabledPlan = (date: Date | string | null | undefined) => {
+  if (!date) return false;
+  const inputDate = new Date(date);
+  return inputDate.getTime() === noPlanStart().getTime();
 };
 
 export const todayStart = () => {
@@ -134,10 +158,8 @@ export const tomorrowStart = () => {
   return tomorrow;
 };
 
-export function msUntilMidnight() {
-  const now = new Date();
-  // Next midnight
-  const midnight = new Date(now);
-  midnight.setHours(24, 0, 0, 0); // sets to next midnight
-  return midnight.getTime() - now.getTime();
-}
+export const noPlanStart = () => {
+  // Tue Oct 02 2096 15:06:40 GMT+0800
+  const noPlan = new Date(4000000000000);
+  return noPlan;
+};

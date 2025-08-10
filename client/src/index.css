@@ -148,20 +148,14 @@
       Arial,
       sans-serif;
   }
-}
 
-@layer utilities {
   @media (width < 80rem) {
-    .scroll-area::-webkit-scrollbar {
+    ::-webkit-scrollbar {
       display: none;
     }
-    .scroll-area {
+    * {
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-  }
-
-  .scroll-area {
-    overflow: scroll;
   }
 }

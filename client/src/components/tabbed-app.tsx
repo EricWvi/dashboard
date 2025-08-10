@@ -6,6 +6,7 @@ import { CheckCircle2, Home } from "lucide-react";
 import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
+import Journey from "@/pages/Journey";
 
 export default function TabbedApp() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -31,7 +32,7 @@ export default function TabbedApp() {
 
           {/* Tabs container with animation - moved higher to hide shadow completely */}
           <div className="absolute top-0 left-0 w-full -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0">
-            <div className="bg-background/95 -translate-y-2 transform rounded-b-lg border-b shadow-lg backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-0">
+            <div className="bg-background/95 -translate-y-2 transform rounded-b-lg border-b shadow-md backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-0">
               <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
@@ -40,12 +41,21 @@ export default function TabbedApp() {
                 <TabsList className="grid h-12 w-full grid-cols-4 bg-transparent">
                   <TabsTrigger
                     value="dashboard"
-                    className="flex items-center gap-2"
+                    className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
                     <span className="lg:inline">Dashboard</span>
                   </TabsTrigger>
-                  <TabsTrigger value="todo" className="flex items-center gap-2">
+                  <TabsTrigger
+                    value="todo"
+                    className="data-[state=active]:bg-accent flex items-center gap-2"
+                  >
                     <span className="lg:inline">Todo</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="journey"
+                    className="data-[state=active]:bg-accent flex items-center gap-2"
+                  >
+                    <span className="lg:inline">Journey</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -76,12 +86,20 @@ export default function TabbedApp() {
                 className={`${activeTab === "todo" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
               />
             </TabsTrigger>
+            <TabsTrigger
+              value="journey"
+              className="flex h-full flex-col items-center gap-1"
+            >
+              <CheckCircle2
+                className={`${activeTab === "journey" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
+              />
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       {/* Tab Content - Lazy rendered but persistent */}
-      <div className="scroll-area h-full w-full pt-6 pb-20 md:pb-6">
+      <div className="h-full w-full pt-6 pb-16 md:pb-6">
         {/* Dashboard - lazy render but keep mounted */}
         <div className={`${activeTab === "dashboard" ? "block" : "hidden"}`}>
           {visitedTabs.has("dashboard") && <Dashboard />}
@@ -90,6 +108,11 @@ export default function TabbedApp() {
         {/* Todo - lazy render but keep mounted */}
         <div className={`${activeTab === "todo" ? "block" : "hidden"}`}>
           {visitedTabs.has("todo") && <Todo />}
+        </div>
+
+        {/* Journey - lazy render but keep mounted */}
+        <div className={`${activeTab === "journey" ? "block" : "hidden"}`}>
+          {visitedTabs.has("journey") && <Journey />}
         </div>
       </div>
     </div>

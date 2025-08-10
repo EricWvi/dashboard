@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { msUntilMidnight } from "@/lib/utils";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export type Todo = {
   id: number;
@@ -13,6 +12,7 @@ export type Todo = {
   difficulty: number;
   link: string;
   draft: number;
+  kanban: number;
   schedule: Date | undefined | null;
   createdAt: Date;
 };
@@ -66,8 +66,11 @@ export function useToday() {
       );
       return data.message.todos as Todo[];
     },
-    refetchInterval: msUntilMidnight(),
   });
+}
+
+export function invalidToday() {
+  queryClient.invalidateQueries({ queryKey: keyTodayTodo() });
 }
 
 export function useCompleted(collectionId: number) {
