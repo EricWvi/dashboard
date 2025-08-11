@@ -7,14 +7,17 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWatches, WatchStatus } from "@/hooks/use-watches";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
-import {
-  WatchedTableToolbar,
-  ToWatchTableToolbar,
-} from "@/components/react-table/data-table-toolbar";
+import { WatchingList } from "@/components/watching-list";
 
 function WatchingTab() {
-  // const { data: watches } = useWatches(WatchStatus.WATCHING);
-  return <></>;
+  const { data: watches } = useWatches(WatchStatus.WATCHING);
+  return (
+    watches && (
+      <div>
+        <WatchingList watches={watches} />
+      </div>
+    )
+  );
 }
 
 function ToWatchTab() {
@@ -24,7 +27,7 @@ function ToWatchTab() {
     <DataTable
       data={watches ?? []}
       columns={towatchColumns}
-      toolbar={ToWatchTableToolbar}
+      toolbar="towatch"
     />
   );
 }
@@ -36,7 +39,7 @@ function WatchedTab() {
     <DataTable
       data={watches ?? []}
       columns={watchedColumns}
-      toolbar={WatchedTableToolbar}
+      toolbar="watched"
     />
   );
 }
@@ -54,7 +57,9 @@ export default function Journey() {
   };
 
   return (
-    <div className={`flex flex-col gap-4 ${isMobile ? "pt-2" : "p-8"}`}>
+    <div
+      className={`flex size-full flex-col gap-4 ${isMobile ? "pt-6" : "p-8"}`}
+    >
       <div
         className={`flex items-center justify-between gap-2 ${isMobile ? "px-6" : ""}`}
       >
@@ -81,7 +86,9 @@ export default function Journey() {
       </div>
 
       {/* Tab Content - Lazy rendered but persistent */}
-      <div>
+      <div
+        className={`${isMobile ? "min-h-0 flex-1 overflow-scroll pt-4 pb-10" : ""}`}
+      >
         {/* Watching Tab - lazy render but keep mounted */}
         <div className={`${activeTab === "watching" ? "block" : "hidden"}`}>
           {visitedTabs.has("watching") && <WatchingTab />}

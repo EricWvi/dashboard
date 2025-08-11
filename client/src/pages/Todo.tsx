@@ -43,7 +43,7 @@ export default function Todo() {
   };
 
   const mobileView = collections && (
-    <div className="fixed top-2 bottom-16 w-full">
+    <div className="size-full">
       <TodoList
         collectionId={activeListId}
         headerContent={

@@ -7,8 +7,10 @@ import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 import Journey from "@/pages/Journey";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function TabbedApp() {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
     new Set(["dashboard"]),
@@ -99,19 +101,27 @@ export default function TabbedApp() {
       </div>
 
       {/* Tab Content - Lazy rendered but persistent */}
-      <div className="h-full w-full pt-6 pb-16 md:pb-6">
+      <div
+        className={`${isMobile ? "fixed top-2 bottom-16 w-full" : "h-full w-full py-6"}`}
+      >
         {/* Dashboard - lazy render but keep mounted */}
-        <div className={`${activeTab === "dashboard" ? "block" : "hidden"}`}>
+        <div
+          className={`${activeTab === "dashboard" ? "block size-full" : "hidden"}`}
+        >
           {visitedTabs.has("dashboard") && <Dashboard />}
         </div>
 
         {/* Todo - lazy render but keep mounted */}
-        <div className={`${activeTab === "todo" ? "block" : "hidden"}`}>
+        <div
+          className={`${activeTab === "todo" ? "block size-full" : "hidden"}`}
+        >
           {visitedTabs.has("todo") && <Todo />}
         </div>
 
         {/* Journey - lazy render but keep mounted */}
-        <div className={`${activeTab === "journey" ? "block" : "hidden"}`}>
+        <div
+          className={`${activeTab === "journey" ? "block size-full" : "hidden"}`}
+        >
           {visitedTabs.has("journey") && <Journey />}
         </div>
       </div>

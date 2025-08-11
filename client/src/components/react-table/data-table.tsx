@@ -23,15 +23,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { WatchedTableToolbar, ToWatchTableToolbar } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
-import { type DataTableToolbarProps } from "./data-table-toolbar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  toolbar: ({ table }: DataTableToolbarProps<TData>) => React.JSX.Element;
+  toolbar: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -78,7 +77,10 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${isMobile ? "px-6" : ""}`}>{toolbar({ table })}</div>
+      <div className={`${isMobile ? "px-6" : ""}`}>
+        {toolbar === "towatch" && <ToWatchTableToolbar table={table} />}
+        {toolbar === "watched" && <WatchedTableToolbar table={table} />}
+      </div>
 
       <div
         className={`overflow-hidden rounded-md ${!isMobile ? "border" : ""}`}
