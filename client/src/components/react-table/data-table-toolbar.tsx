@@ -35,7 +35,8 @@ import {
   useCreateToWatch,
   useCreateWatched,
   WatchStatus,
-  WatchType,
+  WatchEnum,
+  type WatchType,
 } from "@/hooks/use-watches";
 import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -55,7 +56,7 @@ export function WatchedTableToolbar<TData>({
   const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false);
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const [entryName, setEntryName] = useState("");
-  const [entryType, setEntryType] = useState<WatchType>(WatchType.MOVIE);
+  const [entryType, setEntryType] = useState<WatchType>(WatchEnum.MOVIE);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryRate, setEntryRate] = useState<number>(16);
   const [entryMarkInput, setEntryMarkInput] = useState("");
@@ -63,7 +64,7 @@ export function WatchedTableToolbar<TData>({
 
   const handleAddEntryDialogOpen = () => {
     setEntryName("");
-    setEntryType(WatchType.MOVIE);
+    setEntryType(WatchEnum.MOVIE);
     setEntryYear(undefined);
     setEntryRate(16);
     setEntryMarkInput("");
@@ -331,13 +332,13 @@ export function ToWatchTableToolbar<TData>({
   const createEntryMutation = useCreateToWatch();
   const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false);
   const [entryName, setEntryName] = useState("");
-  const [entryType, setEntryType] = useState<WatchType>(WatchType.MOVIE);
+  const [entryType, setEntryType] = useState<WatchType>(WatchEnum.MOVIE);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryLink, setEntryLink] = useState<string>("");
 
   const handleAddEntryDialogOpen = () => {
     setEntryName("");
-    setEntryType(WatchType.MOVIE);
+    setEntryType(WatchEnum.MOVIE);
     setEntryYear(undefined);
     setEntryLink("");
     setAddEntryDialogOpen(true);

@@ -2,7 +2,8 @@ import {
   useUpdateWatch,
   WatchStatus,
   type Watch,
-  WatchType,
+  WatchEnum,
+  type WatchType,
   WatchMeasure,
   useCompleteWatch,
 } from "@/hooks/use-watches";
@@ -212,17 +213,17 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 }}
               >
                 <Button variant="secondary" className="w-full">
-                  {[WatchType.BOOK, WatchType.MANGA].includes(watch.type) ? (
+                  {[WatchEnum.BOOK, WatchEnum.MANGA].includes(watch.type) ? (
                     <BookOpen />
-                  ) : watch.type === WatchType.GAME ? (
+                  ) : watch.type === WatchEnum.GAME ? (
                     <Swords />
                   ) : (
                     <Play />
                   )}
                   Continue{" "}
-                  {[WatchType.BOOK, WatchType.MANGA].includes(watch.type)
+                  {[WatchEnum.BOOK, WatchEnum.MANGA].includes(watch.type)
                     ? "Reading"
-                    : watch.type === WatchType.GAME
+                    : watch.type === WatchEnum.GAME
                       ? "Playing"
                       : "Watching"}
                 </Button>

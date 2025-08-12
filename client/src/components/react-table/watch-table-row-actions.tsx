@@ -44,7 +44,8 @@ import {
   useUpdateWatch,
   WatchMeasure,
   WatchStatus,
-  WatchType,
+  WatchEnum,
+  type WatchType,
   type Watch,
 } from "@/hooks/use-watches";
 import { useRef, useState } from "react";
@@ -298,7 +299,7 @@ export function WatchedTableRowActions<TData>({
                   updateWatch({
                     id: watch.id,
                     title: entryName,
-                    type: entryType ?? WatchType.MOVIE,
+                    type: entryType ?? WatchEnum.MOVIE,
                     status: WatchStatus.COMPLETED,
                     year: entryYear ?? new Date().getFullYear(),
                     rate: entryRate,
@@ -693,7 +694,7 @@ export function ToWatchTableRowActions<TData>({
                   updateWatch({
                     id: watch.id,
                     title: entryName,
-                    type: entryType ?? WatchType.MOVIE,
+                    type: entryType ?? WatchEnum.MOVIE,
                     year: entryYear ?? new Date().getFullYear(),
                     payload: {
                       ...watch.payload,

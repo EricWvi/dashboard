@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 
-import { Rating, WatchType, type Watch } from "@/hooks/use-watches";
+import { Rating, WatchEnum, type Watch } from "@/hooks/use-watches";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {
   ToWatchTableRowActions,
@@ -52,27 +52,27 @@ export const ratings = [
 
 export const types = [
   {
-    value: WatchType.MOVIE,
+    value: WatchEnum.MOVIE,
     icon: Projector,
   },
   {
-    value: WatchType.SERIES,
+    value: WatchEnum.SERIES,
     icon: Clapperboard,
   },
   {
-    value: WatchType.DOCUMENTARY,
+    value: WatchEnum.DOCUMENTARY,
     icon: Tv,
   },
   {
-    value: WatchType.BOOK,
+    value: WatchEnum.BOOK,
     icon: LibraryBig,
   },
   {
-    value: WatchType.GAME,
+    value: WatchEnum.GAME,
     icon: Gamepad2,
   },
   {
-    value: WatchType.MANGA,
+    value: WatchEnum.MANGA,
     icon: Brush,
   },
 ];

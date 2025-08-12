@@ -53,7 +53,7 @@ export function DataTable<TData, TValue>({
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
-      ? Math.min(Math.ceil((window.innerHeight - 344) / 50), 10)
+      ? Math.min(Math.floor((window.innerHeight - 344) / 50), 10)
       : 10;
 
   const table = useReactTable({

@@ -19,7 +19,7 @@ export type WatchType =
   | "Book"
   | "Game"
   | "Manga";
-export const WatchType: {
+export const WatchEnum: {
   MOVIE: WatchType;
   SERIES: WatchType;
   DOCUMENTARY: WatchType;
