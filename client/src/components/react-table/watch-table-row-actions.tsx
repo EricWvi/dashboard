@@ -159,7 +159,12 @@ export function WatchedTableRowActions<TData>({
         open={editEntryDialogOpen}
         onOpenChange={handleEditEntryDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Watched Entry</DialogTitle>
             <DialogDescription>
@@ -559,7 +564,12 @@ export function ToWatchTableRowActions<TData>({
         open={editEntryDialogOpen}
         onOpenChange={handleEditEntryDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit ToWatch Entry</DialogTitle>
             <DialogDescription>

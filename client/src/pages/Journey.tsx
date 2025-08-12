@@ -28,6 +28,7 @@ function ToWatchTab() {
       data={watches ?? []}
       columns={towatchColumns}
       toolbar="towatch"
+      isLoading={watches ? false : true} // Show loading state if data is not available
     />
   );
 }
@@ -40,6 +41,7 @@ function WatchedTab() {
       data={watches ?? []}
       columns={watchedColumns}
       toolbar="watched"
+      isLoading={watches ? false : true} // Show loading state if data is not available
     />
   );
 }
