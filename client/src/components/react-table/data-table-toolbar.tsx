@@ -1,5 +1,6 @@
 import { type Table } from "@tanstack/react-table";
-import { CalendarIcon, Clapperboard, Plus, X } from "lucide-react";
+import { MultiSelect } from "@/components/multi-select";
+import { CalendarIcon, Clapperboard, Link2, Plus, X } from "lucide-react";
 
 import {
   Dialog,
@@ -28,7 +29,11 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { types, ratings } from "@/components/react-table/watch-columns";
+import {
+  types,
+  ratings,
+  domains,
+} from "@/components/react-table/data-table-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { useState } from "react";
 import {
@@ -40,6 +45,12 @@ import {
 } from "@/hooks/use-watches";
 import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Domain,
+  useCreateBookmark,
+  useTags,
+  type DomainType,
+} from "@/hooks/use-bookmarks";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -505,6 +516,243 @@ export function ToWatchTableToolbar<TData>({
                   setAddEntryDialogOpen(false);
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
+              >
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+export function BookmarkTableToolbar<TData>({
+  table,
+}: DataTableToolbarProps<TData>) {
+  const isMobile = useIsMobile();
+  const { data: tags } = useTags();
+
+  const [isComposing, setIsComposing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const isFiltered = table.getState().columnFilters.length > 0;
+  const createBookmarkMutation = useCreateBookmark();
+  const [addBookmarkDialogOpen, setAddBookmarkDialogOpen] = useState(false);
+  const [bookmarkName, setBookmarkName] = useState("");
+  const [bookmarkType, setBookmarkType] = useState<DomainType>(Domain.KNL);
+  const [bookmarkLink, setBookmarkLink] = useState<string>("");
+  const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
+  const [selectedHows, setSelectedHows] = useState<string[]>([]);
+
+  const handleAddBookmarkDialogOpen = () => {
+    setBookmarkName("");
+    setBookmarkType(Domain.KNL);
+    setBookmarkLink("");
+    setSelectedWhats([]);
+    setSelectedHows([]);
+    setAddBookmarkDialogOpen(true);
+  };
+
+  const createBookmark = async (
+    title: string,
+    url: string,
+    domain: DomainType,
+    whats: string[],
+    hows: string[],
+  ) => {
+    await createBookmarkMutation.mutateAsync({
+      title,
+      url,
+      domain,
+      payload: {
+        whats,
+        hows,
+      },
+    });
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2">
+        {!isMobile && (
+          <Input
+            placeholder="Filter watches..."
+            value={searchTerm}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isComposing) {
+                table.getColumn("title")?.setFilterValue(searchTerm);
+              }
+            }}
+            className="h-8 w-[283px]"
+          />
+        )}
+
+        {table.getColumn("domain") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("domain")}
+            title="Domain"
+            options={domains}
+          />
+        )}
+        {table.getColumn("what") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("what")}
+            title="What"
+            showEmptyFilter={false}
+            options={tags?.whatTags ?? []}
+          />
+        )}
+        {table.getColumn("how") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("how")}
+            title="How"
+            showEmptyFilter={false}
+            options={tags?.howTags ?? []}
+          />
+        )}
+        {isFiltered && (
+          <Button
+            variant={`${isMobile ? "secondary" : "ghost"}`}
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              table.resetColumnFilters();
+            }}
+          >
+            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
+            <X />
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {/* <DataTableViewOptions table={table} /> */}
+        <Button
+          size="sm"
+          className="px-4"
+          onClick={handleAddBookmarkDialogOpen}
+        >
+          {!isMobile ? (
+            <>
+              <Link2 />
+              Add
+            </>
+          ) : (
+            <Plus />
+          )}
+        </Button>
+      </div>
+
+      {/* add bookmark dialog */}
+      <Dialog
+        open={addBookmarkDialogOpen}
+        onOpenChange={setAddBookmarkDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Bookmark</DialogTitle>
+            <DialogDescription>
+              Stay up to date with the bookmarks that matter most to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-add-name">Title</Label>
+                <Input
+                  id="bookmark-add-name"
+                  placeholder={!isMobile ? "Enter bookmark title..." : ""}
+                  value={bookmarkName}
+                  disabled={createBookmarkMutation.isPending}
+                  onChange={(e) => setBookmarkName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-add-domain">Domain</Label>
+                <Select
+                  onValueChange={(v: string) =>
+                    setBookmarkType(v as DomainType)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      id="bookmark-add-domain"
+                      placeholder={!isMobile ? "Select domain" : ""}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {domains.map((type, idx) => (
+                        <SelectItem key={idx} value={type.value}>
+                          <type.icon />
+                          {type.value}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-add-link">Link</Label>
+                <Input
+                  id="bookmark-add-link"
+                  placeholder={!isMobile ? "Enter bookmark link..." : ""}
+                  type="text"
+                  value={bookmarkLink}
+                  disabled={createBookmarkMutation.isPending}
+                  onChange={(e) => setBookmarkLink(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-add-what">What</Label>
+                <MultiSelect
+                  id="bookmark-add-what"
+                  placeholder=""
+                  options={tags?.whatTags ?? []}
+                  onValueChange={setSelectedWhats}
+                  defaultValue={selectedWhats}
+                  allowCreateNew
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-add-how">How</Label>
+                <MultiSelect
+                  id="bookmark-add-how"
+                  placeholder=""
+                  options={tags?.howTags ?? []}
+                  onValueChange={setSelectedHows}
+                  defaultValue={selectedHows}
+                  allowCreateNew
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setAddBookmarkDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  createBookmark(
+                    bookmarkName,
+                    bookmarkLink,
+                    bookmarkType,
+                    selectedWhats,
+                    selectedHows,
+                  );
+                  setAddBookmarkDialogOpen(false);
+                }}
+                disabled={
+                  !bookmarkName.trim() || createBookmarkMutation.isPending
+                }
               >
                 Create
               </Button>

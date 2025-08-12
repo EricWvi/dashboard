@@ -7,6 +7,7 @@ import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 import Journey from "@/pages/Journey";
+import Bookmark from "@/pages/Bookmark";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function TabbedApp() {
@@ -59,6 +60,12 @@ export default function TabbedApp() {
                   >
                     <span className="lg:inline">Journey</span>
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="bookmark"
+                    className="data-[state=active]:bg-accent flex items-center gap-2"
+                  >
+                    <span className="lg:inline">Bookmark</span>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -96,6 +103,14 @@ export default function TabbedApp() {
                 className={`${activeTab === "journey" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
               />
             </TabsTrigger>
+            <TabsTrigger
+              value="bookmark"
+              className="flex h-full flex-col items-center gap-1"
+            >
+              <CheckCircle2
+                className={`${activeTab === "bookmark" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
+              />
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -123,6 +138,13 @@ export default function TabbedApp() {
           className={`${activeTab === "journey" ? "block size-full" : "hidden"}`}
         >
           {visitedTabs.has("journey") && <Journey />}
+        </div>
+
+        {/* Bookmark - lazy render but keep mounted */}
+        <div
+          className={`${activeTab === "bookmark" ? "block size-full" : "hidden"}`}
+        >
+          {visitedTabs.has("bookmark") && <Bookmark />}
         </div>
       </div>
     </div>

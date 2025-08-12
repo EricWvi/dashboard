@@ -56,7 +56,7 @@ func (b *BookmarkView) Get(db *gorm.DB, where map[string]any) error {
 
 func ListBookmarks(db *gorm.DB, where map[string]any) ([]BookmarkView, error) {
 	bookmarks := make([]BookmarkView, 0)
-	if err := db.Where(where).
+	if err := db.Where(where).Where("deleted_at IS NULL").
 		Order("click DESC").
 		Find(&bookmarks).Error; err != nil {
 		return nil, err

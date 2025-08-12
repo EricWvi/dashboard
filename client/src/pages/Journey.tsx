@@ -1,7 +1,7 @@
 import {
   towatchColumns,
   watchedColumns,
-} from "@/components/react-table/watch-columns";
+} from "@/components/react-table/data-table-columns";
 import { DataTable } from "@/components/react-table/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWatches, WatchStatus } from "@/hooks/use-watches";

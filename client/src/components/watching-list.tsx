@@ -8,7 +8,7 @@ import {
   useCompleteWatch,
 } from "@/hooks/use-watches";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { types } from "@/components/react-table/watch-columns";
+import { types } from "@/components/react-table/data-table-columns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -42,16 +42,8 @@ import {
   Minus,
   TicketCheck,
 } from "lucide-react";
-import imageCompression from "browser-image-compression";
 import { dateString, formatMediaUrl } from "@/lib/utils";
-import { toast } from "sonner";
-
-const compressOptions = {
-  maxWidthOrHeight: 1920,
-  useWebWorker: true,
-  preserveExif: true,
-  initialQuality: 0.8,
-};
+import { fileUpload } from "@/lib/file-upload";
 
 const WatchingItem = ({ watch }: { watch: Watch }) => {
   const isMobile = useIsMobile();
@@ -113,36 +105,16 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    const compressed = await imageCompression(files[0], compressOptions);
-
-    const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append("photos", compressed, files[0].name);
-
-    xhr.open("POST", "/api/upload");
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const progress = Math.round((event.loaded / event.total) * 100);
+    fileUpload({
+      event,
+      onProgress: (progress) => {
         setProgress(progress);
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        setEntryImg(formatMediaUrl(JSON.parse(xhr.responseText).photos[0]));
+      },
+      onSuccess: (response) => {
+        setEntryImg(formatMediaUrl(JSON.parse(response).photos[0]));
         setProgress(0);
-      } else {
-        toast("Upload Failed");
-      }
-    };
-
-    xhr.onerror = () => toast("Network error");
-
-    xhr.send(formData);
+      },
+    });
   };
 
   return (
@@ -247,7 +219,12 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
         open={editEntryDialogOpen}
         onOpenChange={handleEditEntryDialogOpen}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Watching Entry</DialogTitle>
             <DialogDescription>

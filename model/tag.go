@@ -25,7 +25,7 @@ func (t *Tag) TableName() string {
 
 func ListTags(db *gorm.DB, where map[string]any) ([]string, error) {
 	tags := make([]string, 0)
-	if err := db.Where(where).Pluck("name", &tags).Error; err != nil {
+	if err := db.Model(&Tag{}).Where(where).Pluck("name", &tags).Error; err != nil {
 		return nil, err
 	}
 	return tags, nil
