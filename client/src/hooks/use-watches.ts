@@ -62,26 +62,29 @@ export const Rating = {
 };
 
 export type WatchMeasure =
-  | "Percentage"
   | "Chapter"
   | "Episode"
-  | "Volume"
+  | "Minute"
   | "Page"
-  | "None";
+  | "Percentage"
+  | "Trophy"
+  | "Volume";
 export const WatchMeasure: {
-  PERCENTAGE: WatchMeasure;
   CHAPTER: WatchMeasure;
   EPISODE: WatchMeasure;
-  VOLUME: WatchMeasure;
+  MINUTE: WatchMeasure;
   PAGE: WatchMeasure;
-  NONE: WatchMeasure;
+  PERCENTAGE: WatchMeasure;
+  TROPHY: WatchMeasure;
+  VOLUME: WatchMeasure;
 } = {
-  PERCENTAGE: "Percentage",
   CHAPTER: "Chapter",
   EPISODE: "Episode",
-  VOLUME: "Volume",
+  MINUTE: "Minute",
   PAGE: "Page",
-  NONE: "None",
+  PERCENTAGE: "Percentage",
+  TROPHY: "Trophy",
+  VOLUME: "Volume",
 };
 
 const keyWatch = (id: number) => ["/api/watch", id];
@@ -230,6 +233,34 @@ export function useStartWatch() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(WatchStatus.PLAN_TO_WATCH),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.WATCHING),
+      });
+    },
+  });
+}
+
+export function useCompleteWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; rate: number }) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=UpdateWatch",
+        {
+          id: data.id,
+          status: WatchStatus.COMPLETED,
+          rate: data.rate,
+          createdAt: new Date(),
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.COMPLETED),
       });
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(WatchStatus.WATCHING),

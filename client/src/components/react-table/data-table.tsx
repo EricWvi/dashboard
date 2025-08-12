@@ -23,21 +23,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { WatchedTableToolbar, ToWatchTableToolbar } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
-import { type DataTableToolbarProps } from "./data-table-toolbar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  toolbar: ({ table }: DataTableToolbarProps<TData>) => React.JSX.Element;
+  toolbar: string;
+  isLoading: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   toolbar,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
   const [rowSelection, setRowSelection] = React.useState({});
@@ -47,6 +49,12 @@ export function DataTable<TData, TValue>({
     [],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  // compute default pageSize on mobile
+  const defaultPageSize =
+    window.innerWidth < 768
+      ? Math.min(Math.ceil((window.innerHeight - 344) / 50), 10)
+      : 10;
 
   const table = useReactTable({
     data,
@@ -59,7 +67,7 @@ export function DataTable<TData, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: defaultPageSize,
       },
     },
     enableRowSelection: true,
@@ -78,12 +86,15 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={`${isMobile ? "px-6" : ""}`}>{toolbar({ table })}</div>
+      <div className={`${isMobile ? "px-6" : ""}`}>
+        {toolbar === "towatch" && <ToWatchTableToolbar table={table} />}
+        {toolbar === "watched" && <WatchedTableToolbar table={table} />}
+      </div>
 
       <div
         className={`overflow-hidden rounded-md ${!isMobile ? "border" : ""}`}
       >
-        <Table className={`${isMobile ? "mx-6" : ""}`}>
+        <Table className={`${isMobile ? "mr-2 ml-6" : ""}`}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -127,7 +138,7 @@ export function DataTable<TData, TValue>({
                   ))}
                 </TableRow>
               ))
-            ) : (
+            ) : !isLoading ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
@@ -136,6 +147,33 @@ export function DataTable<TData, TValue>({
                   No results.
                 </TableCell>
               </TableRow>
+            ) : (
+              <>
+                {Array.from({ length: defaultPageSize }).map((_, index) =>
+                  table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={index}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          (!header.column.columnDef.size ||
+                            header.column.columnDef.size > 20) && (
+                            <TableCell
+                              key={header.id}
+                              colSpan={header.colSpan}
+                              style={{
+                                ...(header.column.columnDef.size
+                                  ? { width: header.column.columnDef.size }
+                                  : {}),
+                              }}
+                            >
+                              <Skeleton className="h-8 rounded-md" />
+                            </TableCell>
+                          )
+                        );
+                      })}
+                    </TableRow>
+                  )),
+                )}
+              </>
             )}
           </TableBody>
         </Table>

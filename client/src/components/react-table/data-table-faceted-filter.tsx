@@ -85,7 +85,15 @@ export function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent
+        className="w-[200px] p-0"
+        align="start"
+        onOpenAutoFocus={(e) => {
+          if (isMobile) {
+            e.preventDefault(); // stops Radix from focusing anything
+          }
+        }}
+      >
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>
