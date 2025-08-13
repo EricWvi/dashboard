@@ -60,6 +60,10 @@ export function useBookmarks() {
   });
 }
 
+export function clickBookmark(id: number) {
+  apiRequest("POST", "/api/bookmark?Action=ClickBookmark", { id });
+}
+
 export type Tag = {
   value: string;
   label: string;

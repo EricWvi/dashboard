@@ -3,7 +3,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 
 import { Rating, WatchEnum, type Watch } from "@/hooks/use-watches";
-import { type Bookmark, Domain } from "@/hooks/use-bookmarks";
+import { type Bookmark, clickBookmark, Domain } from "@/hooks/use-bookmarks";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {
@@ -331,6 +331,7 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
             className="max-w-[600px] truncate font-medium underline decoration-1"
             href={row.original.url}
             target="_blank"
+            onClick={() => clickBookmark(row.original.id)}
           >
             {row.getValue("title")}
           </a>

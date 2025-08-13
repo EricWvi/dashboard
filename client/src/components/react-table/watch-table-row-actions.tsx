@@ -922,6 +922,8 @@ export function BookmarkTableRowActions<TData>({
                   onValueChange={setSelectedWhats}
                   defaultValue={selectedWhats}
                   allowCreateNew
+                  modalPopover
+                  hideSelectAll
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -932,6 +934,8 @@ export function BookmarkTableRowActions<TData>({
                   onValueChange={setSelectedHows}
                   defaultValue={selectedHows}
                   allowCreateNew
+                  modalPopover
+                  hideSelectAll
                 />
               </div>
             </div>

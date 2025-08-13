@@ -992,7 +992,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                 }
                               }}
                               aria-label={`Remove ${option.label} from selection`}
-                              className="-m-0.5 ml-2 h-4 w-4 cursor-pointer rounded-sm p-0.5 hover:bg-white/20 focus:ring-1 focus:ring-white/50 focus:outline-none"
+                              className="-m-0.5 ml-2 h-4 w-4 cursor-pointer rounded-sm hover:bg-white/20 focus:ring-1 focus:ring-white/50 focus:outline-none"
                             >
                               <XCircle
                                 className={cn(
@@ -1127,36 +1127,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 )}
               >
                 <CommandEmpty>
-                  {allowCreateNew && searchValue.trim() ? (
-                    <div className="p-2">
-                      <CommandItem
-                        onSelect={() => createNewTag(searchValue.trim())}
-                        className="cursor-pointer justify-start"
-                      >
-                        <Plus className="text-muted-foreground mr-2 h-4 w-4" />
-                        <span>Create "{searchValue.trim()}"</span>
-                      </CommandItem>
-                    </div>
-                  ) : (
-                    emptyIndicator || "No results found."
-                  )}
+                  {emptyIndicator || "No results found."}
                 </CommandEmpty>
-
-                {/* Create new tag option */}
-                {allowCreateNew && searchValue.trim() && !hasExactMatch() && (
-                  <CommandGroup>
-                    <CommandItem
-                      key="create-new"
-                      onSelect={() => createNewTag(searchValue.trim())}
-                      role="option"
-                      aria-label={`Create new tag "${searchValue.trim()}"`}
-                      className="cursor-pointer"
-                    >
-                      <Plus className="text-muted-foreground mr-2 h-4 w-4" />
-                      <span>Create "{searchValue.trim()}"</span>
-                    </CommandItem>
-                  </CommandGroup>
-                )}
 
                 {!hideSelectAll && !searchValue && (
                   <CommandGroup>
@@ -1184,7 +1156,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         )}
                         aria-hidden="true"
                       >
-                        <CheckIcon className="h-4 w-4" />
+                        <CheckIcon className="text-primary-foreground h-4 w-4" />
                       </div>
                       <span>
                         (Select All
@@ -1206,6 +1178,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         return (
                           <CommandItem
                             key={option.value}
+                            value={option.value}
                             onSelect={() => toggleOption(option.value)}
                             role="option"
                             aria-selected={isSelected}
@@ -1229,7 +1202,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                               )}
                               aria-hidden="true"
                             >
-                              <CheckIcon className="h-4 w-4" />
+                              <CheckIcon className="text-primary-foreground h-4 w-4" />
                             </div>
                             {option.icon && (
                               <option.icon
@@ -1250,6 +1223,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       return (
                         <CommandItem
                           key={option.value}
+                          value={option.value}
                           onSelect={() => toggleOption(option.value)}
                           role="option"
                           aria-selected={isSelected}
@@ -1272,7 +1246,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             )}
                             aria-hidden="true"
                           >
-                            <CheckIcon className="h-4 w-4" />
+                            <CheckIcon className="text-primary-foreground h-4 w-4" />
                           </div>
                           {option.icon && (
                             <option.icon
@@ -1286,12 +1260,31 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     })}
                   </CommandGroup>
                 )}
+
+                {/* Create new tag option */}
+                {allowCreateNew && searchValue.trim() && !hasExactMatch() && (
+                  <CommandGroup>
+                    <CommandItem
+                      key="create-new"
+                      value={searchValue.trim()}
+                      onSelect={() => createNewTag(searchValue.trim())}
+                      role="option"
+                      aria-label={`Create new tag "${searchValue.trim()}"`}
+                      className="cursor-pointer"
+                    >
+                      <Plus className="text-muted-foreground mr-2 h-4 w-4" />
+                      <span>Create "{searchValue.trim()}"</span>
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+
                 <CommandSeparator />
                 <CommandGroup>
                   <div className="flex items-center justify-between">
                     {selectedValues.length > 0 && (
                       <>
                         <CommandItem
+                          value=""
                           onSelect={handleClear}
                           className="flex-1 cursor-pointer justify-center"
                         >
@@ -1304,6 +1297,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       </>
                     )}
                     <CommandItem
+                      value=""
                       onSelect={() => setIsPopoverOpen(false)}
                       className="max-w-full flex-1 cursor-pointer justify-center"
                     >
