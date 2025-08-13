@@ -98,7 +98,7 @@ export function DataTableFacetedFilter<TData, TValue>({
       >
         <Command>
           <CommandInput placeholder={title} />
-          <CommandList>
+          <CommandList className="max-h-[400px]">
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {(showEmptyFilter

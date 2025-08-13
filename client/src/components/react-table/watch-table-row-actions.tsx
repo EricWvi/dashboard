@@ -402,6 +402,8 @@ export function ToWatchTableRowActions<TData>({
   const [measureRange, setMeasureRange] = useState<string>("");
   const handleStartWatchingDialogOpen = (open: boolean) => {
     if (open) {
+      setEntryName(watch.title);
+      setEntryImg(watch.payload.img ?? undefined);
       setEntryMeasure("");
       setMeasureRange("");
     }

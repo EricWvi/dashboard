@@ -26,6 +26,7 @@ import {
   MountainSnow,
   Palette,
   Projector,
+  Puzzle,
   School,
   Sparkle,
   Sparkles,
@@ -125,6 +126,10 @@ export const domains = [
   {
     value: Domain.ENV,
     icon: MountainSnow,
+  },
+  {
+    value: Domain.MIS,
+    icon: Puzzle,
   },
 ];
 

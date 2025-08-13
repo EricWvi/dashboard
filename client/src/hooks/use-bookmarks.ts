@@ -19,7 +19,8 @@ export type DomainType =
   | "生活"
   | "金融"
   | "艺术"
-  | "自然";
+  | "自然"
+  | "杂录";
 export const Domain: {
   TEC: DomainType;
   KNL: DomainType;
@@ -30,6 +31,7 @@ export const Domain: {
   BUS: DomainType;
   ART: DomainType;
   ENV: DomainType;
+  MIS: DomainType;
 } = {
   TEC: "技术",
   KNL: "知识",
@@ -40,6 +42,7 @@ export const Domain: {
   BUS: "金融",
   ART: "艺术",
   ENV: "自然",
+  MIS: "杂录",
 };
 
 const keyBookmarks = () => ["/api/bookmarks"];
