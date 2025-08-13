@@ -25,6 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
+  showEmptyFilter?: boolean;
   options: {
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
@@ -34,6 +35,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
+  showEmptyFilter = true,
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const isMobile = useIsMobile();
@@ -99,10 +101,12 @@ export function DataTableFacetedFilter<TData, TValue>({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
-              {/* .filter(
-                  (option) => facets && (facets.get(option.value) ?? 0 > 0),
-                ) */}
-              {options.map((option) => {
+              {(showEmptyFilter
+                ? options
+                : options.filter(
+                    (option) => facets && (facets.get(option.value) ?? 0 > 0),
+                  )
+              ).map((option) => {
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem

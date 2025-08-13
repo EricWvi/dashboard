@@ -19,7 +19,7 @@ export type WatchType =
   | "Book"
   | "Game"
   | "Manga";
-export const WatchType: {
+export const WatchEnum: {
   MOVIE: WatchType;
   SERIES: WatchType;
   DOCUMENTARY: WatchType;
@@ -87,12 +87,10 @@ export const WatchMeasure: {
   VOLUME: "Volume",
 };
 
-const keyWatch = (id: number) => ["/api/watch", id];
+// const keyWatch = (id: number) => ["/api/watch", id];
 const keyWatchesOfStatus = (status: WatchStatus) => ["/api/watches", status];
 
 export function useWatches(status: WatchStatus) {
-  const queryClient = useQueryClient();
-
   return useQuery({
     queryKey: keyWatchesOfStatus(status),
     queryFn: async () => {
@@ -104,27 +102,27 @@ export function useWatches(status: WatchStatus) {
         },
       );
       const data = await response.json();
-      (data.message.watches as Watch[]).forEach((watch) => {
-        queryClient.setQueryData(keyWatch(watch.id), watch);
-      });
+      // (data.message.watches as Watch[]).forEach((watch) => {
+      //   queryClient.setQueryData(keyWatch(watch.id), watch);
+      // });
       return data.message.watches as Watch[];
     },
   });
 }
 
-export function useWatch(id: number) {
-  return useQuery<Watch>({
-    queryKey: keyWatch(id),
-    enabled: !!id,
-    queryFn: async () => {
-      const response = await apiRequest("POST", "/api/watch?Action=GetWatch", {
-        id,
-      });
-      const data = await response.json();
-      return data.message as Watch;
-    },
-  });
-}
+// export function useWatch(id: number) {
+//   return useQuery<Watch>({
+//     queryKey: keyWatch(id),
+//     enabled: !!id,
+//     queryFn: async () => {
+//       const response = await apiRequest("POST", "/api/watch?Action=GetWatch", {
+//         id,
+//       });
+//       const data = await response.json();
+//       return data.message as Watch;
+//     },
+//   });
+// }
 
 export function useCreateWatched() {
   const queryClient = useQueryClient();
@@ -226,6 +224,7 @@ export function useStartWatch() {
           id: data.id,
           status: WatchStatus.WATCHING,
           payload: data.payload,
+          createdAt: new Date(),
         },
       );
       return response.json();

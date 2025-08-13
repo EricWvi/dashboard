@@ -11,6 +11,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type SortingState,
+  type Table as RTable,
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -23,7 +24,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { WatchedTableToolbar, ToWatchTableToolbar } from "./data-table-toolbar";
+import {
+  WatchedTableToolbar,
+  ToWatchTableToolbar,
+  BookmarkTableToolbar,
+} from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  toolbar: string;
+  toolbar: "towatch" | "watched" | "bookmark";
   isLoading: boolean;
 }
 
@@ -50,11 +55,42 @@ export function DataTable<TData, TValue>({
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
+  const [showLoading, setShowLoading] = React.useState(true); // controls animation
+  React.useEffect(() => {
+    if (!isLoading) {
+      setTimeout(() => {
+        setShowLoading(false);
+      }, 200);
+    }
+  }, [isLoading]);
+
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
-      ? Math.min(Math.ceil((window.innerHeight - 344) / 50), 10)
+      ? Math.min(Math.floor((window.innerHeight - 344) / 50), 10)
       : 10;
+
+  const getTagsFacetedUniqueValues = (
+    table: RTable<TData>,
+    columnId: string,
+  ) => {
+    if (columnId !== "what" && columnId !== "how") {
+      return getFacetedUniqueValues()(table as RTable<unknown>, columnId);
+    }
+    return () => {
+      const map = new Map<string, number>();
+      table
+        .getColumn(columnId)
+        ?.getFacetedRowModel()
+        .rows.forEach((row) => {
+          const tags = row.getValue(columnId) as string[];
+          tags.forEach((tag) => {
+            map.set(tag, (map.get(tag) ?? 0) + 1);
+          });
+        });
+      return map;
+    };
+  };
 
   const table = useReactTable({
     data,
@@ -81,7 +117,10 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getFacetedUniqueValues:
+      toolbar === "bookmark"
+        ? getTagsFacetedUniqueValues
+        : getFacetedUniqueValues(),
   });
 
   return (
@@ -89,6 +128,7 @@ export function DataTable<TData, TValue>({
       <div className={`${isMobile ? "px-6" : ""}`}>
         {toolbar === "towatch" && <ToWatchTableToolbar table={table} />}
         {toolbar === "watched" && <WatchedTableToolbar table={table} />}
+        {toolbar === "bookmark" && <BookmarkTableToolbar table={table} />}
       </div>
 
       <div
@@ -122,32 +162,7 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : !isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            ) : (
+            {showLoading ? (
               <>
                 {Array.from({ length: defaultPageSize }).map((_, index) =>
                   table.getHeaderGroups().map((headerGroup) => (
@@ -174,6 +189,31 @@ export function DataTable<TData, TValue>({
                   )),
                 )}
               </>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>

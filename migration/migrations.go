@@ -67,7 +67,38 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddPayloadColumn,
 			Down:    RemovePayloadColumn,
 		},
+		{
+			Version: "v0.11.0",
+			Name:    "Add bookmark table",
+			Up:      AddBookmarkTable,
+			Down:    RemoveBookmarkTable,
+		},
 	}
+}
+
+// -------------------- v0.11.0 -------------------
+
+func AddBookmarkTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_bookmark (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			url VARCHAR(1024) NOT NULL,
+			title VARCHAR(1024) NOT NULL,
+			click INTEGER DEFAULT 0 NOT NULL,
+			domain VARCHAR(64) NOT NULL,
+			payload JSONB DEFAULT '{}'::jsonb NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+		);
+	`).Error
+}
+
+func RemoveBookmarkTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_bookmark CASCADE;
+	`).Error
 }
 
 // -------------------- v0.10.0 -------------------

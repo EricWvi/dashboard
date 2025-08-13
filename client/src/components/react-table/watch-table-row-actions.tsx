@@ -4,6 +4,7 @@ import { type Row } from "@tanstack/react-table";
 import { CalendarIcon, MoreHorizontal, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { MultiSelect } from "@/components/multi-select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,28 +38,29 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
-import { types } from "@/components/react-table/watch-columns";
+import { domains, types } from "@/components/react-table/data-table-columns";
 import {
   useDeleteWatch,
   useStartWatch,
   useUpdateWatch,
   WatchMeasure,
   WatchStatus,
-  WatchType,
+  WatchEnum,
+  type WatchType,
   type Watch,
 } from "@/hooks/use-watches";
 import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, formatMediaUrl, todayStart } from "@/lib/utils";
-import { toast } from "sonner";
-import imageCompression from "browser-image-compression";
-
-const compressOptions = {
-  maxWidthOrHeight: 1920,
-  useWebWorker: true,
-  preserveExif: true,
-  initialQuality: 0.8,
-};
+import { fileUpload } from "@/lib/file-upload";
+import {
+  Domain,
+  useDeleteBookmark,
+  useTags,
+  useUpdateBookmark,
+  type Bookmark,
+  type DomainType,
+} from "@/hooks/use-bookmarks";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -73,6 +75,7 @@ export function WatchedTableRowActions<TData>({
   const [entryType, setEntryType] = useState<WatchType | undefined>(undefined);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryRate, setEntryRate] = useState<number>(16);
+  const [entryImg, setEntryImg] = useState<string | undefined>(undefined);
   const [entryMarkInput, setEntryMarkInput] = useState("");
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
   const [datepickerOpen, setDatepickerOpen] = useState(false);
@@ -87,17 +90,35 @@ export function WatchedTableRowActions<TData>({
     deleteWatchMutation.mutate({ id: watch.id, status: watch.status });
   };
 
+  // edit watch entry dialog
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editEntryDialogOpen, setEditEntryDialogOpen] = useState(false);
   const handleEditEntryDialogOpen = (open: boolean) => {
     if (open) {
       setEntryName(watch.title);
       setEntryType(watch.type);
       setEntryYear(watch.year);
+      setEntryImg(watch.payload.img ?? undefined);
       setEntryRate(watch.rate);
       setEntryMarkInput(dateString(watch.createdAt));
       setEntryMark(watch.createdAt);
     }
     setEditEntryDialogOpen(open);
+  };
+  const [progress, setProgress] = useState(0);
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    fileUpload({
+      event,
+      onProgress: (progress) => {
+        setProgress(progress);
+      },
+      onSuccess: (response) => {
+        setEntryImg(formatMediaUrl(JSON.parse(response).photos[0]));
+        setProgress(0);
+      },
+    });
   };
 
   return (
@@ -286,6 +307,46 @@ export function WatchedTableRowActions<TData>({
               />
             </div>
 
+            <div className="relative aspect-[16/9]">
+              {entryImg ? (
+                <>
+                  <img
+                    src={entryImg}
+                    alt={entryName}
+                    className="size-full rounded-md object-cover"
+                  />
+                  <Button
+                    variant="secondary"
+                    className="absolute top-1 right-1"
+                    onClick={() => setEntryImg(undefined)}
+                  >
+                    <X />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="size-full border-2 border-dashed"
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  {progress ? (
+                    <Progress value={progress} />
+                  ) : (
+                    <Plus className="text-muted-foreground size-8" />
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                  />
+                </Button>
+              )}
+            </div>
+
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
@@ -298,12 +359,12 @@ export function WatchedTableRowActions<TData>({
                   updateWatch({
                     id: watch.id,
                     title: entryName,
-                    type: entryType ?? WatchType.MOVIE,
+                    type: entryType ?? WatchEnum.MOVIE,
                     status: WatchStatus.COMPLETED,
                     year: entryYear ?? new Date().getFullYear(),
                     rate: entryRate,
                     createdAt: entryMark ?? todayStart(),
-                    payload: watch.payload,
+                    payload: { ...watch.payload, img: entryImg },
                   });
                   handleEditEntryDialogOpen(false);
                 }}
@@ -372,39 +433,20 @@ export function ToWatchTableRowActions<TData>({
     }
     setEditEntryDialogOpen(open);
   };
+
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    const compressed = await imageCompression(files[0], compressOptions);
-
-    const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append("photos", compressed, files[0].name);
-
-    xhr.open("POST", "/api/upload");
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const progress = Math.round((event.loaded / event.total) * 100);
+    fileUpload({
+      event,
+      onProgress: (progress) => {
         setProgress(progress);
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        setEntryImg(formatMediaUrl(JSON.parse(xhr.responseText).photos[0]));
+      },
+      onSuccess: (response) => {
+        setEntryImg(formatMediaUrl(JSON.parse(response).photos[0]));
         setProgress(0);
-      } else {
-        toast("Upload Failed");
-      }
-    };
-
-    xhr.onerror = () => toast("Network error");
-
-    xhr.send(formData);
+      },
+    });
   };
 
   return (
@@ -693,7 +735,7 @@ export function ToWatchTableRowActions<TData>({
                   updateWatch({
                     id: watch.id,
                     title: entryName,
-                    type: entryType ?? WatchType.MOVIE,
+                    type: entryType ?? WatchEnum.MOVIE,
                     year: entryYear ?? new Date().getFullYear(),
                     payload: {
                       ...watch.payload,
@@ -704,6 +746,225 @@ export function ToWatchTableRowActions<TData>({
                   handleEditEntryDialogOpen(false);
                 }}
                 disabled={!entryName.trim() || updateWatchMutation.isPending}
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </DropdownMenu>
+  );
+}
+
+export function BookmarkTableRowActions<TData>({
+  row,
+}: DataTableRowActionsProps<TData>) {
+  const isMobile = useIsMobile();
+  const { data: tags } = useTags();
+  const bookmark = row.original as Bookmark;
+  const [bookmarkName, setBookmarkName] = useState("");
+  const [bookmarkType, setBookmarkType] = useState<DomainType>(Domain.KNL);
+  const [bookmarkLink, setBookmarkLink] = useState<string>("");
+  const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
+  const [selectedHows, setSelectedHows] = useState<string[]>([]);
+  const updateBookmarkMutation = useUpdateBookmark();
+  const updateBookmark = (bookmark: { id: number } & Partial<Bookmark>) => {
+    updateBookmarkMutation.mutate(bookmark);
+  };
+
+  // confirm Dialog
+  const deleteBookmarkMutation = useDeleteBookmark();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const deleteBookmark = () => {
+    deleteBookmarkMutation.mutate({ id: bookmark.id });
+  };
+
+  // edit bookmark dialog
+  const [editBookmarkDialogOpen, setEditBookmarkDialogOpen] = useState(false);
+  const handleEditBookmarkDialogOpen = (open: boolean) => {
+    if (open) {
+      setBookmarkName(bookmark.title);
+      setBookmarkType(bookmark.domain);
+      setBookmarkLink(bookmark.url);
+      setSelectedWhats(bookmark.payload.whats ?? []);
+      setSelectedHows(bookmark.payload.hows ?? []);
+    }
+    setEditBookmarkDialogOpen(open);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="data-[state=open]:bg-muted size-8"
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        <DropdownMenuItem onClick={() => handleEditBookmarkDialogOpen(true)}>
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => setConfirmDialogOpen(true)}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+
+      {/* confirm Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete [{bookmark.title}]?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteBookmark();
+                setConfirmDialogOpen(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* edit bookmark dialog */}
+      <Dialog
+        open={editBookmarkDialogOpen}
+        onOpenChange={handleEditBookmarkDialogOpen}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Edit Bookmark</DialogTitle>
+            <DialogDescription>
+              Stay up to date with the bookmarks that matter most to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-edit-title">Title</Label>
+                <Input
+                  id="bookmark-edit-title"
+                  placeholder={!isMobile ? "Enter bookmark title..." : ""}
+                  value={bookmarkName}
+                  disabled={updateBookmarkMutation.isPending}
+                  onChange={(e) => setBookmarkName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-edit-domain">Domain</Label>
+                <Select
+                  value={bookmarkType}
+                  onValueChange={(v: string) =>
+                    setBookmarkType(v as DomainType)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      id="bookmark-edit-domain"
+                      placeholder={!isMobile ? "Select domain" : ""}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {domains.map((type, idx) => (
+                        <SelectItem key={idx} value={type.value}>
+                          <type.icon />
+                          {type.value}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-edit-link">Link</Label>
+                <Input
+                  id="bookmark-edit-link"
+                  placeholder={!isMobile ? "Enter bookmark link..." : ""}
+                  type="text"
+                  value={bookmarkLink}
+                  disabled={updateBookmarkMutation.isPending}
+                  onChange={(e) => setBookmarkLink(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-edit-what">What</Label>
+                <MultiSelect
+                  id="bookmark-edit-what"
+                  options={tags?.whatTags ?? []}
+                  onValueChange={setSelectedWhats}
+                  defaultValue={selectedWhats}
+                  allowCreateNew
+                  modalPopover
+                  hideSelectAll
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bookmark-edit-how">How</Label>
+                <MultiSelect
+                  id="bookmark-edit-how"
+                  options={tags?.howTags ?? []}
+                  onValueChange={setSelectedHows}
+                  defaultValue={selectedHows}
+                  allowCreateNew
+                  modalPopover
+                  hideSelectAll
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleEditBookmarkDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  updateBookmark({
+                    id: bookmark.id,
+                    title: bookmarkName,
+                    url: bookmarkLink,
+                    domain: bookmarkType,
+                    payload: {
+                      ...bookmark.payload,
+                      whats: selectedWhats,
+                      hows: selectedHows,
+                    },
+                  });
+                  handleEditBookmarkDialogOpen(false);
+                }}
+                disabled={
+                  !bookmarkName.trim() || updateBookmarkMutation.isPending
+                }
               >
                 Update
               </Button>

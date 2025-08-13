@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/EricWvi/dashboard/handler"
+	"github.com/EricWvi/dashboard/handler/bookmark"
 	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/media"
 	"github.com/EricWvi/dashboard/handler/tiptap"
@@ -60,6 +61,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.POST("/watch", watch.DefaultHandler)
 	back.POST("/collection", collection.DefaultHandler)
 	back.POST("/tiptap", tiptap.DefaultHandler)
+	back.POST("/bookmark", bookmark.DefaultHandler)
 
 	return g
 }
