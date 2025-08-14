@@ -351,24 +351,24 @@ const inbox = {
   name: "📥 Inbox",
 };
 
-export function useCollections() {
-  const queryClient = useQueryClient();
+export const CollectionsQuery = {
+  queryKey: keyAllCollection(),
+  queryFn: async () => {
+    const response = await apiRequest(
+      "POST",
+      "/api/collection?Action=ListCollections",
+      {},
+    );
+    const data = await response.json();
+    (data.message.collections as Collection[]).map((collection) => {
+      queryClient.setQueryData(keyCollection(collection.id), collection);
+    });
+    return [inbox, ...data.message.collections] as Collection[];
+  },
+};
 
-  return useQuery({
-    queryKey: keyAllCollection(),
-    queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/collection?Action=ListCollections",
-        {},
-      );
-      const data = await response.json();
-      (data.message.collections as Collection[]).map((collection) => {
-        queryClient.setQueryData(keyCollection(collection.id), collection);
-      });
-      return [inbox, ...data.message.collections] as Collection[];
-    },
-  });
+export function useCollections() {
+  return useQuery(CollectionsQuery);
 }
 
 export function useCollection(id: number) {

@@ -508,6 +508,7 @@ export function ToWatchTableRowActions<TData>({
         progress: 0,
         checkpoints: [[dateString(new Date(), "-"), 0]],
       },
+      title: watch.title,
     });
   };
 
