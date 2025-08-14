@@ -461,6 +461,12 @@ export function ToWatchTableRowActions<TData>({
       },
     });
   };
+  const moveToTop = () => {
+    return updateWatchMutation.mutateAsync({
+      id: watch.id,
+      createdAt: new Date(),
+    });
+  };
 
   // start watching dialog
   const [startWatchingDialogOpen, setStartWatchingDialogOpen] = useState(false);
@@ -544,8 +550,11 @@ export function ToWatchTableRowActions<TData>({
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
           Edit
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => moveToTop()}>
+          Move to Top
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleStartWatchingDialogOpen(true)}>
-          Start to Watch
+          Start Watching
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
