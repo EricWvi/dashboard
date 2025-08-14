@@ -59,8 +59,6 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon";
 
 // --- Hooks ---
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useWindowSize } from "@/hooks/use-window-size";
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
@@ -73,9 +71,10 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 // --- Context ---
 import { useTTContext } from "@/components/editor";
-import { useDraft, syncDraft, removeDraftQuery } from "@/hooks/use-draft";
+import { syncDraft, removeDraftQuery } from "@/hooks/use-draft";
 import { useEffect, useRef, useState } from "react";
 import { Eraser, Save } from "lucide-react";
+import { toast } from "sonner";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -106,6 +105,12 @@ const MainToolbarContent = ({
       </ToolbarGroup>
 
       <ToolbarSeparator />
+
+      {isMobile && (
+        <ToolbarGroup>
+          <ImageUploadButton text="Add" />
+        </ToolbarGroup>
+      )}
 
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
@@ -151,11 +156,15 @@ const MainToolbarContent = ({
 
       <ToolbarSeparator />
 
-      <ToolbarGroup>
-        <ImageUploadButton text="Add" />
-      </ToolbarGroup>
+      {!isMobile && (
+        <>
+          <ToolbarGroup>
+            <ImageUploadButton text="Add" />
+          </ToolbarGroup>
 
-      <Spacer />
+          <Spacer />
+        </>
+      )}
 
       {isMobile && <ToolbarSeparator />}
 
@@ -198,14 +207,12 @@ const MobileToolbarContent = ({
   </>
 );
 
-export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
-  const { id, open, setId, setOpen } = useTTContext();
-  const { data: draft } = useDraft(id);
+export function SimpleEditor({ draft }: { draft: any }) {
+  const { id, setId, setOpen } = useTTContext();
   const [isDirty, setIsDirty] = useState(false);
   const isDirtyRef = useRef(isDirty);
 
   const isMobile = useIsMobile();
-  const windowSize = useWindowSize();
   const [mobileView, setMobileView] = React.useState<
     "main" | "highlighter" | "link"
   >("main");
@@ -246,20 +253,14 @@ export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
         maxSize: MAX_FILE_SIZE,
         limit: 9,
         upload: handleImageUpload,
-        onError: (error) => console.error("Upload failed:", error),
+        onError: (error) =>
+          toast("Upload failed", { description: error.message }),
       }),
     ],
-    content: undefined,
+    content: draft,
     onUpdate: () => {
-      if (id !== 0) {
-        setIsDirty(true);
-      }
+      setIsDirty(true);
     },
-  });
-
-  const rect = useCursorVisibility({
-    editor,
-    overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
   });
 
   React.useEffect(() => {
@@ -274,29 +275,22 @@ export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
 
   useEffect(() => {
     if (editor) {
-      if (draft) {
-        editor.commands.setContent(draft.content);
-        setTimeout(() => setIsDirty(false), 0);
-        if (open) {
-          // sync every 5 seconds
-          const interval = setInterval(() => {
-            if (isDirtyRef.current) {
-              syncDraft({ id, content: editor.getJSON() });
-              setIsDirty(false);
-            }
-          }, 5000);
-          return () => clearInterval(interval);
+      // sync every 5 seconds
+      const interval = setInterval(() => {
+        if (isDirtyRef.current) {
+          syncDraft({ id, content: editor.getJSON() });
+          setIsDirty(false);
         }
-      } else {
-        editor.commands.clearContent();
-        setTimeout(() => setIsDirty(false), 0);
-      }
+      }, 5000);
+      return () => clearInterval(interval);
     }
-  }, [draft, editor]);
+  }, [editor]);
 
   const handleSave = async () => {
     if (editor && isDirtyRef.current) {
-      syncDraft({ id, content: editor.getJSON() });
+      syncDraft({ id, content: editor.getJSON() }).then(() => {
+        toast("Draft saved successfully");
+      });
     }
     setId(0);
     setOpen(false);
@@ -304,30 +298,19 @@ export function SimpleEditor({ isScrolling }: { isScrolling: boolean }) {
   };
 
   const handleDrop = async () => {
-    if (draft) {
-      syncDraft({ id, content: draft.content });
-    }
+    syncDraft({ id, content: draft }).then(() => {
+      toast("Draft dropped successfully");
+    });
     setId(0);
     setOpen(false);
+    removeDraftQuery(id);
   };
 
   return (
     editor && (
       <div className="simple-editor-wrapper">
         <EditorContext.Provider value={{ editor }}>
-          <Toolbar
-            ref={toolbarRef}
-            style={{
-              ...(isScrolling && isMobile
-                ? { opacity: 0, transition: "opacity 0.1s ease-in-out" }
-                : {}),
-              ...(isMobile
-                ? {
-                    bottom: `calc(100% - ${windowSize.height - rect.y}px)`,
-                  }
-                : {}),
-            }}
-          >
+          <Toolbar ref={toolbarRef}>
             {mobileView === "main" ? (
               <MainToolbarContent
                 onHighlighterClick={() => setMobileView("highlighter")}

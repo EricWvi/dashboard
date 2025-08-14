@@ -1,4 +1,5 @@
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+import { useDraft } from "@/hooks/use-draft";
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 type TTEditorContext = {
@@ -28,20 +29,17 @@ export const useTTContext = () => {
 };
 
 export const SimpleEditorWrapper = () => {
-  const { open } = useTTContext();
-  const [isScrolling, setIsScrolling] = useState(false);
+  const { open, id } = useTTContext();
+  const { data: draft } = useDraft(id);
   return (
-    open && (
+    open &&
+    draft && (
       <div className="bg-background fixed inset-0 z-50">
         {/* removing `overflow-auto` from the fixed overlay and instead 
           constraining the editor’s height and making it scrollable 
           solves the mobile overlay + sticky toolbar problem */}
-        <div
-          className="dashboard-editor h-full w-full overflow-auto"
-          onScroll={() => setIsScrolling(true)}
-          onScrollEnd={() => setIsScrolling(false)}
-        >
-          <SimpleEditor isScrolling={isScrolling} />
+        <div className="dashboard-editor h-full w-full overflow-auto">
+          <SimpleEditor draft={draft.content} />
         </div>
       </div>
     )

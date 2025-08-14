@@ -13,7 +13,7 @@ export default function App() {
           <TabbedApp />
           <SimpleEditorWrapper />
           <KanbanWrapper />
-          <Toaster position="top-center" />
+          <Toaster position="top-right" />
         </KanbanProvider>
       </TTProvider>
     </QueryClientProvider>

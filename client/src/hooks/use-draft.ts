@@ -40,7 +40,7 @@ export async function createTiptap() {
 }
 
 export async function syncDraft(data: Draft) {
-  await apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
+  return apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
 }
 
 export function removeDraftQuery(id: number) {
