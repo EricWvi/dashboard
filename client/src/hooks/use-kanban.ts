@@ -56,7 +56,7 @@ export async function createKanban() {
 }
 
 export async function syncKanban(data: Kanban) {
-  await apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
+  return apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
 }
 
 export function removeKanbanQuery(id: number) {

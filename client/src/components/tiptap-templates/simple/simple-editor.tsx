@@ -209,8 +209,8 @@ const MobileToolbarContent = ({
 
 export function SimpleEditor({ draft }: { draft: any }) {
   const { id, setId, setOpen } = useTTContext();
-  const [isDirty, setIsDirty] = useState(false);
-  const isDirtyRef = useRef(isDirty);
+  const isChanged = useRef(false);
+  const isDirtyRef = useRef(false);
 
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = React.useState<
@@ -259,7 +259,8 @@ export function SimpleEditor({ draft }: { draft: any }) {
     ],
     content: draft,
     onUpdate: () => {
-      setIsDirty(true);
+      isDirtyRef.current = true;
+      isChanged.current = true;
     },
   });
 
@@ -270,16 +271,12 @@ export function SimpleEditor({ draft }: { draft: any }) {
   }, [isMobile, mobileView]);
 
   useEffect(() => {
-    isDirtyRef.current = isDirty;
-  }, [isDirty]);
-
-  useEffect(() => {
     if (editor) {
       // sync every 5 seconds
       const interval = setInterval(() => {
         if (isDirtyRef.current) {
           syncDraft({ id, content: editor.getJSON() });
-          setIsDirty(false);
+          isDirtyRef.current = false;
         }
       }, 5000);
       return () => clearInterval(interval);
@@ -287,7 +284,7 @@ export function SimpleEditor({ draft }: { draft: any }) {
   }, [editor]);
 
   const handleSave = async () => {
-    if (editor && isDirtyRef.current) {
+    if (editor && isChanged.current) {
       syncDraft({ id, content: editor.getJSON() }).then(() => {
         toast("Draft saved successfully");
       });

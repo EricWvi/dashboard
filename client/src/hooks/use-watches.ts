@@ -97,7 +97,6 @@ export const WatchMeasure: {
   VOLUME: "Volume",
 };
 
-// const keyWatch = (id: number) => ["/api/watch", id];
 const keyWatchesOfStatus = (status: WatchStatus) => ["/api/watches", status];
 
 export function useWatches(status: WatchStatus) {
@@ -112,27 +111,10 @@ export function useWatches(status: WatchStatus) {
         },
       );
       const data = await response.json();
-      // (data.message.watches as Watch[]).forEach((watch) => {
-      //   queryClient.setQueryData(keyWatch(watch.id), watch);
-      // });
       return data.message.watches as Watch[];
     },
   });
 }
-
-// export function useWatch(id: number) {
-//   return useQuery<Watch>({
-//     queryKey: keyWatch(id),
-//     enabled: !!id,
-//     queryFn: async () => {
-//       const response = await apiRequest("POST", "/api/watch?Action=GetWatch", {
-//         id,
-//       });
-//       const data = await response.json();
-//       return data.message as Watch;
-//     },
-//   });
-// }
 
 export function useCreateWatched() {
   const queryClient = useQueryClient();

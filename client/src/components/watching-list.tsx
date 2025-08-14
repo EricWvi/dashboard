@@ -51,11 +51,44 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
 
   const updateWatchMutation = useUpdateWatch(WatchStatus.WATCHING);
   const completeWatchMutation = useCompleteWatch();
-  const updateWatch = (watch: { id: number } & Partial<Watch>) => {
-    updateWatchMutation.mutate(watch);
+  const updateWatch = () => {
+    return updateWatchMutation.mutateAsync({
+      id: watch.id,
+      title: entryName,
+      type: entryType === "" ? watch.type : entryType,
+      year: entryYear === 0 ? watch.year : entryYear,
+      payload: {
+        ...watch.payload,
+        img: entryImg,
+        link: entryLink,
+      },
+    });
   };
-  const completeWatch = (watch: { id: number; rate: number }) => {
-    completeWatchMutation.mutate(watch);
+  const updateProgress = () => {
+    // if today already have progress, update it
+    let curr: [string, number][] = watch.payload.checkpoints ?? [];
+    if (curr.length > 0) {
+      const today = dateString(new Date(), "-");
+      const existing = curr.findIndex(([date]) => date === today);
+      if (existing !== -1) {
+        curr[existing][1] = watchProgress;
+      } else {
+        curr.push([today, watchProgress]);
+      }
+    }
+    return updateWatchMutation.mutateAsync({
+      id: watch.id,
+      payload: {
+        ...watch.payload,
+        measure: entryMeasure === "" ? WatchMeasure.PERCENTAGE : entryMeasure,
+        range: measureRange >= watchProgress ? measureRange : watchProgress,
+        progress: watchProgress,
+        checkpoints: curr,
+      },
+    });
+  };
+  const completeWatch = () => {
+    return completeWatchMutation.mutateAsync({ id: watch.id, rate: entryRate });
   };
 
   // update progress
@@ -349,18 +382,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 </Button>
                 <Button
                   onClick={() => {
-                    updateWatch({
-                      id: watch.id,
-                      title: entryName,
-                      type: entryType === "" ? watch.type : entryType,
-                      year: entryYear === 0 ? watch.year : entryYear,
-                      payload: {
-                        ...watch.payload,
-                        img: entryImg,
-                        link: entryLink,
-                      },
-                    });
-                    handleEditEntryDialogOpen(false);
+                    updateWatch().then(() => handleEditEntryDialogOpen(false));
                   }}
                   disabled={!entryName.trim() || updateWatchMutation.isPending}
                 >
@@ -466,35 +488,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
               </Button>
               <Button
                 onClick={() => {
-                  // if today already have progress, update it
-                  let curr: [string, number][] =
-                    watch.payload.checkpoints ?? [];
-                  if (curr.length > 0) {
-                    const today = dateString(new Date(), "-");
-                    const existing = curr.findIndex(([date]) => date === today);
-                    if (existing !== -1) {
-                      curr[existing][1] = watchProgress;
-                    } else {
-                      curr.push([today, watchProgress]);
-                    }
-                  }
-                  updateWatch({
-                    id: watch.id,
-                    payload: {
-                      ...watch.payload,
-                      measure:
-                        entryMeasure === ""
-                          ? WatchMeasure.PERCENTAGE
-                          : entryMeasure,
-                      range:
-                        measureRange >= watchProgress
-                          ? measureRange
-                          : watchProgress,
-                      progress: watchProgress,
-                      checkpoints: curr,
-                    },
-                  });
-                  handleUpdateProgressOpen(false);
+                  updateProgress().then(() => handleUpdateProgressOpen(false));
                 }}
                 disabled={updateWatchMutation.isPending}
               >
@@ -535,11 +529,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
               </Button>
               <Button
                 onClick={() => {
-                  completeWatch({
-                    id: watch.id,
-                    rate: entryRate,
-                  });
-                  handleCompleteWatchOpen(false);
+                  completeWatch().then(() => handleCompleteWatchOpen(false));
                 }}
                 disabled={completeWatchMutation.isPending}
               >

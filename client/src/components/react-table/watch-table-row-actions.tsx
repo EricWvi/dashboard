@@ -81,15 +81,27 @@ export function WatchedTableRowActions<TData>({
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const updateWatchMutation = useUpdateWatch(WatchStatus.COMPLETED);
-  const updateWatch = (watch: Watch) => {
-    updateWatchMutation.mutate(watch);
+  const updateWatch = () => {
+    return updateWatchMutation.mutateAsync({
+      id: watch.id,
+      title: entryName,
+      type: entryType ?? WatchEnum.MOVIE,
+      status: WatchStatus.COMPLETED,
+      year: entryYear ?? new Date().getFullYear(),
+      rate: entryRate,
+      createdAt: entryMark ?? todayStart(),
+      payload: { ...watch.payload, img: entryImg },
+    });
   };
 
   // delete confirm
   const deleteWatchMutation = useDeleteWatch();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteWatch = () => {
-    deleteWatchMutation.mutate({ id: watch.id, status: watch.status });
+    return deleteWatchMutation.mutateAsync({
+      id: watch.id,
+      status: watch.status,
+    });
   };
 
   // watch again confirm
@@ -188,8 +200,7 @@ export function WatchedTableRowActions<TData>({
             <Button
               variant="destructive"
               onClick={() => {
-                deleteWatch();
-                setConfirmDialogOpen(false);
+                deleteWatch().then(() => setConfirmDialogOpen(false));
               }}
             >
               Confirm
@@ -411,17 +422,7 @@ export function WatchedTableRowActions<TData>({
               </Button>
               <Button
                 onClick={() => {
-                  updateWatch({
-                    id: watch.id,
-                    title: entryName,
-                    type: entryType ?? WatchEnum.MOVIE,
-                    status: WatchStatus.COMPLETED,
-                    year: entryYear ?? new Date().getFullYear(),
-                    rate: entryRate,
-                    createdAt: entryMark ?? todayStart(),
-                    payload: { ...watch.payload, img: entryImg },
-                  });
-                  handleEditEntryDialogOpen(false);
+                  updateWatch().then(() => handleEditEntryDialogOpen(false));
                 }}
                 disabled={!entryName.trim() || updateWatchMutation.isPending}
               >
@@ -447,8 +448,18 @@ export function ToWatchTableRowActions<TData>({
   const [entryLink, setEntryLink] = useState<string>("");
   const updateWatchMutation = useUpdateWatch(WatchStatus.PLAN_TO_WATCH);
   const startWatchMutation = useStartWatch();
-  const updateWatch = (watch: { id: number } & Partial<Watch>) => {
-    updateWatchMutation.mutate(watch);
+  const updateWatch = () => {
+    return updateWatchMutation.mutateAsync({
+      id: watch.id,
+      title: entryName,
+      type: entryType ?? WatchEnum.MOVIE,
+      year: entryYear ?? new Date().getFullYear(),
+      payload: {
+        ...watch.payload,
+        img: entryImg,
+        link: entryLink,
+      },
+    });
   };
 
   // start watching dialog
@@ -464,15 +475,27 @@ export function ToWatchTableRowActions<TData>({
     }
     setStartWatchingDialogOpen(open);
   };
-  const startWatch = (watch: { id: number; payload: any }) => {
-    startWatchMutation.mutate(watch);
+  const startWatch = () => {
+    return startWatchMutation.mutateAsync({
+      id: watch.id,
+      payload: {
+        ...watch.payload,
+        measure: entryMeasure === "" ? WatchMeasure.PERCENTAGE : entryMeasure,
+        range: isNaN(Number(measureRange)) ? 0 : Number(measureRange),
+        progress: 0,
+        checkpoints: [[dateString(new Date(), "-"), 0]],
+      },
+    });
   };
 
   // confirm Dialog
   const deleteWatchMutation = useDeleteWatch();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteWatch = () => {
-    deleteWatchMutation.mutate({ id: watch.id, status: watch.status });
+    return deleteWatchMutation.mutateAsync({
+      id: watch.id,
+      status: watch.status,
+    });
   };
 
   // edit watch entry dialog
@@ -603,22 +626,7 @@ export function ToWatchTableRowActions<TData>({
               </Button>
               <Button
                 onClick={() => {
-                  startWatch({
-                    id: watch.id,
-                    payload: {
-                      ...watch.payload,
-                      measure:
-                        entryMeasure === ""
-                          ? WatchMeasure.PERCENTAGE
-                          : entryMeasure,
-                      range: isNaN(Number(measureRange))
-                        ? 0
-                        : Number(measureRange),
-                      progress: 0,
-                      checkpoints: [[dateString(new Date(), "-"), 0]],
-                    },
-                  });
-                  handleStartWatchingDialogOpen(false);
+                  startWatch().then(() => handleStartWatchingDialogOpen(false));
                 }}
                 disabled={startWatchMutation.isPending}
               >
@@ -648,8 +656,7 @@ export function ToWatchTableRowActions<TData>({
             <Button
               variant="destructive"
               onClick={() => {
-                deleteWatch();
-                setConfirmDialogOpen(false);
+                deleteWatch().then(() => setConfirmDialogOpen(false));
               }}
             >
               Confirm
@@ -789,18 +796,7 @@ export function ToWatchTableRowActions<TData>({
               </Button>
               <Button
                 onClick={() => {
-                  updateWatch({
-                    id: watch.id,
-                    title: entryName,
-                    type: entryType ?? WatchEnum.MOVIE,
-                    year: entryYear ?? new Date().getFullYear(),
-                    payload: {
-                      ...watch.payload,
-                      img: entryImg,
-                      link: entryLink,
-                    },
-                  });
-                  handleEditEntryDialogOpen(false);
+                  updateWatch().then(() => handleEditEntryDialogOpen(false));
                 }}
                 disabled={!entryName.trim() || updateWatchMutation.isPending}
               >
@@ -826,15 +822,25 @@ export function BookmarkTableRowActions<TData>({
   const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
   const [selectedHows, setSelectedHows] = useState<string[]>([]);
   const updateBookmarkMutation = useUpdateBookmark();
-  const updateBookmark = (bookmark: { id: number } & Partial<Bookmark>) => {
-    updateBookmarkMutation.mutate(bookmark);
+  const updateBookmark = () => {
+    return updateBookmarkMutation.mutateAsync({
+      id: bookmark.id,
+      title: bookmarkName,
+      url: bookmarkLink,
+      domain: bookmarkType,
+      payload: {
+        ...bookmark.payload,
+        whats: selectedWhats,
+        hows: selectedHows,
+      },
+    });
   };
 
   // confirm Dialog
   const deleteBookmarkMutation = useDeleteBookmark();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteBookmark = () => {
-    deleteBookmarkMutation.mutate({ id: bookmark.id });
+    return deleteBookmarkMutation.mutateAsync({ id: bookmark.id });
   };
 
   // edit bookmark dialog
@@ -891,9 +897,9 @@ export function BookmarkTableRowActions<TData>({
             </Button>
             <Button
               variant="destructive"
+              disabled={deleteBookmarkMutation.isPending}
               onClick={() => {
-                deleteBookmark();
-                setConfirmDialogOpen(false);
+                deleteBookmark().then(() => setConfirmDialogOpen(false));
               }}
             >
               Confirm
@@ -1006,18 +1012,9 @@ export function BookmarkTableRowActions<TData>({
               </Button>
               <Button
                 onClick={() => {
-                  updateBookmark({
-                    id: bookmark.id,
-                    title: bookmarkName,
-                    url: bookmarkLink,
-                    domain: bookmarkType,
-                    payload: {
-                      ...bookmark.payload,
-                      whats: selectedWhats,
-                      hows: selectedHows,
-                    },
-                  });
-                  handleEditBookmarkDialogOpen(false);
+                  updateBookmark().then(() =>
+                    handleEditBookmarkDialogOpen(false),
+                  );
                 }}
                 disabled={
                   !bookmarkName.trim() || updateBookmarkMutation.isPending

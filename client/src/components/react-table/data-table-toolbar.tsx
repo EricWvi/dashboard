@@ -84,21 +84,14 @@ export function WatchedTableToolbar<TData>({
     setAddEntryDialogOpen(true);
   };
 
-  const createEntry = async (
-    title: string,
-    type: WatchType,
-    status: WatchStatus,
-    year: number,
-    rate: number,
-    createdAt: Date,
-  ) => {
-    await createEntryMutation.mutateAsync({
-      title,
-      type,
-      status,
-      year,
-      rate,
-      createdAt,
+  const createEntry = async () => {
+    return createEntryMutation.mutateAsync({
+      title: entryName,
+      type: entryType,
+      status: WatchStatus.COMPLETED,
+      year: entryYear ?? new Date().getFullYear(),
+      rate: entryRate,
+      createdAt: entryMark ?? todayStart(),
       payload: {},
     });
   };
@@ -324,15 +317,7 @@ export function WatchedTableToolbar<TData>({
               </Button>
               <Button
                 onClick={() => {
-                  createEntry(
-                    entryName,
-                    entryType,
-                    WatchStatus.COMPLETED,
-                    entryYear ?? new Date().getFullYear(),
-                    entryRate,
-                    entryMark ?? todayStart(),
-                  );
-                  setAddEntryDialogOpen(false);
+                  createEntry().then(() => setAddEntryDialogOpen(false));
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
               >
@@ -368,19 +353,13 @@ export function ToWatchTableToolbar<TData>({
     setAddEntryDialogOpen(true);
   };
 
-  const createEntry = async (
-    title: string,
-    type: WatchType,
-    status: WatchStatus,
-    year: number,
-    link: string,
-  ) => {
-    await createEntryMutation.mutateAsync({
-      title,
-      type,
-      status,
-      year,
-      payload: { link },
+  const createEntry = async () => {
+    return createEntryMutation.mutateAsync({
+      title: entryName,
+      type: entryType,
+      status: WatchStatus.PLAN_TO_WATCH,
+      year: entryYear ?? 0,
+      payload: { entryLink },
     });
   };
 
@@ -519,14 +498,7 @@ export function ToWatchTableToolbar<TData>({
               </Button>
               <Button
                 onClick={() => {
-                  createEntry(
-                    entryName,
-                    entryType,
-                    WatchStatus.PLAN_TO_WATCH,
-                    entryYear ?? 0,
-                    entryLink,
-                  );
-                  setAddEntryDialogOpen(false);
+                  createEntry().then(() => setAddEntryDialogOpen(false));
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
               >
@@ -573,7 +545,7 @@ export function BookmarkTableToolbar<TData>({
     whats: string[],
     hows: string[],
   ) => {
-    await createBookmarkMutation.mutateAsync({
+    return createBookmarkMutation.mutateAsync({
       title,
       url,
       domain,
@@ -777,8 +749,7 @@ export function BookmarkTableToolbar<TData>({
                     bookmarkType,
                     selectedWhats,
                     selectedHows,
-                  );
-                  setAddBookmarkDialogOpen(false);
+                  ).then(() => setAddBookmarkDialogOpen(false));
                 }}
                 disabled={
                   !bookmarkName.trim() || createBookmarkMutation.isPending

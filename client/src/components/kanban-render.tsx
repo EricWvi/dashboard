@@ -44,9 +44,10 @@ import {
   syncKanban,
   removeKanbanQuery,
 } from "@/hooks/use-kanban";
+import { toast } from "sonner";
 
 export default function KanbanRender({ data }: { data: KanbanObj }) {
-  const { setOpen: setKanbanDialogOpen } = useKanbanContext();
+  const { setId, setOpen: setKanbanDialogOpen } = useKanbanContext();
 
   const [isComposing, setIsComposing] = useState(false);
 
@@ -109,8 +110,8 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
     setColumnValue(newColumns);
   };
 
-  const [isDirty, setIsDirty] = useState(false);
-  const isDirtyRef = useRef(isDirty);
+  const isDirtyRef = useRef(false);
+  const isChanged = useRef(false);
   const [columnValue, setColumnValue] = useState<Record<string, Task[]>>(
     data.content.columnValue,
   );
@@ -118,16 +119,17 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
   const columnValueRef = useRef(columnValue);
   const columnsRef = useRef(columns);
   useEffect(() => {
-    setIsDirty(true);
+    isDirtyRef.current = true;
+    isChanged.current = true;
     columnValueRef.current = columnValue;
     columnsRef.current = columns;
   }, [columnValue]);
-  useEffect(() => {
-    isDirtyRef.current = isDirty;
-  }, [isDirty]);
 
   useEffect(() => {
-    setTimeout(() => setIsDirty(false), 0);
+    setTimeout(() => {
+      isDirtyRef.current = false;
+      isChanged.current = false;
+    }, 0);
     // sync every 5 seconds
     const interval = setInterval(() => {
       if (isDirtyRef.current) {
@@ -138,22 +140,25 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
             columnValue: columnValueRef.current,
           },
         });
-        setIsDirty(false);
+        isDirtyRef.current = false;
       }
     }, 5000);
     return () => clearInterval(interval);
   }, []);
 
   const handleSave = () => {
-    if (isDirtyRef.current) {
+    if (isChanged.current) {
       syncKanban({
         id: data.id,
         content: {
           columns: columnsRef.current,
           columnValue: columnValueRef.current,
         },
+      }).then(() => {
+        toast("Kanban saved successfully");
       });
     }
+    setId(0);
     setKanbanDialogOpen(false);
     removeKanbanQuery(data.id);
   };
