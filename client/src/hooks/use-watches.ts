@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { CollectionsQuery } from "@/hooks/use-todos";
 
 export type Watch = {
   id: number;
@@ -209,7 +210,11 @@ export function useStartWatch() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: number; payload: any }) => {
+    mutationFn: async (data: {
+      id: number;
+      payload: Payload;
+      title: string;
+    }) => {
       const response = await apiRequest(
         "POST",
         "/api/watch?Action=UpdateWatch",
@@ -222,13 +227,23 @@ export function useStartWatch() {
       );
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(WatchStatus.PLAN_TO_WATCH),
       });
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(WatchStatus.WATCHING),
       });
+      const collections = await queryClient.fetchQuery(CollectionsQuery);
+      const collection = collections.find((collection) =>
+        collection.name.includes("娱乐"),
+      );
+      if (collection) {
+        apiRequest("POST", "/api/todo?Action=CreateTodo", {
+          title: variables.title,
+          collectionId: collection.id,
+        });
+      }
     },
   });
 }

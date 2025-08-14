@@ -98,7 +98,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
   const [watchProgress, setWatchProgress] = useState<number>(0);
   const handleUpdateProgressOpen = (open: boolean) => {
     if (open) {
-      setEntryMeasure(watch.payload.measure ?? "");
+      setEntryMeasure((watch.payload.measure as WatchMeasure) ?? "");
       setMeasureRange(watch.payload.range ?? 0);
       setWatchProgress(watch.payload.progress ?? 0);
     }
@@ -195,14 +195,17 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 </span>
                 <span className="text-sm font-medium">
                   {(
-                    (watch.payload.progress * 100) /
-                    watch.payload.range
+                    ((watch.payload.progress ?? 0) * 100) /
+                    (watch.payload.range ?? 100)
                   ).toFixed(0)}
                   %
                 </span>
               </div>
               <Progress
-                value={(watch.payload.progress * 100) / watch.payload.range}
+                value={
+                  ((watch.payload.progress ?? 0) * 100) /
+                  (watch.payload.range ?? 100)
+                }
               />
             </div>
 

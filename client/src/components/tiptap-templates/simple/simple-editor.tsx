@@ -72,7 +72,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 // --- Context ---
 import { useTTContext } from "@/components/editor";
 import { syncDraft, removeDraftQuery } from "@/hooks/use-draft";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
 

@@ -72,31 +72,33 @@ export type Tag = {
   label: string;
 };
 
-export function useTags() {
-  return useQuery({
-    queryKey: keyTags(),
-    queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/bookmark?Action=ListTags",
-        {},
-      );
-      const data = await response.json();
-      const whatTags: Tag[] = [];
-      const howTags: Tag[] = [];
-      data.message.tags.forEach((tag: string) => {
-        if (tag.startsWith("what:")) {
-          const t = tag.replace("what:", "");
-          whatTags.push({ value: t, label: t });
-        } else if (tag.startsWith("how:")) {
-          const t = tag.replace("how:", "");
-          howTags.push({ value: t, label: t });
-        }
-      });
+const TagsQueryOptions = {
+  queryKey: keyTags(),
+  queryFn: async () => {
+    const response = await apiRequest(
+      "POST",
+      "/api/bookmark?Action=ListTags",
+      {},
+    );
+    const data = await response.json();
+    const whatTags: Tag[] = [];
+    const howTags: Tag[] = [];
+    data.message.tags.forEach((tag: string) => {
+      if (tag.startsWith("what:")) {
+        const t = tag.replace("what:", "");
+        whatTags.push({ value: t, label: t });
+      } else if (tag.startsWith("how:")) {
+        const t = tag.replace("how:", "");
+        howTags.push({ value: t, label: t });
+      }
+    });
 
-      return { whatTags, howTags };
-    },
-  });
+    return { whatTags, howTags };
+  },
+};
+
+export function useTags() {
+  return useQuery(TagsQueryOptions);
 }
 
 export function useCreateBookmark() {
@@ -114,11 +116,8 @@ export function useCreateBookmark() {
       return response.json();
     },
     onSuccess: async (_data, variables) => {
-      const { whatTags, howTags } = queryClient.getQueryData<{
-        whatTags: Tag[];
-        howTags: Tag[];
-      }>(keyTags()) || { whatTags: [], howTags: [] };
-
+      const { whatTags, howTags } =
+        await queryClient.fetchQuery(TagsQueryOptions);
       // filter out newly created tags
       const whatValues = whatTags.map((tag) => tag.value);
       const howValues = howTags.map((tag) => tag.value);
