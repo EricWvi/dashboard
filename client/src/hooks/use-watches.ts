@@ -9,7 +9,7 @@ export type Watch = {
   year: number;
   rate: number;
   createdAt: Date;
-  payload: any;
+  payload: Payload;
 };
 
 export interface Payload {

@@ -117,7 +117,7 @@ export function WatchedTableRowActions<TData>({
       payload: {
         ...watch.payload,
         progress: 0,
-        epoch: (watch.payload.epoch ?? 0) + 1,
+        epoch: (watch.payload.epoch ?? 1) + 1,
         checkpoints: [[dateString(new Date(), "-"), 0]],
       },
     });
@@ -470,8 +470,8 @@ export function ToWatchTableRowActions<TData>({
     if (open) {
       setEntryName(watch.title);
       setEntryImg(watch.payload.img ?? undefined);
-      setEntryMeasure(watch.payload.measure ?? "");
-      setMeasureRange(watch.payload.range ?? "");
+      setEntryMeasure((watch.payload.measure as WatchMeasure) ?? "");
+      setMeasureRange(String(watch.payload.range ?? ""));
     }
     setStartWatchingDialogOpen(open);
   };

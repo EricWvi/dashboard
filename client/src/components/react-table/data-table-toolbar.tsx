@@ -359,7 +359,7 @@ export function ToWatchTableToolbar<TData>({
       type: entryType,
       status: WatchStatus.PLAN_TO_WATCH,
       year: entryYear ?? 0,
-      payload: { entryLink },
+      payload: { link: entryLink, epoch: 1 },
     });
   };
 

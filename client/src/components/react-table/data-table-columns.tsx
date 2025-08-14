@@ -177,6 +177,15 @@ export const watchedColumns: ColumnDef<Watch>[] = [
             <span className="text-muted-foreground">
               {"(" + row.original.year + ")"}
             </span>
+            {(row.original.payload.epoch ?? 1) > 1 && (
+              <Badge variant="outline" className="ml-2">
+                {row.original.payload.epoch === 2
+                  ? "2nd"
+                  : row.original.payload.epoch === 3
+                    ? "3rd"
+                    : row.original.payload.epoch + "th"}
+              </Badge>
+            )}
           </span>
         </div>
       );
@@ -279,6 +288,15 @@ export const towatchColumns: ColumnDef<Watch>[] = [
               <span className="text-muted-foreground">
                 {"(" + row.original.year + ")"}
               </span>
+            )}
+            {(row.original.payload.epoch ?? 1) > 1 && (
+              <Badge variant="outline" className="ml-2">
+                {row.original.payload.epoch === 2
+                  ? "2nd"
+                  : row.original.payload.epoch === 3
+                    ? "3rd"
+                    : row.original.payload.epoch + "th"}
+              </Badge>
             )}
           </span>
         </div>
