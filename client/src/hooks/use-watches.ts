@@ -12,6 +12,16 @@ export type Watch = {
   payload: any;
 };
 
+export interface Payload {
+  img?: string;
+  link?: string;
+  range?: number;
+  measure?: string;
+  progress?: number;
+  epoch?: number;
+  checkpoints?: [string, number][];
+}
+
 export type WatchType =
   | "Movie"
   | "Series"

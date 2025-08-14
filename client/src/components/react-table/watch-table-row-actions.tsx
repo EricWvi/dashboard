@@ -48,6 +48,7 @@ import {
   WatchEnum,
   type WatchType,
   type Watch,
+  useCreateToWatch,
 } from "@/hooks/use-watches";
 import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -84,10 +85,30 @@ export function WatchedTableRowActions<TData>({
     updateWatchMutation.mutate(watch);
   };
 
+  // delete confirm
   const deleteWatchMutation = useDeleteWatch();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteWatch = () => {
     deleteWatchMutation.mutate({ id: watch.id, status: watch.status });
+  };
+
+  // watch again confirm
+  const [watchAgainDialogOpen, setWatchAgainDialogOpen] = useState(false);
+  const createEntryMutation = useCreateToWatch();
+  const watchAgain = () => {
+    return createEntryMutation.mutateAsync({
+      title: watch.title,
+      type: watch.type,
+      status: WatchStatus.PLAN_TO_WATCH,
+      year: watch.year,
+      rate: 0,
+      payload: {
+        ...watch.payload,
+        progress: 0,
+        epoch: (watch.payload.epoch ?? 0) + 1,
+        checkpoints: [[dateString(new Date(), "-"), 0]],
+      },
+    });
   };
 
   // edit watch entry dialog
@@ -136,7 +157,9 @@ export function WatchedTableRowActions<TData>({
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
           Edit
         </DropdownMenuItem>
-        <DropdownMenuItem>Watch Again</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setWatchAgainDialogOpen(true)}>
+          Watch Again
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
@@ -146,7 +169,7 @@ export function WatchedTableRowActions<TData>({
         </DropdownMenuItem>
       </DropdownMenuContent>
 
-      {/* confirm Dialog */}
+      {/* confirm delete dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -167,6 +190,38 @@ export function WatchedTableRowActions<TData>({
               onClick={() => {
                 deleteWatch();
                 setConfirmDialogOpen(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* confirm watch again dialog */}
+      <Dialog
+        open={watchAgainDialogOpen}
+        onOpenChange={setWatchAgainDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Watch Again</DialogTitle>
+            <DialogDescription>
+              Do you want to watch [{watch.title}] again?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setWatchAgainDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                watchAgain().then(() => {
+                  setWatchAgainDialogOpen(false);
+                });
               }}
             >
               Confirm
@@ -404,8 +459,8 @@ export function ToWatchTableRowActions<TData>({
     if (open) {
       setEntryName(watch.title);
       setEntryImg(watch.payload.img ?? undefined);
-      setEntryMeasure("");
-      setMeasureRange("");
+      setEntryMeasure(watch.payload.measure ?? "");
+      setMeasureRange(watch.payload.range ?? "");
     }
     setStartWatchingDialogOpen(open);
   };
