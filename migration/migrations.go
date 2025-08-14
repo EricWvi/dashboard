@@ -73,11 +73,31 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddBookmarkTable,
 			Down:    RemoveBookmarkTable,
 		},
+		{
+			Version: "v0.12.0",
+			Name:    "Add author column to watch",
+			Up:      AddAuthorColumn,
+			Down:    RemoveAuthorColumn,
+		},
 	}
 }
 
-// -------------------- v0.11.0 -------------------
+// -------------------- v0.12.0 -------------------
+func AddAuthorColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_watch
+		ADD COLUMN author VARCHAR(256) DEFAULT '' NOT NULL;
+	`).Error
+}
 
+func RemoveAuthorColumn(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_watch
+		DROP COLUMN IF EXISTS author;
+	`).Error
+}
+
+// -------------------- v0.11.0 -------------------
 func AddBookmarkTable(db *gorm.DB) error {
 	return db.Exec(`
 		CREATE TABLE public.d_bookmark (
@@ -102,7 +122,6 @@ func RemoveBookmarkTable(db *gorm.DB) error {
 }
 
 // -------------------- v0.10.0 -------------------
-
 func AddPayloadColumn(db *gorm.DB) error {
 	return db.Exec(`
 		ALTER TABLE public.d_watch

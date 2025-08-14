@@ -194,6 +194,27 @@ export const watchedColumns: ColumnDef<Watch>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: "author",
+    size: 500,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Author" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
+          <span
+            className="max-w-[500px] truncate font-medium"
+            title={row.getValue("author")}
+          >
+            {row.getValue("author")}
+          </span>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
     accessorKey: "rate",
     accessorFn: (row) => ratings[Math.ceil((20 - Number(row.rate)) / 4)].value,
     size: 300,
@@ -272,7 +293,7 @@ export const towatchColumns: ColumnDef<Watch>[] = [
   },
   {
     accessorKey: "title",
-    size: 200,
+    size: 300,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Title" />
     ),
@@ -298,6 +319,27 @@ export const towatchColumns: ColumnDef<Watch>[] = [
                     : row.original.payload.epoch + "th"}
               </Badge>
             )}
+          </span>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "author",
+    size: 250,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Author" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
+          <span
+            className="max-w-[500px] truncate font-medium"
+            title={row.getValue("author")}
+          >
+            {row.getValue("author")}
           </span>
         </div>
       );

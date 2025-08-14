@@ -19,6 +19,7 @@ type WatchField struct {
 	Year    int            `gorm:"default:2099;not null" json:"year"`
 	Rate    int            `gorm:"default:0;not null" json:"rate"`
 	Payload datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
+	Author  string         `gorm:"size:256;" json:"author"`
 	// CreatorId is inherited from MetaField
 }
 

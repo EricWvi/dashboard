@@ -72,6 +72,7 @@ export function WatchedTableToolbar<TData>({
   const [entryRate, setEntryRate] = useState<number>(16);
   const [entryMarkInput, setEntryMarkInput] = useState("");
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
+  const [entryAuthor, setEntryAuthor] = useState<string>("");
 
   const handleAddEntryDialogOpen = () => {
     setEntryName("");
@@ -80,6 +81,7 @@ export function WatchedTableToolbar<TData>({
     setEntryRate(16);
     setEntryMarkInput("");
     setEntryMark(undefined);
+    setEntryAuthor("");
     setDatepickerOpen(false);
     setAddEntryDialogOpen(true);
   };
@@ -93,6 +95,7 @@ export function WatchedTableToolbar<TData>({
       rate: entryRate,
       createdAt: entryMark ?? todayStart(),
       payload: {},
+      author: entryAuthor,
     });
   };
 
@@ -209,16 +212,13 @@ export function WatchedTableToolbar<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-year">Year</Label>
+                <Label htmlFor="watched-add-watch-author">Author</Label>
                 <Input
-                  id="watched-add-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
-                  type="number"
-                  min={1900}
-                  max={2099}
-                  value={entryYear}
+                  id="watched-add-watch-author"
+                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  value={entryAuthor}
                   disabled={createEntryMutation.isPending}
-                  onChange={(e) => setEntryYear(Number(e.target.value))}
+                  onChange={(e) => setEntryAuthor(e.target.value)}
                 />
               </div>
             </div>
@@ -247,6 +247,33 @@ export function WatchedTableToolbar<TData>({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="watched-add-watch-year">Year</Label>
+                <Input
+                  id="watched-add-watch-year"
+                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  type="number"
+                  min={1900}
+                  max={2099}
+                  value={entryYear}
+                  disabled={createEntryMutation.isPending}
+                  onChange={(e) => setEntryYear(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="mb-6 flex flex-col gap-2">
+              <Label htmlFor="watched-add-watch-rating">
+                Rating: {(entryRate / 2).toFixed(1)}
+              </Label>
+              <Slider
+                id="watched-add-watch-rating"
+                defaultValue={[16]}
+                max={20}
+                step={1}
+                onValueChange={(value) => setEntryRate(value[0])}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="watched-add-watch-mark">Mark</Label>
                 <div className="relative">
@@ -295,18 +322,6 @@ export function WatchedTableToolbar<TData>({
                 </div>
               </div>
             </div>
-            <div className="mb-6 flex flex-col gap-2">
-              <Label htmlFor="watched-add-watch-rating">
-                Rating: {(entryRate / 2).toFixed(1)}
-              </Label>
-              <Slider
-                id="watched-add-watch-rating"
-                defaultValue={[16]}
-                max={20}
-                step={1}
-                onValueChange={(value) => setEntryRate(value[0])}
-              />
-            </div>
 
             <div className="flex justify-end gap-2">
               <Button
@@ -344,12 +359,14 @@ export function ToWatchTableToolbar<TData>({
   const [entryType, setEntryType] = useState<WatchType>(WatchEnum.MOVIE);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryLink, setEntryLink] = useState<string>("");
+  const [entryAuthor, setEntryAuthor] = useState<string>("");
 
   const handleAddEntryDialogOpen = () => {
     setEntryName("");
     setEntryType(WatchEnum.MOVIE);
     setEntryYear(undefined);
     setEntryLink("");
+    setEntryAuthor("");
     setAddEntryDialogOpen(true);
   };
 
@@ -360,6 +377,7 @@ export function ToWatchTableToolbar<TData>({
       status: WatchStatus.PLAN_TO_WATCH,
       year: entryYear ?? 0,
       payload: { link: entryLink, epoch: 1 },
+      author: entryAuthor,
     });
   };
 
@@ -439,16 +457,13 @@ export function ToWatchTableToolbar<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-add-watch-year">Year</Label>
+                <Label htmlFor="towatch-add-watch-author">Author</Label>
                 <Input
-                  id="towatch-add-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
-                  type="number"
-                  min={1900}
-                  max={2099}
-                  value={entryYear}
+                  id="towatch-add-watch-author"
+                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  value={entryAuthor}
                   disabled={createEntryMutation.isPending}
-                  onChange={(e) => setEntryYear(Number(e.target.value))}
+                  onChange={(e) => setEntryAuthor(e.target.value)}
                 />
               </div>
             </div>
@@ -477,16 +492,29 @@ export function ToWatchTableToolbar<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-add-watch-link">Link</Label>
+                <Label htmlFor="towatch-add-watch-year">Year</Label>
                 <Input
-                  id="towatch-add-watch-link"
-                  placeholder={!isMobile ? "Enter entry link..." : ""}
-                  type="text"
-                  value={entryLink}
+                  id="towatch-add-watch-year"
+                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  type="number"
+                  min={1900}
+                  max={2099}
+                  value={entryYear}
                   disabled={createEntryMutation.isPending}
-                  onChange={(e) => setEntryLink(e.target.value)}
+                  onChange={(e) => setEntryYear(Number(e.target.value))}
                 />
               </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="towatch-add-watch-link">Link</Label>
+              <Input
+                id="towatch-add-watch-link"
+                placeholder={!isMobile ? "Enter entry link..." : ""}
+                type="text"
+                value={entryLink}
+                disabled={createEntryMutation.isPending}
+                onChange={(e) => setEntryLink(e.target.value)}
+              />
             </div>
 
             <div className="flex justify-end gap-2">

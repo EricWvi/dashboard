@@ -10,6 +10,7 @@ export type Watch = {
   rate: number;
   createdAt: Date;
   payload: Payload;
+  author: string;
 };
 
 export interface Payload {
