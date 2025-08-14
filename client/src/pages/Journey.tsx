@@ -10,10 +10,11 @@ import { useState } from "react";
 import { WatchingList } from "@/components/watching-list";
 
 function WatchingTab() {
+  const isMobile = useIsMobile();
   const { data: watches } = useWatches(WatchStatus.WATCHING);
   return (
     watches && (
-      <div>
+      <div className={`${isMobile ? "pt-2" : ""}`}>
         <WatchingList watches={watches} />
       </div>
     )
@@ -89,7 +90,7 @@ export default function Journey() {
 
       {/* Tab Content - Lazy rendered but persistent */}
       <div
-        className={`${isMobile ? "min-h-0 flex-1 overflow-scroll pt-4 pb-10" : ""}`}
+        className={`${isMobile ? "min-h-0 flex-1 overflow-scroll pb-10" : ""}`}
       >
         {/* Watching Tab - lazy render but keep mounted */}
         <div className={`${activeTab === "watching" ? "block" : "hidden"}`}>

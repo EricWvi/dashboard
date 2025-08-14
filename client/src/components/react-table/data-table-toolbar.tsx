@@ -153,32 +153,45 @@ export function WatchedTableToolbar<TData>({
             })()}
           />
         )}
-        {isFiltered && (
+        {isFiltered && !isMobile && (
           <Button
-            variant={`${isMobile ? "secondary" : "ghost"}`}
+            variant="ghost"
             size="sm"
             onClick={() => {
               setSearchTerm("");
               table.resetColumnFilters();
             }}
           >
-            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
+            <span>Reset</span>
             <X />
           </Button>
         )}
       </div>
       <div className="flex items-center gap-2">
         {/* <DataTableViewOptions table={table} /> */}
-        <Button size="sm" className="px-4" onClick={handleAddEntryDialogOpen}>
-          {!isMobile ? (
-            <>
-              <Clapperboard />
-              Add
-            </>
-          ) : (
-            <Plus />
-          )}
-        </Button>
+        {isFiltered && isMobile ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              table.resetColumnFilters();
+            }}
+          >
+            <X />
+          </Button>
+        ) : (
+          <Button size="sm" className="px-4" onClick={handleAddEntryDialogOpen}>
+            {!isMobile ? (
+              <>
+                <Clapperboard />
+                Add
+              </>
+            ) : (
+              <Plus />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* add watch entry dialog */}
@@ -613,36 +626,49 @@ export function BookmarkTableToolbar<TData>({
             options={tags?.howTags ?? []}
           />
         )}
-        {isFiltered && (
+        {isFiltered && !isMobile && (
           <Button
-            variant={`${isMobile ? "secondary" : "ghost"}`}
+            variant="ghost"
             size="sm"
             onClick={() => {
               setSearchTerm("");
               table.resetColumnFilters();
             }}
           >
-            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
+            <span>Reset</span>
             <X />
           </Button>
         )}
       </div>
       <div className="flex items-center gap-2">
         {/* <DataTableViewOptions table={table} /> */}
-        <Button
-          size="sm"
-          className="px-4"
-          onClick={handleAddBookmarkDialogOpen}
-        >
-          {!isMobile ? (
-            <>
-              <Link2 />
-              Add
-            </>
-          ) : (
-            <Plus />
-          )}
-        </Button>
+        {isFiltered && isMobile ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              table.resetColumnFilters();
+            }}
+          >
+            <X />
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="px-4"
+            onClick={handleAddBookmarkDialogOpen}
+          >
+            {!isMobile ? (
+              <>
+                <Link2 />
+                Add
+              </>
+            ) : (
+              <Plus />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* add bookmark dialog */}

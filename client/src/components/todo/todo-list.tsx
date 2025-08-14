@@ -361,11 +361,16 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
 
 export const TodayTodoList = () => {
   const isMobile = useIsMobile();
-  const { data: today } = useToday();
+  const { data: today, isLoading } = useToday();
+  const [loadingFlag, setLoadingFlag] = useState(false); // loading animation for second day's refetch
   const [todayDate, setTodayDate] = useState(new Date().toDateString());
   usePageVisibility(() => {
     if (new Date().toDateString() !== todayDate) {
       setTodayDate(new Date().toDateString());
+      setLoadingFlag(true);
+      setTimeout(() => {
+        setLoadingFlag(false);
+      }, 300);
       invalidToday();
     }
   });
@@ -437,7 +442,21 @@ export const TodayTodoList = () => {
         >
           {/* 1. UI library components have complex nested DOM structures that make `h-full` problematic. */}
           {/* 2. min-h-0 lets flex items shrink as needed, fixing overflow and scrolling issues in flex layouts. */}
-          {today &&
+          {loadingFlag || isLoading ? (
+            <>
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-16 rounded-sm" />
+                <Skeleton className="h-10 rounded-sm" />
+                <Skeleton className="h-10 rounded-sm" />
+                <Skeleton className="h-10 rounded-sm" />
+                <Skeleton className="h-5 w-16 rounded-sm" />
+                <Skeleton className="h-10 rounded-sm" />
+                <Skeleton className="h-10 rounded-sm" />
+                <Skeleton className="h-10 rounded-sm" />
+              </div>
+            </>
+          ) : (
+            today &&
             (today.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -475,7 +494,8 @@ export const TodayTodoList = () => {
                   </div>
                 ))}
               </div>
-            ))}
+            ))
+          )}
         </div>
       </CardContent>
 

@@ -89,7 +89,10 @@ const TodoTitle = ({
       className={`line-clamp-1 min-w-0 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
     >
       {todo.link === "" ? (
-        <div title={todo.title}>{todo.title}</div>
+        <div title={todo.title}>
+          {todo.title}
+          {todo.completed && ` (${todo.count})`}
+        </div>
       ) : (
         <a
           className="font-semibold underline decoration-dashed"
@@ -98,6 +101,7 @@ const TodoTitle = ({
           target="_blank"
         >
           {todo.title}
+          {todo.completed && ` (${todo.count})`}
         </a>
       )}
 
@@ -960,7 +964,7 @@ export const TodoEntry = ({
             <DialogHeader>
               <DialogTitle>Set Date</DialogTitle>
               <DialogDescription>
-                Set a date for the todo item.
+                Set a date for the todo item [{todo.title}].
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
