@@ -53,6 +53,15 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+  // compute default pageSize on mobile
+  const defaultPageSize =
+    window.innerWidth < 768
+      ? Math.min(Math.floor((window.innerHeight - 344) / 50), 10)
+      : 10;
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: defaultPageSize,
+  });
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const [showLoading, setShowLoading] = React.useState(true); // controls animation
@@ -63,12 +72,6 @@ export function DataTable<TData, TValue>({
       }, 200);
     }
   }, [isLoading]);
-
-  // compute default pageSize on mobile
-  const defaultPageSize =
-    window.innerWidth < 768
-      ? Math.min(Math.floor((window.innerHeight - 344) / 50), 10)
-      : 10;
 
   const getTagsFacetedUniqueValues = (
     table: RTable<TData>,
@@ -98,6 +101,7 @@ export function DataTable<TData, TValue>({
     state: {
       sorting,
       columnVisibility,
+      pagination,
       rowSelection,
       columnFilters,
     },
@@ -106,10 +110,17 @@ export function DataTable<TData, TValue>({
         pageSize: defaultPageSize,
       },
     },
+    autoResetPageIndex: false,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
+    onColumnFiltersChange: (updater) => {
+      // When filters change, reset pageIndex to 0
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      // Update filters
+      setColumnFilters(updater);
+    },
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

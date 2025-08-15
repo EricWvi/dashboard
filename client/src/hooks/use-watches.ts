@@ -214,6 +214,7 @@ export function useStartWatch() {
       id: number;
       payload: Payload;
       title: string;
+      type: WatchType;
     }) => {
       const response = await apiRequest(
         "POST",
@@ -240,7 +241,7 @@ export function useStartWatch() {
       );
       if (collection) {
         apiRequest("POST", "/api/todo?Action=CreateTodo", {
-          title: variables.title,
+          title: variables.type + ": " + variables.title,
           collectionId: collection.id,
         });
       }

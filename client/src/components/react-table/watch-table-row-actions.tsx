@@ -79,6 +79,7 @@ export function WatchedTableRowActions<TData>({
   const [entryImg, setEntryImg] = useState<string | undefined>(undefined);
   const [entryMarkInput, setEntryMarkInput] = useState("");
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
+  const [entryMarkMonth, setEntryMarkMonth] = useState<Date>(new Date());
   const [entryAuthor, setEntryAuthor] = useState<string>("");
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const updateWatchMutation = useUpdateWatch(WatchStatus.COMPLETED);
@@ -137,7 +138,8 @@ export function WatchedTableRowActions<TData>({
       setEntryImg(watch.payload.img ?? undefined);
       setEntryRate(watch.rate);
       setEntryMarkInput(dateString(watch.createdAt));
-      setEntryMark(watch.createdAt);
+      setEntryMark(new Date(watch.createdAt));
+      setEntryMarkMonth(new Date(watch.createdAt));
       setEntryAuthor(watch.author);
     }
     setEditEntryDialogOpen(open);
@@ -372,8 +374,8 @@ export function WatchedTableRowActions<TData>({
                         mode="single"
                         selected={entryMark}
                         captionLayout="dropdown"
-                        // month={month}
-                        // onMonthChange={setMonth}
+                        month={entryMarkMonth}
+                        onMonthChange={setEntryMarkMonth}
                         onSelect={(date) => {
                           if (date) {
                             setEntryMark(date);
@@ -509,6 +511,7 @@ export function ToWatchTableRowActions<TData>({
         checkpoints: [[dateString(new Date(), "-"), 0]],
       },
       title: watch.title,
+      type: watch.type,
     });
   };
 

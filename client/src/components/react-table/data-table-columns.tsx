@@ -190,6 +190,12 @@ export const watchedColumns: ColumnDef<Watch>[] = [
         </div>
       );
     },
+    filterFn: (row, _id, value) => {
+      return (
+        row.original.title.toLowerCase().includes(value) ||
+        row.original.author.toLowerCase().includes(value)
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -321,6 +327,12 @@ export const towatchColumns: ColumnDef<Watch>[] = [
             )}
           </span>
         </div>
+      );
+    },
+    filterFn: (row, _id, value) => {
+      return (
+        row.original.title.toLowerCase().includes(value) ||
+        row.original.author.toLowerCase().includes(value)
       );
     },
     enableSorting: false,
