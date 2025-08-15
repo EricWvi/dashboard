@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export type Draft = {
@@ -47,5 +47,94 @@ export function removeDraftQuery(id: number) {
   queryClient.removeQueries({
     queryKey: keyDraft(id),
     exact: true,
+  });
+}
+
+const keyQuickNotes = () => ["/api/quicknotes"];
+
+export type QuickNote = {
+  id: number;
+  title: string;
+  draft: number;
+};
+
+export function useQuickNotes() {
+  return useQuery({
+    queryKey: keyQuickNotes(),
+    queryFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        "/api/tiptap?Action=ListQuickNotes",
+        {},
+      );
+      const data = await response.json();
+      return data.message.quickNotes as QuickNote[];
+    },
+  });
+}
+
+export function useUpdateQuickNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number } & Partial<QuickNote>) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/tiptap?Action=UpdateQuickNote",
+        {
+          ...data,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyQuickNotes(),
+      });
+    },
+  });
+}
+
+export function useCreateQuickNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Omit<QuickNote, "id">) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/tiptap?Action=CreateQuickNote",
+        {
+          ...data,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyQuickNotes(),
+      });
+    },
+  });
+}
+
+export function useDeleteQuickNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number }) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/tiptap?Action=DeleteQuickNote",
+        {
+          ...data,
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyQuickNotes(),
+      });
+    },
   });
 }

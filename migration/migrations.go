@@ -79,7 +79,34 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddAuthorColumn,
 			Down:    RemoveAuthorColumn,
 		},
+		{
+			Version: "v0.13.0",
+			Name:    "Add quick note table",
+			Up:      AddQuickNoteTable,
+			Down:    RemoveQuickNoteTable,
+		},
 	}
+}
+
+// -------------------- v0.13.0 -------------------
+func AddQuickNoteTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_quick_note (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			title VARCHAR(1024) NOT NULL,
+			draft INTEGER DEFAULT 0,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+		);
+	`).Error
+}
+
+func RemoveQuickNoteTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_quick_note CASCADE;
+	`).Error
 }
 
 // -------------------- v0.12.0 -------------------

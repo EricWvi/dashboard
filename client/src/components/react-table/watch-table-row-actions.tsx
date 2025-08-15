@@ -512,6 +512,7 @@ export function ToWatchTableRowActions<TData>({
       },
       title: watch.title,
       type: watch.type,
+      link: watch.payload.link ?? "",
     });
   };
 

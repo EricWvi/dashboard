@@ -404,13 +404,31 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
+          <div className="max-w-[500px] truncate font-medium">
+            {row.getValue("title")}
+          </div>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "url",
+    size: 300,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Link" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
           <a
             className="max-w-[600px] truncate font-medium underline decoration-1"
             href={row.original.url}
             target="_blank"
             onClick={() => clickBookmark(row.original.id)}
           >
-            {row.getValue("title")}
+            {row.getValue("url")}
           </a>
         </div>
       );

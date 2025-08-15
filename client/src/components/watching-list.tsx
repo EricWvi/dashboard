@@ -464,7 +464,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 <Slider
                   id="watching-edit-watch-progress"
                   value={[watchProgress]}
-                  max={watch.payload.range ?? 100}
+                  max={measureRange ?? 100}
                   step={1}
                   onValueChange={(value) => setWatchProgress(value[0])}
                 />

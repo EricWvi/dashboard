@@ -31,10 +31,10 @@ export default function TabbedApp() {
       <div className="fixed top-0 left-1/2 z-50 hidden -translate-x-1/2 transform md:block">
         <div className="group">
           {/* Hover trigger area */}
-          <div className="h-8 w-96 bg-transparent" />
+          <div className="h-8 w-256 bg-transparent" />
 
           {/* Tabs container with animation - moved higher to hide shadow completely */}
-          <div className="absolute top-0 left-0 w-full -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0">
+          <div className="absolute top-0 left-1/2 w-108 -translate-x-1/2 -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0">
             <div className="bg-background/95 -translate-y-2 transform rounded-b-lg border-b shadow-md backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-0">
               <Tabs
                 value={activeTab}
