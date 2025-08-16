@@ -6,6 +6,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export default function Bookmark() {
   const isMobile = useIsMobile();
   const { data: bookmarks } = useBookmarks();
+  // compute default pageSize on mobile
+  const defaultPageSize =
+    window.innerWidth < 768
+      ? Math.min(Math.floor((window.innerHeight - 284) / 50), 10)
+      : 10;
 
   return (
     <div
@@ -24,6 +29,7 @@ export default function Bookmark() {
         columns={bookmarkColumns}
         toolbar="bookmark"
         isLoading={bookmarks ? false : true} // Show loading state if data is not available
+        defaultPageSize={defaultPageSize}
       />
     </div>
   );

@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   toolbar: "towatch" | "watched" | "bookmark";
   isLoading: boolean;
+  defaultPageSize: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -45,6 +46,7 @@ export function DataTable<TData, TValue>({
   data,
   toolbar,
   isLoading,
+  defaultPageSize,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
   const [rowSelection, setRowSelection] = React.useState({});
@@ -53,11 +55,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
-  // compute default pageSize on mobile
-  const defaultPageSize =
-    window.innerWidth < 768
-      ? Math.min(Math.floor((window.innerHeight - 344) / 50), 10)
-      : 10;
+
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: defaultPageSize,

@@ -80,7 +80,7 @@ export default function TabbedApp() {
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="grid h-16 w-full grid-cols-4 rounded-none bg-transparent">
+          <TabsList className="grid h-12 w-full grid-cols-4 rounded-none bg-transparent">
             <TabsTrigger
               value="dashboard"
               className="flex h-full flex-col items-center gap-1"
@@ -117,7 +117,7 @@ export default function TabbedApp() {
 
       {/* Tab Content - Lazy rendered but persistent */}
       <div
-        className={`${isMobile ? "fixed top-2 bottom-16 w-full" : "h-full w-full py-6"}`}
+        className={`${isMobile ? "fixed top-2 bottom-12 w-full" : "h-full w-full py-6"}`}
       >
         {/* Dashboard - lazy render but keep mounted */}
         <div

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, MoreHorizontal, Edit } from "lucide-react";
+import { Trash2, Plus, MoreHorizontal, Edit, NotepadText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { dateString } from "@/lib/utils";
+import { dateString, stripeColor } from "@/lib/utils";
 import {
   createTiptap,
   useCreateQuickNote,
@@ -113,21 +113,16 @@ export const QuickNoteList = () => {
                 <div className="min-h-0 flex-1"></div>
               </div>
             ) : (
-              <div className="min-h-0 w-full flex-1">
+              <div className="min-h-0 w-full flex-1 space-y-1">
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className="hover:bg-accent flex items-center justify-between gap-2 rounded-sm p-2"
+                    className={`hover:bg-accent relative flex items-center justify-between gap-2 rounded-sm border px-1 text-sm ${isMobile ? "pl-4" : "pl-6"}`}
                   >
                     <div
-                      className="flex-1 cursor-pointer"
-                      onClick={() => {
-                        setEditorId(note.draft);
-                        setEditorDialogOpen(true);
-                      }}
-                    >
-                      {note.title}
-                    </div>
+                      className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${stripeColor(0)}`}
+                    />
+                    <div className="flex-1 cursor-pointer">{note.title}</div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -140,6 +135,15 @@ export const QuickNoteList = () => {
                         >
                           <Edit />
                           Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditorId(note.draft);
+                            setEditorDialogOpen(true);
+                          }}
+                        >
+                          <NotepadText />
+                          Edit Note
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
