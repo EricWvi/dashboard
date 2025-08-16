@@ -16,38 +16,39 @@ export default function Dashboard() {
         </h1>
       </div>
 
-      {!isMobile && (
-        <Sheet>
-          <SheetTrigger>Journal</SheetTrigger>
-          <SheetContent
-            side="left"
-            style={{
-              maxWidth: "1000px",
-              width: window.innerHeight * (390 / 844) + "px",
-            }}
-          >
-            <div style={{ width: "100%", height: "100%", overflow: "hidden" }}>
-              <iframe
-                src={"https://journal.onlyquant.top/"}
-                title={"Journal"}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                }}
-                allowFullScreen
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
-
       <div
         className={`${isMobile ? "min-h-0 flex-1 overflow-scroll pb-10" : ""}`}
       >
         <div
-          className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:mx-20 xl:gap-20 ${isMobile ? "mx-6" : ""}`}
+          className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:mx-48 xl:gap-12 ${isMobile ? "mx-6" : ""}`}
         >
+          {!isMobile && (
+            <Sheet>
+              <SheetTrigger>Journal</SheetTrigger>
+              <SheetContent
+                side="left"
+                style={{
+                  maxWidth: "1000px",
+                  width: window.innerHeight * (390 / 844) + "px",
+                }}
+              >
+                <div
+                  style={{ width: "100%", height: "100%", overflow: "hidden" }}
+                >
+                  <iframe
+                    src={"https://journal.onlyquant.top/"}
+                    title={"Journal"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      border: "none",
+                    }}
+                    allowFullScreen
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
           <TodayTodoList />
           <QuickNoteList />
         </div>

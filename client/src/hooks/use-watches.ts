@@ -22,6 +22,7 @@ export interface Payload {
   progress?: number;
   epoch?: number;
   checkpoints?: [string, number][];
+  review?: number;
 }
 
 export type WatchType =

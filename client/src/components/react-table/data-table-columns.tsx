@@ -7,6 +7,13 @@ import { type Bookmark, clickBookmark, Domain } from "@/hooks/use-bookmarks";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   BookmarkTableRowActions,
   ToWatchTableRowActions,
   WatchedTableRowActions,
@@ -33,8 +40,11 @@ import {
   Star,
   StarOff,
   Tv,
+  NotebookText,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
+import { useState } from "react";
+import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 
 export const ratings = [
   {
@@ -229,11 +239,36 @@ export const watchedColumns: ColumnDef<Watch>[] = [
     ),
     cell: ({ row }) => {
       const rating = ratings[Math.ceil((20 - Number(row.original.rate)) / 4)];
+      const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
       return (
         <div className="flex items-center gap-2">
           {rating && <rating.icon className="text-muted-foreground size-4" />}
           <span>{(Number(row.original.rate) / 2).toFixed(1)}</span>
+          {row.original.payload.review && (
+            <div
+              className="cursor-pointer"
+              onClick={() => setReviewDialogOpen(true)}
+            >
+              <NotebookText className="text-muted-foreground size-4" />
+            </div>
+          )}
+
+          {/* display review content */}
+          <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+            <DialogContent
+              className="w-[calc(100%-2rem)] !max-w-[800px]"
+              onOpenAutoFocus={(e) => {
+                e.preventDefault(); // stops Radix from focusing anything
+              }}
+            >
+              <DialogHeader>
+                <DialogTitle>Review</DialogTitle>
+                <DialogDescription></DialogDescription>
+              </DialogHeader>
+              <ContentHtml id={row.original.payload.review ?? 0} />
+            </DialogContent>
+          </Dialog>
         </div>
       );
     },

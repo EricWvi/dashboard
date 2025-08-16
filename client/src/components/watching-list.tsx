@@ -64,6 +64,20 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
       },
     });
   };
+  const archiveWatch = () => {
+    console.log("Archiving watch:", watch.id);
+    return updateWatchMutation.mutateAsync({
+      id: watch.id,
+      status: WatchStatus.DROPPED,
+      payload: {
+        ...watch.payload,
+        checkpoints: [
+          ...(watch.payload.checkpoints ?? []),
+          [dateString(new Date(), "-"), -1],
+        ],
+      },
+    });
+  };
   const updateProgress = () => {
     // if today already have progress, update it
     let curr: [string, number][] = watch.payload.checkpoints ?? [];
@@ -373,7 +387,12 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
             </div>
 
             <div className="flex justify-between">
-              <Button variant="secondary">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  archiveWatch().then(() => handleEditEntryDialogOpen(false));
+                }}
+              >
                 <Package2 />
               </Button>
               <div className="flex gap-2">
@@ -550,7 +569,7 @@ export const WatchingList = ({ watches }: { watches: Watch[] }) => {
   const isMobile = useIsMobile();
   return (
     <div
-      className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${isMobile ? "mx-6" : ""}`}
+      className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${isMobile ? "mx-6" : "pb-10"}`}
     >
       {watches.map((watch) => (
         <WatchingItem key={watch.id} watch={watch} />

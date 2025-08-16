@@ -62,6 +62,8 @@ import {
   type Bookmark,
   type DomainType,
 } from "@/hooks/use-bookmarks";
+import { createTiptap } from "@/hooks/use-draft";
+import { useTTContext } from "@/components/editor";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -83,6 +85,7 @@ export function WatchedTableRowActions<TData>({
   const [entryAuthor, setEntryAuthor] = useState<string>("");
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const updateWatchMutation = useUpdateWatch(WatchStatus.COMPLETED);
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
@@ -95,6 +98,20 @@ export function WatchedTableRowActions<TData>({
       payload: { ...watch.payload, img: entryImg },
       author: entryAuthor,
     });
+  };
+  const reviewWatch = async () => {
+    if (!watch.payload.review) {
+      const draftId = await createTiptap();
+      updateWatchMutation.mutateAsync({
+        id: watch.id,
+        payload: { ...watch.payload, review: draftId },
+      });
+      setEditorId(draftId);
+      setEditorDialogOpen(true);
+    } else {
+      setEditorId(watch.payload.review);
+      setEditorDialogOpen(true);
+    }
   };
 
   // delete confirm
@@ -175,6 +192,7 @@ export function WatchedTableRowActions<TData>({
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
           Edit
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={reviewWatch}>Review</DropdownMenuItem>
         <DropdownMenuItem onClick={() => setWatchAgainDialogOpen(true)}>
           Watch Again
         </DropdownMenuItem>

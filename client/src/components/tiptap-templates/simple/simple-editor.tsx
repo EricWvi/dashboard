@@ -71,10 +71,12 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 // --- Context ---
 import { useTTContext } from "@/components/editor";
-import { syncDraft, removeDraftQuery } from "@/hooks/use-draft";
+import { syncDraft, removeDraftQuery, getContent } from "@/hooks/use-draft";
 import { useEffect, useRef } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
+import { generateHTML } from "@tiptap/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -231,23 +233,7 @@ export function SimpleEditor({ draft }: { draft: any }) {
       },
     },
     extensions: [
-      StarterKit.configure({
-        horizontalRule: false,
-        link: {
-          openOnClick: false,
-          enableClickSelection: true,
-        },
-      }),
-      HorizontalRule,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Highlight.configure({ multicolor: true }),
-      Image,
-      Typography,
-      Superscript,
-      Subscript,
-      Selection,
+      ...extensionSetup,
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
@@ -332,5 +318,61 @@ export function SimpleEditor({ draft }: { draft: any }) {
         </EditorContext.Provider>
       </div>
     )
+  );
+}
+
+const extensionSetup = [
+  StarterKit.configure({
+    horizontalRule: false,
+    link: {
+      openOnClick: false,
+      enableClickSelection: true,
+    },
+  }),
+  HorizontalRule,
+  TextAlign.configure({ types: ["heading", "paragraph"] }),
+  TaskList,
+  TaskItem.configure({ nested: true }),
+  Highlight.configure({ multicolor: true }),
+  Image,
+  Typography,
+  Superscript,
+  Subscript,
+  Selection,
+];
+
+export function ContentHtml({ id }: { id: number }) {
+  const isMobile = useIsMobile();
+  const [html, setHtml] = React.useState<string>("");
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  useEffect(() => {
+    getContent(id).then((content) => {
+      if (content) {
+        setHtml(generateHTML(content, extensionSetup));
+      }
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 200);
+    });
+  }, []);
+
+  return (
+    <div
+      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-20"}`}
+    >
+      {isLoading ? (
+        <div className="mt-[4vh] space-y-4">
+          <Skeleton className="h-8 w-40 rounded-sm" />
+          <Skeleton className="h-[30vh] rounded-sm" />
+          <Skeleton className="h-8 w-30 rounded-sm" />
+          <Skeleton className="h-[30vh] rounded-sm" />
+        </div>
+      ) : (
+        <div
+          className="tiptap ProseMirror simple-editor"
+          dangerouslySetInnerHTML={{ __html: html }}
+        ></div>
+      )}
+    </div>
   );
 }
