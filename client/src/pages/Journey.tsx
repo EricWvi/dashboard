@@ -26,7 +26,7 @@ function ToWatchTab() {
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
-      ? Math.min(Math.floor((window.innerHeight - 328) / 50), 10)
+      ? Math.min(Math.floor((window.innerHeight - 336) / 50), 10)
       : 10;
 
   return (
@@ -45,7 +45,7 @@ function WatchedTab() {
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
-      ? Math.min(Math.floor((window.innerHeight - 328) / 50), 10)
+      ? Math.min(Math.floor((window.innerHeight - 336) / 50), 10)
       : 10;
 
   return (

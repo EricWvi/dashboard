@@ -75,7 +75,6 @@ import { syncDraft, removeDraftQuery, getContent } from "@/hooks/use-draft";
 import { useEffect, useRef } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
-import { generateHTML } from "@tiptap/react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const MainToolbarContent = ({
@@ -341,15 +340,47 @@ const extensionSetup = [
   Selection,
 ];
 
+function ReadOnlyTiptap({ draft }: { draft: any }) {
+  const editor = useEditor({
+    editable: false,
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
+    editorProps: {
+      attributes: {
+        autocomplete: "off",
+        autocorrect: "off",
+        autocapitalize: "off",
+        "aria-label": "Main content area, start typing to enter text.",
+        class: "simple-editor read-only-tiptap",
+      },
+    },
+    extensions: extensionSetup,
+    content: draft,
+  });
+  return (
+    <div className="simple-editor-wrapper">
+      <div className="hidden">
+        {/* tiptap dark mode style depends on explicit `dark` class */}
+        <ThemeToggle />
+      </div>
+      <EditorContext.Provider value={{ editor }}>
+        <EditorContent
+          editor={editor}
+          role="presentation"
+          className="simple-editor-content"
+        />
+      </EditorContext.Provider>
+    </div>
+  );
+}
+
 export function ContentHtml({ id }: { id: number }) {
   const isMobile = useIsMobile();
-  const [html, setHtml] = React.useState<string>("");
+  const [draft, setDraft] = React.useState<any>(undefined);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   useEffect(() => {
     getContent(id).then((content) => {
-      if (content) {
-        setHtml(generateHTML(content, extensionSetup));
-      }
+      setDraft(content);
       setTimeout(() => {
         setIsLoading(false);
       }, 200);
@@ -358,20 +389,17 @@ export function ContentHtml({ id }: { id: number }) {
 
   return (
     <div
-      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-20"}`}
+      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full"}`}
     >
       {isLoading ? (
-        <div className="mt-[4vh] space-y-4">
+        <div className="mx-auto mt-6 max-w-[648px] space-y-4">
           <Skeleton className="h-8 w-40 rounded-sm" />
           <Skeleton className="h-[30vh] rounded-sm" />
           <Skeleton className="h-8 w-30 rounded-sm" />
           <Skeleton className="h-[30vh] rounded-sm" />
         </div>
       ) : (
-        <div
-          className="tiptap ProseMirror simple-editor"
-          dangerouslySetInnerHTML={{ __html: html }}
-        ></div>
+        <ReadOnlyTiptap draft={draft} />
       )}
     </div>
   );

@@ -136,7 +136,7 @@ export const QuickNoteList = () => {
                         }}
                       >
                         <DialogHeader>
-                          <DialogTitle>Review</DialogTitle>
+                          <DialogTitle>{note.title}</DialogTitle>
                           <DialogDescription></DialogDescription>
                         </DialogHeader>
                         <ContentHtml id={note.draft} />

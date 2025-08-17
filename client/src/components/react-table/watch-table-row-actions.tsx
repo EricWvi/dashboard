@@ -99,6 +99,20 @@ export function WatchedTableRowActions<TData>({
       author: entryAuthor,
     });
   };
+  const editQuotes = async () => {
+    if (!watch.payload.quotes) {
+      const draftId = await createTiptap();
+      updateWatchMutation.mutateAsync({
+        id: watch.id,
+        payload: { ...watch.payload, quotes: draftId },
+      });
+      setEditorId(draftId);
+      setEditorDialogOpen(true);
+    } else {
+      setEditorId(watch.payload.quotes);
+      setEditorDialogOpen(true);
+    }
+  };
   const reviewWatch = async () => {
     if (!watch.payload.review) {
       const draftId = await createTiptap();
@@ -192,6 +206,9 @@ export function WatchedTableRowActions<TData>({
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
           Edit
         </DropdownMenuItem>
+        {watch.type === WatchEnum.BOOK && (
+          <DropdownMenuItem onClick={editQuotes}>Quotes</DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={reviewWatch}>Review</DropdownMenuItem>
         <DropdownMenuItem onClick={() => setWatchAgainDialogOpen(true)}>
           Watch Again
