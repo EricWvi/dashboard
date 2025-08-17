@@ -41,10 +41,8 @@ import {
   Star,
   StarOff,
   Tv,
-  NotebookText,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
-import { useState } from "react";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 
 export const ratings = [
@@ -250,8 +248,8 @@ export const watchedColumns: ColumnDef<Watch>[] = [
           {row.original.payload.review && (
             <Dialog>
               <DialogTrigger>
-                <div className="cursor-pointer">
-                  <NotebookText className="text-muted-foreground size-4" />
+                <div className="cursor-pointer font-medium underline decoration-1">
+                  review
                 </div>
               </DialogTrigger>
               <DialogContent

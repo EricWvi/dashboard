@@ -6,6 +6,7 @@ export interface Task {
   title: string;
   priority: "low" | "medium" | "high";
   dueDate?: string;
+  detail?: string;
 }
 
 export type KanbanContent = {

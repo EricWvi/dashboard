@@ -34,6 +34,7 @@ import {
   MoreHorizontal,
   Plus,
   Save,
+  TextCursorInput,
   Trash2,
 } from "lucide-react";
 import { useKanbanContext } from "@/components/kanban";
@@ -45,6 +46,12 @@ import {
   removeKanbanQuery,
 } from "@/hooks/use-kanban";
 import { toast } from "sonner";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function KanbanRender({ data }: { data: KanbanObj }) {
   const { setId, setOpen: setKanbanDialogOpen } = useKanbanContext();
@@ -447,6 +454,8 @@ const KanbanItem = ({
   const [editItemDialogOpen, setEditItemDialogOpen] = useState(false);
   const [editItemName, setEditItemName] = useState("");
   const [deleteItemDialogOpen, setDeleteItemDialogOpen] = useState(false);
+  const [editDetailDialogOpen, setEditDetailDialogOpen] = useState(false);
+  const [itemDetail, setItemDetail] = useState("");
 
   const onRename = () => {
     setColumns((prev: Record<string, Task[]>) => {
@@ -457,6 +466,23 @@ const KanbanItem = ({
                 k,
                 v.map((item) =>
                   item.id === task.id ? { ...item, title: editItemName } : item,
+                ),
+              ]
+            : [k, v],
+        ),
+      );
+    });
+  };
+
+  const onUpdateDetail = () => {
+    setColumns((prev: Record<string, Task[]>) => {
+      return Object.fromEntries(
+        Object.entries(prev).map(([k, v]) =>
+          k === columnName
+            ? [
+                k,
+                v.map((item) =>
+                  item.id === task.id ? { ...item, detail: itemDetail } : item,
                 ),
               ]
             : [k, v],
@@ -484,9 +510,21 @@ const KanbanItem = ({
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 flex-col gap-2">
-                <span className="line-clamp-1 text-sm font-medium">
-                  {task.title}
-                </span>
+                {task.detail ? (
+                  <HoverCard>
+                    <HoverCardTrigger>
+                      <span className="line-clamp-1 text-sm font-medium underline decoration-dashed">
+                        {task.title}
+                      </span>
+                    </HoverCardTrigger>
+                    <HoverCardContent>{task.detail}</HoverCardContent>
+                  </HoverCard>
+                ) : (
+                  <span className="line-clamp-1 text-sm font-medium">
+                    {task.title}
+                  </span>
+                )}
+
                 <div className="flex items-center gap-2">
                   <Badge
                     variant={
@@ -542,8 +580,24 @@ const KanbanItem = ({
                         setEditItemDialogOpen(true);
                       }}
                     >
-                      <Edit />
+                      <TextCursorInput className="text-muted-foreground" />
                       Rename Item
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setItemDetail(task.detail ?? "");
+                        setEditDetailDialogOpen(true);
+                      }}
+                    >
+                      <Edit />
+                      Edit Detail
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onMouseDown={(e) => {
@@ -608,6 +662,44 @@ const KanbanItem = ({
                 disabled={!editItemName.trim()}
               >
                 Rename
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Detail Dialog */}
+      <Dialog
+        open={editDetailDialogOpen}
+        onOpenChange={setEditDetailDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Details</DialogTitle>
+            <DialogDescription>Enter details for your item.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Enter new details..."
+              value={itemDetail}
+              onChange={(e) => setItemDetail(e.target.value)}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditDetailDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  onUpdateDetail();
+                  setEditDetailDialogOpen(false);
+                }}
+                disabled={!itemDetail.trim()}
+              >
+                Update
               </Button>
             </div>
           </div>

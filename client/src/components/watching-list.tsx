@@ -65,7 +65,6 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
     });
   };
   const archiveWatch = () => {
-    console.log("Archiving watch:", watch.id);
     return updateWatchMutation.mutateAsync({
       id: watch.id,
       status: WatchStatus.DROPPED,

@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import {
   useUpdateQuickNote,
 } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
+import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 
 export const QuickNoteList = () => {
   const isMobile = useIsMobile();
@@ -117,15 +119,34 @@ export const QuickNoteList = () => {
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`hover:bg-accent relative flex items-center justify-between gap-2 rounded-sm border px-1 text-sm ${isMobile ? "pl-4" : "pl-6"}`}
+                    className={`relative flex items-center justify-between gap-2 rounded-sm border py-2 pr-2 text-sm ${isMobile ? "pl-4" : "pl-6"}`}
                   >
                     <div
                       className={`absolute top-0 bottom-0 left-0 w-1 rounded-l-sm ${stripeColor(0)}`}
                     />
-                    <div className="flex-1 cursor-pointer">{note.title}</div>
+                    {/* quick note title */}
+                    <Dialog>
+                      <DialogTrigger className="flex flex-1 cursor-pointer justify-start">
+                        <div>{note.title}</div>
+                      </DialogTrigger>
+                      <DialogContent
+                        className="w-[calc(100%-2rem)] !max-w-[800px]"
+                        onOpenAutoFocus={(e) => {
+                          e.preventDefault(); // stops Radix from focusing anything
+                        }}
+                      >
+                        <DialogHeader>
+                          <DialogTitle>Review</DialogTitle>
+                          <DialogDescription></DialogDescription>
+                        </DialogHeader>
+                        <ContentHtml id={note.draft} />
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* quick note menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" className="size-4 xl:size-6">
                           <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
