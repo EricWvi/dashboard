@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   BookmarkTableRowActions,
@@ -239,36 +240,34 @@ export const watchedColumns: ColumnDef<Watch>[] = [
     ),
     cell: ({ row }) => {
       const rating = ratings[Math.ceil((20 - Number(row.original.rate)) / 4)];
-      const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
       return (
         <div className="flex items-center gap-2">
           {rating && <rating.icon className="text-muted-foreground size-4" />}
           <span>{(Number(row.original.rate) / 2).toFixed(1)}</span>
-          {row.original.payload.review && (
-            <div
-              className="cursor-pointer"
-              onClick={() => setReviewDialogOpen(true)}
-            >
-              <NotebookText className="text-muted-foreground size-4" />
-            </div>
-          )}
 
           {/* display review content */}
-          <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-            <DialogContent
-              className="w-[calc(100%-2rem)] !max-w-[800px]"
-              onOpenAutoFocus={(e) => {
-                e.preventDefault(); // stops Radix from focusing anything
-              }}
-            >
-              <DialogHeader>
-                <DialogTitle>Review</DialogTitle>
-                <DialogDescription></DialogDescription>
-              </DialogHeader>
-              <ContentHtml id={row.original.payload.review ?? 0} />
-            </DialogContent>
-          </Dialog>
+          {row.original.payload.review && (
+            <Dialog>
+              <DialogTrigger>
+                <div className="cursor-pointer">
+                  <NotebookText className="text-muted-foreground size-4" />
+                </div>
+              </DialogTrigger>
+              <DialogContent
+                className="w-[calc(100%-2rem)] !max-w-[800px]"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault(); // stops Radix from focusing anything
+                }}
+              >
+                <DialogHeader>
+                  <DialogTitle>Review</DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+                <ContentHtml id={row.original.payload.review ?? 0} />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       );
     },
@@ -457,14 +456,36 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
-          <a
-            className="max-w-[600px] truncate font-medium underline decoration-1"
-            href={row.original.url}
-            target="_blank"
-            onClick={() => clickBookmark(row.original.id)}
-          >
-            {row.getValue("url")}
-          </a>
+          {row.original.payload.draft ? (
+            <Dialog>
+              <DialogTrigger onClick={() => clickBookmark(row.original.id)}>
+                <div className="font-medium underline decoration-1">
+                  cheatsheet
+                </div>
+              </DialogTrigger>
+              <DialogContent
+                className="w-[calc(100%-2rem)] !max-w-[800px]"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault(); // stops Radix from focusing anything
+                }}
+              >
+                <DialogHeader>
+                  <DialogTitle>Cheat Sheet</DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+                <ContentHtml id={row.original.payload.draft ?? 0} />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <a
+              className="max-w-[600px] truncate font-medium underline decoration-1"
+              href={row.original.url}
+              target="_blank"
+              onClick={() => clickBookmark(row.original.id)}
+            >
+              {row.getValue("url")}
+            </a>
+          )}
         </div>
       );
     },

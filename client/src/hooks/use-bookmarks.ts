@@ -7,7 +7,13 @@ export type Bookmark = {
   url: string;
   click: number;
   domain: DomainType;
-  payload: any;
+  payload: Payload;
+};
+
+type Payload = {
+  whats?: string[];
+  hows?: string[];
+  draft?: number;
 };
 
 export type DomainType =

@@ -881,6 +881,7 @@ export function BookmarkTableRowActions<TData>({
   const [bookmarkLink, setBookmarkLink] = useState<string>("");
   const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
   const [selectedHows, setSelectedHows] = useState<string[]>([]);
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const updateBookmarkMutation = useUpdateBookmark();
   const updateBookmark = () => {
     return updateBookmarkMutation.mutateAsync({
@@ -931,6 +932,16 @@ export function BookmarkTableRowActions<TData>({
         <DropdownMenuItem onClick={() => handleEditBookmarkDialogOpen(true)}>
           Edit
         </DropdownMenuItem>
+        {!!bookmark.payload.draft && (
+          <DropdownMenuItem
+            onClick={() => {
+              setEditorId(bookmark.payload.draft ?? 0);
+              setEditorDialogOpen(true);
+            }}
+          >
+            Cheat Sheet
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setConfirmDialogOpen(true)}
@@ -1033,7 +1044,10 @@ export function BookmarkTableRowActions<TData>({
                   placeholder={!isMobile ? "Enter bookmark link..." : ""}
                   type="text"
                   value={bookmarkLink}
-                  disabled={updateBookmarkMutation.isPending}
+                  disabled={
+                    updateBookmarkMutation.isPending ||
+                    bookmarkLink === "cheatsheet"
+                  }
                   onChange={(e) => setBookmarkLink(e.target.value)}
                 />
               </div>

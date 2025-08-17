@@ -51,6 +51,7 @@ import {
   useTags,
   type DomainType,
 } from "@/hooks/use-bookmarks";
+import { createTiptap } from "@/hooks/use-draft";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -573,6 +574,7 @@ export function BookmarkTableToolbar<TData>({
     whats: string[],
     hows: string[],
   ) => {
+    const draft = url !== "cheatsheet" ? 0 : await createTiptap();
     return createBookmarkMutation.mutateAsync({
       title,
       url,
@@ -580,6 +582,7 @@ export function BookmarkTableToolbar<TData>({
       payload: {
         whats,
         hows,
+        draft,
       },
     });
   };
