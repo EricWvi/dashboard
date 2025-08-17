@@ -9,7 +9,7 @@ export default function Bookmark() {
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
-      ? Math.min(Math.floor((window.innerHeight - 284) / 50), 10)
+      ? Math.min(Math.floor((window.innerHeight - 292) / 50), 10)
       : 10;
 
   return (

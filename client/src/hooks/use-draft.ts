@@ -61,6 +61,12 @@ export function removeDraftQuery(id: number) {
   });
 }
 
+export type Quote = {
+  date: Date;
+  chapter: string;
+  content: string;
+};
+
 const keyQuickNotes = () => ["/api/quicknotes"];
 
 export type QuickNote = {

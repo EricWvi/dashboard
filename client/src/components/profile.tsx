@@ -436,12 +436,6 @@ const BeaverSheet = () => (
 
 const MinifluxSheet = (props: React.ComponentProps<"div">) => {
   const { data: rssCount } = useRSSCount();
-  const [countNumber, setCountNumber] = useState(0);
-  useEffect(() => {
-    if (rssCount) {
-      setCountNumber(rssCount);
-    }
-  }, [rssCount]);
   const [updateTime, setUpdateTime] = useState(Date.now());
   usePageVisibility(() => {
     if (Date.now() - updateTime > 10 * 60 * 1000) {
@@ -451,18 +445,22 @@ const MinifluxSheet = (props: React.ComponentProps<"div">) => {
   });
 
   return (
-    <Sheet>
+    <Sheet
+      onOpenChange={(isOpen: boolean) => {
+        if (!isOpen) invalidRSSCount();
+      }}
+    >
       <SheetTrigger className="relative">
-        <div className="relative size-12" onClick={() => setCountNumber(0)}>
+        <div className="relative size-12">
           <div
             className="size-full cursor-pointer overflow-hidden rounded-lg border shadow-md"
             {...props}
           >
             <img src="/brands/miniflux.png"></img>
           </div>
-          {countNumber !== 0 && (
+          {!!rssCount && (
             <div className="bg-destructive absolute top-0 right-0 z-20 flex size-5 translate-x-1/3 -translate-y-1/3 items-center justify-center rounded-full text-sm text-white">
-              {countNumber}
+              {rssCount}
             </div>
           )}
         </div>
@@ -499,12 +497,6 @@ const MinifluxSheet = (props: React.ComponentProps<"div">) => {
 
 const QQMailSheet = (props: React.ComponentProps<"div">) => {
   const { data: mailCount } = useMailCount();
-  const [countNumber, setCountNumber] = useState(0);
-  useEffect(() => {
-    if (mailCount) {
-      setCountNumber(mailCount);
-    }
-  }, [mailCount]);
   const [updateTime, setUpdateTime] = useState(Date.now());
   usePageVisibility(() => {
     if (Date.now() - updateTime > 10 * 60 * 1000) {
@@ -518,15 +510,15 @@ const QQMailSheet = (props: React.ComponentProps<"div">) => {
       className="relative size-12"
       onClick={() => {
         window.open("https://wx.mail.qq.com/", "_blank");
-        setCountNumber(0);
+        setUpdateTime(0);
       }}
     >
       <div className="size-full cursor-pointer" {...props}>
         <img src="/brands/qqmail.png" alt="QQ Mail" />
       </div>
-      {countNumber !== 0 && (
+      {!!mailCount && (
         <div className="bg-destructive absolute top-0 right-0 z-20 flex size-5 translate-x-1/3 -translate-y-1/3 items-center justify-center rounded-full text-sm text-white">
-          {countNumber}
+          {mailCount}
         </div>
       )}
     </div>

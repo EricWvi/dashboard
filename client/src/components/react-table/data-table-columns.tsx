@@ -244,6 +244,29 @@ export const watchedColumns: ColumnDef<Watch>[] = [
           {rating && <rating.icon className="text-muted-foreground size-4" />}
           <span>{(Number(row.original.rate) / 2).toFixed(1)}</span>
 
+          {/* display quotes content */}
+          {row.original.payload.quotes && (
+            <Dialog>
+              <DialogTrigger>
+                <div className="cursor-pointer font-medium underline decoration-1">
+                  quotes
+                </div>
+              </DialogTrigger>
+              <DialogContent
+                className="w-[calc(100%-2rem)] !max-w-[800px]"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault(); // stops Radix from focusing anything
+                }}
+              >
+                <DialogHeader>
+                  <DialogTitle>Quotes</DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+                <ContentHtml id={row.original.payload.quotes ?? 0} />
+              </DialogContent>
+            </Dialog>
+          )}
+
           {/* display review content */}
           {row.original.payload.review && (
             <Dialog>
