@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"os"
+	"sync"
 
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/model"
@@ -9,7 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var EmailToID map[string]uint
+var emailToID map[string]uint
+
+var lock sync.RWMutex
 
 func InitJWTMap() {
 	m, err := model.CreateEmailToIDMap(config.DB)
@@ -17,7 +20,34 @@ func InitJWTMap() {
 		log.Error()
 		os.Exit(1)
 	}
-	EmailToID = m
+	emailToID = m
+}
+
+func readMap(email string) (uint, bool) {
+	lock.RLock()
+	defer lock.RUnlock()
+	id, ok := emailToID[email]
+	return id, ok
+}
+
+func writeMap(email string) uint {
+	lock.Lock()
+	defer lock.Unlock()
+	if id, ok := emailToID[email]; ok {
+		return id
+	} else {
+		id := model.CreateUser(config.DB, email)
+		emailToID[email] = id
+		return id
+	}
+}
+
+func getId(email string) uint {
+	if id, ok := readMap(email); ok {
+		return id
+	} else {
+		return writeMap(email)
+	}
 }
 
 func JWT(c *gin.Context) {
@@ -25,7 +55,7 @@ func JWT(c *gin.Context) {
 	if len(email) == 0 {
 		c.Set("UserId", 0)
 	} else {
-		c.Set("UserId", EmailToID[email])
+		c.Set("UserId", getId(email))
 	}
 }
 
