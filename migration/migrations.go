@@ -85,7 +85,30 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddQuickNoteTable,
 			Down:    RemoveQuickNoteTable,
 		},
+		{
+			Version: "v0.14.0",
+			Name:    "Add username+avatar columns to user",
+			Up:      AddUsernameAvatar,
+			Down:    RemoveUsernameAvatar,
+		},
 	}
+}
+
+// -------------------- v0.14.0 -------------------
+func AddUsernameAvatar(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_user
+		ADD COLUMN avatar VARCHAR(1024) DEFAULT '' NOT NULL,
+		ADD COLUMN username VARCHAR(255) DEFAULT '' NOT NULL;
+	`).Error
+}
+
+func RemoveUsernameAvatar(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_user
+		DROP COLUMN IF EXISTS avatar,
+		DROP COLUMN IF EXISTS username;
+	`).Error
 }
 
 // -------------------- v0.13.0 -------------------
