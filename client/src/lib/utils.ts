@@ -163,3 +163,68 @@ export const noPlanStart = () => {
   const noPlan = new Date(4000000000000);
   return noPlan;
 };
+
+export function refinedGreeting() {
+  const hour = new Date().getHours();
+  const now = Date.now();
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const index = Math.floor(now / msPerDay);
+
+  if (hour >= 5 && hour < 12) {
+    const morningGreetings = [
+      "A splendid morning to you.",
+      "May your day begin with brightness.",
+      "Wishing you a serene morning.",
+      "A refreshing morning to greet your endeavors.",
+      "May your morning be filled with promise.",
+      "Wishing you clarity and cheer this morning.",
+      "A fine morning, may it set the tone for your day.",
+      "Grace and calm be with you this morning.",
+      "May the dawn bring you renewed energy.",
+      "A radiant morning to accompany your path.",
+    ];
+    return morningGreetings[index % morningGreetings.length];
+  } else if (hour >= 12 && hour < 17) {
+    const afternoonGreetings = [
+      "A gracious afternoon to you.",
+      "I trust your day is unfolding well.",
+      "Wishing you a delightful afternoon.",
+      "May your afternoon be filled with lightness.",
+      "A warm afternoon greeting to you.",
+      "I hope your afternoon is as pleasant as you are.",
+      "May your afternoon be calm and fulfilling.",
+      "A bright afternoon, wishing you continued success.",
+      "I trust the day has been kind thus far.",
+      "Wishing you harmony this afternoon.",
+    ];
+    return afternoonGreetings[index % afternoonGreetings.length];
+  } else if (hour >= 17 && hour < 21) {
+    const eveningGreetings = [
+      "A pleasant evening to you.",
+      "May your evening be tranquil.",
+      "Wishing you a graceful evening.",
+      "A serene evening filled with comfort.",
+      "May the twilight bring you peace.",
+      "Wishing you calm as the day concludes.",
+      "A gentle evening to ease your spirit.",
+      "May your evening glow with contentment.",
+      "A peaceful evening to accompany your thoughts.",
+      "Wishing you ease and warmth this evening.",
+    ];
+    return eveningGreetings[index % eveningGreetings.length];
+  } else {
+    const nightGreetings = [
+      "A restful night to you.",
+      "May your night be peaceful.",
+      "Wishing you a serene night’s rest.",
+      "May your slumber be deep and kind.",
+      "A tranquil night to calm your soul.",
+      "Rest well under the quiet of night.",
+      "Wishing you gentle dreams and ease.",
+      "May the stars keep you company tonight.",
+      "A peaceful night to restore your strength.",
+      "May sleep embrace you with serenity.",
+    ];
+    return nightGreetings[index % nightGreetings.length];
+  }
+}

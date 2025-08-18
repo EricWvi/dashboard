@@ -81,35 +81,17 @@ export default function TabbedApp() {
           className="w-full"
         >
           <TabsList className="grid h-12 w-full grid-cols-4 rounded-none bg-transparent">
-            <TabsTrigger
-              value="dashboard"
-              className="flex h-full flex-col items-center gap-1"
-            >
+            <TabsTrigger value="dashboard" className="h-full rounded-full">
               <Home className="size-6" />
             </TabsTrigger>
-            <TabsTrigger
-              value="todo"
-              className="flex h-full flex-col items-center gap-1"
-            >
-              <CheckCircle2
-                className={`${activeTab === "todo" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
-              />
+            <TabsTrigger value="todo" className="h-full rounded-full">
+              <CheckCircle2 className="size-6" />
             </TabsTrigger>
-            <TabsTrigger
-              value="journey"
-              className="flex h-full flex-col items-center gap-1"
-            >
-              <CheckCircle2
-                className={`${activeTab === "journey" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
-              />
+            <TabsTrigger value="journey" className="h-full rounded-full">
+              <CheckCircle2 className="size-6" />
             </TabsTrigger>
-            <TabsTrigger
-              value="bookmark"
-              className="flex h-full flex-col items-center gap-1"
-            >
-              <CheckCircle2
-                className={`${activeTab === "bookmark" ? "fill-foreground text-background size-8" : "fill-background text-foreground size-6"}`}
-              />
+            <TabsTrigger value="bookmark" className="h-full rounded-full">
+              <CheckCircle2 className="size-6" />
             </TabsTrigger>
           </TabsList>
         </Tabs>

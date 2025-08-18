@@ -438,7 +438,7 @@ export const TodayTodoList = () => {
       <CardContent>
         {/* desktop fixed height, mobile full height */}
         <div
-          className={`flex flex-col rounded-sm ${isMobile ? "min-h-20" : "h-100 overflow-scroll"}`}
+          className={`flex flex-col rounded-sm ${isMobile ? "min-h-20" : "h-120 overflow-scroll"}`}
         >
           {/* 1. UI library components have complex nested DOM structures that make `h-full` problematic. */}
           {/* 2. min-h-0 lets flex items shrink as needed, fixing overflow and scrolling issues in flex layouts. */}

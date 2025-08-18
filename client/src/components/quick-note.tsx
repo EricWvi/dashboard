@@ -93,7 +93,7 @@ export const QuickNoteList = () => {
       <CardContent className="pr-3 pl-6">
         {/* desktop fixed height, mobile full height */}
         <div
-          className={`flex flex-col rounded-sm ${isMobile ? "min-h-20" : "h-100 overflow-scroll"}`}
+          className={`flex flex-col rounded-sm ${isMobile ? "min-h-20" : "h-120 overflow-scroll"}`}
         >
           {isLoading ? (
             <>

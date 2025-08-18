@@ -1,54 +1,52 @@
 import QuickNoteList from "@/components/quick-note";
+import { Profile } from "@/components/profile";
 import { TodayTodoList } from "@/components/todo/todo-list";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUser } from "@/hooks/use-user";
+import { useState } from "react";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
+import { refinedGreeting } from "@/lib/utils";
 
 export default function Dashboard() {
   const isMobile = useIsMobile();
+  const { data: userInfo } = useUser();
+  const [greetingHour, setGreetingHour] = useState(new Date().getHours());
+  const [greeting, setGreeting] = useState(refinedGreeting());
+  usePageVisibility(() => {
+    if (new Date().getHours() !== greetingHour) {
+      setGreetingHour(new Date().getHours());
+      setGreeting(refinedGreeting());
+    }
+  });
 
   return (
     <div
-      className={`flex size-full flex-col gap-4 ${isMobile ? "pt-6" : "p-8"}`}
+      className={`flex size-full flex-col gap-2 ${isMobile ? "pt-6" : "p-8"}`}
     >
-      <div>
-        <h1 className={`text-3xl font-bold ${isMobile ? "px-6" : "mb-6"}`}>
-          Dashboard
-        </h1>
-      </div>
+      {isMobile && (
+        <div className="px-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <Avatar>
+              <AvatarImage src={userInfo?.avatar} />
+              <AvatarFallback />
+            </Avatar>
+          </div>
+          <p className="text-muted-foreground">{greeting}</p>
+        </div>
+      )}
 
       <div
-        className={`${isMobile ? "min-h-0 flex-1 overflow-scroll pb-10" : ""}`}
+        className={`${isMobile ? "min-h-0 flex-1 overflow-scroll pt-2 pb-10" : "pt-16"}`}
       >
-        <div
-          className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:mx-48 xl:gap-12 ${isMobile ? "mx-6" : ""}`}
-        >
+        <div className="mx-6 grid gap-6 md:grid-cols-2 lg:gap-10 xl:mx-24 xl:grid-cols-3 xl:gap-12 2xl:mx-48">
           {!isMobile && (
-            <Sheet>
-              <SheetTrigger>Journal</SheetTrigger>
-              <SheetContent
-                side="left"
-                style={{
-                  maxWidth: "1000px",
-                  width: window.innerHeight * (390 / 844) + "px",
-                }}
-              >
-                <div
-                  style={{ width: "100%", height: "100%", overflow: "hidden" }}
-                >
-                  <iframe
-                    src={"https://journal.onlyquant.top/"}
-                    title={"Journal"}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      border: "none",
-                    }}
-                    allowFullScreen
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
+            <div className="col-span-2 xl:col-span-1">
+              <Profile />
+            </div>
           )}
+
           <TodayTodoList />
           <QuickNoteList />
         </div>

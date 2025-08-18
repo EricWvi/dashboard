@@ -375,6 +375,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                     <Plus className="text-muted-foreground size-8" />
                   )}
                   <Input
+                    id="watching-edit-watch-img"
                     type="file"
                     accept="image/*"
                     className="hidden"

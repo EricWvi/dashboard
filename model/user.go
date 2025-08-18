@@ -9,14 +9,22 @@ import (
 
 type User struct {
 	gorm.Model
-	Email    string `gorm:"size:100;uniqueIndex;not null"`
-	Avatar   string `gorm:"size:1024;not null" json:"avatar"`
-	Username string `gorm:"size:1024;not null" json:"username"`
+	Email      string `gorm:"size:100;uniqueIndex;not null"`
+	Avatar     string `gorm:"size:1024" json:"avatar"`
+	Username   string `gorm:"size:1024" json:"username"`
+	RssToken   string `gorm:"column:rss_token;size:255" json:"rssToken"`
+	EmailToken string `gorm:"column:email_token;size:255" json:"emailToken"`
+	EmailFeed  string `gorm:"column:email_feed;size:255" json:"emailFeed"`
 }
 
 const (
-	User_Table = "d_user"
-	User_Email = "email"
+	User_Table      = "d_user"
+	User_Email      = "email"
+	User_Avatar     = "avatar"
+	User_Username   = "username"
+	User_RssToken   = "rss_token"
+	User_EmailToken = "email_token"
+	User_EmailFeed  = "email_feed"
 )
 
 func (u *User) TableName() string {
@@ -48,6 +56,18 @@ func (u *User) Get(db *gorm.DB, where map[string]any) error {
 		return fmt.Errorf("can not find user with id %d", u.ID)
 	}
 	return nil
+}
+
+func GetRssToken(db *gorm.DB, where map[string]any) string {
+	token := make([]string, 0)
+	if err := db.Model(&User{}).Where(where).Pluck(User_RssToken, &token).Error; err != nil {
+		log.Errorf("failed to get rss token: %s", err)
+		return ""
+	}
+	if len(token) == 0 {
+		return ""
+	}
+	return token[0]
 }
 
 func CreateUser(db *gorm.DB, email string) uint {

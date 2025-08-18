@@ -91,7 +91,32 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddUsernameAvatar,
 			Down:    RemoveUsernameAvatar,
 		},
+		{
+			Version: "v0.15.0",
+			Name:    "Add rss_token and email_token columns to user",
+			Up:      AddRssEmailTokens,
+			Down:    RemoveRssEmailTokens,
+		},
 	}
+}
+
+// -------------------- v0.15.0 -------------------
+func AddRssEmailTokens(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_user
+		ADD COLUMN rss_token VARCHAR(255) DEFAULT '' NOT NULL,
+		ADD COLUMN email_token VARCHAR(255) DEFAULT '' NOT NULL,
+		ADD COLUMN email_feed VARCHAR(255) DEFAULT '' NOT NULL;
+	`).Error
+}
+
+func RemoveRssEmailTokens(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_user
+		DROP COLUMN IF EXISTS rss_token,
+		DROP COLUMN IF EXISTS email_token,
+		DROP COLUMN IF EXISTS email_feed;
+	`).Error
 }
 
 // -------------------- v0.14.0 -------------------
