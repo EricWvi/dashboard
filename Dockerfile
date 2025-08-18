@@ -33,10 +33,6 @@ FROM alpine:latest
 # Install a shell and CA certificates
 RUN apk add --no-cache bash ca-certificates tzdata
 
-# Set the timezone to Asia/Shanghai
-ENV TZ=Asia/Shanghai
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
 # Set working directory inside container
 WORKDIR /app
 
@@ -48,6 +44,8 @@ COPY --from=backend-builder /app/config.prod.yaml config.yaml
 
 # Expose your web server's port
 EXPOSE 8765
+
+ENV GIN_MODE=release
 
 # Default entrypoint: run the server
 ENTRYPOINT ["./dashboard"]

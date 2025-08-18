@@ -33,6 +33,7 @@ func openDB(host, port, username, password, name string) *gorm.DB {
 		name,
 		port,
 		time.Local)
+	log.Info("db connection uses timezone ", time.Local)
 
 	newLogger := logger.New(
 		log.StandardLogger(),
