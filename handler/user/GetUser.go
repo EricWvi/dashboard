@@ -19,8 +19,11 @@ func (b Base) GetUser(c *gin.Context, req *GetUserRequest) *GetUserResponse {
 	}
 
 	return &GetUserResponse{
-		Avatar:   user.Avatar,
-		Username: user.Username,
+		Avatar:        user.Avatar,
+		Username:      user.Username,
+		EmailFeed:     user.EmailFeed,
+		HasRssToken:   string(user.RssToken) != "",
+		HasEmailToken: string(user.EmailToken) != "",
 	}
 }
 
@@ -29,6 +32,9 @@ type GetUserRequest struct {
 }
 
 type GetUserResponse struct {
-	Avatar   string `json:"avatar"`
-	Username string `json:"username"`
+	Avatar        string `json:"avatar"`
+	Username      string `json:"username"`
+	EmailFeed     string `json:"emailFeed"`
+	HasRssToken   bool   `json:"hasRssToken"`
+	HasEmailToken bool   `json:"hasEmailToken"`
 }

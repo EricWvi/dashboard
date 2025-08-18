@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/EricWvi/dashboard/service"
 	"github.com/spf13/viper"
 )
 
@@ -8,6 +9,9 @@ func Init() {
 	// init config
 	if err := LoadCfg(); err != nil {
 		panic(err)
+	}
+	if service.Key() == "" {
+		panic("DASHBOARD_ENCRYPT_KEY is not set")
 	}
 
 	InitDB()

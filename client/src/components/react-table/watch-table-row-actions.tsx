@@ -438,6 +438,7 @@ export function WatchedTableRowActions<TData>({
                     <Plus className="text-muted-foreground size-8" />
                   )}
                   <Input
+                    id="watched-edit-watch-img"
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -837,6 +838,7 @@ export function ToWatchTableRowActions<TData>({
                     <Plus className="text-muted-foreground size-8" />
                   )}
                   <Input
+                    id="towatch-edit-watch-img"
                     type="file"
                     accept="image/*"
                     className="hidden"

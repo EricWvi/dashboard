@@ -162,7 +162,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
           columnValue: columnValueRef.current,
         },
       }).then(() => {
-        toast("Kanban saved successfully");
+        toast.success("Kanban saved successfully");
       });
     }
     setId(0);

@@ -124,6 +124,18 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Allura";
+  src: url("/fonts/Allura-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "CormorantGaramond";
+  src: url("/fonts/CormorantGaramond-Regular.ttf") format("truetype");
+  font-style: normal;
+}
+
 @layer base {
   ::-webkit-scrollbar {
     width: 0.25rem;

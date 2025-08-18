@@ -21,7 +21,7 @@ export async function apiRequest(
   });
 
   if (!res.ok) {
-    toast("API Request failed", {
+    toast.error("API Request failed", {
       description: method + " " + url + " failed with status " + res.status,
     });
   }

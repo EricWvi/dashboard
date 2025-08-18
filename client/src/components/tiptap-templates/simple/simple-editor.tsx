@@ -240,7 +240,7 @@ export function SimpleEditor({ draft }: { draft: any }) {
         limit: 9,
         upload: handleImageUpload,
         onError: (error) =>
-          toast("Upload failed", { description: error.message }),
+          toast.error("Upload failed", { description: error.message }),
       }),
     ],
     content: draft,
@@ -272,7 +272,7 @@ export function SimpleEditor({ draft }: { draft: any }) {
   const handleSave = async () => {
     if (editor && isChanged.current) {
       syncDraft({ id, content: editor.getJSON() }).then(() => {
-        toast("Draft saved successfully");
+        toast.success("Draft saved successfully");
       });
     }
     setId(0);
@@ -282,7 +282,7 @@ export function SimpleEditor({ draft }: { draft: any }) {
 
   const handleDrop = async () => {
     syncDraft({ id, content: draft }).then(() => {
-      toast("Draft dropped successfully");
+      toast.success("Draft dropped successfully");
     });
     setId(0);
     setOpen(false);

@@ -39,11 +39,11 @@ export const fileUpload = async ({
     if (xhr.status >= 200 && xhr.status < 300) {
       onSuccess(xhr.responseText);
     } else {
-      toast("Upload Failed");
+      toast.error("Upload Failed");
     }
   };
 
-  xhr.onerror = () => toast("Network error");
+  xhr.onerror = () => toast.error("Network error");
 
   xhr.send(formData);
 };

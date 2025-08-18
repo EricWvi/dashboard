@@ -963,7 +963,7 @@ export const TodoEntry = ({
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Set Date</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="wrap-anywhere">
                 Set a date for the todo item [{todo.title}].
               </DialogDescription>
             </DialogHeader>
