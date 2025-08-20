@@ -6,6 +6,7 @@ import { TTProvider, SimpleEditorWrapper } from "@/components/editor";
 import { KanbanProvider, KanbanWrapper } from "@/components/kanban";
 import { Toaster } from "@/components/ui/sonner";
 import { useUser } from "@/hooks/use-user";
+import SearchCommand from "@/components/search-command";
 
 const MainPage = () => {
   const { data: userInfo } = useUser();
@@ -23,6 +24,7 @@ export default function App() {
           <SimpleEditorWrapper />
           <KanbanWrapper />
           <Toaster position="top-right" />
+          <SearchCommand />
         </KanbanProvider>
       </TTProvider>
     </QueryClientProvider>

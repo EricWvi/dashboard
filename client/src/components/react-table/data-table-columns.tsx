@@ -436,9 +436,20 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
-          <div className="max-w-[500px] truncate font-medium">
-            {row.getValue("title")}
-          </div>
+          {row.original.payload.draft || row.original.url === "" ? (
+            <div className="max-w-[500px] truncate font-medium">
+              {row.getValue("title")}
+            </div>
+          ) : (
+            <a
+              className="max-w-[500px] truncate font-medium"
+              href={row.original.url}
+              target="_blank"
+              onClick={() => clickBookmark(row.original.id)}
+            >
+              {row.getValue("title")}
+            </a>
+          )}
         </div>
       );
     },
@@ -457,7 +468,7 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
           {row.original.payload.draft ? (
             <Dialog>
               <DialogTrigger onClick={() => clickBookmark(row.original.id)}>
-                <div className="font-medium underline decoration-1">
+                <div className="cursor-pointer font-medium underline decoration-1">
                   cheatsheet
                 </div>
               </DialogTrigger>

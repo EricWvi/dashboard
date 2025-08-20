@@ -65,7 +65,7 @@ export function invalidMailCount() {
 export function useSignUp() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: User) => {
+    mutationFn: async (data: { avatar: string; username: string }) => {
       const response = await apiRequest(
         "POST",
         "/api/user?Action=SignUp",
