@@ -79,6 +79,23 @@ export function useSignUp() {
   });
 }
 
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { avatar: string; username: string }) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/user?Action=SignUp",
+        data,
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keyUser() });
+    },
+  });
+}
+
 export function useUpdateEmailToken() {
   const queryClient = useQueryClient();
   return useMutation({

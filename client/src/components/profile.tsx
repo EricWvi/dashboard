@@ -31,11 +31,15 @@ import {
   useMailCount,
   useRSSCount,
   useUpdateEmailToken,
+  useUpdateProfile,
   useUpdateRssToken,
   useUser,
 } from "@/hooks/use-user";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
+import { Plus, X } from "lucide-react";
+import { fileUpload } from "@/lib/file-upload";
+import { formatMediaUrl } from "@/lib/utils";
 
 export const Profile = () => {
   const { data: userInfo } = useUser();
@@ -67,6 +71,34 @@ export const Profile = () => {
       emailFeed: emailFeed.trim() + "@qq.com",
     });
   };
+  // edit profile
+  const updateProfileMutation = useUpdateProfile();
+  const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
+  const [username, setUsername] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    fileUpload({
+      event,
+      onProgress: () => {},
+      onSuccess: (response) => {
+        setAvatar(formatMediaUrl(JSON.parse(response).photos[0]));
+      },
+    });
+  };
+  const handleEditProfileDialogOpen = () => {
+    setUsername(userInfo?.username || "");
+    setAvatar(userInfo?.avatar || "");
+    setEditProfileDialogOpen(true);
+  };
+  const updateProfile = () => {
+    return updateProfileMutation.mutateAsync({
+      avatar: avatar.trim(),
+      username: username.trim(),
+    });
+  };
 
   return (
     <div className="size-full space-y-8 pt-10">
@@ -74,7 +106,7 @@ export const Profile = () => {
         <div className="flex w-full flex-col items-center justify-center">
           {/* avatar */}
           <div className="group relative mx-auto mb-6 aspect-square h-auto w-30 xl:w-1/2">
-            <Avatar className="border-border size-full border-2 shadow-lg">
+            <Avatar className="border-border size-full border-2 shadow-md">
               <AvatarImage src={userInfo?.avatar} />
               <AvatarFallback />
             </Avatar>
@@ -93,7 +125,7 @@ export const Profile = () => {
                     <div className="mt-[2px] text-2xl leading-none">⚙️</div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-[160px]">
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={handleEditProfileDialogOpen}>
                       Edit Profile
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleRssTokenDialogOpen}>
@@ -239,6 +271,86 @@ export const Profile = () => {
                   updateEmailToken().then(() => setEmailTokenDialogOpen(false));
                 }}
                 disabled={updateEmailTokenMutation.isPending}
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* edit profile dialog */}
+      <Dialog
+        open={editProfileDialogOpen}
+        onOpenChange={setEditProfileDialogOpen}
+      >
+        <DialogContent className="gap-1 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription></DialogDescription>
+          </DialogHeader>
+          <div className="space-y-8">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-profile-username">Username</Label>
+              <Input
+                id="edit-profile-username"
+                value={username}
+                disabled={updateProfileMutation.isPending}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+
+            <div className="relative aspect-[2/1]">
+              {avatar ? (
+                <>
+                  <img
+                    src={avatar}
+                    alt={username}
+                    className="mx-auto aspect-square h-full rounded-full object-cover"
+                  />
+                  <Button
+                    variant="secondary"
+                    className="absolute top-1 right-1"
+                    onClick={() => setAvatar("")}
+                  >
+                    <X />
+                  </Button>
+                </>
+              ) : (
+                <div className="flex size-full items-center justify-center">
+                  <Button
+                    variant="outline"
+                    className="aspect-square h-full rounded-full border-2 border-dashed"
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Plus className="text-muted-foreground size-8" />
+                    <Input
+                      id="update-profile-avatar"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                    />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditProfileDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  updateProfile().then(() => setEditProfileDialogOpen(false));
+                }}
+                disabled={updateProfileMutation.isPending}
               >
                 Update
               </Button>

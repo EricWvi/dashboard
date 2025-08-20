@@ -28,7 +28,7 @@ export default function Dashboard() {
         <div className="px-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <Avatar>
+            <Avatar className="border border-gray-300">
               <AvatarImage src={userInfo?.avatar} />
               <AvatarFallback />
             </Avatar>
