@@ -9,12 +9,12 @@ import (
 )
 
 func (b Base) DeleteQuickNote(c *gin.Context, req *DeleteQuickNoteRequest) *DeleteQuickNoteResponse {
-	QuickNote := &model.QuickNote{}
+	quickNote := &model.QuickNote{}
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := QuickNote.Delete(config.DB, m); err != nil {
+	if err := quickNote.Delete(config.DB, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

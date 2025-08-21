@@ -112,6 +112,26 @@ export function useUpdateQuickNote() {
   });
 }
 
+export function useBottomQuickNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number }) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/tiptap?Action=BottomQuickNote",
+        data,
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyQuickNotes(),
+      });
+    },
+  });
+}
+
 export function useCreateQuickNote() {
   const queryClient = useQueryClient();
 
