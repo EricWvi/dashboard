@@ -97,7 +97,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddRssEmailTokens,
 			Down:    RemoveRssEmailTokens,
 		},
+		{
+			Version: "v0.16.0",
+			Name:    "Add order field to quick note",
+			Up:      AddOrderFieldToQuickNote,
+			Down:    RemoveOrderFieldFromQuickNote,
+		},
 	}
+}
+
+// -------------------- v0.16.0 -------------------
+func AddOrderFieldToQuickNote(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_quick_note
+		ADD COLUMN d_order INTEGER DEFAULT -1;
+	`).Error
+}
+
+func RemoveOrderFieldFromQuickNote(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_quick_note
+		DROP COLUMN IF EXISTS d_order;
+	`).Error
 }
 
 // -------------------- v0.15.0 -------------------

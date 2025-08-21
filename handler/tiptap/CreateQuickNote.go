@@ -9,17 +9,25 @@ import (
 )
 
 func (b Base) CreateQuickNote(c *gin.Context, req *CreateQuickNoteRequest) *CreateQuickNoteResponse {
-	QuickNote := &model.QuickNote{}
-	QuickNote.CreatorId = middleware.GetUserId(c)
-	QuickNote.QuickNoteField = req.QuickNoteField
+	quickNote := &model.QuickNote{}
+	quickNote.CreatorId = middleware.GetUserId(c)
+	quickNote.QuickNoteField = req.QuickNoteField
+	maxOrder, err := model.MaxNoteOrder(config.DB, model.WhereMap{
+		model.CreatorId: middleware.GetUserId(c),
+	})
+	if err != nil {
+		handler.Errorf(c, "%s", err.Error())
+		return nil
+	}
+	quickNote.Order = max(maxOrder+1, 1)
 
-	if err := QuickNote.Create(config.DB); err != nil {
+	if err := quickNote.Create(config.DB); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
 
 	return &CreateQuickNoteResponse{
-		Id: QuickNote.ID,
+		Id: quickNote.ID,
 	}
 }
 

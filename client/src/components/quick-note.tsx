@@ -2,7 +2,14 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, MoreHorizontal, Edit, NotepadText } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  NotepadText,
+  CornerRightDown,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +30,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, stripeColor } from "@/lib/utils";
 import {
   createTiptap,
+  useBottomQuickNote,
   useCreateQuickNote,
   useDeleteQuickNote,
   useQuickNotes,
@@ -36,6 +45,7 @@ export const QuickNoteList = () => {
   const { data: notes, isLoading } = useQuickNotes();
   const [editTitleDialogOpen, setEditTitleDialogOpen] = useState(false);
   const updateQuickNoteMutation = useUpdateQuickNote();
+  const bottomQuickNoteMutation = useBottomQuickNote();
   const createQuickNoteMutation = useCreateQuickNote();
   const deleteQuickNoteMutation = useDeleteQuickNote();
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
@@ -49,6 +59,10 @@ export const QuickNoteList = () => {
     setNoteName(note.title);
     setNoteId(note.id);
     setEditTitleDialogOpen(true);
+  };
+
+  const moveToBottom = async (id: number) => {
+    bottomQuickNoteMutation.mutateAsync({ id });
   };
 
   const onRename = async () => {
@@ -116,7 +130,7 @@ export const QuickNoteList = () => {
               </div>
             ) : (
               <div className="min-h-0 w-full flex-1 space-y-1">
-                {notes.map((note) => (
+                {notes.map((note, idx) => (
                   <div
                     key={note.id}
                     className={`relative flex items-center justify-between gap-2 rounded-sm border py-2 pr-2 text-sm ${isMobile ? "pl-4" : "pl-6"}`}
@@ -166,6 +180,15 @@ export const QuickNoteList = () => {
                           <NotepadText />
                           Edit Note
                         </DropdownMenuItem>
+                        {idx !== notes.length - 1 && (
+                          <DropdownMenuItem
+                            onClick={() => moveToBottom(note.id)}
+                          >
+                            <CornerRightDown />
+                            Bottom
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => {
                             setNoteId(note.id);
@@ -175,7 +198,7 @@ export const QuickNoteList = () => {
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="text-destructive" />
-                          Delete QuickNote
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

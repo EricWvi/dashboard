@@ -35,7 +35,7 @@ import {
   useUpdateRssToken,
   useUser,
 } from "@/hooks/use-user";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { Plus, X } from "lucide-react";
 import { fileUpload } from "@/lib/file-upload";
