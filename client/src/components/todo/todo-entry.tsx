@@ -20,6 +20,7 @@ import {
   SquareKanban,
   CalendarOff,
   CalendarPlus,
+  Copy,
 } from "lucide-react";
 import {
   Dialog,
@@ -201,6 +202,12 @@ export const TodayTodoView = ({ id }: { id: number }) => {
             Done
           </ContextMenuItem>
         )}
+        <ContextMenuItem
+          onClick={() => navigator.clipboard.writeText(todo.title)}
+        >
+          <Copy />
+          Copy
+        </ContextMenuItem>
         <ContextMenuItem
           onClick={() => {
             setEditTodoName(todo.title);
