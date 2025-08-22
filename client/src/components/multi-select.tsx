@@ -353,6 +353,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       MultiSelectOption[] | MultiSelectGroup[]
     >(options);
 
+    const [isComposing, setIsComposing] = React.useState(false);
+
     const [politeMessage, setPoliteMessage] = React.useState("");
     const [assertiveMessage, setAssertiveMessage] = React.useState("");
     const prevSelectedCount = React.useRef(selectedValues.length);
@@ -619,7 +621,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>,
     ) => {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && !isComposing) {
         if (allowCreateNew && searchValue.trim() && !hasExactMatch()) {
           createNewTag(searchValue.trim());
         } else {
@@ -1107,6 +1109,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               {searchable && (
                 <CommandInput
                   placeholder="Search options..."
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
                   onKeyDown={handleInputKeyDown}
                   value={searchValue}
                   onValueChange={setSearchValue}

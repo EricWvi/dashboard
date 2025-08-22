@@ -187,7 +187,31 @@ export function useUpdateBookmark() {
       );
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
+      if (variables.payload) {
+        const { whatTags, howTags } =
+          await queryClient.fetchQuery(TagsQueryOptions);
+        // filter out newly created tags
+        const whatValues = whatTags.map((tag) => tag.value);
+        const howValues = howTags.map((tag) => tag.value);
+        const filteredWhats = (variables.payload.whats || [])
+          .filter((tag: string) => !whatValues.includes(tag))
+          .map((tag: string) => "what:" + tag);
+        const filteredHows = (variables.payload.hows || [])
+          .filter((tag: string) => !howValues.includes(tag))
+          .map((tag: string) => "how:" + tag);
+        // create new tags
+        const newTags = [...filteredWhats, ...filteredHows];
+        if (newTags.length > 0) {
+          await apiRequest("POST", "/api/bookmark?Action=CreateTags", {
+            tags: newTags,
+          });
+          queryClient.invalidateQueries({
+            queryKey: keyTags(),
+          });
+        }
+      }
+
       queryClient.invalidateQueries({
         queryKey: keyBookmarks(),
       });
