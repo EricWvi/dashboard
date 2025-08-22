@@ -494,6 +494,7 @@ export function ToWatchTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const isMobile = useIsMobile();
   const watch = row.original as Watch;
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const [entryName, setEntryName] = useState("");
   const [entryType, setEntryType] = useState<WatchType | undefined>(undefined);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
@@ -515,6 +516,20 @@ export function ToWatchTableRowActions<TData>({
       },
       author: entryAuthor,
     });
+  };
+  const reviewWatch = async () => {
+    if (!watch.payload.review) {
+      const draftId = await createTiptap();
+      updateWatchMutation.mutateAsync({
+        id: watch.id,
+        payload: { ...watch.payload, review: draftId },
+      });
+      setEditorId(draftId);
+      setEditorDialogOpen(true);
+    } else {
+      setEditorId(watch.payload.review);
+      setEditorDialogOpen(true);
+    }
   };
   const moveToTop = () => {
     return updateWatchMutation.mutateAsync({
@@ -609,6 +624,7 @@ export function ToWatchTableRowActions<TData>({
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
           Edit
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={reviewWatch}>Review</DropdownMenuItem>
         <DropdownMenuItem onClick={() => moveToTop()}>
           Move to Top
         </DropdownMenuItem>

@@ -41,13 +41,17 @@ import {
   Play,
   Minus,
   TicketCheck,
+  MessageSquareQuote,
 } from "lucide-react";
 import { dateString, formatMediaUrl } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
+import { useTTContext } from "@/components/editor";
+import { createTiptap } from "@/hooks/use-draft";
 
 const WatchingItem = ({ watch }: { watch: Watch }) => {
   const isMobile = useIsMobile();
   const type = types.find((type) => type.value === watch.type);
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
 
   const updateWatchMutation = useUpdateWatch(WatchStatus.WATCHING);
   const completeWatchMutation = useCompleteWatch();
@@ -76,6 +80,21 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
         ],
       },
     });
+  };
+  const reviewWatch = async () => {
+    if (!watch.payload.review) {
+      const draftId = await createTiptap();
+      updateWatchMutation.mutateAsync({
+        id: watch.id,
+        payload: { ...watch.payload, review: draftId },
+      });
+      setEditorId(draftId);
+      setEditorDialogOpen(true);
+    } else {
+      setEditorId(watch.payload.review);
+      setEditorDialogOpen(true);
+    }
+    handleUpdateProgressOpen(false);
   };
   const updateProgress = () => {
     // if today already have progress, update it
@@ -501,21 +520,28 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handleUpdateProgressOpen(false)}
-              >
-                Cancel
+            <div className="flex justify-between gap-2">
+              <Button variant="secondary" onClick={reviewWatch}>
+                <MessageSquareQuote />
               </Button>
-              <Button
-                onClick={() => {
-                  updateProgress().then(() => handleUpdateProgressOpen(false));
-                }}
-                disabled={updateWatchMutation.isPending}
-              >
-                Update
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleUpdateProgressOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    updateProgress().then(() =>
+                      handleUpdateProgressOpen(false),
+                    );
+                  }}
+                  disabled={updateWatchMutation.isPending}
+                >
+                  Update
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
