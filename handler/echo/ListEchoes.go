@@ -11,8 +11,13 @@ import (
 func (b Base) ListEchoes(c *gin.Context, req *ListEchoesRequest) *ListEchoesResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
-	m.Eq(model.Echo_Year, req.Year)
 	m.Eq(model.Echo_Type, req.Type)
+	if req.Year != 0 {
+		m.Eq(model.Echo_Year, req.Year)
+	}
+	if req.Sub != 0 {
+		m.Eq(model.Echo_Sub, req.Sub)
+	}
 
 	echoes, err := model.ListEchoes(config.DB, m)
 	if err != nil {
@@ -27,6 +32,7 @@ func (b Base) ListEchoes(c *gin.Context, req *ListEchoesRequest) *ListEchoesResp
 
 type ListEchoesRequest struct {
 	Year int    `json:"year"`
+	Sub  int    `json:"sub"`
 	Type string `json:"type"`
 }
 
