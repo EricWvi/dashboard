@@ -27,6 +27,53 @@ export function dateString(
   return formatted;
 }
 
+export function getWeekYearPair(date = new Date()) {
+  // Copy input date so we don't mutate it
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  // Find the first Monday of the year
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const startDay = yearStart.getDay() || 7; // Sunday = 0 → 7
+  const firstMonday = new Date(yearStart);
+  firstMonday.setDate(yearStart.getDate() + ((8 - startDay) % 7));
+
+  // If before the first Monday → the last week in the past year
+  if (d < firstMonday)
+    return getWeekYearPair(new Date(d.getFullYear() - 1, 11, 31));
+
+  // Difference in days between the date and the first Monday
+  const diffDays = Math.floor((d.getTime() - firstMonday.getTime()) / 86400000);
+
+  // Compute week number (1-based)
+  return { week: Math.floor(diffDays / 7) + 1, year: d.getFullYear() };
+}
+
+export function getWeekRange(year: number, weekNumber: number) {
+  // Find the first Monday of the year
+  const yearStart = new Date(year, 0, 1);
+  const startDay = yearStart.getDay() || 7; // Sunday = 0 → 7
+  const firstMonday = new Date(yearStart);
+  firstMonday.setDate(yearStart.getDate() + ((8 - startDay) % 7));
+
+  if (weekNumber === 0) {
+    // Week 0 = days before first Monday
+    return {
+      start: new Date(year, 0, 1),
+      end: new Date(firstMonday.getTime() - 86400000), // day before first Monday
+    };
+  }
+
+  // Start = first Monday + (weekNumber - 1) * 7 days
+  const start = new Date(firstMonday);
+  start.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+
+  // End = start + 6 days (Sunday)
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return { start, end };
+}
+
 export function stripeColor(difficulty: number): string {
   return difficulty === 4
     ? "bg-red-400 dark:bg-red-600"

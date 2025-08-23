@@ -8,17 +8,6 @@ export type Draft = {
 
 const keyDraft = (id: number) => ["/api/tiptap", id];
 
-export async function getContent(id: number) {
-  if (id === 0) {
-    return null;
-  }
-  const response = await apiRequest("POST", "/api/tiptap?Action=GetTiptap", {
-    id,
-  });
-  const data = await response.json();
-  return data.message.content;
-}
-
 export function useDraft(id: number) {
   return useQuery<Draft | null>({
     queryKey: keyDraft(id),
@@ -47,7 +36,7 @@ export async function createTiptap() {
     },
   });
   const rst = await response.json();
-  return rst.message.id;
+  return rst.message.id as number;
 }
 
 export async function syncDraft(data: Draft) {

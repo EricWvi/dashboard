@@ -253,9 +253,10 @@ export const watchedColumns: ColumnDef<Watch>[] = [
                 </div>
               </DialogTrigger>
               <DialogContent
-                className="w-[calc(100%-2rem)] !max-w-[800px]"
+                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
                 onOpenAutoFocus={(e) => {
                   e.preventDefault(); // stops Radix from focusing anything
+                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
                 }}
               >
                 <DialogHeader>
@@ -276,9 +277,10 @@ export const watchedColumns: ColumnDef<Watch>[] = [
                 </div>
               </DialogTrigger>
               <DialogContent
-                className="w-[calc(100%-2rem)] !max-w-[800px]"
+                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
                 onOpenAutoFocus={(e) => {
                   e.preventDefault(); // stops Radix from focusing anything
+                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
                 }}
               >
                 <DialogHeader>
@@ -496,9 +498,10 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
                 </div>
               </DialogTrigger>
               <DialogContent
-                className="w-[calc(100%-2rem)] !max-w-[800px]"
+                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
                 onOpenAutoFocus={(e) => {
                   e.preventDefault(); // stops Radix from focusing anything
+                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
                 }}
               >
                 <DialogHeader>

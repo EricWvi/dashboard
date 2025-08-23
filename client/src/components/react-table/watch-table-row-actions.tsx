@@ -291,6 +291,7 @@ export function WatchedTableRowActions<TData>({
           className="sm:max-w-md"
           onOpenAutoFocus={(e) => {
             e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
           }}
         >
           <DialogHeader>
@@ -758,6 +759,7 @@ export function ToWatchTableRowActions<TData>({
           className="sm:max-w-md"
           onOpenAutoFocus={(e) => {
             e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
           }}
         >
           <DialogHeader>
@@ -1023,6 +1025,7 @@ export function BookmarkTableRowActions<TData>({
           className="sm:max-w-md"
           onOpenAutoFocus={(e) => {
             e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
           }}
         >
           <DialogHeader>

@@ -93,6 +93,7 @@ export function DataTableFacetedFilter<TData, TValue>({
         onOpenAutoFocus={(e) => {
           if (isMobile) {
             e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
           }
         }}
       >
