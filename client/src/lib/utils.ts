@@ -27,6 +27,13 @@ export function dateString(
   return formatted;
 }
 
+export function getDecadePair(date = new Date()) {
+  const year = date.getFullYear();
+  const start = year - (year % 10) + 1;
+  const end = start + 9;
+  return { start, end };
+}
+
 export function getWeekYearPair(date = new Date()) {
   // Copy input date so we don't mutate it
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());

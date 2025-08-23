@@ -2,6 +2,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeeklyRetro } from "@/components/weekly-retro";
+import { AnnualRetro } from "@/components/annual-retro";
+import { DecadeRetro } from "@/components/decade-retro";
 
 export default function Echo() {
   const isMobile = useIsMobile();
@@ -54,12 +56,12 @@ export default function Echo() {
 
         {/* Year Tab - lazy render but keep mounted */}
         <div className={`${activeTab === "year" ? "block" : "hidden"}`}>
-          {/* {visitedTabs.has("year") && <ToWatchTab />} */}
+          {visitedTabs.has("year") && <AnnualRetro />}
         </div>
 
         {/* Decade Tab - lazy render but keep mounted */}
         <div className={`${activeTab === "decade" ? "block" : "hidden"}`}>
-          {/* {visitedTabs.has("decade") && <WatchedTab />} */}
+          {visitedTabs.has("decade") && <DecadeRetro />}
         </div>
       </div>
     </div>

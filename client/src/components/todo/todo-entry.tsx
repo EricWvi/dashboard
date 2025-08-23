@@ -20,7 +20,7 @@ import {
   SquareKanban,
   CalendarOff,
   CalendarPlus,
-  Copy,
+  Timer,
 } from "lucide-react";
 import {
   Dialog,
@@ -191,22 +191,17 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   const TodayTodoMenuContent = () =>
     todo && (
       <ContextMenuContent>
-        {todo.done ? (
-          <ContextMenuItem onClick={undoneTodo}>
-            <Undo2 />
-            Undone
-          </ContextMenuItem>
-        ) : (
-          <ContextMenuItem onClick={doneTodo}>
-            <CircleCheckBig />
-            Done
-          </ContextMenuItem>
-        )}
         <ContextMenuItem
-          onClick={() => navigator.clipboard.writeText(todo.title)}
+          onClick={() => {
+            navigator.clipboard.writeText(todo.title);
+            window.open(
+              "https://timetagger.onlyquant.top/timetagger/app/",
+              "_blank",
+            );
+          }}
         >
-          <Copy />
-          Copy
+          <Timer />
+          Start
         </ContextMenuItem>
         <ContextMenuItem
           onClick={() => {
@@ -258,6 +253,17 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           <SquareKanban />
           Kanban
         </ContextMenuItem>
+        {todo.done ? (
+          <ContextMenuItem onClick={undoneTodo}>
+            <Undo2 />
+            Undone
+          </ContextMenuItem>
+        ) : (
+          <ContextMenuItem onClick={doneTodo}>
+            <CircleCheckBig />
+            Done
+          </ContextMenuItem>
+        )}
         {!todo.done && (
           <ContextMenuItem onClick={unsetScheduleDate}>
             <X />

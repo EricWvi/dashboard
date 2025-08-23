@@ -113,7 +113,6 @@ const Weeks = ({ year }: { year: number }) => {
             if (!draft) {
               draft = await createTiptap();
               createEchoMutation.mutateAsync({
-                year: currYear,
                 sub: currWeek,
                 draft,
               });
@@ -132,7 +131,6 @@ const Weeks = ({ year }: { year: number }) => {
             onClick={async () => {
               const draft = await createTiptap();
               createEchoMutation.mutateAsync({
-                year: currYear,
                 sub: currWeek - 1,
                 draft,
               });
@@ -167,7 +165,6 @@ const Weeks = ({ year }: { year: number }) => {
             onClick={async () => {
               const draft = await createTiptap();
               createEchoMutation.mutateAsync({
-                year: year,
                 sub: lastWeekOfLastYear,
                 draft,
               });
@@ -189,7 +186,7 @@ const Weeks = ({ year }: { year: number }) => {
           <DialogHeader>
             <DialogTitle className="text-left">
               <div className="relative">
-                {`Week ${dialogWeek}`}
+                {`Week ${dialogWeek} `}
                 <span className="text-muted-foreground text-sm">
                   {dialogWeekRange}
                 </span>
