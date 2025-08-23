@@ -25,7 +25,7 @@ func (b Base) ListWatches(c *gin.Context, req *ListWatchesRequest) *ListWatchesR
 }
 
 type ListWatchesRequest struct {
-	Status model.WatchStatus `json:"status"`
+	Status string `json:"status"`
 }
 
 type ListWatchesResponse struct {
