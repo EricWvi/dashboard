@@ -291,6 +291,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
           className="sm:max-w-md"
           onOpenAutoFocus={(e) => {
             e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
           }}
         >
           <DialogHeader>

@@ -71,7 +71,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 // --- Context ---
 import { useTTContext } from "@/components/editor";
-import { syncDraft, removeDraftQuery, getContent } from "@/hooks/use-draft";
+import { syncDraft, removeDraftQuery, useDraft } from "@/hooks/use-draft";
 import { useEffect, useRef } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -376,22 +376,21 @@ function ReadOnlyTiptap({ draft }: { draft: any }) {
 
 export function ContentHtml({ id }: { id: number }) {
   const isMobile = useIsMobile();
-  const [draft, setDraft] = React.useState<any>(undefined);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const { data: draft, isLoading } = useDraft(id);
+  const [showLoading, setShowLoading] = React.useState(true);
   useEffect(() => {
-    getContent(id).then((content) => {
-      setDraft(content);
+    if (!isLoading) {
       setTimeout(() => {
-        setIsLoading(false);
+        setShowLoading(false);
       }, 200);
-    });
-  }, []);
+    }
+  }, [isLoading]);
 
   return (
     <div
       className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full"}`}
     >
-      {isLoading ? (
+      {showLoading ? (
         <div className="mx-auto mt-6 max-w-[648px] space-y-4">
           <Skeleton className="h-8 w-40 rounded-sm" />
           <Skeleton className="h-[30vh] rounded-sm" />
@@ -399,7 +398,7 @@ export function ContentHtml({ id }: { id: number }) {
           <Skeleton className="h-[30vh] rounded-sm" />
         </div>
       ) : (
-        <ReadOnlyTiptap draft={draft} />
+        <ReadOnlyTiptap draft={draft?.content} />
       )}
     </div>
   );

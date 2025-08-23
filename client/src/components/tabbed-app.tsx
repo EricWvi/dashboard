@@ -7,6 +7,7 @@ import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 import Journey from "@/pages/Journey";
+import Echo from "@/pages/Echo";
 import Bookmark from "@/pages/Bookmark";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -41,7 +42,7 @@ export default function TabbedApp() {
                 onValueChange={handleTabChange}
                 className="w-full"
               >
-                <TabsList className="grid h-12 w-full grid-cols-4 bg-transparent">
+                <TabsList className="grid h-12 w-full grid-cols-5 bg-transparent">
                   <TabsTrigger
                     value="dashboard"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
@@ -66,6 +67,12 @@ export default function TabbedApp() {
                   >
                     <span className="lg:inline">Bookmark</span>
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="echo"
+                    className="data-[state=active]:bg-accent flex items-center gap-2"
+                  >
+                    <span className="lg:inline">Echo</span>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -80,7 +87,7 @@ export default function TabbedApp() {
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="grid h-14 w-full grid-cols-4 rounded-none bg-transparent">
+          <TabsList className="grid h-14 w-full grid-cols-5 rounded-none bg-transparent">
             <TabsTrigger value="dashboard" className="h-full rounded-full">
               <Home className="size-6" />
             </TabsTrigger>
@@ -91,6 +98,9 @@ export default function TabbedApp() {
               <CheckCircle2 className="size-6" />
             </TabsTrigger>
             <TabsTrigger value="bookmark" className="h-full rounded-full">
+              <CheckCircle2 className="size-6" />
+            </TabsTrigger>
+            <TabsTrigger value="echo" className="h-full rounded-full">
               <CheckCircle2 className="size-6" />
             </TabsTrigger>
           </TabsList>
@@ -127,6 +137,13 @@ export default function TabbedApp() {
           className={`${activeTab === "bookmark" ? "block size-full" : "hidden"}`}
         >
           {visitedTabs.has("bookmark") && <Bookmark />}
+        </div>
+
+        {/* Echo - lazy render but keep mounted */}
+        <div
+          className={`${activeTab === "echo" ? "block size-full" : "hidden"}`}
+        >
+          {visitedTabs.has("echo") && <Echo />}
         </div>
       </div>
     </div>
