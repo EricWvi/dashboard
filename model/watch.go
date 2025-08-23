@@ -29,26 +29,6 @@ const (
 	Watch_Status = "status"
 )
 
-type WatchType string
-
-const (
-	WatchTypeMovie       = "Movie"
-	WatchTypeSeries      = "Series"
-	WatchTypeDocumentary = "Documentary"
-	WatchTypeBook        = "Book"
-	WatchTypeGame        = "Game"
-	WatchTypeManga       = "Manga"
-)
-
-type WatchStatus string
-
-const (
-	WatchStatusWatching    = "Watching"
-	WatchStatusCompleted   = "Completed"
-	WatchStatusDropped     = "Dropped"
-	WatchStatusPlanToWatch = "Plan to Watch"
-)
-
 func (w *Watch) TableName() string {
 	return Watch_Table
 }

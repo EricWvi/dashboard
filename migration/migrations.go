@@ -103,7 +103,36 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddOrderFieldToQuickNote,
 			Down:    RemoveOrderFieldFromQuickNote,
 		},
+		{
+			Version: "v0.17.0",
+			Name:    "Add echo table",
+			Up:      AddEchoTable,
+			Down:    RemoveEchoTable,
+		},
 	}
+}
+
+// -------------------- v0.17.0 -------------------
+func AddEchoTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_echo (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			e_type VARCHAR(64) NOT NULL,
+			year INTEGER NOT NULL,
+			sub INTEGER NOT NULL,
+			draft INTEGER DEFAULT 0,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+		);
+	`).Error
+}
+
+func RemoveEchoTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_echo CASCADE;
+	`).Error
 }
 
 // -------------------- v0.16.0 -------------------
