@@ -38,9 +38,7 @@ export const SimpleEditorWrapper = () => {
         {/* removing `overflow-auto` from the fixed overlay and instead 
           constraining the editor’s height and making it scrollable 
           solves the mobile overlay + sticky toolbar problem */}
-        <div className="dashboard-editor h-full w-full overflow-auto">
-          <SimpleEditor draft={draft.content} />
-        </div>
+        <SimpleEditor draft={draft.content} />
       </div>
     )
   );

@@ -24,6 +24,10 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
+import {
+  TOCExtension,
+  TableOfContents,
+} from "@/components/tiptap-node/toc-node";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -213,6 +217,8 @@ export function SimpleEditor({ draft }: { draft: any }) {
   const isChanged = useRef(false);
   const isDirtyRef = useRef(false);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = React.useState<
     "main" | "highlighter" | "link"
@@ -301,31 +307,41 @@ export function SimpleEditor({ draft }: { draft: any }) {
 
   return (
     editor && (
-      <div className="simple-editor-wrapper">
-        <EditorContext.Provider value={{ editor }}>
-          <Toolbar ref={toolbarRef}>
-            {mobileView === "main" ? (
-              <MainToolbarContent
-                onHighlighterClick={() => setMobileView("highlighter")}
-                onLinkClick={() => setMobileView("link")}
-                isMobile={isMobile}
-                onSave={handleSave}
-                dropChange={handleDrop}
-              />
-            ) : (
-              <MobileToolbarContent
-                type={mobileView === "highlighter" ? "highlighter" : "link"}
-                onBack={() => setMobileView("main")}
-              />
-            )}
-          </Toolbar>
+      <div
+        ref={scrollRef}
+        className="dashboard-editor h-full w-full overflow-auto"
+      >
+        <div className="simple-editor-wrapper">
+          <EditorContext.Provider value={{ editor }}>
+            <Toolbar ref={toolbarRef}>
+              {mobileView === "main" ? (
+                <MainToolbarContent
+                  onHighlighterClick={() => setMobileView("highlighter")}
+                  onLinkClick={() => setMobileView("link")}
+                  isMobile={isMobile}
+                  onSave={handleSave}
+                  dropChange={handleDrop}
+                />
+              ) : (
+                <MobileToolbarContent
+                  type={mobileView === "highlighter" ? "highlighter" : "link"}
+                  onBack={() => setMobileView("main")}
+                />
+              )}
+            </Toolbar>
 
-          <EditorContent
-            editor={editor}
-            role="presentation"
-            className="simple-editor-content"
-          />
-        </EditorContext.Provider>
+            <EditorContent
+              editor={editor}
+              role="presentation"
+              className="simple-editor-content"
+            />
+
+            {/* Table of Contents - only show on desktop */}
+            {!isMobile && (
+              <TableOfContents editor={editor} scrollRef={scrollRef} />
+            )}
+          </EditorContext.Provider>
+        </div>
       </div>
     )
   );
@@ -349,6 +365,10 @@ const extensionSetup = [
   Superscript,
   Subscript,
   Selection,
+  TOCExtension.configure({
+    levels: [2, 3, 4],
+    scrollBehavior: "smooth",
+  }),
 ];
 
 function ReadOnlyTiptap({ draft }: { draft: any }) {
