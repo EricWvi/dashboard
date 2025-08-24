@@ -268,6 +268,17 @@ export function SimpleEditor({ draft }: { draft: any }) {
     }
   }, [editor]);
 
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      // Cancel the event as permitted by the standard
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+    };
+  }, []);
+
   const handleSave = async () => {
     if (editor && isChanged.current) {
       syncDraft({ id, content: editor.getJSON() }).then(() => {

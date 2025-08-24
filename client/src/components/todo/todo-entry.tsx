@@ -191,18 +191,20 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   const TodayTodoMenuContent = () =>
     todo && (
       <ContextMenuContent>
-        <ContextMenuItem
-          onClick={() => {
-            navigator.clipboard.writeText(todo.title);
-            window.open(
-              "https://timetagger.onlyquant.top/timetagger/app/",
-              "_blank",
-            );
-          }}
-        >
-          <Timer />
-          Start
-        </ContextMenuItem>
+        {!todo.done && (
+          <ContextMenuItem
+            onClick={() => {
+              navigator.clipboard.writeText(todo.title);
+              window.open(
+                "https://timetagger.onlyquant.top/timetagger/app/",
+                "_blank",
+              );
+            }}
+          >
+            <Timer />
+            Start
+          </ContextMenuItem>
+        )}
         <ContextMenuItem
           onClick={() => {
             setEditTodoName(todo.title);
