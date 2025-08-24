@@ -7,7 +7,6 @@ import { formatMediaUrl } from "@/lib/utils";
 const compressOptions = {
   maxWidthOrHeight: 1920,
   useWebWorker: true,
-  preserveExif: true,
   initialQuality: 0.8,
 };
 
