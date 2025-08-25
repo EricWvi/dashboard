@@ -33,6 +33,13 @@ const SearchEngines = [
       window.open("https://www.baidu.com/s?ie=UTF-8&wd=" + s, "_blank"),
   },
   {
+    name: "Translate",
+    logo: <Icon.TranslateLogo />,
+    shortcut: "tr",
+    onSelect: (s: string) =>
+      window.open("https://fanyi.baidu.com/#en/zh/" + s, "_blank"),
+  },
+  {
     name: "GitHub",
     logo: <Icon.GitHubLogo />,
     shortcut: "github",
