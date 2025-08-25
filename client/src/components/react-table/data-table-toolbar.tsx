@@ -1,6 +1,13 @@
 import { type Table } from "@tanstack/react-table";
 import { MultiSelect } from "@/components/multi-select";
-import { CalendarIcon, Clapperboard, Link2, Plus, X } from "lucide-react";
+import {
+  CalendarIcon,
+  Clapperboard,
+  LetterText,
+  Link2,
+  Plus,
+  X,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -52,6 +59,7 @@ import {
   type DomainType,
 } from "@/hooks/use-bookmarks";
 import { createTiptap } from "@/hooks/use-draft";
+import { useCreateBlog } from "@/hooks/use-blogs";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -592,7 +600,7 @@ export function BookmarkTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter watches..."
+            placeholder="Filter bookmarks..."
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -785,6 +793,187 @@ export function BookmarkTableToolbar<TData>({
                 disabled={
                   !bookmarkName.trim() || createBookmarkMutation.isPending
                 }
+              >
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+export function BlogTableToolbar<TData>({
+  table,
+}: DataTableToolbarProps<TData>) {
+  const isMobile = useIsMobile();
+  const { data: tags } = useTags();
+
+  const [isComposing, setIsComposing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const isFiltered = table.getState().columnFilters.length > 0;
+  const createBlogMutation = useCreateBlog();
+  const [addBlogDialogOpen, setAddBlogDialogOpen] = useState(false);
+  const [blogName, setBlogName] = useState("");
+  const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
+  const [selectedHows, setSelectedHows] = useState<string[]>([]);
+
+  const handleAddBlogDialogOpen = () => {
+    setBlogName("");
+    setSelectedWhats([]);
+    setSelectedHows([]);
+    setAddBlogDialogOpen(true);
+  };
+
+  const createBlog = async (title: string, whats: string[], hows: string[]) => {
+    return createBlogMutation.mutateAsync({
+      title,
+      payload: {
+        whats,
+        hows,
+      },
+    });
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2">
+        {!isMobile && (
+          <Input
+            placeholder="Filter blogs..."
+            value={searchTerm}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isComposing) {
+                table.getColumn("title")?.setFilterValue(searchTerm);
+              }
+            }}
+            className="h-8 w-[283px]"
+          />
+        )}
+
+        {table.getColumn("what") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("what")}
+            title="What"
+            showEmptyFilter={false}
+            options={tags?.whatTags ?? []}
+          />
+        )}
+        {table.getColumn("how") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("how")}
+            title="How"
+            showEmptyFilter={false}
+            options={tags?.howTags ?? []}
+          />
+        )}
+        {isFiltered && !isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              table.resetColumnFilters();
+            }}
+          >
+            <span>Reset</span>
+            <X />
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {/* <DataTableViewOptions table={table} /> */}
+        {isFiltered && isMobile ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setSearchTerm("");
+              table.resetColumnFilters();
+            }}
+          >
+            <X />
+          </Button>
+        ) : (
+          <Button size="sm" className="px-4" onClick={handleAddBlogDialogOpen}>
+            {!isMobile ? (
+              <>
+                <LetterText />
+                Add
+              </>
+            ) : (
+              <Plus />
+            )}
+          </Button>
+        )}
+      </div>
+
+      {/* add blog dialog */}
+      <Dialog open={addBlogDialogOpen} onOpenChange={setAddBlogDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Blog</DialogTitle>
+            <DialogDescription>
+              Stay up to date with the blogs that matter most to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="blog-add-name">Title</Label>
+              <Input
+                id="blog-add-name"
+                placeholder={!isMobile ? "Enter blog title..." : ""}
+                value={blogName}
+                disabled={createBlogMutation.isPending}
+                onChange={(e) => setBlogName(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="blog-add-what">What</Label>
+              <MultiSelect
+                id="blog-add-what"
+                placeholder=""
+                options={tags?.whatTags ?? []}
+                onValueChange={setSelectedWhats}
+                defaultValue={selectedWhats}
+                allowCreateNew
+                modalPopover
+                hideSelectAll
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="blog-add-how">How</Label>
+              <MultiSelect
+                id="blog-add-how"
+                placeholder=""
+                options={tags?.howTags ?? []}
+                onValueChange={setSelectedHows}
+                defaultValue={selectedHows}
+                allowCreateNew
+                modalPopover
+                hideSelectAll
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setAddBlogDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  createBlog(blogName, selectedWhats, selectedHows).then(() =>
+                    setAddBlogDialogOpen(false),
+                  );
+                }}
+                disabled={!blogName.trim() || createBlogMutation.isPending}
               >
                 Create
               </Button>

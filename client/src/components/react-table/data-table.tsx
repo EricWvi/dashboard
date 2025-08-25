@@ -28,6 +28,7 @@ import {
   WatchedTableToolbar,
   ToWatchTableToolbar,
   BookmarkTableToolbar,
+  BlogTableToolbar,
 } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,7 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  toolbar: "towatch" | "watched" | "bookmark";
+  toolbar: "towatch" | "watched" | "bookmark" | "blog";
   isLoading: boolean;
   defaultPageSize: number;
 }
@@ -127,7 +128,7 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     getFacetedUniqueValues:
-      toolbar === "bookmark"
+      toolbar === "bookmark" || toolbar === "blog"
         ? getTagsFacetedUniqueValues
         : getFacetedUniqueValues(),
   });
@@ -138,6 +139,7 @@ export function DataTable<TData, TValue>({
         {toolbar === "towatch" && <ToWatchTableToolbar table={table} />}
         {toolbar === "watched" && <WatchedTableToolbar table={table} />}
         {toolbar === "bookmark" && <BookmarkTableToolbar table={table} />}
+        {toolbar === "blog" && <BlogTableToolbar table={table} />}
       </div>
 
       <div

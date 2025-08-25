@@ -545,7 +545,7 @@ const QQMailSheet = (props: React.ComponentProps<"div">) => {
       className="relative size-12"
       onClick={() => {
         window.open("https://wx.mail.qq.com/", "_blank");
-        setUpdateTime(0);
+        setUpdateTime(Date.now() - 8 * 60 * 1000);
       }}
     >
       <div className="size-full cursor-pointer" {...props}>

@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  BlogTableRowActions,
   BookmarkTableRowActions,
   ToWatchTableRowActions,
   WatchedTableRowActions,
@@ -44,6 +45,7 @@ import {
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
+import { BlogEnum, type Blog } from "@/hooks/use-blogs";
 
 export const ratings = [
   {
@@ -583,5 +585,125 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
     id: "actions",
     size: 20,
     cell: ({ row }) => <BookmarkTableRowActions row={row} />,
+  },
+];
+
+export const blogColumns: ColumnDef<Blog>[] = [
+  {
+    accessorKey: "createdAt",
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Created" className="ml-2" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="ml-2 flex items-center gap-2">
+          <span>{dateString(row.original.createdAt)}</span>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "title",
+    size: 300,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Title" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
+          <div className="max-w-[600px] truncate font-medium">
+            {row.getValue("title")}
+            <Badge
+              variant={
+                row.original.visibility === BlogEnum.PUBLIC
+                  ? "outline"
+                  : "secondary"
+              }
+              className="ml-2"
+            >
+              {row.original.visibility}
+            </Badge>
+          </div>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "what",
+    accessorFn: (row) => row.payload.whats ?? [],
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="What" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
+          {row.original.payload.whats?.map((what: string, idx: number) => (
+            <Badge key={idx} variant="outline">
+              {what}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+    filterFn: (row, _id, value) => {
+      return value.every((item: string) =>
+        row.original.payload.whats?.includes(item),
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "how",
+    accessorFn: (row) => row.payload.hows ?? [],
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="How" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex gap-2">
+          {row.original.payload.hows?.map((what: string, idx: number) => (
+            <Badge key={idx} variant="secondary">
+              {what}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+    filterFn: (row, _id, value) => {
+      return value.every((item: string) =>
+        row.original.payload.hows?.includes(item),
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "updatedAt",
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Updated" className="ml-2" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="ml-2 flex items-center gap-2">
+          <span>{dateString(row.original.updatedAt)}</span>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    id: "actions",
+    size: 20,
+    cell: ({ row }) => <BlogTableRowActions row={row} />,
   },
 ];

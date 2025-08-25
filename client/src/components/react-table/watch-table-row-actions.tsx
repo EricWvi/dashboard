@@ -64,6 +64,7 @@ import {
 } from "@/hooks/use-bookmarks";
 import { createTiptap } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
+import { BlogEnum, useUpdateBlog, type Blog } from "@/hooks/use-blogs";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -152,7 +153,7 @@ export function WatchedTableRowActions<TData>({
         ...watch.payload,
         progress: 0,
         epoch: (watch.payload.epoch ?? 1) + 1,
-        checkpoints: [[dateString(new Date(), "-"), 0]],
+        checkpoints: [],
       },
       author: watch.author,
     });
@@ -1131,6 +1132,241 @@ export function BookmarkTableRowActions<TData>({
                 disabled={
                   !bookmarkName.trim() || updateBookmarkMutation.isPending
                 }
+              >
+                Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </DropdownMenu>
+  );
+}
+
+export function BlogTableRowActions<TData>({
+  row,
+}: DataTableRowActionsProps<TData>) {
+  const isMobile = useIsMobile();
+  const { data: tags } = useTags();
+  const blog = row.original as Blog;
+  const [blogName, setBlogName] = useState("");
+  const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
+  const [selectedHows, setSelectedHows] = useState<string[]>([]);
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const updateBlogMutation = useUpdateBlog();
+  const updateBlog = () => {
+    return updateBlogMutation.mutateAsync({
+      id: blog.id,
+      title: blogName,
+      payload: {
+        ...blog.payload,
+        whats: selectedWhats,
+        hows: selectedHows,
+      },
+    });
+  };
+
+  const publishBlog = () => {
+    return updateBlogMutation.mutateAsync({
+      id: blog.id,
+      visibility: BlogEnum.PUBLIC,
+    });
+  };
+
+  const unpublishBlog = () => {
+    return updateBlogMutation.mutateAsync({
+      id: blog.id,
+      visibility: BlogEnum.PRIVATE,
+    });
+  };
+
+  // confirm Dialog
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<string>("");
+  const [action, setAction] = useState<() => Promise<any>>(
+    () => () => Promise.resolve(),
+  ); // lazy initializer: func will execute immediately
+  const archiveBlog = () => {
+    return updateBlogMutation.mutateAsync({
+      id: blog.id,
+      visibility: BlogEnum.ARCHIVED,
+    });
+  };
+  const unarchiveBlog = () => {
+    return updateBlogMutation.mutateAsync({
+      id: blog.id,
+      visibility: BlogEnum.PRIVATE,
+    });
+  };
+
+  // edit blog dialog
+  const [editBlogDialogOpen, setEditBlogDialogOpen] = useState(false);
+  const handleEditBlogDialogOpen = (open: boolean) => {
+    if (open) {
+      setBlogName(blog.title);
+      setSelectedWhats(blog.payload.whats ?? []);
+      setSelectedHows(blog.payload.hows ?? []);
+    }
+    setEditBlogDialogOpen(open);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="data-[state=open]:bg-muted size-8"
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-[160px]">
+        {blog.visibility === BlogEnum.PRIVATE && (
+          <DropdownMenuItem
+            onClick={() => {
+              setConfirmAction("Publish");
+              setAction(() => () => publishBlog());
+              setConfirmDialogOpen(true);
+            }}
+          >
+            Publish
+          </DropdownMenuItem>
+        )}
+        {blog.visibility === BlogEnum.PUBLIC && (
+          <DropdownMenuItem
+            onClick={() => {
+              setConfirmAction("Unpublish");
+              setAction(() => () => unpublishBlog());
+              setConfirmDialogOpen(true);
+            }}
+          >
+            Unpublish
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={() => handleEditBlogDialogOpen(true)}>
+          Edit Properties
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            setEditorId(blog.draft ?? 0);
+            setEditorDialogOpen(true);
+          }}
+        >
+          Edit Contents
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            if (blog.visibility === BlogEnum.ARCHIVED) {
+              setConfirmAction("Unarchive");
+              setAction(() => () => unarchiveBlog());
+            } else {
+              setConfirmAction("Archive");
+              setAction(() => () => archiveBlog());
+            }
+            setConfirmDialogOpen(true);
+          }}
+        >
+          <div className="text-yellow-700 hover:text-yellow-700 dark:text-yellow-600 dark:hover:text-yellow-600">
+            {blog.visibility === BlogEnum.ARCHIVED ? "Unarchive" : "Archive"}
+          </div>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+
+      {/* confirm Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to {confirmAction.toLowerCase()} [
+              {blog.title}]?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={updateBlogMutation.isPending}
+              onClick={() => {
+                action().then(() => setConfirmDialogOpen(false));
+              }}
+            >
+              {confirmAction}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* edit blog dialog */}
+      <Dialog open={editBlogDialogOpen} onOpenChange={handleEditBlogDialogOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Edit Blog</DialogTitle>
+            <DialogDescription>
+              Stay up to date with the blogs that matter most to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="blog-edit-title">Title</Label>
+              <Input
+                id="blog-edit-title"
+                placeholder={!isMobile ? "Enter blog title..." : ""}
+                value={blogName}
+                disabled={updateBlogMutation.isPending}
+                onChange={(e) => setBlogName(e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="blog-edit-what">What</Label>
+              <MultiSelect
+                id="blog-edit-what"
+                options={tags?.whatTags ?? []}
+                onValueChange={setSelectedWhats}
+                defaultValue={selectedWhats}
+                allowCreateNew
+                modalPopover
+                hideSelectAll
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="blog-edit-how">How</Label>
+              <MultiSelect
+                id="blog-edit-how"
+                options={tags?.howTags ?? []}
+                onValueChange={setSelectedHows}
+                defaultValue={selectedHows}
+                allowCreateNew
+                modalPopover
+                hideSelectAll
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleEditBlogDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  updateBlog().then(() => handleEditBlogDialogOpen(false));
+                }}
+                disabled={!blogName.trim() || updateBlogMutation.isPending}
               >
                 Update
               </Button>

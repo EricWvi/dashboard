@@ -8,6 +8,7 @@ import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
 import Journey from "@/pages/Journey";
 import Echo from "@/pages/Echo";
+import Blog from "@/pages/Blog";
 import Bookmark from "@/pages/Bookmark";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -32,17 +33,17 @@ export default function TabbedApp() {
       <div className="fixed top-0 left-1/2 z-50 hidden -translate-x-1/2 transform md:block">
         <div className="group">
           {/* Hover trigger area */}
-          <div className="h-8 w-256 bg-transparent" />
+          <div className="h-8 w-300 bg-transparent" />
 
           {/* Tabs container with animation - moved higher to hide shadow completely */}
-          <div className="absolute top-0 left-1/2 w-108 -translate-x-1/2 -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0">
+          <div className="absolute top-0 left-1/2 w-160 -translate-x-1/2 -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0">
             <div className="bg-background/95 -translate-y-2 transform rounded-b-lg border-b shadow-md backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-0">
               <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
                 className="w-full"
               >
-                <TabsList className="grid h-12 w-full grid-cols-5 bg-transparent">
+                <TabsList className="grid h-12 w-full grid-cols-6 bg-transparent">
                   <TabsTrigger
                     value="dashboard"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
@@ -72,6 +73,12 @@ export default function TabbedApp() {
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
                     <span className="lg:inline">Echo</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="blog"
+                    className="data-[state=active]:bg-accent flex items-center gap-2"
+                  >
+                    <span className="lg:inline">Blog</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -144,6 +151,13 @@ export default function TabbedApp() {
           className={`${activeTab === "echo" ? "block size-full" : "hidden"}`}
         >
           {visitedTabs.has("echo") && <Echo />}
+        </div>
+
+        {/* Blog - lazy render but keep mounted */}
+        <div
+          className={`${activeTab === "blog" ? "block size-full" : "hidden"}`}
+        >
+          {visitedTabs.has("blog") && <Blog />}
         </div>
       </div>
     </div>

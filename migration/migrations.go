@@ -109,7 +109,36 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddEchoTable,
 			Down:    RemoveEchoTable,
 		},
+		{
+			Version: "v0.18.0",
+			Name:    "Add blog table",
+			Up:      AddBlogTable,
+			Down:    RemoveBlogTable,
+		},
 	}
+}
+
+// -------------------- v0.18.0 -------------------
+func AddBlogTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_blog (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			title VARCHAR(1024) NOT NULL,
+			visibility VARCHAR(10) DEFAULT 'Private'::VARCHAR(10) NOT NULL,
+			draft INTEGER DEFAULT 0,
+			payload JSONB DEFAULT '{}'::jsonb NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+			deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+		);
+	`).Error
+}
+
+func RemoveBlogTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_blog CASCADE;
+	`).Error
 }
 
 // -------------------- v0.17.0 -------------------

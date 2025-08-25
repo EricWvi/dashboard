@@ -52,7 +52,7 @@ export const Domain: {
 };
 
 const keyBookmarks = () => ["/api/bookmarks"];
-const keyTags = () => ["/api/tags"];
+export const keyTags = () => ["/api/tags"];
 
 export function useBookmarks() {
   return useQuery({
@@ -78,7 +78,7 @@ export type Tag = {
   label: string;
 };
 
-const TagsQueryOptions = {
+export const TagsQueryOptions = {
   queryKey: keyTags(),
   queryFn: async () => {
     const response = await apiRequest(
