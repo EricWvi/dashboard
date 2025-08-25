@@ -337,9 +337,9 @@ export function SimpleEditor({ draft }: { draft: any }) {
             />
 
             {/* Table of Contents - only show on desktop */}
-            {!isMobile && (
+            <div className="hidden xl:block">
               <TableOfContents editor={editor} scrollRef={scrollRef} />
-            )}
+            </div>
           </EditorContext.Provider>
         </div>
       </div>

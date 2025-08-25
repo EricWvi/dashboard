@@ -97,6 +97,9 @@ const Weeks = ({ year }: { year: number }) => {
   const [dialogWeek, setDialogWeek] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const currWeekDraft =
+    (weeks ?? [])[0]?.sub === currWeek ? (weeks ?? [])[0]?.draft : undefined;
+
   return !showLoading ? (
     <div
       className={`${isMobile ? "grid grid-cols-3 gap-2" : "flex flex-wrap gap-2"}`}
@@ -104,14 +107,12 @@ const Weeks = ({ year }: { year: number }) => {
       {/* current week */}
       {year === currYear && (
         <Button
-          variant="secondary"
+          variant={!!currWeekDraft ? "secondary" : "outline"}
+          className={!!currWeekDraft ? "" : "border-dashed"}
           onClick={async () => {
-            let draft =
-              (weeks ?? [])[0]?.sub === currWeek
-                ? (weeks ?? [])[0]?.draft
-                : undefined;
+            let draft = currWeekDraft;
             if (!draft) {
-              draft = await createTiptap();
+              draft = await createTiptap(weeklyReviewInitial);
               createEchoMutation.mutateAsync({
                 sub: currWeek,
                 draft,
@@ -127,9 +128,10 @@ const Weeks = ({ year }: { year: number }) => {
         currWeek > 1 &&
         !weeks?.find((week) => week.sub === currWeek - 1) && (
           <Button
-            variant="secondary"
+            variant="outline"
+            className="border-dashed"
             onClick={async () => {
-              const draft = await createTiptap();
+              const draft = await createTiptap(weeklyReviewInitial);
               createEchoMutation.mutateAsync({
                 sub: currWeek - 1,
                 draft,
@@ -161,9 +163,10 @@ const Weeks = ({ year }: { year: number }) => {
         currWeek === 1 &&
         !weeks?.find((week) => week.sub === lastWeekOfLastYear) && (
           <Button
-            variant="secondary"
+            variant="outline"
+            className="border-dashed"
             onClick={async () => {
-              const draft = await createTiptap();
+              const draft = await createTiptap(weeklyReviewInitial);
               createEchoMutation.mutateAsync({
                 sub: lastWeekOfLastYear,
                 draft,
@@ -222,3 +225,66 @@ const Weeks = ({ year }: { year: number }) => {
     <Skeleton className={`${isMobile ? "h-80" : "h-30"}`} />
   );
 };
+
+const questions = [
+  {
+    id: 1,
+    "zh-CN": "本周哪些时刻让我觉得最有意义或最难忘？",
+    "en-US": "What moments this week felt the most meaningful or memorable?",
+  },
+  {
+    id: 2,
+    "zh-CN": "什么对我挑战最大，我是如何应对的？",
+    "en-US": "What challenged me the most, and how did I respond?",
+  },
+  {
+    id: 3,
+    "zh-CN": "我做了什么让自己感到骄傲的事情，无论多小？",
+    "en-US": "What did I do that I’m proud of, no matter how small?",
+  },
+  {
+    id: 4,
+    "zh-CN": "我在哪里感受到了快乐、轻松或感激？",
+    "en-US": "Where did I notice joy, ease, or gratitude?",
+  },
+  {
+    id: 5,
+    "zh-CN": "什么消耗了我的精力，下周我可能会做些什么不同的事？",
+    "en-US": "What drained me, and what might I do differently next week?",
+  },
+  {
+    id: 6,
+    "zh-CN": "这周谁或什么支持了我？",
+    "en-US": "Who or what supported me this week?",
+  },
+  {
+    id: 7,
+    "zh-CN": "我会带着什么样的教训、见解或提醒继续前进？",
+    "en-US": "What lesson, insight, or reminder will I carry forward?",
+  },
+  {
+    id: 8,
+    "zh-CN": "还有什么...",
+    "en-US": "What’s more...",
+  },
+];
+
+const weeklyReviewInitial = questions.flatMap((q) => [
+  {
+    type: "heading",
+    attrs: {
+      level: 3,
+      textAlign: null,
+    },
+    content: [
+      {
+        text: q["en-US"],
+        type: "text",
+      },
+    ],
+  },
+  {
+    type: "paragraph",
+    attrs: { textAlign: null },
+  },
+]);

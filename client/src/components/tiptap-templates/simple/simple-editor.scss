@@ -162,9 +162,7 @@
 }
 
 .read-only-tiptap {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  padding-top: 24px !important;
+  padding: 24px 0 24px !important;
 }
 
 body {
@@ -221,7 +219,7 @@ body,
 }
 
 .simple-editor-content {
-  max-width: 648px;
+  max-width: 870px;
   width: 100%;
   margin: 0 auto;
   height: 100%;

@@ -83,18 +83,19 @@ const Years = ({
   const [dialogYear, setDialogYear] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const currYearDraft =
+    (years ?? [])[0]?.year === currYear ? (years ?? [])[0]?.draft : undefined;
+
   return !showLoading ? (
     <div
       className={`${isMobile ? "grid grid-cols-4 gap-2" : "flex flex-wrap gap-2"}`}
     >
       {/* current year */}
       <Button
-        variant="secondary"
+        variant={!!currYearDraft ? "secondary" : "outline"}
+        className={!!currYearDraft ? "" : "border-dashed"}
         onClick={async () => {
-          let draft =
-            (years ?? [])[0]?.year === currYear
-              ? (years ?? [])[0]?.draft
-              : undefined;
+          let draft = currYearDraft;
           if (!draft) {
             draft = await createTiptap();
             createEchoMutation.mutateAsync({

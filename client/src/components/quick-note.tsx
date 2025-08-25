@@ -87,7 +87,7 @@ export const QuickNoteList = () => {
   };
 
   return (
-    <Card className="max-w-4xl gap-1">
+    <Card className="max-w-4xl min-w-0 gap-1">
       <CardHeader>
         <CardTitle>
           <div className="flex justify-between">
@@ -104,7 +104,7 @@ export const QuickNoteList = () => {
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="pr-3 pl-6">
+      <CardContent>
         {/* desktop fixed height, mobile full height */}
         <div
           className={`flex flex-col rounded-sm ${isMobile ? "min-h-20" : "h-120 overflow-scroll"}`}
@@ -140,8 +140,8 @@ export const QuickNoteList = () => {
                     />
                     {/* quick note title */}
                     <Dialog>
-                      <DialogTrigger className="flex flex-1 cursor-pointer justify-start">
-                        <div>{note.title}</div>
+                      <DialogTrigger className="one-line-text cursor-pointer">
+                        {note.title}
                       </DialogTrigger>
                       <DialogContent
                         className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"

@@ -87,10 +87,10 @@ const TodoTitle = ({
 }: { todo: Todo; todayView?: boolean } & { children?: React.ReactNode }) => {
   return (
     <div
-      className={`line-clamp-1 min-w-0 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
+      className={`min-w-0 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
     >
       {todo.link === "" ? (
-        <div title={todo.title}>
+        <div title={todo.title} className="one-line-text">
           {todo.title}
           {todo.completed && ` (${todo.count})`}
         </div>
@@ -101,8 +101,10 @@ const TodoTitle = ({
           href={todo.link}
           target="_blank"
         >
-          {todo.title}
-          {todo.completed && ` (${todo.count})`}
+          <div className="one-line-text">
+            {todo.title}
+            {todo.completed && ` (${todo.count})`}
+          </div>
         </a>
       )}
 
@@ -131,7 +133,7 @@ export const PlanTodoView = ({
       <div className="min-w-0 flex-1">
         <Label htmlFor={String(todo.id)}>
           <div
-            className={`line-clamp-1 text-base ${underlineColor(todo.difficulty)}`}
+            className={`one-line-text text-base ${underlineColor(todo.difficulty)}`}
           >
             {todo.title}
           </div>

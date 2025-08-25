@@ -175,3 +175,9 @@
     }
   }
 }
+
+@layer components {
+  .one-line-text {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+}

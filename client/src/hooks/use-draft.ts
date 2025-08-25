@@ -28,11 +28,20 @@ export function useDraft(id: number) {
   });
 }
 
-export async function createTiptap() {
+const defaultContent = [
+  {
+    type: "paragraph",
+    attrs: {
+      textAlign: null,
+    },
+  },
+];
+
+export async function createTiptap(content: any = defaultContent) {
   const response = await apiRequest("POST", "/api/tiptap?Action=CreateTiptap", {
     content: {
       type: "doc",
-      content: [],
+      content,
     },
   });
   const rst = await response.json();

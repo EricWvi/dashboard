@@ -21,6 +21,7 @@
   cursor: pointer;
   transition: opacity 0.5s ease !important;
   white-space: nowrap;
+  max-width: 210px;
   overflow: hidden;
   text-overflow: ellipsis;
 
@@ -33,7 +34,7 @@
   display: inline-block;
   background: #e5e5e5;
   vertical-align: middle;
-  width: 16px;
+  width: 18px;
   border-radius: 20px;
   height: 4px;
 
@@ -83,7 +84,7 @@
   }
 
   .toc-item-circle {
-    width: 12px;
+    width: 14px;
     margin-right: 8px;
   }
 }
@@ -96,7 +97,7 @@
   }
 
   .toc-item-circle {
-    width: 8px;
+    width: 10px;
     margin-right: 16px;
   }
 }
