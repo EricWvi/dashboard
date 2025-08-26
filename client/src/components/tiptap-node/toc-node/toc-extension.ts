@@ -49,13 +49,15 @@ export const TOCExtension = Extension.create<TOCOptions>({
             const { doc } = tr;
             const items: TOCItem[] = [];
             const decorations: Decoration[] = [];
+            let headingCount = 1;
 
             doc.descendants((node, pos) => {
               if (
                 node.type.name === "heading" &&
                 levels.includes(node.attrs.level)
               ) {
-                const id = `heading-${pos}`;
+                const id = `heading-${headingCount}`;
+                headingCount++;
                 const text = node.textContent;
                 const level = node.attrs.level;
 

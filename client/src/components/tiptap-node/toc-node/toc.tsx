@@ -21,7 +21,12 @@ export const TableOfContents: React.FC<TOCProps> = ({ editor, scrollRef }) => {
   const [items, setItems] = useState<TOCItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(isHovered);
   const tocRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    isHoveredRef.current = isHovered;
+  }, [isHovered]);
 
   // Function to update TOC items from ProseMirror state
   const updateTOCFromState = useCallback(() => {
@@ -80,7 +85,9 @@ export const TableOfContents: React.FC<TOCProps> = ({ editor, scrollRef }) => {
     if (!items.length || !scrollRef.current) return;
 
     const interval = setInterval(() => {
-      updateActiveHeading();
+      if (!isHoveredRef.current) {
+        updateActiveHeading();
+      }
     }, 500);
 
     return () => clearInterval(interval);
@@ -159,7 +166,7 @@ export const TableOfContents: React.FC<TOCProps> = ({ editor, scrollRef }) => {
   return (
     <div
       ref={tocRef}
-      className="tiptap-toc"
+      className="tiptap-toc scrollbar-hide"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
