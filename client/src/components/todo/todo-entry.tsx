@@ -257,6 +257,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           <SquareKanban />
           Kanban
         </ContextMenuItem>
+        <ContextMenuSeparator />
         {todo.done ? (
           <ContextMenuItem onClick={undoneTodo}>
             <Undo2 />
@@ -616,6 +617,31 @@ export const TodoEntry = ({
   const TodoMenuContent = () =>
     todo && (
       <ContextMenuContent>
+        {collectionId !== 0 &&
+          (isSetToday(todo.schedule) ? (
+            todo.done ? (
+              <>
+                <ContextMenuItem onClick={undoneTodo}>
+                  <Undo2 />
+                  Undone
+                </ContextMenuItem>
+                <ContextMenuItem onClick={completeTodo}>
+                  <Archive />
+                  Complete
+                </ContextMenuItem>
+              </>
+            ) : (
+              <ContextMenuItem onClick={doneTodo}>
+                <CircleCheckBig />
+                Done
+              </ContextMenuItem>
+            )
+          ) : (
+            <ContextMenuItem onClick={completeTodo}>
+              <Archive />
+              Complete
+            </ContextMenuItem>
+          ))}
         {/* set today and completed: false  -->  ["Reset Date","Unset Date"] */}
         {/* set today and completed: true  -->  ["Reset Date"] */}
         {/* set date (not today) and done: false  -->  ["Reset Date","Unset Date"] */}
@@ -666,31 +692,6 @@ export const TodoEntry = ({
                 </ContextMenuItem>
               )}
             </>
-          ))}
-        {collectionId !== 0 &&
-          (isSetToday(todo.schedule) ? (
-            todo.done ? (
-              <>
-                <ContextMenuItem onClick={undoneTodo}>
-                  <Undo2 />
-                  Undone
-                </ContextMenuItem>
-                <ContextMenuItem onClick={completeTodo}>
-                  <Archive />
-                  Complete
-                </ContextMenuItem>
-              </>
-            ) : (
-              <ContextMenuItem onClick={doneTodo}>
-                <CircleCheckBig />
-                Done
-              </ContextMenuItem>
-            )
-          ) : (
-            <ContextMenuItem onClick={completeTodo}>
-              <Archive />
-              Complete
-            </ContextMenuItem>
           ))}
         {collectionId !== 0 && <ContextMenuSeparator />}
         <ContextMenuItem

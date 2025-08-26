@@ -270,7 +270,7 @@ const TodoList = ({
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Todo List</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogDescription className="wrap-anywhere">
                   Are you sure you want to delete [{collection?.name}]? <br />
                   This action cannot be undone.
                 </AlertDialogDescription>
@@ -512,7 +512,7 @@ export const TodayTodoList = () => {
       >
         <DialogContent className="sm:max-w-md" showCloseButton={false}>
           <div className="flex items-start justify-between">
-            <DialogHeader>
+            <DialogHeader className="text-left">
               <DialogTitle>My Day</DialogTitle>
               <DialogDescription>
                 {new Date().toLocaleDateString("en-US", {

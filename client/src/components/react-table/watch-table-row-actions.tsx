@@ -228,7 +228,7 @@ export function WatchedTableRowActions<TData>({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="wrap-anywhere">
               Are you sure you want to delete [{watch.title}]?
             </DialogDescription>
           </DialogHeader>
@@ -259,7 +259,7 @@ export function WatchedTableRowActions<TData>({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Watch Again</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="wrap-anywhere">
               Do you want to watch [{watch.title}] again?
             </DialogDescription>
           </DialogHeader>
@@ -728,7 +728,7 @@ export function ToWatchTableRowActions<TData>({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="wrap-anywhere">
               Are you sure you want to delete [{watch.title}]?
             </DialogDescription>
           </DialogHeader>
@@ -993,7 +993,7 @@ export function BookmarkTableRowActions<TData>({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="wrap-anywhere">
               Are you sure you want to delete [{bookmark.title}]?
             </DialogDescription>
           </DialogHeader>
@@ -1279,9 +1279,8 @@ export function BlogTableRowActions<TData>({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Action</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to {confirmAction.toLowerCase()} [
-              {blog.title}]?
+            <DialogDescription className="wrap-anywhere">
+              {`Are you sure you want to {${confirmAction.toLowerCase()}} [${blog.title}]?`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">

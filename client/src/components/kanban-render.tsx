@@ -418,7 +418,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Board</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="wrap-anywhere">
               Are you sure you want to delete [{actionObjName}]? <br />
               This action cannot be undone.
             </AlertDialogDescription>
@@ -714,7 +714,7 @@ const KanbanItem = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Item</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="wrap-anywhere">
               Are you sure you want to delete [{task.title}]? <br />
               This action cannot be undone.
             </AlertDialogDescription>
