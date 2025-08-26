@@ -106,7 +106,10 @@ export const Profile = () => {
         <div className="flex w-full flex-col items-center justify-center">
           {/* avatar */}
           <div className="group relative mx-auto mb-6 aspect-square h-auto w-30 xl:w-1/2">
-            <ProfileAvatar src={userInfo?.avatar} />
+            <Avatar className="border-border size-full border-2 shadow-md">
+              <AvatarImage src={userInfo?.avatar} />
+              <AvatarFallback />
+            </Avatar>
 
             <div
               className={`${openDropdown ? "" : "opacity-0"} bg-accent border-border absolute right-[18%] bottom-[18%] size-10 translate-1/2 cursor-pointer rounded-full border group-hover:opacity-100`}
@@ -356,43 +359,6 @@ export const Profile = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-};
-
-const avatarFrame = (
-  day = new Date(),
-): { isHoliday: boolean; frameSrc: string } => {
-  if (day.getMonth() === 9 && day.getDate() >= 1 && day.getDate() <= 7) {
-    return { isHoliday: true, frameSrc: "/avatar/national-day.png" };
-  }
-  return { isHoliday: false, frameSrc: "" };
-};
-
-const ProfileAvatar = ({ src }: { src: string | undefined }) => {
-  const [todayDate, setTodayDate] = useState(new Date());
-  usePageVisibility(() => {
-    if (new Date().toDateString() !== todayDate.toDateString()) {
-      setTodayDate(new Date());
-    }
-  });
-  const { isHoliday, frameSrc } = avatarFrame(todayDate);
-
-  return (
-    <div className="size-full">
-      {isHoliday ? (
-        <div className="border-border relative z-1 size-full overflow-hidden rounded-xl border-2">
-          <img src={src} className="size-full object-cover" />
-          <div className="absolute inset-0 z-0">
-            <img src={frameSrc} className="size-full object-cover" />
-          </div>
-        </div>
-      ) : (
-        <Avatar className="border-border size-full border-2 shadow-md">
-          <AvatarImage src={src} />
-          <AvatarFallback />
-        </Avatar>
-      )}
     </div>
   );
 };

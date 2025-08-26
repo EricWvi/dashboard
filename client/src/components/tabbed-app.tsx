@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Home } from "lucide-react";
 import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
@@ -11,6 +10,13 @@ import Echo from "@/pages/Echo";
 import Blog from "@/pages/Blog";
 import Bookmark from "@/pages/Bookmark";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  BookmarkIcon,
+  DashboardIcon,
+  EchoIcon,
+  JourneyIcon,
+  TodoIcon,
+} from "@/components/ui/icons";
 
 export default function TabbedApp() {
   const isMobile = useIsMobile();
@@ -94,21 +100,51 @@ export default function TabbedApp() {
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="grid h-14 w-full grid-cols-5 rounded-none bg-transparent">
-            <TabsTrigger value="dashboard" className="h-full rounded-full">
-              <Home className="size-6" />
+          <TabsList className="flex h-14 w-full rounded-none bg-transparent">
+            <TabsTrigger
+              value="dashboard"
+              className="h-10 gap-2 rounded-3xl !border-none !shadow-none data-[state=active]:bg-gray-100 data-[state=active]:!px-6 data-[state=active]:dark:!bg-[#2e2e2e]"
+            >
+              <DashboardIcon
+                className={`size-6 ${activeTab === "dashboard" ? "" : "dark:text-muted-foreground text-gray-700"}`}
+              />
+              {activeTab === "dashboard" && <div className="">Dashboard</div>}
             </TabsTrigger>
-            <TabsTrigger value="todo" className="h-full rounded-full">
-              <CheckCircle2 className="size-6" />
+            <TabsTrigger
+              value="todo"
+              className="h-10 gap-2 rounded-3xl !border-none !shadow-none data-[state=active]:bg-gray-100 data-[state=active]:!px-6 data-[state=active]:dark:!bg-[#2e2e2e]"
+            >
+              <TodoIcon
+                className={`size-6 ${activeTab === "todo" ? "" : "dark:text-muted-foreground text-gray-700"}`}
+              />
+              {activeTab === "todo" && <div className="">Todo</div>}
             </TabsTrigger>
-            <TabsTrigger value="journey" className="h-full rounded-full">
-              <CheckCircle2 className="size-6" />
+            <TabsTrigger
+              value="journey"
+              className="h-10 gap-2 rounded-3xl !border-none !shadow-none data-[state=active]:bg-gray-100 data-[state=active]:!px-6 data-[state=active]:dark:!bg-[#2e2e2e]"
+            >
+              <JourneyIcon
+                className={`size-6 ${activeTab === "journey" ? "" : "dark:text-muted-foreground text-gray-700"}`}
+              />
+              {activeTab === "journey" && <div className="">Journey</div>}
             </TabsTrigger>
-            <TabsTrigger value="bookmark" className="h-full rounded-full">
-              <CheckCircle2 className="size-6" />
+            <TabsTrigger
+              value="bookmark"
+              className="h-10 gap-2 rounded-3xl !border-none !shadow-none data-[state=active]:bg-gray-100 data-[state=active]:!px-6 data-[state=active]:dark:!bg-[#2e2e2e]"
+            >
+              <BookmarkIcon
+                className={`size-6 ${activeTab === "bookmark" ? "" : "dark:text-muted-foreground text-gray-700"}`}
+              />
+              {activeTab === "bookmark" && <div className="">Bookmark</div>}
             </TabsTrigger>
-            <TabsTrigger value="echo" className="h-full rounded-full">
-              <CheckCircle2 className="size-6" />
+            <TabsTrigger
+              value="echo"
+              className="h-10 gap-2 rounded-3xl !border-none !shadow-none data-[state=active]:bg-gray-100 data-[state=active]:!px-6 data-[state=active]:dark:!bg-[#2e2e2e]"
+            >
+              <EchoIcon
+                className={`size-6 ${activeTab === "echo" ? "" : "dark:text-muted-foreground text-gray-700"}`}
+              />
+              {activeTab === "echo" && <div className="">Echo</div>}
             </TabsTrigger>
           </TabsList>
         </Tabs>
