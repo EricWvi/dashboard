@@ -49,7 +49,10 @@ export async function createTiptap(content: any = defaultContent) {
 }
 
 export async function syncDraft(data: Draft) {
-  return apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", { ...data });
+  return apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", {
+    ...data,
+    ts: Date.now(),
+  });
 }
 
 export function removeDraftQuery(id: number) {

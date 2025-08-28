@@ -417,6 +417,13 @@ export function ContentHtml({ id }: { id: number }) {
     }
   }, [isLoading]);
 
+  // do not keep draft in cache
+  useEffect(() => {
+    return () => {
+      removeDraftQuery(id);
+    };
+  }, []);
+
   return (
     <div
       className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-4"}`}

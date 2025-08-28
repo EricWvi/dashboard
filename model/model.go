@@ -46,6 +46,8 @@ func (nt *NullTime) UnmarshalJSON(b []byte) error {
 
 const (
 	CreatorId = "creator_id"
+	CreatedAt = "created_at"
+	UpdatedAt = "updated_at"
 	Id        = "id"
 )
 
@@ -57,10 +59,6 @@ type WhereMap map[string]any
 
 // func (m WhereMap) Gte(key string, value any) {
 // 	m[key+" >="] = value
-// }
-
-// func (m WhereMap) Lt(key string, value any) {
-// 	m[key+" <"] = value
 // }
 
 // func (m WhereMap) Lte(key string, value any) {
@@ -90,6 +88,10 @@ func (m *WhereExpr) Ne(key string, value any) {
 
 func (m *WhereExpr) Eq(key string, value any) {
 	*m = append(*m, gorm.Expr(key+" = ?", value))
+}
+
+func (m *WhereExpr) LT(key string, value any) {
+	*m = append(*m, gorm.Expr(key+" < ?", value))
 }
 
 // func (m WhereMap) NotIn(key string, values []any) {

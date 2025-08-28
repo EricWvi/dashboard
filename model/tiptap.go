@@ -18,7 +18,8 @@ type TiptapField struct {
 }
 
 const (
-	Tiptap_Table = "d_tiptap"
+	Tiptap_Table   = "d_tiptap"
+	Tiptap_Content = "content"
 )
 
 func (t *Tiptap) TableName() string {
@@ -40,8 +41,11 @@ func (t *Tiptap) Create(db *gorm.DB) error {
 	return db.Create(t).Error
 }
 
-func (t *Tiptap) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Updates(t).Error
+func UpdateTiptap(db *gorm.DB, where WhereExpr, updates map[string]any) error {
+	for i := range where {
+		db = db.Where(where[i])
+	}
+	return db.Table(Tiptap_Table).UpdateColumns(updates).Error
 }
 
 func (t *Tiptap) Delete(db *gorm.DB, where map[string]any) error {
