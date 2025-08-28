@@ -513,14 +513,14 @@ const KanbanItem = ({
                 {task.detail ? (
                   <HoverCard>
                     <HoverCardTrigger>
-                      <span className="one-line-text text-sm font-medium underline decoration-dashed">
+                      <span className="dashed-text truncate text-sm font-medium">
                         {task.title}
                       </span>
                     </HoverCardTrigger>
                     <HoverCardContent>{task.detail}</HoverCardContent>
                   </HoverCard>
                 ) : (
-                  <span className="one-line-text text-sm font-medium">
+                  <span className="truncate text-sm font-medium">
                     {task.title}
                   </span>
                 )}

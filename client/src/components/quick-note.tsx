@@ -140,7 +140,7 @@ export const QuickNoteList = () => {
                     />
                     {/* quick note title */}
                     <Dialog>
-                      <DialogTrigger className="one-line-text cursor-pointer">
+                      <DialogTrigger className="cursor-pointer truncate">
                         {note.title}
                       </DialogTrigger>
                       <DialogContent

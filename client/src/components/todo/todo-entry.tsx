@@ -39,7 +39,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-
+import PopoverText from "@/components/popovertext";
 import {
   Popover,
   PopoverContent,
@@ -79,20 +79,24 @@ import { createTiptap } from "@/hooks/use-draft";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { createKanban } from "@/hooks/use-kanban";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const TodoTitle = ({
   todo,
   todayView,
   children,
 }: { todo: Todo; todayView?: boolean } & { children?: React.ReactNode }) => {
+  const isMobile = useIsMobile();
+  const todoText = `${todo.title}${todo.completed ? ` (${todo.count})` : ""}`;
   return (
     <div
       className={`min-w-0 text-sm ${(todayView && todo.done) || todo.completed ? "text-muted-foreground line-through" : ""}`}
     >
-      {todo.link === "" ? (
-        <div title={todo.title} className="one-line-text">
-          {todo.title}
-          {todo.completed && ` (${todo.count})`}
+      {isMobile ? (
+        <PopoverText text={todoText} />
+      ) : todo.link === "" ? (
+        <div title={todo.title} className="truncate">
+          {todoText}
         </div>
       ) : (
         <a
@@ -101,10 +105,7 @@ const TodoTitle = ({
           href={todo.link}
           target="_blank"
         >
-          <div className="one-line-text dashed-text">
-            {todo.title}
-            {todo.completed && ` (${todo.count})`}
-          </div>
+          <div className="dashed-text truncate">{todoText}</div>
         </a>
       )}
 
@@ -133,7 +134,7 @@ export const PlanTodoView = ({
       <div className="min-w-0 flex-1">
         <Label htmlFor={String(todo.id)}>
           <div
-            className={`one-line-text text-base ${underlineColor(todo.difficulty)}`}
+            className={`truncate text-base ${underlineColor(todo.difficulty)}`}
           >
             {todo.title}
           </div>
@@ -524,6 +525,7 @@ export const TodoEntry = ({
   collectionId: number;
   top: boolean;
 }) => {
+  const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
   const { data: todo } = useTodo(id);
@@ -824,7 +826,7 @@ export const TodoEntry = ({
                 </div>
               </TodoTitle>
 
-              <span className="flex items-center">
+              <span className="flex items-center gap-1 xl:gap-0">
                 {/* Schedule date badge */}
                 {collectionId !== 0 && (
                   <Badge
@@ -857,7 +859,7 @@ export const TodoEntry = ({
                 {todo.kanban !== 0 && (
                   <Button
                     variant="ghost"
-                    className="mx-1 size-4 xl:mx-0 xl:size-8"
+                    className="size-4 xl:size-8"
                     onClick={() => {
                       setKanbanId(todo.kanban);
                       setKanbanDialogOpen(true);
@@ -876,6 +878,15 @@ export const TodoEntry = ({
                     }}
                   >
                     <NotepadText className="text-muted-foreground" />
+                  </Button>
+                )}
+                {isMobile && todo.link !== "" && (
+                  <Button
+                    variant="ghost"
+                    className="size-4 xl:size-8"
+                    onClick={() => window.open(todo.link, "_blank")}
+                  >
+                    <Link className="text-muted-foreground" />
                   </Button>
                 )}
               </span>

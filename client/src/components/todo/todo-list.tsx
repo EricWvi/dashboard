@@ -103,7 +103,7 @@ const TodoList = ({
               <CardTitle>
                 {headerContent ? (
                   headerContent
-                ) : collection ? (
+                ) : !!collection ? (
                   <div className="h-8 text-2xl">{collection.name}</div>
                 ) : (
                   <Skeleton className="h-8 w-32 rounded-md" />
@@ -418,7 +418,7 @@ export const TodayTodoList = () => {
   }, [collections]);
 
   return (
-    <Card className="max-w-4xl gap-1">
+    <Card className="max-w-4xl min-w-0 gap-1">
       <CardHeader>
         <CardTitle>
           <div className="flex justify-between">

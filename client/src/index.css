@@ -178,12 +178,6 @@
   }
 }
 
-@layer components {
-  .one-line-text {
-    @apply overflow-hidden text-ellipsis whitespace-nowrap;
-  }
-}
-
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;

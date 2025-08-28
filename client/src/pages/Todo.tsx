@@ -50,11 +50,9 @@ export default function Todo() {
           <DropdownMenu onOpenChange={(open) => setListDropdownOpen(open)}>
             <DropdownMenuTrigger asChild>
               <div className="flex h-auto cursor-pointer items-center p-0 text-2xl font-bold">
-                {collections[
-                  collections.findIndex(
-                    (collection) => collection.id === activeListId,
-                  )
-                ]?.name || collections[0].name}
+                {collections.find(
+                  (collection) => collection.id === activeListId,
+                )?.name || collections[0].name}
                 <ChevronDown
                   className={`ml-1 size-5 transition-transform ${listDropdownOpen ? "rotate-180" : ""}`}
                 />
