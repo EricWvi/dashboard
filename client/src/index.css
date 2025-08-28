@@ -80,6 +80,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   --github-fill: #24292f;
+  --dashed-borderColor: oklch(55.4% 0.046 257.417);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -119,6 +120,7 @@
     --sidebar-ring: oklch(0.556 0 0);
 
     --github-fill: #fff;
+    --dashed-borderColor: oklch(86.9% 0.022 252.894);
   }
 }
 
@@ -189,5 +191,16 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  .dashed-text {
+    background: linear-gradient(
+        to right,
+        var(--dashed-borderColor) 0%,
+        var(--dashed-borderColor) 100%
+      )
+      repeat-x left bottom;
+    background-size: 8px 2px;
+    padding-bottom: 1px;
   }
 }

@@ -100,7 +100,7 @@ export default function TabbedApp() {
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="flex h-14 w-full rounded-none bg-transparent">
+          <TabsList className="flex h-14 w-full rounded-none bg-transparent px-4 pb-2">
             <TabsTrigger
               value="dashboard"
               className="h-10 gap-2 rounded-3xl !border-none !shadow-none data-[state=active]:bg-gray-100 data-[state=active]:!px-6 data-[state=active]:dark:!bg-[#2e2e2e]"

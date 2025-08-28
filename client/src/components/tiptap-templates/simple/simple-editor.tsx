@@ -419,10 +419,10 @@ export function ContentHtml({ id }: { id: number }) {
 
   return (
     <div
-      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full"}`}
+      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-4"}`}
     >
       {showLoading ? (
-        <div className="mx-auto mt-6 max-w-[648px] space-y-4">
+        <div className="mx-auto mt-6 max-w-[870px] space-y-4">
           <Skeleton className="h-8 w-40 rounded-sm" />
           <Skeleton className="h-[30vh] rounded-sm" />
           <Skeleton className="h-8 w-30 rounded-sm" />

@@ -96,12 +96,12 @@ const TodoTitle = ({
         </div>
       ) : (
         <a
-          className="font-semibold underline decoration-dashed"
+          className="font-medium"
           title={todo.title}
           href={todo.link}
           target="_blank"
         >
-          <div className="one-line-text">
+          <div className="one-line-text dashed-text">
             {todo.title}
             {todo.completed && ` (${todo.count})`}
           </div>
