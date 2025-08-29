@@ -3,14 +3,14 @@ import { Profile } from "@/components/profile";
 import { TodayTodoList } from "@/components/todo/todo-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useUser } from "@/hooks/use-user";
 import { useState } from "react";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { refinedGreeting } from "@/lib/utils";
+import { useUserContext } from "@/user-provider";
 
 export default function Dashboard() {
   const isMobile = useIsMobile();
-  const { data: userInfo } = useUser();
+  const { user } = useUserContext();
   const [greetingHour, setGreetingHour] = useState(new Date().getHours());
   const [greeting, setGreeting] = useState(refinedGreeting());
   usePageVisibility(() => {
@@ -29,7 +29,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <Avatar className="border border-gray-300">
-              <AvatarImage src={userInfo?.avatar} />
+              <AvatarImage src={user.avatar} />
               <AvatarFallback />
             </Avatar>
           </div>

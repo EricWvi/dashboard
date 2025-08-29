@@ -15,6 +15,7 @@ type User struct {
 	RssToken   string `gorm:"column:rss_token;size:255" json:"rssToken"`
 	EmailToken string `gorm:"column:email_token;size:255" json:"emailToken"`
 	EmailFeed  string `gorm:"column:email_feed;size:255" json:"emailFeed"`
+	Language   string `gorm:"column:language;size:10;default:'zh-CN';not null" json:"language"`
 }
 
 const (

@@ -24,6 +24,7 @@ func (b Base) GetUser(c *gin.Context, req *GetUserRequest) *GetUserResponse {
 		EmailFeed:     user.EmailFeed,
 		HasRssToken:   string(user.RssToken) != "",
 		HasEmailToken: string(user.EmailToken) != "",
+		Language:      user.Language,
 	}
 }
 
@@ -37,4 +38,5 @@ type GetUserResponse struct {
 	EmailFeed     string `json:"emailFeed"`
 	HasRssToken   bool   `json:"hasRssToken"`
 	HasEmailToken bool   `json:"hasEmailToken"`
+	Language      string `json:"language"`
 }

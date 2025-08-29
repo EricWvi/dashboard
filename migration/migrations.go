@@ -115,7 +115,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddBlogTable,
 			Down:    RemoveBlogTable,
 		},
+		{
+			Version: "v0.19.0",
+			Name:    "Add language column to user",
+			Up:      AddLanguageColumnToUser,
+			Down:    RemoveLanguageColumnFromUser,
+		},
 	}
+}
+
+// -------------------- v0.19.0 -------------------
+func AddLanguageColumnToUser(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_user
+		ADD COLUMN language VARCHAR(10) DEFAULT 'zh-CN' NOT NULL;
+	`).Error
+}
+
+func RemoveLanguageColumnFromUser(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_user
+		DROP COLUMN IF EXISTS language;
+	`).Error
 }
 
 // -------------------- v0.18.0 -------------------

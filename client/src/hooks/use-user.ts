@@ -1,12 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
+export type UserLang = "zh-CN" | "en-US";
+export const UserLangEnum: {
+  ZHCN: UserLang;
+  ENUS: UserLang;
+} = {
+  ZHCN: "zh-CN",
+  ENUS: "en-US",
+};
+
 export type User = {
   avatar: string;
   username: string;
   emailFeed: string;
   hasRssToken: boolean;
   hasEmailToken: boolean;
+  language: UserLang;
 };
 
 const keyUser = () => ["/api/user"];

@@ -33,16 +33,16 @@ import {
   useUpdateEmailToken,
   useUpdateProfile,
   useUpdateRssToken,
-  useUser,
 } from "@/hooks/use-user";
 import { useRef, useState } from "react";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { Plus, X } from "lucide-react";
 import { fileUpload } from "@/lib/file-upload";
 import { formatMediaUrl } from "@/lib/utils";
+import { useUserContext } from "@/user-provider";
 
 export const Profile = () => {
-  const { data: userInfo } = useUser();
+  const { user } = useUserContext();
   const [openDropdown, setOpenDropdown] = useState(false);
   // edit rss token
   const [rssTokenDialogOpen, setRssTokenDialogOpen] = useState(false);
@@ -60,7 +60,7 @@ export const Profile = () => {
   const [emailToken, setEmailToken] = useState("");
   const [emailFeed, setEmailFeed] = useState("");
   const handleEmailTokenDialogOpen = () => {
-    setEmailFeed(userInfo?.emailFeed.split("@")[0] || "");
+    setEmailFeed(user.emailFeed.split("@")[0]);
     setEmailToken("");
     setEmailTokenDialogOpen(true);
   };
@@ -89,8 +89,8 @@ export const Profile = () => {
     });
   };
   const handleEditProfileDialogOpen = () => {
-    setUsername(userInfo?.username || "");
-    setAvatar(userInfo?.avatar || "");
+    setUsername(user.username);
+    setAvatar(user.avatar);
     setEditProfileDialogOpen(true);
   };
   const updateProfile = () => {
@@ -107,7 +107,7 @@ export const Profile = () => {
           {/* avatar */}
           <div className="group relative mx-auto mb-6 aspect-square h-auto w-30 xl:w-1/2">
             <Avatar className="border-border size-full border-2 shadow-md">
-              <AvatarImage src={userInfo?.avatar} />
+              <AvatarImage src={user.avatar} />
               <AvatarFallback />
             </Avatar>
 
@@ -156,7 +156,7 @@ export const Profile = () => {
               className="text-4xl font-semibold"
               style={{ fontFamily: "CormorantGaramond" }}
             >
-              {userInfo?.username}
+              {user.username}
             </span>
           </div>
         </div>
@@ -164,7 +164,7 @@ export const Profile = () => {
           <JournalSheet />
           <QQMailSheet
             onClick={(e) => {
-              if (!userInfo?.hasEmailToken) {
+              if (!user.hasEmailToken) {
                 e.stopPropagation();
                 handleEmailTokenDialogOpen();
               }
@@ -172,7 +172,7 @@ export const Profile = () => {
           />
           <MinifluxSheet
             onClick={(e) => {
-              if (!userInfo?.hasRssToken) {
+              if (!user.hasRssToken) {
                 e.stopPropagation();
                 handleRssTokenDialogOpen();
               }
