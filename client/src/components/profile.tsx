@@ -136,9 +136,7 @@ export const Profile = () => {
                       Set QQMail Token
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => {}}>
-                      Delete
-                    </DropdownMenuItem>
+                    <DropdownMenuItem>{__APP_VERSION__}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
