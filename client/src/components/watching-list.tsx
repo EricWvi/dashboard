@@ -47,6 +47,7 @@ import { dateString, formatMediaUrl } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
 import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
+import WatchCheckpoints from "@/components/watch-checkpoint";
 
 const WatchingItem = ({ watch }: { watch: Watch }) => {
   const isMobile = useIsMobile();
@@ -520,6 +521,9 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 </Button>
               </div>
             </div>
+
+            {/* checkpoints display */}
+            <WatchCheckpoints checkpoints={watch.payload.checkpoints ?? []} />
 
             <div className="flex justify-between gap-2">
               <Button variant="secondary" onClick={reviewWatch}>

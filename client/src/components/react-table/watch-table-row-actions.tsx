@@ -32,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import WatchCheckpoints from "@/components/watch-checkpoint";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -129,6 +130,8 @@ export function WatchedTableRowActions<TData>({
     }
   };
 
+  const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
+
   // delete confirm
   const deleteWatchMutation = useDeleteWatch();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -211,6 +214,11 @@ export function WatchedTableRowActions<TData>({
           <DropdownMenuItem onClick={editQuotes}>Quotes</DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={reviewWatch}>Review</DropdownMenuItem>
+        {watch.payload.checkpoints && (
+          <DropdownMenuItem onClick={() => setTimelineDialogOpen(true)}>
+            Timeline
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => setWatchAgainDialogOpen(true)}>
           Watch Again
         </DropdownMenuItem>
@@ -280,6 +288,23 @@ export function WatchedTableRowActions<TData>({
               Confirm
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* timeline display dialog */}
+      <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Timeline</DialogTitle>
+            <DialogDescription></DialogDescription>
+          </DialogHeader>
+          <WatchCheckpoints checkpoints={watch.payload.checkpoints ?? []} />
         </DialogContent>
       </Dialog>
 
