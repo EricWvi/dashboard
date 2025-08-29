@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { CollectionsQuery } from "@/hooks/use-todos";
+import { dateString } from "@/lib/utils";
 
 export type Watch = {
   id: number;
@@ -276,6 +277,41 @@ export function useCompleteWatch() {
       });
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(WatchStatus.WATCHING),
+      });
+    },
+  });
+}
+
+export function useRecoverWatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Watch) => {
+      const response = await apiRequest(
+        "POST",
+        "/api/watch?Action=UpdateWatch",
+        {
+          id: data.id,
+          status: WatchStatus.PLAN_TO_WATCH,
+          createdAt: new Date(),
+          payload: {
+            ...data.payload,
+            progress: 0,
+            checkpoints: [
+              ...(data.payload.checkpoints ?? []),
+              [dateString(new Date(), "-"), 0],
+            ],
+          },
+        },
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.DROPPED),
+      });
+      queryClient.invalidateQueries({
+        queryKey: keyWatchesOfStatus(WatchStatus.PLAN_TO_WATCH),
       });
     },
   });

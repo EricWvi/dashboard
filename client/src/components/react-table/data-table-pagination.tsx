@@ -27,7 +27,7 @@ export function DataTablePagination<TData>({
 
   return (
     <div
-      className={`items-center justify-end px-2 ${isMobile ? "fixed right-2 bottom-18" : "flex"}`}
+      className={`px-2 ${isMobile ? "fixed right-2 bottom-18" : "flex items-center justify-end"}`}
     >
       {/* <div className="text-muted-foreground flex-1 text-sm">
         {table.getFilteredSelectedRowModel().rows.length} of{" "}

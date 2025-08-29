@@ -3,11 +3,21 @@ import {
   watchedColumns,
 } from "@/components/react-table/data-table-columns";
 import { DataTable } from "@/components/react-table/data-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWatches, WatchStatus } from "@/hooks/use-watches";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { WatchingList } from "@/components/watching-list";
+import { Package2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import DroppedList from "@/components/dropped-watch";
 
 function WatchingTab() {
   const isMobile = useIsMobile();
@@ -22,21 +32,52 @@ function WatchingTab() {
 }
 
 function ToWatchTab() {
+  const isMobile = useIsMobile();
   const { data: watches } = useWatches(WatchStatus.PLAN_TO_WATCH);
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
       ? Math.min(Math.floor((window.innerHeight - 336) / 50), 10)
       : 10;
+  const [droppedDialogOpen, setDroppedDialogOpen] = useState(false);
 
   return (
-    <DataTable
-      data={watches ?? []}
-      columns={towatchColumns}
-      toolbar="towatch"
-      isLoading={watches ? false : true} // Show loading state if data is not available
-      defaultPageSize={defaultPageSize}
-    />
+    <div className="relative">
+      <DataTable
+        data={watches ?? []}
+        columns={towatchColumns}
+        toolbar="towatch"
+        isLoading={watches ? false : true} // Show loading state if data is not available
+        defaultPageSize={defaultPageSize}
+      />
+      <div
+        className={`${isMobile ? "fixed bottom-18 left-6" : "absolute bottom-0 left-0"}`}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setDroppedDialogOpen(true)}
+        >
+          <Package2 />
+        </Button>
+      </div>
+
+      <Dialog open={droppedDialogOpen} onOpenChange={setDroppedDialogOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault(); // stops Radix from focusing anything
+            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Dropped Watches</DialogTitle>
+            <DialogDescription></DialogDescription>
+          </DialogHeader>
+          <DroppedList />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
