@@ -25,6 +25,8 @@ export default function Todo() {
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
+  if (!collections) return null;
+
   const [listDropdownOpen, setListDropdownOpen] = useState(false);
   const [activeListId, setActiveListId] = useState<number>(0);
 
@@ -42,7 +44,7 @@ export default function Todo() {
     }
   };
 
-  const mobileView = collections && (
+  const mobileView = (
     <div className="size-full">
       <TodoList
         collectionId={activeListId}
@@ -85,7 +87,7 @@ export default function Todo() {
     </div>
   );
 
-  const desktopView = collections && (
+  const desktopView = (
     <div className="fixed top-16 bottom-16 w-full">
       <div className="flex h-full">
         <div className="xl:flex-1/8"></div>

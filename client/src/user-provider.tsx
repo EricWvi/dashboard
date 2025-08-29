@@ -12,13 +12,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   if (!userInfo) return null;
 
   return (
-    !!userInfo && (
-      <UserContext.Provider
-        value={{ language: userInfo.language, user: userInfo }}
-      >
-        {children}
-      </UserContext.Provider>
-    )
+    <UserContext.Provider
+      value={{ language: userInfo.language, user: userInfo }}
+    >
+      {children}
+    </UserContext.Provider>
   );
 };
 

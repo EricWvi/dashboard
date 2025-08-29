@@ -177,7 +177,7 @@ const TodoList = ({
             <div
               className={`flex min-h-0 flex-1 flex-col overflow-scroll ${!isMobile ? "rounded-sm" : ""}`}
             >
-              {todos &&
+              {!!todos &&
                 (todos.length === 0 ? (
                   <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col text-lg">
                     <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -313,7 +313,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
         <CardTitle>
           <div className="flex items-end justify-between">
             <div className="text-muted-foreground h-8 text-xl">Completed</div>
-            {completed && (
+            {!!completed && (
               <div className="flex items-center gap-2">
                 {completed.length > 0 && (
                   <Button
@@ -333,7 +333,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
       <CardContent
         className={`flex min-h-0 flex-1 flex-col overflow-scroll ${isMobile ? "px-0" : "rounded-sm"}`}
       >
-        {completed &&
+        {!!completed &&
           (completed.length > 0 ? (
             <div className="min-h-0 w-full flex-1">
               <div className="space-y-2">
@@ -456,7 +456,7 @@ export const TodayTodoList = () => {
               </div>
             </>
           ) : (
-            today &&
+            !!today &&
             (today.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">

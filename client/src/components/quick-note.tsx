@@ -120,7 +120,7 @@ export const QuickNoteList = () => {
               </div>
             </>
           ) : (
-            notes &&
+            !!notes &&
             (notes.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">

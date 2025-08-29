@@ -136,7 +136,11 @@ export const Profile = () => {
                       Set QQMail Token
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>{__APP_VERSION__}</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <div className="text-muted-foreground">
+                        {__APP_VERSION__}
+                      </div>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

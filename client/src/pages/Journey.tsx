@@ -23,11 +23,9 @@ function WatchingTab() {
   const isMobile = useIsMobile();
   const { data: watches } = useWatches(WatchStatus.WATCHING);
   return (
-    watches && (
-      <div className={`${isMobile ? "pt-2" : ""}`}>
-        <WatchingList watches={watches} />
-      </div>
-    )
+    <div className={`${isMobile ? "pt-2" : ""}`}>
+      <WatchingList watches={watches ?? []} />
+    </div>
   );
 }
 

@@ -33,7 +33,7 @@ export const SimpleEditorWrapper = () => {
   const { data: draft } = useDraft(id);
   return (
     open &&
-    draft && (
+    !!draft && (
       <div className="bg-background fixed inset-0 z-50">
         {/* removing `overflow-auto` from the fixed overlay and instead 
           constraining the editor’s height and making it scrollable 
