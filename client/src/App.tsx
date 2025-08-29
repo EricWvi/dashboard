@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { UserLangEnum } from "@/hooks/use-user";
 import SearchCommand from "@/components/search-command";
 import { UserProvider, useUserContext } from "@/user-provider";
+import { useEffect } from "react";
 
 const MainPage = () => {
   const { user } = useUserContext();
@@ -21,30 +22,32 @@ const MainPage = () => {
       console.error("Service Worker registration failed", error);
     },
   });
-  if (needRefresh) {
-    toast(
-      <div className="flex flex-col gap-2">
-        <p>{i18nText[user.language].newVersion}</p>
-        <div className="flex gap-2">
-          <button
-            className="rounded bg-blue-600 px-3 py-1 text-white"
-            onClick={() => updateServiceWorker(true)}
-          >
-            {i18nText[user.language].update}
-          </button>
-          <button
-            className="rounded bg-gray-300 px-3 py-1"
-            onClick={() => toast.dismiss()} // just close the toast
-          >
-            {i18nText[user.language].later}
-          </button>
-        </div>
-      </div>,
-      {
-        duration: Infinity, // stays open until user acts
-      },
-    );
-  }
+  useEffect(() => {
+    if (needRefresh) {
+      toast(
+        <div className="flex flex-col gap-2">
+          <p>{i18nText[user.language].newVersion}</p>
+          <div className="flex gap-2">
+            <button
+              className="rounded bg-blue-600 px-3 py-1 text-white"
+              onClick={() => updateServiceWorker(true)}
+            >
+              {i18nText[user.language].update}
+            </button>
+            <button
+              className="rounded bg-gray-300 px-3 py-1"
+              onClick={() => toast.dismiss()} // just close the toast
+            >
+              {i18nText[user.language].later}
+            </button>
+          </div>
+        </div>,
+        {
+          duration: Infinity, // stays open until user acts
+        },
+      );
+    }
+  }, [needRefresh]);
 
   return user.username === "" ? <SignUp /> : <TabbedApp />;
 };

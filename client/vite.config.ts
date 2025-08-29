@@ -25,9 +25,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       workbox: {
         maximumFileSizeToCacheInBytes: 50 * 1024 * 1024, // 50 MB
+        skipWaiting: false, // Important: don't auto-skip waiting
+        clientsClaim: false, // Important: don't auto-claim clients
         globPatterns: [
           "**/*.{js,css,html,ico,png,svg}",
           "fonts/**/*.{woff,woff2,ttf,otf}",
