@@ -24,6 +24,7 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
+import { EmojiExtension } from "@/components/tiptap-node/emoji-node";
 import {
   TOCExtension,
   TableOfContents,
@@ -55,6 +56,7 @@ import {
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
+import { EmojiPopover } from "@/components/tiptap-ui/emoji-popover/emoji-popover";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
@@ -141,6 +143,7 @@ const MainToolbarContent = ({
           <ColorHighlightPopoverButton onClick={onHighlighterClick} />
         )}
         {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
+        <EmojiPopover />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -364,6 +367,7 @@ const extensionSetup = [
   Typography,
   Superscript,
   Subscript,
+  EmojiExtension,
   Selection,
   TOCExtension.configure({
     levels: [2, 3, 4],
