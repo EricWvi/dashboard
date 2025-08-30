@@ -34,7 +34,7 @@ func (b *Blog) Get(db *gorm.DB, where map[string]any) error {
 		return rst.Error
 	}
 	if rst.RowsAffected == 0 {
-		return fmt.Errorf("can not find blog with id %d", b.ID)
+		return fmt.Errorf("can not find blog")
 	}
 	return nil
 }

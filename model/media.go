@@ -36,7 +36,7 @@ func (m *Media) Get(db *gorm.DB, where map[string]any) error {
 		return rst.Error
 	}
 	if rst.RowsAffected == 0 {
-		return fmt.Errorf("can not find media with link %d", m.Link)
+		return fmt.Errorf("can not find media")
 	}
 	return nil
 }

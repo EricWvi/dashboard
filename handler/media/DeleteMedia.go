@@ -25,7 +25,6 @@ func (b Base) DeleteMedia(c *gin.Context, req *DeleteMediaRequest) *DeleteMediaR
 			model.Media_Link:      id,
 		})
 		if err != nil {
-			log.Errorf("GetMedia %s failed: %s", id, err)
 			continue
 		}
 		err = m.Delete(config.DB, nil)

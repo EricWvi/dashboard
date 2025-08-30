@@ -29,7 +29,7 @@ func (c *Collection) Get(db *gorm.DB, where map[string]any) error {
 		return rst.Error
 	}
 	if rst.RowsAffected == 0 {
-		return fmt.Errorf("can not find collection with id %d", c.ID)
+		return fmt.Errorf("can not find collection")
 	}
 	return nil
 }

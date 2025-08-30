@@ -49,7 +49,7 @@ func (b *BookmarkView) Get(db *gorm.DB, where map[string]any) error {
 		return rst.Error
 	}
 	if rst.RowsAffected == 0 {
-		return fmt.Errorf("can not find bookmark with id %d", b.ID)
+		return fmt.Errorf("can not find bookmark")
 	}
 	return nil
 }
