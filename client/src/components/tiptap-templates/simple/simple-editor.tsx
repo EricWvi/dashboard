@@ -269,8 +269,9 @@ export function SimpleEditor({ draft }: { draft: any }) {
       // sync every 5 seconds
       const interval = setInterval(() => {
         if (isDirtyRef.current) {
-          syncDraft({ id, content: editor.getJSON() });
-          isDirtyRef.current = false;
+          syncDraft({ id, content: editor.getJSON() }).then(
+            () => (isDirtyRef.current = false),
+          );
         }
       }, 5000);
       return () => clearInterval(interval);
@@ -289,23 +290,32 @@ export function SimpleEditor({ draft }: { draft: any }) {
   }, []);
 
   const handleSave = async () => {
-    if (editor && isChanged.current) {
-      syncDraft({ id, content: editor.getJSON() }).then(() => {
-        toast.success("Draft saved successfully");
-      });
+    if (editor) {
+      if (isDirtyRef.current) {
+        syncDraft({ id, content: editor.getJSON() }).then(() => {
+          toast.success("Draft saved successfully");
+          setId(0);
+          setOpen(false);
+          removeDraftQuery(id);
+        });
+      } else {
+        if (isChanged.current) {
+          toast.success("Draft saved successfully");
+        }
+        setId(0);
+        setOpen(false);
+        removeDraftQuery(id);
+      }
     }
-    setId(0);
-    setOpen(false);
-    removeDraftQuery(id);
   };
 
   const handleDrop = async () => {
     syncDraft({ id, content: draft }).then(() => {
       toast.success("Draft dropped successfully");
+      setId(0);
+      setOpen(false);
+      removeDraftQuery(id);
     });
-    setId(0);
-    setOpen(false);
-    removeDraftQuery(id);
   };
 
   return (

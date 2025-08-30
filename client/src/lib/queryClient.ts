@@ -14,17 +14,18 @@ export async function apiRequest(
   data?: unknown,
   retries = 3,
   baseTimeout = 2000,
-  maxTimeout = 5000,
+  maxTimeout = 10000,
 ): Promise<Response> {
+  let errorMsg = `${method} ${url} failed after ${retries} attempts`;
+
   for (let attempt = 0; attempt < retries; attempt++) {
-    // Exponential backoff timeout (2s → 4s → max 5s)
+    // Exponential backoff timeout (2s → 4s → 8s)
     const timeout = Math.min(baseTimeout * 2 ** attempt, maxTimeout);
+    // Setup abort controller for timeout
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
 
     try {
-      // Setup abort controller for timeout
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
-
       const res = await fetch(url, {
         method,
         headers: data ? { "Content-Type": "application/json" } : {},
@@ -33,32 +34,25 @@ export async function apiRequest(
         signal: controller.signal,
       });
 
-      clearTimeout(id);
-
       if (!res.ok) {
-        toast.error("API Request failed", {
-          description: `${method} ${url} failed with status ${res.status}`,
-        });
+        errorMsg = `${method} ${url} failed with status ${res.status}`;
+        break; // fail fast on bad status
       }
 
-      return res; // success, return response
+      return res; // success
     } catch (err) {
-      // Retry only if timeout or network error
       if (attempt < retries - 1) {
         console.warn(`Retrying ${method} ${url} (attempt ${attempt + 2})...`);
         continue;
       }
-
-      // All retries failed → show toast and rethrow
-      toast.error("API Request failed", {
-        description: `${method} ${url} failed after ${retries} attempts`,
-      });
-      throw err;
+    } finally {
+      clearTimeout(id);
     }
   }
 
-  // This should never happen, but TypeScript needs it
-  throw new Error("Unexpected error in apiRequest");
+  // All retries failed → show toast and rethrow
+  toast.error("API Request failed", { description: errorMsg });
+  throw new Error(errorMsg);
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
