@@ -12,7 +12,7 @@ func (b Base) CreateQuickNote(c *gin.Context, req *CreateQuickNoteRequest) *Crea
 	quickNote := &model.QuickNote{}
 	quickNote.CreatorId = middleware.GetUserId(c)
 	quickNote.QuickNoteField = req.QuickNoteField
-	maxOrder, err := model.MaxNoteOrder(config.DB, model.WhereMap{
+	maxOrder, err := model.MaxNoteOrder(config.DB.WithContext(c), model.WhereMap{
 		model.CreatorId: middleware.GetUserId(c),
 	})
 	if err != nil {
@@ -21,7 +21,7 @@ func (b Base) CreateQuickNote(c *gin.Context, req *CreateQuickNoteRequest) *Crea
 	}
 	quickNote.Order = max(maxOrder+1, 1)
 
-	if err := quickNote.Create(config.DB); err != nil {
+	if err := quickNote.Create(config.DB.WithContext(c)); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

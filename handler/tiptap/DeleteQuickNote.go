@@ -14,7 +14,7 @@ func (b Base) DeleteQuickNote(c *gin.Context, req *DeleteQuickNoteRequest) *Dele
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := quickNote.Delete(config.DB, m); err != nil {
+	if err := quickNote.Delete(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

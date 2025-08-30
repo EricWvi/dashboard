@@ -14,7 +14,7 @@ func (b Base) GetWatch(c *gin.Context, req *GetWatchRequest) *GetWatchResponse {
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := watch.Get(config.DB, m); err != nil {
+	if err := watch.Get(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

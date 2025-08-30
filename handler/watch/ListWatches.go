@@ -13,7 +13,7 @@ func (b Base) ListWatches(c *gin.Context, req *ListWatchesRequest) *ListWatchesR
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Watch_Status, req.Status)
 
-	watches, err := model.ListWatches(config.DB, m)
+	watches, err := model.ListWatches(config.DB.WithContext(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

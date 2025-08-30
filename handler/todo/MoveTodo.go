@@ -15,7 +15,7 @@ func (b Base) MoveTodo(c *gin.Context, req *MoveTodoRequest) *MoveTodoResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
-	maxOrder, err := model.MaxOrder(config.DB, model.WhereMap{
+	maxOrder, err := model.MaxOrder(config.DB.WithContext(c), model.WhereMap{
 		model.CreatorId:         middleware.GetUserId(c),
 		model.Todo_CollectionId: req.Dst,
 	})
@@ -25,7 +25,7 @@ func (b Base) MoveTodo(c *gin.Context, req *MoveTodoRequest) *MoveTodoResponse {
 	}
 	todo.Order = maxOrder + 1
 
-	if err = todo.Update(config.DB, m); err != nil {
+	if err = todo.Update(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

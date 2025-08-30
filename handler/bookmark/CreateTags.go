@@ -14,7 +14,7 @@ func (b Base) CreateTags(c *gin.Context, req *CreateTagsRequest) *CreateTagsResp
 		tag.CreatorId = middleware.GetUserId(c)
 		tag.Name = req.Tags[i]
 
-		if err := tag.Create(config.DB); err != nil {
+		if err := tag.Create(config.DB.WithContext(c)); err != nil {
 			handler.Errorf(c, "%s", err.Error())
 			return nil
 		}

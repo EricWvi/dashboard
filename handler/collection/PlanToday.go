@@ -23,7 +23,7 @@ func (b Base) PlanToday(c *gin.Context, req *PlanTodayRequest) *PlanTodayRespons
 
 	now := time.Now()
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	err := model.UpdateSchedule(config.DB, model.NewNullTime(startOfDay), m)
+	err := model.UpdateSchedule(config.DB.WithContext(c), model.NewNullTime(startOfDay), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

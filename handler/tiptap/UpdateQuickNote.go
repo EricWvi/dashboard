@@ -16,7 +16,7 @@ func (b Base) UpdateQuickNote(c *gin.Context, req *UpdateQuickNoteRequest) *Upda
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := quickNote.Update(config.DB, m); err != nil {
+	if err := quickNote.Update(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

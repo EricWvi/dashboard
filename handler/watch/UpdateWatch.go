@@ -19,7 +19,7 @@ func (b Base) UpdateWatch(c *gin.Context, req *UpdateWatchRequest) *UpdateWatchR
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := watch.Update(config.DB, m); err != nil {
+	if err := watch.Update(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

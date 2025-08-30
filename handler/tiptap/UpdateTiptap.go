@@ -17,7 +17,7 @@ func (b Base) UpdateTiptap(c *gin.Context, req *UpdateTiptapRequest) *UpdateTipt
 	m.Eq(model.Id, req.Id)
 	m.LT(model.UpdatedAt, updatedTime)
 
-	if err := model.UpdateTiptap(config.DB, m, map[string]any{
+	if err := model.UpdateTiptap(config.DB.WithContext(c), m, map[string]any{
 		model.UpdatedAt:      updatedTime,
 		model.Tiptap_Content: req.TiptapField.Content,
 	}); err != nil {

@@ -20,14 +20,14 @@ func (b Base) DeleteMedia(c *gin.Context, req *DeleteMediaRequest) *DeleteMediaR
 	}
 	for _, id := range req.Ids {
 		m := &model.Media{}
-		err := m.Get(config.DB, gin.H{
+		err := m.Get(config.DB.WithContext(c), gin.H{
 			model.Media_CreatorId: middleware.GetUserId(c),
 			model.Media_Link:      id,
 		})
 		if err != nil {
 			continue
 		}
-		err = m.Delete(config.DB, nil)
+		err = m.Delete(config.DB.WithContext(c), nil)
 		if err != nil {
 			log.Errorf(c, "DeleteMedia %s failed: %s", id, err)
 			continue

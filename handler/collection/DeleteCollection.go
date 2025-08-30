@@ -14,7 +14,7 @@ func (b Base) DeleteCollection(c *gin.Context, req *DeleteCollectionRequest) *De
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := collection.Delete(config.DB, m); err != nil {
+	if err := collection.Delete(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
@@ -23,7 +23,7 @@ func (b Base) DeleteCollection(c *gin.Context, req *DeleteCollectionRequest) *De
 	d.Eq(model.CreatorId, middleware.GetUserId(c))
 	d.Eq(model.Todo_CollectionId, req.Id)
 	todo := &model.Todo{}
-	if err := todo.Delete(config.DB, d); err != nil {
+	if err := todo.Delete(config.DB.WithContext(c), d); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

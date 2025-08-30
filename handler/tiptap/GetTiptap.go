@@ -14,7 +14,7 @@ func (b Base) GetTiptap(c *gin.Context, req *GetTiptapRequest) *GetTiptapRespons
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := tiptap.Get(config.DB, m); err != nil {
+	if err := tiptap.Get(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

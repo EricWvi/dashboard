@@ -12,7 +12,7 @@ func (b Base) ListQuickNotes(c *gin.Context, req *ListQuickNotesRequest) *ListQu
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	quicknotes, err := model.ListQuickNotes(config.DB, m)
+	quicknotes, err := model.ListQuickNotes(config.DB.WithContext(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

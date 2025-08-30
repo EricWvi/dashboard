@@ -13,7 +13,7 @@ func (b Base) CreateTiptap(c *gin.Context, req *CreateTiptapRequest) *CreateTipt
 	tiptap.CreatorId = middleware.GetUserId(c)
 	tiptap.TiptapField = req.TiptapField
 
-	if err := tiptap.Create(config.DB); err != nil {
+	if err := tiptap.Create(config.DB.WithContext(c)); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

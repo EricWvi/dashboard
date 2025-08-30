@@ -12,7 +12,7 @@ func (b Base) ListTags(c *gin.Context, req *ListTagsRequest) *ListTagsResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	tags, err := model.ListTags(config.DB, m)
+	tags, err := model.ListTags(config.DB.WithContext(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

@@ -16,7 +16,7 @@ func (b Base) GetQQMailCount(c *gin.Context, req *GetQQMailCountRequest) *GetQQM
 	m.Eq(model.Id, middleware.GetUserId(c))
 	count := 0
 
-	if err := user.Get(config.DB, m); err != nil {
+	if err := user.Get(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

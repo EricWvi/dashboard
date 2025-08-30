@@ -14,7 +14,7 @@ func (b Base) DeleteBookmark(c *gin.Context, req *DeleteBookmarkRequest) *Delete
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := bookmark.Delete(config.DB, m); err != nil {
+	if err := bookmark.Delete(config.DB.WithContext(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

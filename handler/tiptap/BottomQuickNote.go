@@ -11,7 +11,7 @@ import (
 func (b Base) BottomQuickNote(c *gin.Context, req *BottomQuickNoteRequest) *BottomQuickNoteResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
-	minOrder, err := model.MinNoteOrder(config.DB, m)
+	minOrder, err := model.MinNoteOrder(config.DB.WithContext(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
@@ -22,7 +22,7 @@ func (b Base) BottomQuickNote(c *gin.Context, req *BottomQuickNoteRequest) *Bott
 	u := model.WhereMap{}
 	u.Eq(model.CreatorId, middleware.GetUserId(c))
 	u.Eq(model.Id, req.Id)
-	if err = quickNote.Update(config.DB, u); err != nil {
+	if err = quickNote.Update(config.DB.WithContext(c), u); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

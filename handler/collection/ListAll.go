@@ -14,7 +14,7 @@ func (b Base) ListAll(c *gin.Context, req *ListAllRequest) *ListAllResponse {
 	m.Eq(model.Todo_Completed, false) // Only list incomplete todos
 	m.Ne(model.Todo_CollectionId, 0)  // Exclude todos in Inbox
 
-	todos, err := model.ListPlanTodos(config.DB, m)
+	todos, err := model.ListPlanTodos(config.DB.WithContext(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
