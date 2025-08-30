@@ -1,11 +1,13 @@
 package config
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -26,6 +28,8 @@ func InitDB() {
 }
 
 func openDB(host, port, username, password, name string) *gorm.DB {
+	ctx := context.Background()
+
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
 		host,
 		username,
@@ -33,36 +37,33 @@ func openDB(host, port, username, password, name string) *gorm.DB {
 		name,
 		port,
 		time.Local)
-	log.Info("db connection uses timezone ", time.Local)
+	log.Info(ctx, "db connection uses timezone "+time.Local.String())
 
-	newLogger := logger.New(
-		log.StandardLogger(),
-		logger.Config{
-			SlowThreshold: time.Second, // Slow SQL threshold
-			LogLevel:      logger.Info, // Log level
-			Colorful:      false,       // Disable color
-		},
-	)
+	newLogger := log.NewDBLogger(slog.LevelInfo, logger.Config{
+		SlowThreshold: time.Second, // Slow SQL threshold
+		LogLevel:      logger.Info, // Log level
+		Colorful:      false,       // Disable color
+	})
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: newLogger,
 	})
 	if err != nil {
-		log.Error(err)
-		log.Errorf("Database connection failed. Database name: %s", name)
+		log.Error(ctx, err.Error())
+		log.Errorf(ctx, "Database connection failed. Database name: %s", name)
 		os.Exit(1)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Error(err)
-		log.Errorf("SetMaxIdleConns get an error.")
+		log.Error(ctx, err.Error())
+		log.Error(ctx, "SetMaxIdleConns get an error.")
 	} else {
 		sqlDB.SetMaxOpenConns(20000)
 		sqlDB.SetMaxIdleConns(100)
 	}
 
-	log.Info("db connected")
+	log.Info(ctx, "db connected")
 
 	return db
 }

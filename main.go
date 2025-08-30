@@ -1,16 +1,17 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/EricWvi/dashboard/config"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/migration"
 	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -18,15 +19,17 @@ func main() {
 	// init
 	config.Init()
 
+	ctx := context.Background()
+
 	// Run migrations
 	if err := runMigrations(); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
+		log.Fatalf(ctx, "Failed to run migrations: %v", err)
 	}
 
 	// Initialize MinIO service
 	minioService, err := service.InitMinIOService()
 	if err != nil {
-		log.Fatalf("Failed to initialize MinIO service: %v", err)
+		log.Fatalf(ctx, "Failed to initialize MinIO service: %v", err)
 	}
 
 	// Initialize and start job scheduler
@@ -40,19 +43,19 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		log.Info("Shutting down job scheduler...")
+		log.Info(ctx, "Shutting down job scheduler...")
 		jobScheduler.Stop()
 		os.Exit(0)
 	}()
 
 	// gin
 	g := gin.New()
-	Load(g, gin.LoggerWithWriter(log.StandardLogger().Out))
+	Load(g)
 
 	addr := viper.GetString("addr")
 
-	log.Infof("Start to listening the incoming requests on http address: %s", addr)
-	log.Info(http.ListenAndServe(addr, g).Error())
+	log.Infof(ctx, "Start to listening the incoming requests on http address: %s", addr)
+	log.Error(ctx, http.ListenAndServe(addr, g).Error())
 }
 
 func runMigrations() error {

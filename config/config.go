@@ -1,7 +1,11 @@
 package config
 
 import (
+	"log/slog"
+
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/service"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
@@ -12,6 +16,13 @@ func Init() {
 	}
 	if service.Key() == "" {
 		panic("DASHBOARD_ENCRYPT_KEY is not set")
+	}
+
+	// logger
+	if gin.Mode() == gin.DebugMode {
+		log.InitLogger(slog.LevelDebug)
+	} else {
+		log.InitLogger(slog.LevelInfo)
 	}
 
 	InitDB()

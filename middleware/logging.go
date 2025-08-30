@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/EricWvi/dashboard/handler"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 type bodyLogWriter struct {
@@ -25,38 +25,43 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 
 func Logging(c *gin.Context) {
 	start := time.Now().UTC()
-	requestBody, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Error("failed to read request body")
-		handler.ReplyError(c, http.StatusInternalServerError, "failed to read request body")
-		c.Abort()
-		return
-	}
 
-	requestId := uuid.New().String()
+	// set RequestId and Action
+	// Get existing ID or generate new
+	requestId := c.GetHeader("X-Request-ID")
+	if requestId == "" {
+		requestId = uuid.NewString()
+	}
 	c.Set("RequestId", requestId)
-	list := c.Request.URL.Query().Get("Action")
-	if len(list) == 0 {
+	action := c.Request.URL.Query().Get("Action")
+	if len(action) == 0 {
 		handler.ReplyError(c, http.StatusBadRequest, "request action is missing")
 		c.Abort()
 		return
 	}
-	c.Set("Action", list)
+	c.Set("Action", action)
 
-	c.Set("RequestBody", string(requestBody))
+	// log request body
+	requestBody, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Error(c, "failed to read request body")
+		handler.ReplyError(c, http.StatusInternalServerError, "failed to read request body")
+		c.Abort()
+		return
+	}
+	// c.Set("RequestBody", string(requestBody))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody)) // restore
 
-	ip := c.ClientIP()
-
-	log.Infof("---------------------- %s ----------------------", requestId)
-	f := log.Fields{
-		"requestId": requestId,
-		"ip":        ip,
+	// log request fields
+	fields := []any{
+		"ip", c.ClientIP(),
 	}
 	if c.ContentType() == "application/json" {
-		f["body"] = string(requestBody)
+		fields = append(fields, "body", string(requestBody))
 	}
-	log.WithFields(f).Info()
+	log.Info(c, c.Request.Method+" "+c.Request.URL.String(), fields...)
 
+	// use blw to retrieve response body
 	blw := &bodyLogWriter{
 		body:           bytes.NewBufferString(""),
 		ResponseWriter: c.Writer,
@@ -72,22 +77,16 @@ func Logging(c *gin.Context) {
 	// get code and message
 	rsp := handler.Response{}
 	if err := json.Unmarshal(blw.body.Bytes(), &rsp); err != nil {
-		log.Errorf("response body can not unmarshal to handler.Response struct, body: `%s`", blw.body.Bytes())
+		log.Errorf(c, "response body can not unmarshal to handler.Response struct, body: `%s`", blw.body.Bytes())
 	} else {
+		fields := []any{
+			"code", rsp.Code,
+			"latency", latency,
+		}
 		if rsp.Code >= 400 {
-			log.WithFields(log.Fields{
-				"requestId": rsp.RequestId,
-				"code":      rsp.Code,
-				"message":   rsp.Message,
-				"latency":   latency,
-			}).Info()
+			log.Info(c, rsp.Message.(string), fields...)
 		} else {
-			log.WithFields(log.Fields{
-				"requestId": rsp.RequestId,
-				"code":      rsp.Code,
-				"latency":   latency,
-			}).Info()
+			log.Info(c, "ok", fields...)
 		}
 	}
-	log.Info("------------------------------------------------------------------")
 }

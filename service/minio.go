@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -48,14 +46,13 @@ func NewMinIOUploader(config MinIOConfig) (*MinIOUploader, error) {
 
 // UploadFromReader uploads a file to MinIO bucket from an io.Reader
 func (m *MinIOUploader) UploadFromReader(ctx context.Context, objectName string, reader io.Reader, size int64, contentType string) error {
-	uploadInfo, err := m.client.PutObject(ctx, m.bucket, objectName, reader, size, minio.PutObjectOptions{
+	_, err := m.client.PutObject(ctx, m.bucket, objectName, reader, size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
 
-	log.Infof("File uploaded successfully from reader. ETag: %s, Size: %d bytes", uploadInfo.ETag, uploadInfo.Size)
 	return nil
 }
 
@@ -118,7 +115,6 @@ func (m *MinIOUploader) DeleteObject(ctx context.Context, objectName string) err
 		return fmt.Errorf("failed to delete object %s: %w", objectName, err)
 	}
 
-	log.Infof("Object %s deleted successfully", objectName)
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,10 +16,10 @@ import (
 	"github.com/EricWvi/dashboard/handler/todo"
 	"github.com/EricWvi/dashboard/handler/user"
 	"github.com/EricWvi/dashboard/handler/watch"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -44,7 +45,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 			return nil
 		})
 	if err != nil {
-		log.Error(err)
+		log.Error(context.Background(), err.Error())
 		os.Exit(1)
 	}
 

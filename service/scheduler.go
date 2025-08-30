@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/robfig/cron/v3"
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -33,23 +33,24 @@ func (js *JobScheduler) Start() {
 	// Schedule the media re-presigning job to run every day at 2:30 AM
 	_, err := js.cron.AddFunc("15 2 * * *", js.RePresignExpiredMedia)
 	if err != nil {
-		log.Errorf("Failed to schedule media re-presigning job: %v", err)
+		log.Errorf(context.Background(), "Failed to schedule media re-presigning job: %v", err)
 		return
 	}
 
-	log.Info("Job scheduler started successfully")
+	log.Info(context.Background(), "Job scheduler started successfully")
 	js.cron.Start()
 }
 
 // Stop gracefully shuts down the job scheduler
 func (js *JobScheduler) Stop() {
 	js.cron.Stop()
-	log.Info("Job scheduler stopped")
+	log.Info(context.Background(), "Job scheduler stopped")
 }
 
 // RePresignExpiredMedia finds and re-presigns media files that have expired presigned URLs
 func (js *JobScheduler) RePresignExpiredMedia() {
-	log.Info("Starting media re-presigning job")
+	ctx := context.Background()
+	log.Info(ctx, "Starting media re-presigning job")
 
 	// Find all media files where LastPresignedTime is older than 3 days
 	threeDaysAgo := time.Now().AddDate(0, 0, -3)
@@ -58,25 +59,25 @@ func (js *JobScheduler) RePresignExpiredMedia() {
 	result := js.db.Where(model.Media_LastPresignedTime+" < ?", threeDaysAgo).Find(&expiredMedia)
 
 	if result.Error != nil {
-		log.Errorf("Failed to query expired media: %v", result.Error)
+		log.Errorf(ctx, "Failed to query expired media: %v", result.Error)
 		return
 	}
 
-	log.Infof("Found %d media files to re-presign", len(expiredMedia))
+	log.Infof(ctx, "Found %d media files to re-presign", len(expiredMedia))
 
 	successCount := 0
 	failureCount := 0
 
 	for _, media := range expiredMedia {
 		if err := js.rePresignSingleMedia(&media); err != nil {
-			log.Errorf("Failed to re-presign media ID %d (Key: %s): %v", media.ID, media.Key, err)
+			log.Errorf(ctx, "Failed to re-presign media ID %d (Key: %s): %v", media.ID, media.Key, err)
 			failureCount++
 		} else {
 			successCount++
 		}
 	}
 
-	log.Infof("Media re-presigning job completed. Success: %d, Failures: %d", successCount, failureCount)
+	log.Infof(ctx, "Media re-presigning job completed. Success: %d, Failures: %d", successCount, failureCount)
 }
 
 // rePresignSingleMedia re-presigns a single media file
@@ -102,6 +103,6 @@ func (js *JobScheduler) rePresignSingleMedia(media *model.Media) error {
 		return fmt.Errorf("failed to update media record: %w", err)
 	}
 
-	log.Debugf("Successfully re-presigned media ID %d (Key: %s)", media.ID, media.Key)
+	log.Debugf(context.Background(), "Successfully re-presigned media ID %d (Key: %s)", media.ID, media.Key)
 	return nil
 }

@@ -1,13 +1,14 @@
 package middleware
 
 import (
+	"context"
 	"os"
 	"sync"
 
 	"github.com/EricWvi/dashboard/config"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 var emailToID map[string]uint
@@ -17,7 +18,7 @@ var lock sync.RWMutex
 func InitJWTMap() {
 	m, err := model.CreateEmailToIDMap(config.DB)
 	if err != nil {
-		log.Error()
+		log.Error(context.Background(), err.Error())
 		os.Exit(1)
 	}
 	emailToID = m
@@ -36,7 +37,10 @@ func writeMap(email string) uint {
 	if id, ok := emailToID[email]; ok {
 		return id
 	} else {
-		id := model.CreateUser(config.DB, email)
+		id, err := model.CreateUser(config.DB, email)
+		if err != nil {
+			log.Error(context.Background(), err.Error())
+		}
 		emailToID[email] = id
 		return id
 	}

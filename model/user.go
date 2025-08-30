@@ -1,9 +1,9 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -36,8 +36,7 @@ func CreateEmailToIDMap(db *gorm.DB) (map[string]uint, error) {
 	var users []User
 
 	if err := db.Select(Id, User_Email).Find(&users).Error; err != nil {
-		log.Errorf("failed to fetch users: %s", err)
-		return nil, err
+		return nil, errors.New("failed to fetch users: " + err.Error())
 	}
 
 	emailToID := make(map[string]uint, len(users))
@@ -59,25 +58,23 @@ func (u *User) Get(db *gorm.DB, where map[string]any) error {
 	return nil
 }
 
-func GetRssToken(db *gorm.DB, where map[string]any) string {
+func GetRssToken(db *gorm.DB, where map[string]any) (string, error) {
 	token := make([]string, 0)
 	if err := db.Model(&User{}).Where(where).Pluck(User_RssToken, &token).Error; err != nil {
-		log.Errorf("failed to get rss token: %s", err)
-		return ""
+		return "", errors.New("failed to get rss token: " + err.Error())
 	}
 	if len(token) == 0 {
-		return ""
+		return "", nil
 	}
-	return token[0]
+	return token[0], nil
 }
 
-func CreateUser(db *gorm.DB, email string) uint {
+func CreateUser(db *gorm.DB, email string) (uint, error) {
 	user := User{Email: email}
 	if err := db.Create(&user).Error; err != nil {
-		log.Errorf("failed to create user: %s", err)
-		return 0
+		return 0, errors.New("failed to create user: " + err.Error())
 	}
-	return user.ID
+	return user.ID, nil
 }
 
 func (u *User) Update(db *gorm.DB, where map[string]any) error {

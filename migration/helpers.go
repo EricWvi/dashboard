@@ -1,10 +1,11 @@
 package migration
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/EricWvi/dashboard/log"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ func SafeColumnAdd(db *gorm.DB, tableName, columnName, columnType string, defaul
 	}
 
 	if count > 0 {
-		log.Infof("Column %s.%s already exists, skipping", tableName, columnName)
+		log.Infof(context.Background(), "Column %s.%s already exists, skipping", tableName, columnName)
 		return nil
 	}
 
@@ -35,7 +36,7 @@ func SafeColumnAdd(db *gorm.DB, tableName, columnName, columnType string, defaul
 		sql = fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", tableName, columnName, columnType)
 	}
 
-	log.Infof("Adding column %s.%s", tableName, columnName)
+	log.Infof(context.Background(), "Adding column %s.%s", tableName, columnName)
 	return db.Exec(sql).Error
 }
 
@@ -54,13 +55,13 @@ func SafeColumnDrop(db *gorm.DB, tableName, columnName string) error {
 	}
 
 	if count == 0 {
-		log.Infof("Column %s.%s doesn't exist, skipping drop", tableName, columnName)
+		log.Infof(context.Background(), "Column %s.%s doesn't exist, skipping drop", tableName, columnName)
 		return nil
 	}
 
 	// Drop the column
 	sql := fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s", tableName, columnName)
-	log.Infof("Dropping column %s.%s", tableName, columnName)
+	log.Infof(context.Background(), "Dropping column %s.%s", tableName, columnName)
 	return db.Exec(sql).Error
 }
 
@@ -79,7 +80,7 @@ func SafeIndexAdd(db *gorm.DB, tableName, indexName, columns string, unique bool
 	}
 
 	if count > 0 {
-		log.Infof("Index %s already exists, skipping", indexName)
+		log.Infof(context.Background(), "Index %s already exists, skipping", indexName)
 		return nil
 	}
 
@@ -91,7 +92,7 @@ func SafeIndexAdd(db *gorm.DB, tableName, indexName, columns string, unique bool
 		sql = fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s (%s)", indexName, tableName, columns)
 	}
 
-	log.Infof("Creating index %s", indexName)
+	log.Infof(context.Background(), "Creating index %s", indexName)
 	return db.Exec(sql).Error
 }
 
@@ -110,13 +111,13 @@ func SafeIndexDrop(db *gorm.DB, indexName string) error {
 	}
 
 	if count == 0 {
-		log.Infof("Index %s doesn't exist, skipping drop", indexName)
+		log.Infof(context.Background(), "Index %s doesn't exist, skipping drop", indexName)
 		return nil
 	}
 
 	// Drop the index
 	sql := fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s", indexName)
-	log.Infof("Dropping index %s", indexName)
+	log.Infof(context.Background(), "Dropping index %s", indexName)
 	return db.Exec(sql).Error
 }
 
@@ -143,7 +144,7 @@ func BackfillData(db *gorm.DB, query string, batchSize int, processor func(*gorm
 			return fmt.Errorf("failed to process batch: %w", err)
 		}
 
-		log.Infof("Processed %d records (offset: %d)", len(results), offset)
+		log.Infof(context.Background(), "Processed %d records (offset: %d)", len(results), offset)
 		offset += batchSize
 
 		// Add a small delay to prevent overwhelming the database

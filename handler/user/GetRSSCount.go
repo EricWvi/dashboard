@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/EricWvi/dashboard/config"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/EricWvi/dashboard/service"
@@ -13,11 +14,17 @@ func (b Base) GetRSSCount(c *gin.Context, req *GetRSSCountRequest) *GetRSSCountR
 	m.Eq(model.Id, middleware.GetUserId(c))
 	count := 0
 
-	tokenField := model.GetRssToken(config.DB, m)
+	tokenField, err := model.GetRssToken(config.DB, m)
+	if err != nil {
+		log.Error(c, err.Error())
+	}
 	if tokenField != "" {
 		token, err := service.Decrypt(service.Key(), tokenField)
 		if err == nil {
-			count = service.MinifluxUnreadCount(token)
+			count, err = service.MinifluxUnreadCount(token)
+			if err != nil {
+				log.Error(c, err.Error())
+			}
 		}
 	}
 

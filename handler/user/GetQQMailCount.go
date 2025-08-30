@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/handler"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/EricWvi/dashboard/service"
@@ -22,7 +23,10 @@ func (b Base) GetQQMailCount(c *gin.Context, req *GetQQMailCountRequest) *GetQQM
 	if user.EmailToken != "" && user.EmailFeed != "" {
 		token, err := service.Decrypt(service.Key(), user.EmailToken)
 		if err == nil {
-			count = service.QQMailUnreadCount(user.EmailFeed, token)
+			count, err = service.QQMailUnreadCount(user.EmailFeed, token)
+			if err != nil {
+				log.Error(c, err.Error())
+			}
 		}
 	}
 
