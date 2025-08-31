@@ -14,12 +14,14 @@ type Tiptap struct {
 
 type TiptapField struct {
 	Content datatypes.JSON `gorm:"type:jsonb;default:'{}'::jsonb;not null" json:"content"`
+	Ts      int64          `gorm:"type:bigint;default:1756629730634;not null" json:"ts"`
 	// CreatorId is inherited from MetaField
 }
 
 const (
 	Tiptap_Table   = "d_tiptap"
 	Tiptap_Content = "content"
+	Tiptap_Ts      = "ts"
 )
 
 func (t *Tiptap) TableName() string {
@@ -41,11 +43,15 @@ func (t *Tiptap) Create(db *gorm.DB) error {
 	return db.Create(t).Error
 }
 
-func UpdateTiptap(db *gorm.DB, where WhereExpr, updates map[string]any) error {
-	for i := range where {
-		db = db.Where(where[i])
+func (t *Tiptap) Update(db *gorm.DB, where map[string]any) error {
+	rst := db.Where(where).Updates(t)
+	if rst.Error != nil {
+		return rst.Error
 	}
-	return db.Table(Tiptap_Table).UpdateColumns(updates).Error
+	if rst.RowsAffected == 0 {
+		return fmt.Errorf("can not update tiptap")
+	}
+	return nil
 }
 
 func (t *Tiptap) Delete(db *gorm.DB, where map[string]any) error {

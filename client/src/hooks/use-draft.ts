@@ -4,6 +4,7 @@ import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 export type Draft = {
   id: number;
   content: any;
+  ts: number;
 };
 
 const keyDraft = (id: number) => ["/api/tiptap", id];
@@ -44,15 +45,21 @@ export async function createTiptap(content: any = defaultContent) {
   return rst.message.id as number;
 }
 
-export async function syncDraft(data: Draft) {
-  return postRequest("/api/tiptap?Action=UpdateTiptap", {
-    ...data,
-    ts: Date.now(),
-  });
+export async function syncDraft(
+  data: Omit<Draft, "ts"> & { prev: number; curr: number },
+) {
+  return postRequest("/api/tiptap?Action=UpdateTiptap", { ...data });
 }
 
 export function removeDraftQuery(id: number) {
   queryClient.removeQueries({
+    queryKey: keyDraft(id),
+    exact: true,
+  });
+}
+
+export function invalidateDraftQuery(id: number) {
+  queryClient.invalidateQueries({
     queryKey: keyDraft(id),
     exact: true,
   });

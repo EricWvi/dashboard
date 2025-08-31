@@ -121,7 +121,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddLanguageColumnToUser,
 			Down:    RemoveLanguageColumnFromUser,
 		},
+		{
+			Version: "v1.0.0",
+			Name:    "Add unix timestamp column ts to tiptap",
+			Up:      AddTimestampColumnToTiptap,
+			Down:    RemoveTimestampColumnFromTiptap,
+		},
 	}
+}
+
+// -------------------- v1.0.0 -------------------
+func AddTimestampColumnToTiptap(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_tiptap
+		ADD COLUMN ts BIGINT DEFAULT 1756629730634;
+	`).Error
+}
+
+func RemoveTimestampColumnFromTiptap(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_tiptap
+		DROP COLUMN IF EXISTS ts;
+	`).Error
 }
 
 // -------------------- v0.19.0 -------------------

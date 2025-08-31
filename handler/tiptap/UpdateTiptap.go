@@ -1,27 +1,34 @@
 package tiptap
 
 import (
-	"time"
+	"net/http"
 
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 )
 
 func (b Base) UpdateTiptap(c *gin.Context, req *UpdateTiptapRequest) *UpdateTiptapResponse {
-	updatedTime := time.Unix(req.Ts/1000, (req.Ts%1000)*int64(time.Millisecond))
-	m := model.WhereExpr{}
+	tiptap := &model.Tiptap{}
+	tiptap.Content = req.Content
+	tiptap.Ts = req.Curr
+	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
-	m.LT(model.UpdatedAt, updatedTime)
+	if req.Prev != -1 {
+		m.Eq(model.Tiptap_Ts, req.Prev)
+	}
 
-	if err := model.UpdateTiptap(config.DB.WithContext(c), m, map[string]any{
-		model.UpdatedAt:      updatedTime,
-		model.Tiptap_Content: req.TiptapField.Content,
-	}); err != nil {
-		handler.Errorf(c, "%s", err.Error())
+	if err := tiptap.Update(config.DB, m); err != nil {
+		c.JSON(http.StatusConflict, handler.Response{
+			RequestId: c.GetString("RequestId"),
+			Code:      http.StatusConflict,
+			Message:   err.Error(),
+		})
+		c.Abort()
 		return nil
 	}
 
@@ -29,9 +36,10 @@ func (b Base) UpdateTiptap(c *gin.Context, req *UpdateTiptapRequest) *UpdateTipt
 }
 
 type UpdateTiptapRequest struct {
-	Id uint  `json:"id"`
-	Ts int64 `json:"ts"`
-	model.TiptapField
+	Id      uint           `json:"id"`
+	Content datatypes.JSON `json:"content"`
+	Prev    int64          `json:"prev"`
+	Curr    int64          `json:"curr"`
 }
 
 type UpdateTiptapResponse struct {

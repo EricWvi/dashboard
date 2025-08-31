@@ -77,11 +77,18 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 // --- Context ---
 import { useTTContext } from "@/components/editor";
-import { syncDraft, removeDraftQuery, useDraft } from "@/hooks/use-draft";
+import {
+  syncDraft,
+  invalidateDraftQuery,
+  removeDraftQuery,
+  useDraft,
+} from "@/hooks/use-draft";
 import { useEffect, useRef } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -215,10 +222,18 @@ const MobileToolbarContent = ({
   </>
 );
 
-export function SimpleEditor({ draft }: { draft: any }) {
+export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
+  const { language } = useUserContext();
   const { id, setId, setOpen } = useTTContext();
   const isChanged = useRef(false);
   const isDirtyRef = useRef(false);
+  const prevTs = useRef(ts);
+
+  const handleOutOfSync = () => {
+    isDirtyRef.current = false;
+    invalidateDraftQuery(id);
+    alert(i18nText[language].outOfSync);
+  };
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -269,15 +284,25 @@ export function SimpleEditor({ draft }: { draft: any }) {
       // sync every 5 seconds
       const interval = setInterval(() => {
         if (isDirtyRef.current) {
-          syncDraft({ id, content: editor.getJSON() }).then(
-            () => (isDirtyRef.current = false),
-          );
+          const currTs = Date.now();
+          syncDraft({
+            id,
+            content: editor.getJSON(),
+            prev: prevTs.current,
+            curr: currTs,
+          })
+            .then(() => {
+              isDirtyRef.current = false;
+              prevTs.current = currTs;
+            })
+            .catch(handleOutOfSync);
         }
       }, 5000);
       return () => clearInterval(interval);
     }
   }, [editor]);
 
+  // warning before reload or leave page
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
       // Cancel the event as permitted by the standard
@@ -292,7 +317,13 @@ export function SimpleEditor({ draft }: { draft: any }) {
   const handleSave = async () => {
     if (editor) {
       if (isDirtyRef.current) {
-        syncDraft({ id, content: editor.getJSON() }).then(() => {
+        isDirtyRef.current = false;
+        syncDraft({
+          id,
+          content: editor.getJSON(),
+          prev: -1,
+          curr: Date.now(),
+        }).then(() => {
           toast.success("Draft saved successfully");
           setId(0);
           setOpen(false);
@@ -310,7 +341,13 @@ export function SimpleEditor({ draft }: { draft: any }) {
   };
 
   const handleDrop = async () => {
-    syncDraft({ id, content: draft }).then(() => {
+    isDirtyRef.current = false;
+    syncDraft({
+      id,
+      content: draft,
+      prev: -1,
+      curr: Date.now(),
+    }).then(() => {
       toast.success("Draft dropped successfully");
       setId(0);
       setOpen(false);
@@ -455,3 +492,12 @@ export function ContentHtml({ id }: { id: number }) {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    outOfSync: "🔄 文档内容有更新！",
+  },
+  [UserLangEnum.ENUS]: {
+    outOfSync: "🔄 Draft content is out of sync!",
+  },
+};

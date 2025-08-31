@@ -61,6 +61,7 @@ export async function postRequest(
 ): Promise<Response> {
   const method = "POST";
   let errorMsg = `${method} ${url} failed after ${retries} attempts`;
+  let resCode = 0;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     // Exponential backoff timeout (3s → 6s → max 10s)
@@ -83,6 +84,7 @@ export async function postRequest(
 
       if (!res.ok) {
         errorMsg = `${method} ${url} failed with status ${res.status}`;
+        resCode = res.status;
         break; // fail fast on bad status
       }
 
@@ -98,7 +100,10 @@ export async function postRequest(
   }
 
   // All retries failed → show toast and rethrow
-  toast.error("API Request failed", { description: errorMsg });
+  // 409 is for UpdateTiptap
+  if (resCode !== 409) {
+    toast.error("API Request failed", { description: errorMsg });
+  }
   throw new Error(errorMsg);
 }
 
