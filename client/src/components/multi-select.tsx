@@ -1104,6 +1104,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
             }}
             align="start"
             onEscapeKeyDown={() => setIsPopoverOpen(false)}
+            onOpenAutoFocus={(e) => {
+              if (screenSize === "mobile") {
+                e.preventDefault(); // stops Radix from focusing anything
+                (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+              }
+            }}
           >
             <Command>
               {searchable && (

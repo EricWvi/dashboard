@@ -9,7 +9,7 @@ export default function WatchCheckpoints({
         <div className="flex flex-col">
           {[...checkpoints].reverse().map((checkpoint, idx) => (
             <div key={idx} className="flex gap-13">
-              <span className="text-muted-foreground w-24 pt-3 text-right text-sm">
+              <span className="text-muted-foreground w-22 pt-3 text-right text-sm sm:w-24">
                 {checkpoint[0]}
               </span>
               <span className="relative pt-2 pb-6">
@@ -21,7 +21,7 @@ export default function WatchCheckpoints({
             </div>
           ))}
           <div className="flex gap-13">
-            <span className="w-24 pt-3"></span>
+            <span className="w-22 pt-3 sm:w-24"></span>
             <span className="relative pt-2 pb-2">
               <div className="bg-border absolute top-0 bottom-0 left-[-28px] w-0.5" />
             </span>

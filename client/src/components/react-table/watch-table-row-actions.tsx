@@ -946,7 +946,11 @@ export function BookmarkTableRowActions<TData>({
   const [selectedHows, setSelectedHows] = useState<string[]>([]);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const updateBookmarkMutation = useUpdateBookmark();
-  const updateBookmark = () => {
+  const updateBookmark = async () => {
+    const draft =
+      bookmarkLink === "cheatsheet" && !bookmark.payload.draft
+        ? await createTiptap()
+        : bookmark.payload.draft;
     return updateBookmarkMutation.mutateAsync({
       id: bookmark.id,
       title: bookmarkName,
@@ -954,6 +958,7 @@ export function BookmarkTableRowActions<TData>({
       domain: bookmarkType,
       payload: {
         ...bookmark.payload,
+        draft,
         whats: selectedWhats,
         hows: selectedHows,
       },
