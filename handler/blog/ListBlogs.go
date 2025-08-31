@@ -12,7 +12,7 @@ func (b Base) ListBlogs(c *gin.Context, req *ListBlogsRequest) *ListBlogsRespons
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	blogs, err := model.ListBlogs(config.DB.WithContext(c), m)
+	blogs, err := model.ListBlogs(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

@@ -19,7 +19,7 @@ func (b Base) ListEchoes(c *gin.Context, req *ListEchoesRequest) *ListEchoesResp
 		m.Eq(model.Echo_Sub, req.Sub)
 	}
 
-	echoes, err := model.ListEchoes(config.DB.WithContext(c), m)
+	echoes, err := model.ListEchoes(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

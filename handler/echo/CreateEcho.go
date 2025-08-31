@@ -13,7 +13,7 @@ func (b Base) CreateEcho(c *gin.Context, req *CreateEchoRequest) *CreateEchoResp
 	echo.CreatorId = middleware.GetUserId(c)
 	echo.EchoField = req.EchoField
 
-	if err := echo.Create(config.DB.WithContext(c)); err != nil {
+	if err := echo.Create(config.ContextDB(c)); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

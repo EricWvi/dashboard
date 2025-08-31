@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,21 +18,19 @@ func main() {
 	// init
 	config.Init()
 
-	ctx := context.Background()
-
 	// Run migrations
 	if err := runMigrations(); err != nil {
-		log.Fatalf(ctx, "Failed to run migrations: %v", err)
+		log.Fatalf(service.WorkerCtx, "Failed to run migrations: %v", err)
 	}
 
 	// Initialize MinIO service
 	minioService, err := service.InitMinIOService()
 	if err != nil {
-		log.Fatalf(ctx, "Failed to initialize MinIO service: %v", err)
+		log.Fatalf(service.WorkerCtx, "Failed to initialize MinIO service: %v", err)
 	}
 
 	// Initialize and start job scheduler
-	jobScheduler := service.NewJobScheduler(minioService, config.DB)
+	jobScheduler := service.NewJobScheduler(minioService, config.ContextDB(service.WorkerCtx))
 	// Re-presign expired media files immediately on startup
 	jobScheduler.RePresignExpiredMedia()
 	jobScheduler.Start()
@@ -43,7 +40,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		log.Info(ctx, "Shutting down job scheduler...")
+		log.Info(service.WorkerCtx, "Shutting down job scheduler...")
 		jobScheduler.Stop()
 		os.Exit(0)
 	}()
@@ -54,12 +51,12 @@ func main() {
 
 	addr := viper.GetString("addr")
 
-	log.Infof(ctx, "Start to listening the incoming requests on http address: %s", addr)
-	log.Error(ctx, http.ListenAndServe(addr, g).Error())
+	log.Infof(service.WorkerCtx, "Start to listening the incoming requests on http address: %s", addr)
+	log.Error(service.WorkerCtx, http.ListenAndServe(addr, g).Error())
 }
 
 func runMigrations() error {
-	migrator := migration.NewMigrator(config.DB)
+	migrator := migration.NewMigrator(config.ContextDB(service.WorkerCtx))
 
 	// Add all migrations
 	migrations := migration.GetAllMigrations()

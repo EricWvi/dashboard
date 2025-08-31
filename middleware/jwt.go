@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"context"
 	"os"
 	"sync"
 
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/model"
+	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,9 +16,9 @@ var emailToID map[string]uint
 var lock sync.RWMutex
 
 func InitJWTMap() {
-	m, err := model.CreateEmailToIDMap(config.DB)
+	m, err := model.CreateEmailToIDMap(config.ContextDB(service.WorkerCtx))
 	if err != nil {
-		log.Error(context.Background(), err.Error())
+		log.Error(service.WorkerCtx, err.Error())
 		os.Exit(1)
 	}
 	emailToID = m
@@ -37,9 +37,9 @@ func writeMap(email string) uint {
 	if id, ok := emailToID[email]; ok {
 		return id
 	} else {
-		id, err := model.CreateUser(config.DB, email)
+		id, err := model.CreateUser(config.ContextDB(service.WorkerCtx), email)
 		if err != nil {
-			log.Error(context.Background(), err.Error())
+			log.Error(service.WorkerCtx, err.Error())
 		}
 		emailToID[email] = id
 		return id

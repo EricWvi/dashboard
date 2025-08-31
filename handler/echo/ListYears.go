@@ -15,7 +15,7 @@ func (b Base) ListYears(c *gin.Context, req *ListYearsRequest) *ListYearsRespons
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Echo_Type, req.Type)
 
-	years, err := model.ListYears(config.DB.WithContext(c), m)
+	years, err := model.ListYears(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

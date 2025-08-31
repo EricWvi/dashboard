@@ -21,7 +21,7 @@ func (b Base) UpdateRssToken(c *gin.Context, req *UpdateRssTokenRequest) *Update
 	m := model.WhereMap{}
 	m.Eq(model.Id, middleware.GetUserId(c))
 
-	if err := user.Update(config.DB.WithContext(c), m); err != nil {
+	if err := user.Update(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

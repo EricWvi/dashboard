@@ -12,7 +12,7 @@ func (b Base) ListCollections(c *gin.Context, req *ListCollectionsRequest) *List
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	collections, err := model.ListCollections(config.DB.WithContext(c), m)
+	collections, err := model.ListCollections(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

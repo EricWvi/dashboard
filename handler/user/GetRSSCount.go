@@ -14,7 +14,7 @@ func (b Base) GetRSSCount(c *gin.Context, req *GetRSSCountRequest) *GetRSSCountR
 	m.Eq(model.Id, middleware.GetUserId(c))
 	count := 0
 
-	tokenField, err := model.GetRssToken(config.DB.WithContext(c), m)
+	tokenField, err := model.GetRssToken(config.ContextDB(c), m)
 	if err != nil {
 		log.Error(c, err.Error())
 	}

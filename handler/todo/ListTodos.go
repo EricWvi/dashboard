@@ -14,7 +14,7 @@ func (b Base) ListTodos(c *gin.Context, req *ListTodosRequest) *ListTodosRespons
 	m.Eq(model.Todo_CollectionId, req.CollectionId) // Filter by collection ID
 	m.Eq(model.Todo_Completed, false)               // Only list incomplete todos
 
-	todos, err := model.ListTodos(config.DB.WithContext(c), m)
+	todos, err := model.ListTodos(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

@@ -8,28 +8,49 @@ import (
 	"time"
 
 	"github.com/EricWvi/dashboard/log"
+	"github.com/EricWvi/dashboard/service"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-var DB *gorm.DB
+var (
+	db *gorm.DB
+
+	loggerConfig = logger.Config{
+		LogLevel:                  logger.Info,
+		SlowThreshold:             time.Second,
+		ParameterizedQueries:      true,
+		IgnoreRecordNotFoundError: true,
+	}
+	slogger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+)
 
 func InitDB() {
 	passwd := os.Getenv("POSTGRES_PASSWORD")
-	DB = openDB(
+	db = openDB(
 		viper.GetString("db.host"),
 		viper.GetString("db.port"),
 		viper.GetString("db.username"),
 		passwd,
 		viper.GetString("db.name"),
 	)
+
+	if gin.Mode() == gin.DebugMode {
+		loggerConfig.ParameterizedQueries = false
+	}
+}
+
+func ContextDB(ctx context.Context) *gorm.DB {
+	gormLogger := logger.NewSlogLogger(slogger.With("requestId", ctx.Value("RequestId")), loggerConfig)
+	return db.Session(&gorm.Session{Logger: gormLogger})
 }
 
 func openDB(host, port, username, password, name string) *gorm.DB {
-	ctx := context.Background()
-
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
 		host,
 		username,
@@ -37,33 +58,27 @@ func openDB(host, port, username, password, name string) *gorm.DB {
 		name,
 		port,
 		time.Local)
-	log.Info(ctx, "db connection uses timezone "+time.Local.String())
-
-	newLogger := log.NewDBLogger(slog.LevelInfo, logger.Config{
-		SlowThreshold: time.Second, // Slow SQL threshold
-		LogLevel:      logger.Info, // Log level
-		Colorful:      false,       // Disable color
-	})
+	log.Info(service.WorkerCtx, "db connection uses timezone "+time.Local.String())
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: newLogger,
+		Logger: logger.NewSlogLogger(slogger.With("requestId", service.WorkerCtx), loggerConfig),
 	})
 	if err != nil {
-		log.Error(ctx, err.Error())
-		log.Errorf(ctx, "Database connection failed. Database name: %s", name)
+		log.Error(service.WorkerCtx, err.Error())
+		log.Errorf(service.WorkerCtx, "Database connection failed. Database name: %s", name)
 		os.Exit(1)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Error(ctx, err.Error())
-		log.Error(ctx, "SetMaxIdleConns get an error.")
+		log.Error(service.WorkerCtx, err.Error())
+		log.Error(service.WorkerCtx, "SetMaxIdleConns get an error.")
 	} else {
 		sqlDB.SetMaxOpenConns(20000)
 		sqlDB.SetMaxIdleConns(100)
 	}
 
-	log.Info(ctx, "db connected")
+	log.Info(service.WorkerCtx, "db connected")
 
 	return db
 }

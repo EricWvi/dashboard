@@ -13,7 +13,7 @@ func (b Base) ListCompleted(c *gin.Context, req *ListCompletedRequest) *ListComp
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Todo_CollectionId, req.CollectionId) // Filter by collection ID
 
-	todos, err := model.ListCompleted(config.DB.WithContext(c), m)
+	todos, err := model.ListCompleted(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

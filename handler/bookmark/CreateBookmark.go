@@ -13,7 +13,7 @@ func (b Base) CreateBookmark(c *gin.Context, req *CreateBookmarkRequest) *Create
 	bookmark.CreatorId = middleware.GetUserId(c)
 	bookmark.BookmarkField = req.BookmarkField
 
-	if err := bookmark.Create(config.DB.WithContext(c)); err != nil {
+	if err := bookmark.Create(config.ContextDB(c)); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

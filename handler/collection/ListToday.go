@@ -12,7 +12,7 @@ func (b Base) ListToday(c *gin.Context, req *ListTodayRequest) *ListTodayRespons
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	todos, err := model.ListToday(config.DB.WithContext(c), m)
+	todos, err := model.ListToday(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

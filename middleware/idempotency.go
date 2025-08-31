@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/EricWvi/dashboard/log"
+	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,9 +20,6 @@ type cacheEntry struct {
 var (
 	idemCache = make(map[string]*cacheEntry)
 	mu        sync.RWMutex
-	// TODO
-	middlewareLogId = "4d78d6b8-b34b-4cc1-a740-38d00cd90779"
-	middlewareCtx   = context.WithValue(context.Background(), "RequestId", middlewareLogId)
 )
 
 func init() {
@@ -87,7 +84,7 @@ func startCacheCleaner(interval time.Duration) {
 			}
 			mu.Unlock()
 			if count > 0 {
-				log.Infof(middlewareCtx, "idemCache clean %d keys", count)
+				log.Infof(service.WorkerCtx, "idemCache clean %d keys", count)
 			}
 		}
 	}()

@@ -12,7 +12,7 @@ func (b Base) ListBookmarks(c *gin.Context, req *ListBookmarksRequest) *ListBook
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	bookmarks, err := model.ListBookmarks(config.DB.WithContext(c), m)
+	bookmarks, err := model.ListBookmarks(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

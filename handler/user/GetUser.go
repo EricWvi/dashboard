@@ -13,7 +13,7 @@ func (b Base) GetUser(c *gin.Context, req *GetUserRequest) *GetUserResponse {
 	m := model.WhereMap{}
 	m.Eq(model.Id, middleware.GetUserId(c))
 
-	if err := user.Get(config.DB.WithContext(c), m); err != nil {
+	if err := user.Get(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

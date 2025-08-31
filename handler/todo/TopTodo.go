@@ -12,7 +12,7 @@ func (b Base) TopTodo(c *gin.Context, req *TopTodoRequest) *TopTodoResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Todo_CollectionId, req.CollectionId)
-	maxOrder, err := model.MaxOrder(config.DB.WithContext(c), m)
+	maxOrder, err := model.MaxOrder(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
@@ -23,7 +23,7 @@ func (b Base) TopTodo(c *gin.Context, req *TopTodoRequest) *TopTodoResponse {
 	u := model.WhereMap{}
 	u.Eq(model.CreatorId, middleware.GetUserId(c))
 	u.Eq(model.Id, req.Id)
-	if err = todo.Update(config.DB.WithContext(c), u); err != nil {
+	if err = todo.Update(config.ContextDB(c), u); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

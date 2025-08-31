@@ -16,7 +16,7 @@ func (b Base) UpdateBlog(c *gin.Context, req *UpdateBlogRequest) *UpdateBlogResp
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := blog.Update(config.DB.WithContext(c), m); err != nil {
+	if err := blog.Update(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

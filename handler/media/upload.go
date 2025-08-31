@@ -45,7 +45,7 @@ func Upload(c *gin.Context) {
 			Key:          fileKey,
 			PresignedURL: presignedUrl,
 		}
-		err = m.Create(config.DB.WithContext(c))
+		err = m.Create(config.ContextDB(service.MediaCtx))
 		if err != nil {
 			c.JSON(500, gin.H{"message": err.Error()})
 			return

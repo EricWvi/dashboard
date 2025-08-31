@@ -13,7 +13,7 @@ func (b Base) CreateBlog(c *gin.Context, req *CreateBlogRequest) *CreateBlogResp
 	blog.CreatorId = middleware.GetUserId(c)
 	blog.BlogField = req.BlogField
 
-	if err := blog.Create(config.DB.WithContext(c)); err != nil {
+	if err := blog.Create(config.ContextDB(c)); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

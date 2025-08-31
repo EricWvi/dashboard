@@ -1,11 +1,11 @@
 package migration
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/EricWvi/dashboard/log"
+	"github.com/EricWvi/dashboard/service"
 	"gorm.io/gorm"
 )
 
@@ -82,8 +82,7 @@ func (m *Migrator) Up() error {
 
 // Down rolls back the last migration
 func (m *Migrator) Down() error {
-	ctx := context.Background()
-	log.Info(ctx, "Rolling back last migration...")
+	log.Info(service.WorkerCtx, "Rolling back last migration...")
 
 	applied, err := m.GetAppliedMigrations()
 	if err != nil {
@@ -100,11 +99,11 @@ func (m *Migrator) Down() error {
 	}
 
 	if lastMigration == nil {
-		log.Info(ctx, "No migrations to roll back")
+		log.Info(service.WorkerCtx, "No migrations to roll back")
 		return nil
 	}
 
-	log.Infof(ctx, "Rolling back migration %s: %s", lastMigration.Version, lastMigration.Name)
+	log.Infof(service.WorkerCtx, "Rolling back migration %s: %s", lastMigration.Version, lastMigration.Name)
 
 	// Start transaction for rollback
 	tx := m.db.Begin()
@@ -129,21 +128,19 @@ func (m *Migrator) Down() error {
 		return fmt.Errorf("failed to commit rollback %s: %w", lastMigration.Version, err)
 	}
 
-	log.Infof(ctx, "Migration %s rolled back successfully", lastMigration.Version)
+	log.Infof(service.WorkerCtx, "Migration %s rolled back successfully", lastMigration.Version)
 	return nil
 }
 
 // Status shows the current migration status
 func (m *Migrator) Status() error {
-	ctx := context.Background()
-
 	status, err := m.GetMigrationStatus()
 	if err != nil {
 		return err
 	}
 
-	log.Info(ctx, "Migration Status:")
-	log.Info(ctx, "================")
+	log.Info(service.WorkerCtx, "Migration Status:")
+	log.Info(service.WorkerCtx, "================")
 
 	pendingCount := 0
 	appliedCount := 0
@@ -162,11 +159,11 @@ func (m *Migrator) Status() error {
 			pendingCount++
 		}
 
-		log.Infof(ctx, "%s | %s | %s%s", ms.Version, statusText, ms.Name, timeText)
+		log.Infof(service.WorkerCtx, "%s | %s | %s%s", ms.Version, statusText, ms.Name, timeText)
 	}
 
-	log.Info(ctx, "================")
-	log.Infof(ctx, "Total: %d | Applied: %d | Pending: %d", len(status), appliedCount, pendingCount)
+	log.Info(service.WorkerCtx, "================")
+	log.Infof(service.WorkerCtx, "Total: %d | Applied: %d | Pending: %d", len(status), appliedCount, pendingCount)
 
 	return nil
 }
@@ -180,8 +177,6 @@ type MigrationOptions struct {
 
 // UpWithOptions runs migrations with specified options
 func (m *Migrator) UpWithOptions(opts MigrationOptions) error {
-	ctx := context.Background()
-
 	if err := m.InitMigrationTable(); err != nil {
 		return fmt.Errorf("failed to initialize migration table: %w", err)
 	}
@@ -200,32 +195,32 @@ func (m *Migrator) UpWithOptions(opts MigrationOptions) error {
 	}
 
 	if len(pendingMigrations) == 0 {
-		log.Info(ctx, "No pending migrations to apply")
+		log.Info(service.WorkerCtx, "No pending migrations to apply")
 		return nil
 	}
 
-	log.Infof(ctx, "Found %d pending migrations", len(pendingMigrations))
+	log.Infof(service.WorkerCtx, "Found %d pending migrations", len(pendingMigrations))
 
-	log.Info(ctx, "Starting database migration...")
+	log.Info(service.WorkerCtx, "Starting database migration...")
 
 	// Apply limit if specified
 	migrationsToRun := pendingMigrations
 	if opts.MaxMigrations > 0 && len(pendingMigrations) > opts.MaxMigrations {
 		migrationsToRun = pendingMigrations[:opts.MaxMigrations]
-		log.Infof(ctx, "Limiting to %d migrations as requested", opts.MaxMigrations)
+		log.Infof(service.WorkerCtx, "Limiting to %d migrations as requested", opts.MaxMigrations)
 	}
 
 	if opts.DryRun {
-		log.Info(ctx, "DRY RUN - Would apply the following migrations:")
+		log.Info(service.WorkerCtx, "DRY RUN - Would apply the following migrations:")
 		for i, migration := range migrationsToRun {
-			log.Infof(ctx, "%d. %s: %s", i+1, migration.Version, migration.Name)
+			log.Infof(service.WorkerCtx, "%d. %s: %s", i+1, migration.Version, migration.Name)
 		}
 		return nil
 	}
 
 	// Apply migrations
 	for i, migration := range migrationsToRun {
-		log.Infof(ctx, "Applying migration %d/%d: %s (%s)", i+1, len(migrationsToRun), migration.Version, migration.Name)
+		log.Infof(service.WorkerCtx, "Applying migration %d/%d: %s (%s)", i+1, len(migrationsToRun), migration.Version, migration.Name)
 
 		// Start transaction for migration
 		tx := m.db.Begin()
@@ -256,13 +251,13 @@ func (m *Migrator) UpWithOptions(opts MigrationOptions) error {
 			return fmt.Errorf("failed to commit migration %s: %w", migration.Version, err)
 		}
 
-		log.Infof(ctx, "Migration %s applied successfully", migration.Version)
+		log.Infof(service.WorkerCtx, "Migration %s applied successfully", migration.Version)
 	}
 
 	if len(migrationsToRun) > 0 {
-		log.Infof(ctx, "Applied %d migrations successfully", len(migrationsToRun))
+		log.Infof(service.WorkerCtx, "Applied %d migrations successfully", len(migrationsToRun))
 	} else {
-		log.Info(ctx, "No pending migrations to apply")
+		log.Info(service.WorkerCtx, "No pending migrations to apply")
 	}
 
 	return nil

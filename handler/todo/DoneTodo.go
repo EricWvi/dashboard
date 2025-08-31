@@ -13,7 +13,7 @@ func (b Base) DoneTodo(c *gin.Context, req *DoneTodoRequest) *DoneTodoResponse {
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := model.DoneTodo(config.DB.WithContext(c), m); err != nil {
+	if err := model.DoneTodo(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

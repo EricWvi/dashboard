@@ -14,7 +14,7 @@ func (b Base) RestoreTodo(c *gin.Context, req *RestoreTodoRequest) *RestoreTodoR
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
-	maxOrder, err := model.MaxOrder(config.DB.WithContext(c), model.WhereMap{
+	maxOrder, err := model.MaxOrder(config.ContextDB(c), model.WhereMap{
 		model.CreatorId:         middleware.GetUserId(c),
 		model.Todo_CollectionId: req.CollectionId,
 	})
@@ -24,7 +24,7 @@ func (b Base) RestoreTodo(c *gin.Context, req *RestoreTodoRequest) *RestoreTodoR
 	}
 	todo.Order = maxOrder + 1
 
-	if err = todo.Restore(config.DB.WithContext(c), m); err != nil {
+	if err = todo.Restore(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

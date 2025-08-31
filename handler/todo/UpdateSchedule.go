@@ -13,7 +13,7 @@ func (b Base) UpdateSchedule(c *gin.Context, req *UpdateScheduleRequest) *Update
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 	m.Eq(model.Id, req.Id)
 
-	if err := model.UpdateSchedule(config.DB.WithContext(c), req.Schedule, m); err != nil {
+	if err := model.UpdateSchedule(config.ContextDB(c), req.Schedule, m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
