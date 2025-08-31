@@ -27,11 +27,12 @@ import (
 func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	middleware.InitJWTMap()
 
-	// Middlewares.
+	// Basic Middlewares.
 	g.Use(gin.Recovery())
 	g.Use(mw...)
 	g.Use(gzip.Gzip(gzip.DefaultCompression))
 
+	// serve front dist
 	dir := viper.GetString("route.front.dir")
 	err := filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -49,17 +50,24 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 		os.Exit(1)
 	}
 
+	// serve index.html at root path
 	g.StaticFile("/", viper.GetString("route.front.index"))
 
 	g.GET("/ping", handler.Ping)
-	g.Use(middleware.JWT)
+	// middleware.BodyWriter retrieves response body
+	g.Use(middleware.BodyWriter())
+	// middleware.JWT inject user ID
+	g.Use(middleware.JWT())
+	// middleware.Idempotency handles idempotency key
+	g.Use(middleware.Idempotency())
 
 	raw := g.Group(viper.GetString("route.back.base"))
 	raw.POST("/upload", media.Upload)
 	raw.GET("/m/:link", media.Serve)
 
 	back := g.Group(viper.GetString("route.back.base"))
-	back.Use(middleware.Logging)
+	// middleware.Logging logs request and response
+	back.Use(middleware.Logging())
 	back.GET("/user", user.DefaultHandler)
 	back.POST("/user", user.DefaultHandler)
 	back.GET("/media", media.DefaultHandler)

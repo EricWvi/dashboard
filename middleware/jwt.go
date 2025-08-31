@@ -54,12 +54,14 @@ func getId(email string) uint {
 	}
 }
 
-func JWT(c *gin.Context) {
-	email := c.Request.Header.Get("Remote-Email")
-	if len(email) == 0 {
-		c.Set("UserId", 0)
-	} else {
-		c.Set("UserId", getId(email))
+func JWT() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		email := c.Request.Header.Get("Remote-Email")
+		if len(email) == 0 {
+			c.Set("UserId", 0)
+		} else {
+			c.Set("UserId", getId(email))
+		}
 	}
 }
 
