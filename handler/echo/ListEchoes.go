@@ -31,9 +31,9 @@ func (b Base) ListEchoes(c *gin.Context, req *ListEchoesRequest) *ListEchoesResp
 }
 
 type ListEchoesRequest struct {
-	Year int    `json:"year"`
-	Sub  int    `json:"sub"`
-	Type string `json:"type"`
+	Year int    `form:"year"`
+	Sub  int    `form:"sub"`
+	Type string `form:"type"`
 }
 
 type ListEchoesResponse struct {

@@ -25,7 +25,7 @@ func Dispatch(c *gin.Context, base any) {
 	param := Type.In(1).Elem()
 	ptr := reflect.New(param).Interface()
 
-	// Let Gin handle binding (body, query, uri)
+	// Let Gin handle binding (body, query)
 	if err := c.ShouldBind(ptr); err != nil {
 		ReplyError(c, http.StatusBadRequest, "failed to bind request: "+err.Error())
 		return

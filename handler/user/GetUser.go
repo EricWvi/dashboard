@@ -29,7 +29,6 @@ func (b Base) GetUser(c *gin.Context, req *GetUserRequest) *GetUserResponse {
 }
 
 type GetUserRequest struct {
-	Id uint `json:"id"`
 }
 
 type GetUserResponse struct {

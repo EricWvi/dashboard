@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { getRequest, postRequest } from "@/lib/queryClient";
 import { CollectionsQuery } from "@/hooks/use-todos";
 import { dateString } from "@/lib/utils";
 
@@ -108,12 +108,8 @@ export function useWatches(status: WatchStatus) {
   return useQuery({
     queryKey: keyWatchesOfStatus(status),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=ListWatches",
-        {
-          status,
-        },
+      const response = await getRequest(
+        "/api/watch?Action=ListWatches&status=" + status,
       );
       const data = await response.json();
       return data.message.watches as Watch[];
@@ -126,13 +122,9 @@ export function useCreateWatched() {
 
   return useMutation({
     mutationFn: async (data: Omit<Watch, "id">) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=CreateWatch",
-        {
-          ...data,
-        },
-      );
+      const response = await postRequest("/api/watch?Action=CreateWatch", {
+        ...data,
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -148,13 +140,9 @@ export function useCreateToWatch() {
 
   return useMutation({
     mutationFn: async (data: Partial<Watch>) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=CreateWatch",
-        {
-          ...data,
-        },
-      );
+      const response = await postRequest("/api/watch?Action=CreateWatch", {
+        ...data,
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -170,13 +158,9 @@ export function useDeleteWatch() {
 
   return useMutation({
     mutationFn: async (data: { id: number; status: WatchStatus }) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=DeleteWatch",
-        {
-          id: data.id,
-        },
-      );
+      const response = await postRequest("/api/watch?Action=DeleteWatch", {
+        id: data.id,
+      });
       return response.json();
     },
     onSuccess: (_data, variables) => {
@@ -192,13 +176,9 @@ export function useUpdateWatch(status: WatchStatus) {
 
   return useMutation({
     mutationFn: async (data: { id: number } & Partial<Watch>) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=UpdateWatch",
-        {
-          ...data,
-        },
-      );
+      const response = await postRequest("/api/watch?Action=UpdateWatch", {
+        ...data,
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -220,16 +200,12 @@ export function useStartWatch() {
       type: WatchType;
       link: string;
     }) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=UpdateWatch",
-        {
-          id: data.id,
-          status: WatchStatus.WATCHING,
-          payload: data.payload,
-          createdAt: new Date(),
-        },
-      );
+      const response = await postRequest("/api/watch?Action=UpdateWatch", {
+        id: data.id,
+        status: WatchStatus.WATCHING,
+        payload: data.payload,
+        createdAt: new Date(),
+      });
       return response.json();
     },
     onSuccess: async (_data, variables) => {
@@ -244,7 +220,7 @@ export function useStartWatch() {
         collection.name.includes("娱乐"),
       );
       if (collection) {
-        apiRequest("POST", "/api/todo?Action=CreateTodo", {
+        postRequest("/api/todo?Action=CreateTodo", {
           title: variables.type + ": " + variables.title,
           link: variables.link,
           collectionId: collection.id,
@@ -259,16 +235,12 @@ export function useCompleteWatch() {
 
   return useMutation({
     mutationFn: async (data: { id: number; rate: number }) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=UpdateWatch",
-        {
-          id: data.id,
-          status: WatchStatus.COMPLETED,
-          rate: data.rate,
-          createdAt: new Date(),
-        },
-      );
+      const response = await postRequest("/api/watch?Action=UpdateWatch", {
+        id: data.id,
+        status: WatchStatus.COMPLETED,
+        rate: data.rate,
+        createdAt: new Date(),
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -287,23 +259,19 @@ export function useRecoverWatch() {
 
   return useMutation({
     mutationFn: async (data: Watch) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/watch?Action=UpdateWatch",
-        {
-          id: data.id,
-          status: WatchStatus.PLAN_TO_WATCH,
-          createdAt: new Date(),
-          payload: {
-            ...data.payload,
-            progress: 0,
-            checkpoints: [
-              ...(data.payload.checkpoints ?? []),
-              [dateString(new Date(), "-"), 0],
-            ],
-          },
+      const response = await postRequest("/api/watch?Action=UpdateWatch", {
+        id: data.id,
+        status: WatchStatus.PLAN_TO_WATCH,
+        createdAt: new Date(),
+        payload: {
+          ...data.payload,
+          progress: 0,
+          checkpoints: [
+            ...(data.payload.checkpoints ?? []),
+            [dateString(new Date(), "-"), 0],
+          ],
         },
-      );
+      });
       return response.json();
     },
     onSuccess: () => {

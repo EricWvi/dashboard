@@ -25,7 +25,7 @@ func (b Base) ListCompleted(c *gin.Context, req *ListCompletedRequest) *ListComp
 }
 
 type ListCompletedRequest struct {
-	CollectionId uint `json:"collectionId"`
+	CollectionId uint `form:"collectionId"`
 }
 
 type ListCompletedResponse struct {

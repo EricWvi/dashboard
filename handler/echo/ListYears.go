@@ -29,7 +29,7 @@ func (b Base) ListYears(c *gin.Context, req *ListYearsRequest) *ListYearsRespons
 }
 
 type ListYearsRequest struct {
-	Type string `json:"type"`
+	Type string `form:"type"`
 }
 
 type ListYearsResponse struct {

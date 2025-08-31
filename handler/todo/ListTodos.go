@@ -26,7 +26,7 @@ func (b Base) ListTodos(c *gin.Context, req *ListTodosRequest) *ListTodosRespons
 }
 
 type ListTodosRequest struct {
-	CollectionId uint `json:"collectionId"`
+	CollectionId uint `form:"collectionId"`
 }
 
 type ListTodosResponse struct {

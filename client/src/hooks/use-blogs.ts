@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { getRequest, postRequest } from "@/lib/queryClient";
 import { createTiptap } from "./use-draft";
 import { keyTags, TagsQueryOptions } from "./use-bookmarks";
 
@@ -35,11 +35,7 @@ export function useBlogs() {
   return useQuery({
     queryKey: keyBlogs(),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/blog?Action=ListBlogs",
-        {},
-      );
+      const response = await getRequest("/api/blog?Action=ListBlogs");
       const data = await response.json();
       return data.message.blogs as Blog[];
     },
@@ -72,7 +68,7 @@ export function useCreateBlog() {
   return useMutation({
     mutationFn: async (data: { title: string; payload: Payload }) => {
       const draftId = await createTiptap(blogInitialContent(data.title));
-      const response = await apiRequest("POST", "/api/blog?Action=CreateBlog", {
+      const response = await postRequest("/api/blog?Action=CreateBlog", {
         ...data,
         visibility: BlogEnum.PRIVATE,
         draft: draftId,
@@ -94,7 +90,7 @@ export function useCreateBlog() {
       // create new tags
       const newTags = [...filteredWhats, ...filteredHows];
       if (newTags.length > 0) {
-        await apiRequest("POST", "/api/bookmark?Action=CreateTags", {
+        await postRequest("/api/bookmark?Action=CreateTags", {
           tags: newTags,
         });
         queryClient.invalidateQueries({
@@ -114,7 +110,7 @@ export function useUpdateBlog() {
 
   return useMutation({
     mutationFn: async (data: { id: number } & Partial<Blog>) => {
-      const response = await apiRequest("POST", "/api/blog?Action=UpdateBlog", {
+      const response = await postRequest("/api/blog?Action=UpdateBlog", {
         ...data,
       });
       return response.json();
@@ -135,7 +131,7 @@ export function useUpdateBlog() {
         // create new tags
         const newTags = [...filteredWhats, ...filteredHows];
         if (newTags.length > 0) {
-          await apiRequest("POST", "/api/bookmark?Action=CreateTags", {
+          await postRequest("/api/bookmark?Action=CreateTags", {
             tags: newTags,
           });
           queryClient.invalidateQueries({

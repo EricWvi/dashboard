@@ -25,13 +25,8 @@ func (b Base) ListAll(c *gin.Context, req *ListAllRequest) *ListAllResponse {
 	}
 }
 
-type ListAllTodoView struct {
-	Id    uint   `json:"id"`
-	Title string `json:"title"`
-}
-
 type ListAllRequest struct {
-	CollectionId uint `json:"collectionId"`
+	CollectionId uint `form:"collectionId"`
 }
 
 type ListAllResponse struct {

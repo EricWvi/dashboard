@@ -25,7 +25,7 @@ func (b Base) GetWatch(c *gin.Context, req *GetWatchRequest) *GetWatchResponse {
 }
 
 type GetWatchRequest struct {
-	Id uint `json:"id"`
+	Id uint `form:"id"`
 }
 
 type GetWatchResponse struct {

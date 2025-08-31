@@ -28,7 +28,7 @@ func Logging(c *gin.Context) {
 
 	// set RequestId and Action
 	// Get existing ID or generate new
-	requestId := c.GetHeader("X-Request-ID")
+	requestId := c.GetHeader("Idempotency-Key")
 	if requestId == "" {
 		requestId = uuid.NewString()
 	}

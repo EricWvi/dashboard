@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { getRequest, postRequest } from "@/lib/queryClient";
 
 export type Bookmark = {
   id: number;
@@ -58,11 +58,7 @@ export function useBookmarks() {
   return useQuery({
     queryKey: keyBookmarks(),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/bookmark?Action=ListBookmarks",
-        {},
-      );
+      const response = await getRequest("/api/bookmark?Action=ListBookmarks");
       const data = await response.json();
       return data.message.bookmarks as Bookmark[];
     },
@@ -70,7 +66,7 @@ export function useBookmarks() {
 }
 
 export function clickBookmark(id: number) {
-  apiRequest("POST", "/api/bookmark?Action=ClickBookmark", { id });
+  postRequest("/api/bookmark?Action=ClickBookmark", { id });
 }
 
 export type Tag = {
@@ -81,11 +77,7 @@ export type Tag = {
 export const TagsQueryOptions = {
   queryKey: keyTags(),
   queryFn: async () => {
-    const response = await apiRequest(
-      "POST",
-      "/api/bookmark?Action=ListTags",
-      {},
-    );
+    const response = await getRequest("/api/bookmark?Action=ListTags");
     const data = await response.json();
     const whatTags: Tag[] = [];
     const howTags: Tag[] = [];
@@ -112,12 +104,9 @@ export function useCreateBookmark() {
 
   return useMutation({
     mutationFn: async (data: Omit<Bookmark, "id" | "click">) => {
-      const response = await apiRequest(
-        "POST",
+      const response = await postRequest(
         "/api/bookmark?Action=CreateBookmark",
-        {
-          ...data,
-        },
+        { ...data },
       );
       return response.json();
     },
@@ -136,9 +125,7 @@ export function useCreateBookmark() {
       // create new tags
       const newTags = [...filteredWhats, ...filteredHows];
       if (newTags.length > 0) {
-        await apiRequest("POST", "/api/bookmark?Action=CreateTags", {
-          tags: newTags,
-        });
+        await postRequest("/api/bookmark?Action=CreateTags", { tags: newTags });
         queryClient.invalidateQueries({
           queryKey: keyTags(),
         });
@@ -156,12 +143,9 @@ export function useDeleteBookmark() {
 
   return useMutation({
     mutationFn: async (data: { id: number }) => {
-      const response = await apiRequest(
-        "POST",
+      const response = await postRequest(
         "/api/bookmark?Action=DeleteBookmark",
-        {
-          ...data,
-        },
+        { ...data },
       );
       return response.json();
     },
@@ -178,12 +162,9 @@ export function useUpdateBookmark() {
 
   return useMutation({
     mutationFn: async (data: { id: number } & Partial<Bookmark>) => {
-      const response = await apiRequest(
-        "POST",
+      const response = await postRequest(
         "/api/bookmark?Action=UpdateBookmark",
-        {
-          ...data,
-        },
+        { ...data },
       );
       return response.json();
     },
@@ -203,7 +184,7 @@ export function useUpdateBookmark() {
         // create new tags
         const newTags = [...filteredWhats, ...filteredHows];
         if (newTags.length > 0) {
-          await apiRequest("POST", "/api/bookmark?Action=CreateTags", {
+          await postRequest("/api/bookmark?Action=CreateTags", {
             tags: newTags,
           });
           queryClient.invalidateQueries({

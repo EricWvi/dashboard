@@ -25,7 +25,7 @@ func (b Base) GetTiptap(c *gin.Context, req *GetTiptapRequest) *GetTiptapRespons
 }
 
 type GetTiptapRequest struct {
-	Id uint `json:"id"`
+	Id uint `form:"id"`
 }
 
 type GetTiptapResponse struct {

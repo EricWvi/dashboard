@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 
 export type UserLang = "zh-CN" | "en-US";
 export const UserLangEnum: {
@@ -27,7 +27,7 @@ export function useUser() {
   return useQuery<User>({
     queryKey: keyUser(),
     queryFn: async () => {
-      const response = await apiRequest("POST", "/api/user?Action=GetUser", {});
+      const response = await getRequest("/api/user?Action=GetUser");
       const data = await response.json();
       return data.message as User;
     },
@@ -38,11 +38,7 @@ export function useRSSCount() {
   return useQuery<number>({
     queryKey: keyRSSCount(),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/user?Action=GetRSSCount",
-        {},
-      );
+      const response = await getRequest("/api/user?Action=GetRSSCount");
       const data = await response.json();
       return data.message.count as number;
     },
@@ -57,11 +53,7 @@ export function useMailCount() {
   return useQuery<number>({
     queryKey: keyMailCount(),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/user?Action=GetQQMailCount",
-        {},
-      );
+      const response = await getRequest("/api/user?Action=GetQQMailCount");
       const data = await response.json();
       return data.message.count as number;
     },
@@ -76,11 +68,7 @@ export function useSignUp() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { avatar: string; username: string }) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/user?Action=SignUp",
-        data,
-      );
+      const response = await postRequest("/api/user?Action=SignUp", data);
       return response.json();
     },
     onSuccess: () => {
@@ -93,11 +81,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { avatar: string; username: string }) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/user?Action=SignUp",
-        data,
-      );
+      const response = await postRequest("/api/user?Action=SignUp", data);
       return response.json();
     },
     onSuccess: () => {
@@ -110,8 +94,7 @@ export function useUpdateEmailToken() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { emailToken: string; emailFeed: string }) => {
-      const response = await apiRequest(
-        "POST",
+      const response = await postRequest(
         "/api/user?Action=UpdateEmailToken",
         data,
       );
@@ -127,8 +110,7 @@ export function useUpdateRssToken() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { rssToken: string }) => {
-      const response = await apiRequest(
-        "POST",
+      const response = await postRequest(
         "/api/user?Action=UpdateRssToken",
         data,
       );

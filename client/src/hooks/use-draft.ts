@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 
 export type Draft = {
   id: number;
@@ -15,12 +15,8 @@ export function useDraft(id: number) {
       if (id === 0) {
         return null;
       }
-      const response = await apiRequest(
-        "POST",
-        "/api/tiptap?Action=GetTiptap",
-        {
-          id,
-        },
+      const response = await getRequest(
+        "/api/tiptap?Action=GetTiptap&id=" + id,
       );
       const data = await response.json();
       return data.message as Draft;
@@ -38,7 +34,7 @@ const defaultContent = [
 ];
 
 export async function createTiptap(content: any = defaultContent) {
-  const response = await apiRequest("POST", "/api/tiptap?Action=CreateTiptap", {
+  const response = await postRequest("/api/tiptap?Action=CreateTiptap", {
     content: {
       type: "doc",
       content,
@@ -49,7 +45,7 @@ export async function createTiptap(content: any = defaultContent) {
 }
 
 export async function syncDraft(data: Draft) {
-  return apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", {
+  return postRequest("/api/tiptap?Action=UpdateTiptap", {
     ...data,
     ts: Date.now(),
   });
@@ -80,11 +76,7 @@ export function useQuickNotes() {
   return useQuery({
     queryKey: keyQuickNotes(),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/tiptap?Action=ListQuickNotes",
-        {},
-      );
+      const response = await getRequest("/api/tiptap?Action=ListQuickNotes");
       const data = await response.json();
       return data.message.quickNotes as QuickNote[];
     },
@@ -96,13 +88,9 @@ export function useUpdateQuickNote() {
 
   return useMutation({
     mutationFn: async (data: { id: number } & Partial<QuickNote>) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/tiptap?Action=UpdateQuickNote",
-        {
-          ...data,
-        },
-      );
+      const response = await postRequest("/api/tiptap?Action=UpdateQuickNote", {
+        ...data,
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -118,8 +106,7 @@ export function useBottomQuickNote() {
 
   return useMutation({
     mutationFn: async (data: { id: number }) => {
-      const response = await apiRequest(
-        "POST",
+      const response = await postRequest(
         "/api/tiptap?Action=BottomQuickNote",
         data,
       );
@@ -138,13 +125,9 @@ export function useCreateQuickNote() {
 
   return useMutation({
     mutationFn: async (data: Omit<QuickNote, "id">) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/tiptap?Action=CreateQuickNote",
-        {
-          ...data,
-        },
-      );
+      const response = await postRequest("/api/tiptap?Action=CreateQuickNote", {
+        ...data,
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -160,13 +143,9 @@ export function useDeleteQuickNote() {
 
   return useMutation({
     mutationFn: async (data: { id: number }) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/tiptap?Action=DeleteQuickNote",
-        {
-          ...data,
-        },
-      );
+      const response = await postRequest("/api/tiptap?Action=DeleteQuickNote", {
+        ...data,
+      });
       return response.json();
     },
     onSuccess: () => {

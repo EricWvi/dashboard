@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { getRequest, postRequest } from "@/lib/queryClient";
 
 export type Echo = {
   id: number;
@@ -36,10 +36,9 @@ export function useEchoes(
   return useQuery({
     queryKey: keyEchoes(year, type),
     queryFn: async () => {
-      const response = await apiRequest("POST", "/api/echo?Action=ListEchoes", {
-        type,
-        year,
-      });
+      const response = await getRequest(
+        `/api/echo?Action=ListEchoes&type=${type}&year=${year}`,
+      );
       const data = await response.json();
       return (
         reverse ? data.message.echoes.toReversed() : data.message.echoes
@@ -52,10 +51,9 @@ export function useEchoesOfQuestion(sub: number, type: EchoType) {
   return useQuery({
     queryKey: keyEchoesOfQuestion(sub, type),
     queryFn: async () => {
-      const response = await apiRequest("POST", "/api/echo?Action=ListEchoes", {
-        type,
-        sub,
-      });
+      const response = await getRequest(
+        `/api/echo?Action=ListEchoes&type=${type}&sub=${sub}`,
+      );
       const data = await response.json();
       return data.message.echoes.toReversed() as Echo[];
     },
@@ -66,9 +64,9 @@ export function useYears(type: EchoType) {
   return useQuery({
     queryKey: keyYearsOfType(type),
     queryFn: async () => {
-      const response = await apiRequest("POST", "/api/echo?Action=ListYears", {
-        type,
-      });
+      const response = await getRequest(
+        `/api/echo?Action=ListYears&type=${type}`,
+      );
       const data = await response.json();
       return data.message.years as number[];
     },
@@ -80,7 +78,7 @@ export function useCreateEcho(year: number, type: EchoType) {
 
   return useMutation({
     mutationFn: async (data: Omit<Echo, "id" | "type" | "year">) => {
-      const response = await apiRequest("POST", "/api/echo?Action=CreateEcho", {
+      const response = await postRequest("/api/echo?Action=CreateEcho", {
         ...data,
         type,
         year,
@@ -100,7 +98,7 @@ export function useCreateQuestionEcho(sub: number, type: EchoType) {
 
   return useMutation({
     mutationFn: async (data: Omit<Echo, "id" | "type" | "sub">) => {
-      const response = await apiRequest("POST", "/api/echo?Action=CreateEcho", {
+      const response = await postRequest("/api/echo?Action=CreateEcho", {
         ...data,
         type,
         sub,

@@ -60,15 +60,32 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 
 	back := g.Group(viper.GetString("route.back.base"))
 	back.Use(middleware.Logging)
+	back.GET("/user", user.DefaultHandler)
 	back.POST("/user", user.DefaultHandler)
+	back.GET("/media", media.DefaultHandler)
 	back.POST("/media", media.DefaultHandler)
+	back.GET("/todo", todo.DefaultHandler)
 	back.POST("/todo", todo.DefaultHandler)
+	back.GET("/watch", watch.DefaultHandler)
 	back.POST("/watch", watch.DefaultHandler)
+	back.GET("/echo", echo.DefaultHandler)
 	back.POST("/echo", echo.DefaultHandler)
+	back.GET("/collection", collection.DefaultHandler)
 	back.POST("/collection", collection.DefaultHandler)
+	back.GET("/tiptap", tiptap.DefaultHandler)
 	back.POST("/tiptap", tiptap.DefaultHandler)
+	back.GET("/bookmark", bookmark.DefaultHandler)
 	back.POST("/bookmark", bookmark.DefaultHandler)
+	back.GET("/blog", blog.DefaultHandler)
 	back.POST("/blog", blog.DefaultHandler)
+
+	// Handle 404 for all unmatched routes
+	g.NoRoute(func(c *gin.Context) {
+		c.JSON(404, gin.H{
+			"code":    404,
+			"message": "404 page not found - Gin Server",
+		})
+	})
 
 	return g
 }

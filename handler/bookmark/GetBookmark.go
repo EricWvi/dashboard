@@ -25,7 +25,7 @@ func (b Base) GetBookmark(c *gin.Context, req *GetBookmarkRequest) *GetBookmarkR
 }
 
 type GetBookmarkRequest struct {
-	Id uint `json:"id"`
+	Id uint `form:"id"`
 }
 
 type GetBookmarkResponse struct {

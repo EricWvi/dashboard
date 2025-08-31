@@ -25,7 +25,7 @@ func (b Base) GetTodo(c *gin.Context, req *GetTodoRequest) *GetTodoResponse {
 }
 
 type GetTodoRequest struct {
-	Id uint `json:"id"`
+	Id uint `form:"id"`
 }
 
 type GetTodoResponse struct {

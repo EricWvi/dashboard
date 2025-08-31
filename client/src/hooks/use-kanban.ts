@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 
 export interface Task {
   id: string;
@@ -28,12 +28,8 @@ export function useKanban(id: number) {
       if (id === 0) {
         return null;
       }
-      const response = await apiRequest(
-        "POST",
-        "/api/tiptap?Action=GetTiptap",
-        {
-          id,
-        },
+      const response = await getRequest(
+        "/api/tiptap?Action=GetTiptap&id=" + id,
       );
       const data = await response.json();
       return data.message as Kanban;
@@ -42,7 +38,7 @@ export function useKanban(id: number) {
 }
 
 export async function createKanban() {
-  const response = await apiRequest("POST", "/api/tiptap?Action=CreateTiptap", {
+  const response = await postRequest("/api/tiptap?Action=CreateTiptap", {
     content: {
       columns: ["Backlog", "In Progress", "Done"],
       columnValue: {
@@ -57,7 +53,7 @@ export async function createKanban() {
 }
 
 export async function syncKanban(data: Kanban) {
-  return apiRequest("POST", "/api/tiptap?Action=UpdateTiptap", {
+  return postRequest("/api/tiptap?Action=UpdateTiptap", {
     ...data,
     ts: Date.now(),
   });

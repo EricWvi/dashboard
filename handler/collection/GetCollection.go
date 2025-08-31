@@ -25,7 +25,7 @@ func (b Base) GetCollection(c *gin.Context, req *GetCollectionRequest) *GetColle
 }
 
 type GetCollectionRequest struct {
-	Id uint `json:"id"`
+	Id uint `form:"id"`
 }
 
 type GetCollectionResponse struct {

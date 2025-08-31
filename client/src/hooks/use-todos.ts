@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 
 export type Todo = {
   id: number;
@@ -36,9 +36,9 @@ export function useTodos(collectionId: number) {
   return useQuery({
     queryKey: keyTodosOfCollection(collectionId),
     queryFn: async () => {
-      const response = await apiRequest("POST", "/api/todo?Action=ListTodos", {
-        collectionId,
-      });
+      const response = await getRequest(
+        `/api/todo?Action=ListTodos&collectionId=${collectionId}`,
+      );
       const data = await response.json();
       const ids = (data.message.todos as Todo[]).map((todo) => {
         queryClient.setQueryData(keyTodo(todo.id), todo);
@@ -55,11 +55,7 @@ export function useToday() {
   return useQuery({
     queryKey: keyTodayTodo(),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/collection?Action=ListToday",
-        {},
-      );
+      const response = await getRequest("/api/collection?Action=ListToday");
       const data = await response.json();
       (data.message.todos as Todo[]).forEach((todo) =>
         queryClient.setQueryData(keyTodo(todo.id), todo),
@@ -79,12 +75,8 @@ export function useCompleted(collectionId: number) {
   return useQuery({
     queryKey: keyCompletedOfCollection(collectionId),
     queryFn: async () => {
-      const response = await apiRequest(
-        "POST",
-        "/api/todo?Action=ListCompleted",
-        {
-          collectionId,
-        },
+      const response = await getRequest(
+        "/api/todo?Action=ListCompleted&collectionId=" + collectionId,
       );
       const data = await response.json();
       const ids = (data.message.todos as Todo[]).map((todo) => {
@@ -101,9 +93,7 @@ export function useTodo(id: number) {
     queryKey: keyTodo(id),
     enabled: !!id,
     queryFn: async () => {
-      const response = await apiRequest("POST", "/api/todo?Action=GetTodo", {
-        id,
-      });
+      const response = await getRequest("/api/todo?Action=GetTodo&id=" + id);
       const data = await response.json();
       return data.message as Todo;
     },
@@ -115,7 +105,7 @@ export function useCreateTodo() {
 
   return useMutation({
     mutationFn: async (data: { title: string; collectionId: number }) => {
-      const response = await apiRequest("POST", "/api/todo?Action=CreateTodo", {
+      const response = await postRequest("/api/todo?Action=CreateTodo", {
         ...data,
       });
       return response.json();
@@ -133,7 +123,7 @@ export function useUpdateTodo() {
 
   return useMutation({
     mutationFn: async (data: { id: number } & Partial<Todo>) => {
-      await apiRequest("POST", "/api/todo?Action=UpdateTodo", { ...data });
+      await postRequest("/api/todo?Action=UpdateTodo", { ...data });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -148,7 +138,7 @@ export function useTopTodo() {
 
   return useMutation({
     mutationFn: async (data: { id: number; collectionId: number }) => {
-      await apiRequest("POST", "/api/todo?Action=TopTodo", { ...data });
+      await postRequest("/api/todo?Action=TopTodo", { ...data });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -163,7 +153,7 @@ export function useUpdateSchedule() {
 
   return useMutation({
     mutationFn: async (data: { id: number; schedule: Date }) => {
-      await apiRequest("POST", "/api/todo?Action=UpdateSchedule", { ...data });
+      await postRequest("/api/todo?Action=UpdateSchedule", { ...data });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -181,7 +171,7 @@ export function useUnsetLink() {
 
   return useMutation({
     mutationFn: async (data: { id: number }) => {
-      await apiRequest("POST", "/api/todo?Action=UnsetLink", { ...data });
+      await postRequest("/api/todo?Action=UnsetLink", { ...data });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -196,7 +186,7 @@ export function useCompleteTodo() {
 
   return useMutation({
     mutationFn: async (data: { id: number; collectionId: number }) => {
-      await apiRequest("POST", "/api/todo?Action=CompleteTodo", {
+      await postRequest("/api/todo?Action=CompleteTodo", {
         id: data.id,
       });
     },
@@ -216,7 +206,7 @@ export function useDoneTodo() {
 
   return useMutation({
     mutationFn: async (data: { id: number }) => {
-      await apiRequest("POST", "/api/todo?Action=DoneTodo", {
+      await postRequest("/api/todo?Action=DoneTodo", {
         id: data.id,
       });
     },
@@ -233,7 +223,7 @@ export function useUndoneTodo() {
 
   return useMutation({
     mutationFn: async (data: { id: number }) => {
-      await apiRequest("POST", "/api/todo?Action=UndoneTodo", {
+      await postRequest("/api/todo?Action=UndoneTodo", {
         id: data.id,
       });
     },
@@ -250,7 +240,7 @@ export function useRestoreTodo() {
 
   return useMutation({
     mutationFn: async (data: { id: number; collectionId: number }) => {
-      await apiRequest("POST", "/api/todo?Action=RestoreTodo", { ...data });
+      await postRequest("/api/todo?Action=RestoreTodo", { ...data });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -275,7 +265,7 @@ export function useMoveTodo() {
       src: number;
       dst: number;
     }) => {
-      await apiRequest("POST", "/api/todo?Action=MoveTodo", {
+      await postRequest("/api/todo?Action=MoveTodo", {
         id,
         dst,
       });
@@ -299,7 +289,7 @@ export function useDeleteTodo(collectionId: number, completed = false) {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("POST", "/api/todo?Action=DeleteTodo", { id });
+      await postRequest("/api/todo?Action=DeleteTodo", { id });
     },
     onSuccess: () => {
       if (completed) {
@@ -316,11 +306,7 @@ export function useDeleteTodo(collectionId: number, completed = false) {
 }
 
 export async function listAllTodos() {
-  const response = await apiRequest(
-    "POST",
-    "/api/collection?Action=ListAll",
-    {},
-  );
+  const response = await getRequest("/api/collection?Action=ListAll");
   const data = await response.json();
   return data.message.todos as Todo[];
 }
@@ -330,7 +316,7 @@ export function usePlanToday() {
 
   return useMutation({
     mutationFn: async (data: { ids: number[] }) => {
-      await apiRequest("POST", "/api/collection?Action=PlanToday", { ...data });
+      await postRequest("/api/collection?Action=PlanToday", { ...data });
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: keyTodayTodo() });
@@ -354,11 +340,7 @@ const inbox = {
 export const CollectionsQuery = {
   queryKey: keyAllCollection(),
   queryFn: async () => {
-    const response = await apiRequest(
-      "POST",
-      "/api/collection?Action=ListCollections",
-      {},
-    );
+    const response = await getRequest("/api/collection?Action=ListCollections");
     const data = await response.json();
     (data.message.collections as Collection[]).map((collection) => {
       queryClient.setQueryData(keyCollection(collection.id), collection);
@@ -378,12 +360,8 @@ export function useCollection(id: number) {
       if (id === 0) {
         return inbox;
       }
-      const response = await apiRequest(
-        "POST",
-        "/api/collection?Action=GetCollection",
-        {
-          id,
-        },
+      const response = await getRequest(
+        "/api/collection?Action=GetCollection&id=" + id,
       );
       const data = await response.json();
       return data.message as Collection;
@@ -396,7 +374,7 @@ export function useCreateCollection() {
 
   return useMutation({
     mutationFn: async (data: Omit<Collection, "id">) => {
-      await apiRequest("POST", "/api/collection?Action=CreateCollection", data);
+      await postRequest("/api/collection?Action=CreateCollection", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -411,7 +389,7 @@ export function useUpdateCollection() {
 
   return useMutation({
     mutationFn: async (data: { id: number } & Partial<Collection>) => {
-      await apiRequest("POST", "/api/collection?Action=UpdateCollection", {
+      await postRequest("/api/collection?Action=UpdateCollection", {
         ...data,
       });
     },
@@ -426,7 +404,7 @@ export function useDeleteCollection() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("POST", "/api/collection?Action=DeleteCollection", {
+      await postRequest("/api/collection?Action=DeleteCollection", {
         id,
       });
     },
