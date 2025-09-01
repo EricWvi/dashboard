@@ -155,7 +155,6 @@
   body {
     @apply bg-background text-foreground;
     font-family:
-      "OPPO Sans 4.0",
       "OPPO Sans",
       system-ui,
       -apple-system,

@@ -153,6 +153,18 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
     return () => clearInterval(interval);
   }, []);
 
+  // warning before reload or leave page
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      // Cancel the event as permitted by the standard
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+    };
+  }, []);
+
   const handleSave = () => {
     if (isChanged.current) {
       syncKanban({
