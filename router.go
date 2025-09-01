@@ -68,6 +68,9 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back := g.Group(viper.GetString("route.back.base"))
 	// middleware.Logging logs request and response
 	back.Use(middleware.Logging())
+	// middleware.Session maintains session status
+	back.Use(middleware.Session())
+
 	back.GET("/user", user.DefaultHandler)
 	back.POST("/user", user.DefaultHandler)
 	back.GET("/media", media.DefaultHandler)

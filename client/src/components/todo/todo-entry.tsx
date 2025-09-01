@@ -105,7 +105,9 @@ const TodoTitle = ({
           href={todo.link}
           target="_blank"
         >
-          <div className="dashed-text truncate">{todoText}</div>
+          <div className="flex">
+            <div className="dashed-text truncate">{todoText}</div>
+          </div>
         </a>
       )}
 
@@ -208,6 +210,24 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           Start
         </ContextMenuItem>
       )}
+      {todo.done ? (
+        <ContextMenuItem onClick={undoneTodo}>
+          <Undo2 />
+          Undone
+        </ContextMenuItem>
+      ) : (
+        <ContextMenuItem onClick={doneTodo}>
+          <CircleCheckBig />
+          Done
+        </ContextMenuItem>
+      )}
+      {!todo.done && (
+        <ContextMenuItem onClick={unsetScheduleDate}>
+          <X />
+          Unset Date
+        </ContextMenuItem>
+      )}
+      <ContextMenuSeparator />
       <ContextMenuItem
         onClick={() => {
           setEditTodoName(todo.title);
@@ -258,24 +278,6 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         <SquareKanban />
         Kanban
       </ContextMenuItem>
-      <ContextMenuSeparator />
-      {todo.done ? (
-        <ContextMenuItem onClick={undoneTodo}>
-          <Undo2 />
-          Undone
-        </ContextMenuItem>
-      ) : (
-        <ContextMenuItem onClick={doneTodo}>
-          <CircleCheckBig />
-          Done
-        </ContextMenuItem>
-      )}
-      {!todo.done && (
-        <ContextMenuItem onClick={unsetScheduleDate}>
-          <X />
-          Unset Date
-        </ContextMenuItem>
-      )}
     </ContextMenuContent>
   );
 

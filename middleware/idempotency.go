@@ -48,24 +48,20 @@ func firstWriteCache(key string, value *cacheEntry) bool {
 
 func checkCache(c *gin.Context, key string) {
 	start := time.Now()
-	for {
-		if entry, ok := readCache(key); ok {
+	if entry, ok := readCache(key); ok {
+		for time.Since(start) < 5*time.Second {
 			if entry.status != -1 {
 				log.Info(c, "idem cache hit")
 				c.Data(entry.status, "application/json", entry.data)
 				c.Abort()
 				return
 			}
-			if time.Since(start) > 500*time.Millisecond {
-				log.Error(c, "idem cache hit failed")
-				c.Data(http.StatusInternalServerError, "text/plain", []byte("read idem cache failed"))
-				c.Abort()
-				return
-			}
-			time.Sleep(50 * time.Millisecond)
-		} else {
-			break
+			time.Sleep(500 * time.Millisecond)
 		}
+		log.Error(c, "read idem cache timeout")
+		c.Data(http.StatusInternalServerError, "text/plain", []byte("read idem cache timeout"))
+		c.Abort()
+		return
 	}
 }
 
@@ -117,6 +113,13 @@ func Idempotency() gin.HandlerFunc {
 
 		c.Next()
 		if c.IsAborted() {
+			mu.Lock()
+			idemCache[key] = &cacheEntry{
+				data:      []byte("\"previous request failed\""),
+				status:    http.StatusInternalServerError,
+				createdAt: time.Now(),
+			}
+			mu.Unlock()
 			return
 		}
 
