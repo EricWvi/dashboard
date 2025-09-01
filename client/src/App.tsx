@@ -24,28 +24,13 @@ const MainPage = () => {
   });
   useEffect(() => {
     if (needRefresh) {
-      toast(
-        <div className="flex flex-col gap-2">
-          <p>{i18nText[user.language].newVersion}</p>
-          <div className="flex gap-2">
-            <button
-              className="rounded bg-blue-600 px-3 py-1 text-white"
-              onClick={() => updateServiceWorker(true)}
-            >
-              {i18nText[user.language].update}
-            </button>
-            <button
-              className="rounded bg-gray-300 px-3 py-1"
-              onClick={() => toast.dismiss()} // just close the toast
-            >
-              {i18nText[user.language].later}
-            </button>
-          </div>
-        </div>,
-        {
-          duration: Infinity, // stays open until user acts
+      toast(i18nText[user.language].newVersion, {
+        action: {
+          label: i18nText[user.language].update,
+          onClick: () => updateServiceWorker(true),
         },
-      );
+        duration: Infinity, // stays open until user acts
+      });
     }
   }, [needRefresh]);
 
@@ -74,11 +59,9 @@ const i18nText = {
   [UserLangEnum.ZHCN]: {
     newVersion: "🚀 新版本已就绪！",
     update: "更新",
-    later: "稍后",
   },
   [UserLangEnum.ENUS]: {
     newVersion: "🚀 A new version is available!",
     update: "Update",
-    later: "Later",
   },
 };
