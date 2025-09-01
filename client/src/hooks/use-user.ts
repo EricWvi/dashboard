@@ -29,6 +29,9 @@ export function useUser() {
     queryFn: async () => {
       const response = await getRequest("/api/user?Action=GetUser");
       const data = await response.json();
+      if (data.code !== 200) {
+        window.open("https://auth.onlyquant.top/", "_blank");
+      }
       return data.message as User;
     },
   });

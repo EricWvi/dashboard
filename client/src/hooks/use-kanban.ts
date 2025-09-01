@@ -17,6 +17,7 @@ export type KanbanContent = {
 export type Kanban = {
   id: number;
   content: KanbanContent;
+  ts: number;
 };
 
 const keyKanban = (id: number) => ["/api/kanban", id];
@@ -52,15 +53,21 @@ export async function createKanban() {
   return rst.message.id;
 }
 
-export async function syncKanban(data: Kanban) {
-  return postRequest("/api/tiptap?Action=UpdateTiptap", {
-    ...data,
-    ts: Date.now(),
-  });
+export async function syncKanban(
+  data: Omit<Kanban, "ts"> & { prev: number; curr: number },
+) {
+  return postRequest("/api/tiptap?Action=UpdateTiptap", { ...data });
 }
 
 export function removeKanbanQuery(id: number) {
   queryClient.removeQueries({
+    queryKey: keyKanban(id),
+    exact: true,
+  });
+}
+
+export function invalidateKanbanQuery(id: number) {
+  queryClient.invalidateQueries({
     queryKey: keyKanban(id),
     exact: true,
   });

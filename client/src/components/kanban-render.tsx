@@ -44,6 +44,7 @@ import {
   type Kanban as KanbanObj,
   syncKanban,
   removeKanbanQuery,
+  invalidateKanbanQuery,
 } from "@/hooks/use-kanban";
 import { toast } from "sonner";
 import {
@@ -52,9 +53,15 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Textarea } from "@/components/ui/textarea";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import PopoverText from "@/components/popovertext";
 
 export default function KanbanRender({ data }: { data: KanbanObj }) {
-  const { setId, setOpen: setKanbanDialogOpen } = useKanbanContext();
+  const { language } = useUserContext();
+  const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
+    useKanbanContext();
 
   const [isComposing, setIsComposing] = useState(false);
 
@@ -119,6 +126,14 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
 
   const isDirtyRef = useRef(false);
   const isChanged = useRef(false);
+  const prevTs = useRef(data.ts);
+
+  const handleOutOfSync = () => {
+    isDirtyRef.current = false;
+    invalidateKanbanQuery(data.id);
+    alert(i18nText[language].outOfSync);
+  };
+
   const [columnValue, setColumnValue] = useState<Record<string, Task[]>>(
     data.content.columnValue,
   );
@@ -140,14 +155,21 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
     // sync every 5 seconds
     const interval = setInterval(() => {
       if (isDirtyRef.current) {
+        const currTs = Date.now();
         syncKanban({
           id: data.id,
           content: {
             columns: columnsRef.current,
             columnValue: columnValueRef.current,
           },
-        });
-        isDirtyRef.current = false;
+          prev: prevTs.current,
+          curr: currTs,
+        })
+          .then(() => {
+            isDirtyRef.current = false;
+            prevTs.current = currTs;
+          })
+          .catch(handleOutOfSync);
       }
     }, 5000);
     return () => clearInterval(interval);
@@ -166,20 +188,30 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
   }, []);
 
   const handleSave = () => {
-    if (isChanged.current) {
+    if (isDirtyRef.current) {
+      isDirtyRef.current = false;
       syncKanban({
         id: data.id,
         content: {
           columns: columnsRef.current,
           columnValue: columnValueRef.current,
         },
+        prev: -1,
+        curr: Date.now(),
       }).then(() => {
         toast.success("Kanban saved successfully");
+        setKanbanId(0);
+        setKanbanDialogOpen(false);
+        removeKanbanQuery(data.id);
       });
+    } else {
+      if (isChanged.current) {
+        toast.success("Kanban saved successfully");
+      }
+      setKanbanId(0);
+      setKanbanDialogOpen(false);
+      removeKanbanQuery(data.id);
     }
-    setId(0);
-    setKanbanDialogOpen(false);
-    removeKanbanQuery(data.id);
   };
 
   return (
@@ -515,6 +547,8 @@ const KanbanItem = ({
     });
   };
 
+  const isMobile = useIsMobile();
+
   return (
     <>
       <Kanban.Item key={task.id} value={task.id} asHandle asChild>
@@ -523,14 +557,28 @@ const KanbanItem = ({
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 flex-col gap-2">
                 {task.detail ? (
-                  <HoverCard>
-                    <HoverCardTrigger>
-                      <span className="dashed-text truncate text-sm font-medium">
-                        {task.title}
-                      </span>
-                    </HoverCardTrigger>
-                    <HoverCardContent>{task.detail}</HoverCardContent>
-                  </HoverCard>
+                  isMobile ? (
+                    <PopoverText
+                      className="dashed-text truncate text-sm font-medium"
+                      text={task.title}
+                      detail={task.detail}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                      }}
+                    />
+                  ) : (
+                    <HoverCard>
+                      <HoverCardTrigger>
+                        <span className="dashed-text truncate text-sm font-medium">
+                          {task.title}
+                        </span>
+                      </HoverCardTrigger>
+                      <HoverCardContent>{task.detail}</HoverCardContent>
+                    </HoverCard>
+                  )
                 ) : (
                   <span className="truncate text-sm font-medium">
                     {task.title}
@@ -747,4 +795,13 @@ const KanbanItem = ({
       </AlertDialog>
     </>
   );
+};
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    outOfSync: "🔄 看板内容有更新！",
+  },
+  [UserLangEnum.ENUS]: {
+    outOfSync: "🔄 Kanban content is out of sync!",
+  },
 };

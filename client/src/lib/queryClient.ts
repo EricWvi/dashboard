@@ -16,6 +16,7 @@ export async function getRequest(
 ): Promise<Response> {
   const method = "GET";
   let errorMsg = `${method} ${url} failed after ${retries} attempts`;
+  let resCode = 0;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     // Exponential backoff timeout (2s → 4s → 8s)
@@ -33,6 +34,7 @@ export async function getRequest(
 
       if (!res.ok) {
         errorMsg = `${method} ${url} failed with status ${res.status}`;
+        resCode = res.status;
         break; // fail fast on bad status
       }
 
@@ -48,7 +50,10 @@ export async function getRequest(
   }
 
   // All retries failed → show toast and rethrow
-  toast.error("API Request failed", { description: errorMsg });
+  // 409 is for GetQueryStatus
+  if (resCode !== 409) {
+    toast.error("API Request failed", { description: errorMsg });
+  }
   throw new Error(errorMsg);
 }
 

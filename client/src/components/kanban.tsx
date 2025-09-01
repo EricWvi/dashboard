@@ -37,7 +37,7 @@ export const KanbanWrapper = () => {
     kanban && (
       <div className="bg-background fixed inset-0 z-50">
         <div className="h-full w-full">
-          <KanbanRender data={kanban} />
+          <KanbanRender key={kanban.ts} data={kanban} />
         </div>
       </div>
     )
