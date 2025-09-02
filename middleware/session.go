@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 var (
@@ -54,6 +55,7 @@ func (u *userSession) findSessionSlot(token string) int {
 func (u *userSession) newSessionSlot(token string) int {
 	u.lock.Lock()
 	defer u.lock.Unlock()
+
 	idx := u.nextWrite
 	u.Clients[idx] = clientSession{
 		Version: u.Version,
@@ -71,6 +73,15 @@ func (u *userSession) BumpVersion(index int) {
 	u.Clients[index].lock.Lock()
 	defer u.Clients[index].lock.Unlock()
 	u.Clients[index].Version++
+}
+
+func (u *userSession) SyncVersion(index int) {
+	u.lock.RLock()
+	defer u.lock.RUnlock()
+
+	u.Clients[index].lock.Lock()
+	defer u.Clients[index].lock.Unlock()
+	u.Clients[index].Version = u.Version
 }
 
 type clientSession struct {
@@ -128,4 +139,26 @@ func IsStale(c *gin.Context) bool {
 	userSession.Clients[idx].lock.RLock()
 	defer userSession.Clients[idx].lock.RUnlock()
 	return userSession.Clients[idx].Version != userSession.Version
+}
+
+func UpdateSession(c *gin.Context) string {
+	userId := GetUserId(c)
+	userSession, ok := readUserSession(userId)
+	if !ok {
+		userSession = writeUserSession(userId)
+	}
+	token := GetUserSessionToken(c)
+	if token == "" {
+		token = uuid.NewString()
+		userSession.newSessionSlot(token)
+	} else {
+		idx := userSession.findSessionSlot(token)
+		if idx == -1 {
+			userSession.newSessionSlot(token)
+		} else {
+			userSession.SyncVersion(idx)
+		}
+	}
+
+	return token
 }

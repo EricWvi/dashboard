@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
@@ -17,10 +17,16 @@ import {
   JourneyIcon,
   TodoIcon,
 } from "@/components/ui/icons";
+import { usePageVisibility } from "@/hooks/use-page-visibility";
+import { getSessionStatus, syncSessionStatus } from "@/hooks/use-user";
 
 export default function TabbedApp() {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const activeTabRef = useRef("dashboard");
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
     new Set(["dashboard"]),
   );
@@ -30,6 +36,16 @@ export default function TabbedApp() {
     setActiveTab(value);
     setVisitedTabs((prev) => new Set([...prev, value]));
   };
+
+  usePageVisibility(() => {
+    getSessionStatus().then(async (res) => {
+      const data = await res.json();
+      if (data.message.stale) {
+        setVisitedTabs(new Set([activeTabRef.current]));
+        syncSessionStatus();
+      }
+    });
+  });
 
   return (
     <div

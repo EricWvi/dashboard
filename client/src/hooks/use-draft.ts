@@ -7,7 +7,7 @@ export type Draft = {
   ts: number;
 };
 
-const keyDraft = (id: number) => ["/api/tiptap", id];
+const keyDraft = (id: number) => ["/meta/tiptap", id];
 
 export function useDraft(id: number) {
   return useQuery<Draft | null>({

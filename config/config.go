@@ -19,10 +19,10 @@ func Init() {
 	}
 
 	// logger
-	if gin.Mode() == gin.DebugMode {
-		log.InitLogger(slog.LevelDebug)
-	} else {
+	if gin.Mode() == gin.ReleaseMode {
 		log.InitLogger(slog.LevelInfo)
+	} else {
+		log.InitLogger(slog.LevelDebug)
 	}
 
 	InitDB()

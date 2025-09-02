@@ -1,7 +1,11 @@
 import { useEffect, useRef } from "react";
 
-export function usePageVisibility(onVisible: () => void) {
+export function usePageVisibility(
+  onVisible: () => void,
+  onHidden?: () => void,
+) {
   const onVisibleRef = useRef(onVisible);
+  const onHiddenRef = useRef(onHidden);
 
   // Keep ref updated with the latest callback without triggering re-attachment
   useEffect(() => {
@@ -9,9 +13,15 @@ export function usePageVisibility(onVisible: () => void) {
   }, [onVisible]);
 
   useEffect(() => {
+    onHiddenRef.current = onHidden;
+  }, [onHidden]);
+
+  useEffect(() => {
     const handler = () => {
       if (document.visibilityState === "visible") {
         onVisibleRef.current();
+      } else if (document.visibilityState === "hidden" && onHiddenRef.current) {
+        onHiddenRef.current();
       }
     };
     document.addEventListener("visibilitychange", handler);

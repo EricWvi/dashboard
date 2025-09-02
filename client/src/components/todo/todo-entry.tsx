@@ -149,7 +149,6 @@ export const PlanTodoView = ({
 export const TodayTodoView = ({ id }: { id: number }) => {
   const [isComposing, setIsComposing] = useState(false);
   const { data: todo } = useTodo(id);
-  if (!todo) return null;
 
   // to-do state
   const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
@@ -193,6 +192,8 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   const updateTodoDraft = async (draftId: number) => {
     await updateTodoMutation.mutateAsync({ id, draft: draftId });
   };
+
+  if (!todo) return null;
 
   const TodayTodoMenuContent = () => (
     <ContextMenuContent>
@@ -427,7 +428,6 @@ export const CompletedTodoView = ({
   collectionId: number;
 }) => {
   const { data: todo } = useTodo(id);
-  if (!todo) return null;
 
   const restoreTodoMutation = useRestoreTodo();
   const deleteTodoMutation = useDeleteTodo(collectionId, true);
@@ -442,6 +442,8 @@ export const CompletedTodoView = ({
     useKanbanContext();
   // editor state
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+
+  if (!todo) return null;
 
   return (
     <Card className="group relative rounded-sm py-2 opacity-75 transition-all select-none xl:select-auto">
@@ -527,7 +529,6 @@ export const TodoEntry = ({
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
   const { data: todo } = useTodo(id);
-  if (!todo) return null;
 
   // to-do state
   const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
@@ -615,6 +616,8 @@ export const TodoEntry = ({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState("");
   const [action, setAction] = useState(() => () => {}); // lazy initializer: func will execute immediately
+
+  if (!todo) return null;
 
   const TodoMenuContent = () => (
     <ContextMenuContent>

@@ -20,7 +20,7 @@ export type Kanban = {
   ts: number;
 };
 
-const keyKanban = (id: number) => ["/api/kanban", id];
+const keyKanban = (id: number) => ["/meta/kanban", id];
 
 export function useKanban(id: number) {
   return useQuery<Kanban | null>({

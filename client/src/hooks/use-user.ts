@@ -17,24 +17,27 @@ export type User = {
   hasRssToken: boolean;
   hasEmailToken: boolean;
   language: UserLang;
+  session: string;
 };
 
-const keyUser = () => ["/api/user"];
+const keyUser = () => ["/meta/user"];
 const keyRSSCount = () => ["/api/rss/count"];
 const keyMailCount = () => ["/api/mail/count"];
 
+export const UserQueryOptions = {
+  queryKey: keyUser(),
+  queryFn: async () => {
+    const response = await getRequest("/api/user?Action=GetUser", false);
+    const data = await response.json();
+    if (data.code !== 200) {
+      window.open("https://auth.onlyquant.top/", "_blank");
+    }
+    return data.message as User;
+  },
+};
+
 export function useUser() {
-  return useQuery<User>({
-    queryKey: keyUser(),
-    queryFn: async () => {
-      const response = await getRequest("/api/user?Action=GetUser");
-      const data = await response.json();
-      if (data.code !== 200) {
-        window.open("https://auth.onlyquant.top/", "_blank");
-      }
-      return data.message as User;
-    },
-  });
+  return useQuery<User>(UserQueryOptions);
 }
 
 export function useRSSCount() {
@@ -56,7 +59,13 @@ export function useMailCount() {
   return useQuery<number>({
     queryKey: keyMailCount(),
     queryFn: async () => {
-      const response = await getRequest("/api/user?Action=GetQQMailCount");
+      const response = await getRequest(
+        "/api/user?Action=GetQQMailCount",
+        true,
+        3,
+        4000,
+        5000,
+      );
       const data = await response.json();
       return data.message.count as number;
     },
@@ -122,5 +131,19 @@ export function useUpdateRssToken() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keyUser() });
     },
+  });
+}
+
+export async function getSessionStatus() {
+  return getRequest("/api/user?Action=GetSessionStatus");
+}
+
+export async function syncSessionStatus() {
+  getRequest("/api/user?Action=SyncSessionStatus");
+  queryClient.removeQueries({
+    predicate: (query) => !(query.queryKey[0] as string).startsWith("/meta"),
+  });
+  queryClient.invalidateQueries({
+    predicate: (query) => query.queryKey[0] !== "/meta/user",
   });
 }

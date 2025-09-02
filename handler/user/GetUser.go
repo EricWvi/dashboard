@@ -25,6 +25,7 @@ func (b Base) GetUser(c *gin.Context, req *GetUserRequest) *GetUserResponse {
 		HasRssToken:   string(user.RssToken) != "",
 		HasEmailToken: string(user.EmailToken) != "",
 		Language:      user.Language,
+		Session:       middleware.UpdateSession(c),
 	}
 }
 
@@ -38,4 +39,5 @@ type GetUserResponse struct {
 	HasRssToken   bool   `json:"hasRssToken"`
 	HasEmailToken bool   `json:"hasEmailToken"`
 	Language      string `json:"language"`
+	Session       string `json:"session"`
 }

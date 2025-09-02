@@ -25,7 +25,6 @@ export default function Todo() {
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
-  if (!collections) return null;
 
   const [listDropdownOpen, setListDropdownOpen] = useState(false);
   const [activeListId, setActiveListId] = useState<number>(0);
@@ -43,6 +42,8 @@ export default function Todo() {
       setNewListName("");
     }
   };
+
+  if (!collections) return null;
 
   const mobileView = (
     <div className="size-full">

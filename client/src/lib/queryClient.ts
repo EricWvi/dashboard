@@ -1,3 +1,4 @@
+import { UserQueryOptions } from "@/hooks/use-user";
 import { QueryClient, type QueryFunction } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -10,6 +11,7 @@ async function throwIfResNotOk(res: Response) {
 
 export async function getRequest(
   url: string,
+  token: boolean = true,
   retries = 3,
   baseTimeout = 2000,
   maxTimeout = 10000,
@@ -17,6 +19,12 @@ export async function getRequest(
   const method = "GET";
   let errorMsg = `${method} ${url} failed after ${retries} attempts`;
   let resCode = 0;
+
+  let sessionToken = "";
+  if (token) {
+    const user = await queryClient.fetchQuery(UserQueryOptions);
+    sessionToken = user.session;
+  }
 
   for (let attempt = 0; attempt < retries; attempt++) {
     // Exponential backoff timeout (2s → 4s → 8s)
@@ -28,6 +36,9 @@ export async function getRequest(
     try {
       const res = await fetch(url, {
         method,
+        headers: {
+          "Only-Session-Token": sessionToken,
+        },
         credentials: "include",
         signal: controller.signal,
       });
@@ -68,6 +79,8 @@ export async function postRequest(
   let errorMsg = `${method} ${url} failed after ${retries} attempts`;
   let resCode = 0;
 
+  const user = await queryClient.fetchQuery(UserQueryOptions);
+
   for (let attempt = 0; attempt < retries; attempt++) {
     // Exponential backoff timeout (3s → 6s → max 10s)
     const timeout = Math.min(baseTimeout * 2 ** attempt, maxTimeout);
@@ -81,6 +94,7 @@ export async function postRequest(
         headers: {
           "Content-Type": "application/json",
           "Idempotency-Key": crypto.randomUUID(),
+          "Only-Session-Token": user.session,
         },
         body: JSON.stringify(data),
         credentials: "include",
