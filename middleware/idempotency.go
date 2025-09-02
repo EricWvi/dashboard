@@ -112,25 +112,20 @@ func Idempotency() gin.HandlerFunc {
 		}
 
 		c.Next()
-		if c.IsAborted() {
-			mu.Lock()
-			idemCache[key] = &cacheEntry{
-				data:      []byte("\"previous request failed\""),
-				status:    http.StatusInternalServerError,
-				createdAt: time.Now(),
-			}
-			mu.Unlock()
-			return
-		}
 
-		writer, _ := c.Get("bodyWriter")
-		rspBody := writer.(*bodyWriter).body.Bytes()
 		mu.Lock()
-		idemCache[key] = &cacheEntry{
-			data:      rspBody,
-			status:    c.Writer.Status(),
-			createdAt: time.Now(),
+		defer mu.Unlock()
+		if entry, ok := idemCache[key]; ok {
+			if c.IsAborted() {
+				entry.data = []byte(`"previous request failed"`)
+				entry.status = http.StatusInternalServerError
+			} else {
+				writer, _ := c.Get("bodyWriter")
+				rspBody := writer.(*bodyWriter).body.Bytes()
+				entry.data = rspBody
+				entry.status = c.Writer.Status()
+				entry.createdAt = time.Now()
+			}
 		}
-		mu.Unlock()
 	}
 }

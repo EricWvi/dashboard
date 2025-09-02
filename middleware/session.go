@@ -108,7 +108,7 @@ func Session() gin.HandlerFunc {
 	}
 }
 
-func GetUserSession(c *gin.Context) string {
+func GetUserSessionToken(c *gin.Context) string {
 	return c.GetString("UserSession")
 }
 
@@ -118,7 +118,7 @@ func IsStale(c *gin.Context) bool {
 		return true
 	}
 
-	idx := userSession.findSessionSlot(GetUserSession(c))
+	idx := userSession.findSessionSlot(GetUserSessionToken(c))
 	if idx == -1 {
 		return true
 	}
