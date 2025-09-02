@@ -458,15 +458,17 @@ function ReadOnlyTiptap({ draft }: { draft: any }) {
 
 export function ContentHtml({ id }: { id: number }) {
   const isMobile = useIsMobile();
-  const { data: draft, isLoading } = useDraft(id);
+  const { data: draft, isFetching } = useDraft(id);
   const [showLoading, setShowLoading] = React.useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isFetching) {
       setTimeout(() => {
         setShowLoading(false);
       }, 200);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isFetching]);
 
   // do not keep draft in cache
   useEffect(() => {

@@ -60,19 +60,21 @@ const Years = ({
 }) => {
   const isMobile = useIsMobile();
   const { year: currYear } = getWeekYearPair();
-  const { data: years, isLoading } = useEchoesOfQuestion(
+  const { data: years, isFetching } = useEchoesOfQuestion(
     questionId,
     EchoEnum.YEAR,
   );
 
   const [showLoading, setShowLoading] = useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isFetching) {
       setTimeout(() => {
         setShowLoading(false);
       }, 400);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isFetching]);
   const {
     id,
     setId: setEditorId,

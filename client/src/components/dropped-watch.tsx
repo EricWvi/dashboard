@@ -6,16 +6,18 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
 export default function DroppedList() {
-  const { data: watches, isLoading } = useWatches(WatchStatus.DROPPED);
+  const { data: watches, isFetching } = useWatches(WatchStatus.DROPPED);
   const recoverWatchMutation = useRecoverWatch();
   const [showLoading, setShowLoading] = useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isFetching) {
       setTimeout(() => {
         setShowLoading(false);
       }, 200);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isFetching]);
 
   return (
     <div className="aspect-[5/4] rounded-lg sm:aspect-[16/9]">

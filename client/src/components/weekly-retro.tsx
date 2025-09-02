@@ -73,19 +73,21 @@ const Weeks = ({ year }: { year: number }) => {
     new Date(currYear - 1, 11, 31),
   ).week;
 
-  const { data: weeks, isLoading } = useEchoes(
+  const { data: weeks, isFetching } = useEchoes(
     year,
     EchoEnum.WEEK,
     year === currYear,
   );
   const [showLoading, setShowLoading] = useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isFetching) {
       setTimeout(() => {
         setShowLoading(false);
       }, 400);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isFetching]);
   const {
     id,
     setId: setEditorId,
