@@ -119,7 +119,9 @@ export default function SearchCommand() {
       />
       <CommandList className="max-h-[400px]">
         <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Search Engines">
+        <CommandGroup
+          heading={`${!selectedEngine || SearchEngines.some((s) => s.shortcut === selectedEngine) ? "Search Engines" : ""}`}
+        >
           {/* <CommandItem value={"bi" + searchValue} onSelect={selectBing}>
             <BingLogo />
             <span>Bing</span>

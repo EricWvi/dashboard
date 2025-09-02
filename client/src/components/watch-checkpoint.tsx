@@ -5,7 +5,7 @@ export default function WatchCheckpoints({
 }) {
   return (
     <div className="bg-accent flex aspect-[5/4] rounded-lg pl-2 sm:aspect-[16/9]">
-      <div className="overflow-scroll pt-8">
+      <div className="flex-1 overflow-scroll pt-8">
         <div className="flex flex-col">
           {[...checkpoints].reverse().map((checkpoint, idx) => (
             <div key={idx} className="flex gap-13">

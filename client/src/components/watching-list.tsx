@@ -54,7 +54,11 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
   const type = types.find((type) => type.value === watch.type);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
 
-  const updateWatchMutation = useUpdateWatch(WatchStatus.WATCHING);
+  const updateWatchMutation = useUpdateWatch([WatchStatus.WATCHING]);
+  const dropWatchMutation = useUpdateWatch([
+    WatchStatus.WATCHING,
+    WatchStatus.DROPPED,
+  ]);
   const completeWatchMutation = useCompleteWatch();
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
@@ -70,7 +74,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
     });
   };
   const archiveWatch = () => {
-    return updateWatchMutation.mutateAsync({
+    return dropWatchMutation.mutateAsync({
       id: watch.id,
       status: WatchStatus.DROPPED,
       payload: {

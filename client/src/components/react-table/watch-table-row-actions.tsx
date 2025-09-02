@@ -86,7 +86,7 @@ export function WatchedTableRowActions<TData>({
   const [entryMarkMonth, setEntryMarkMonth] = useState<Date>(new Date());
   const [entryAuthor, setEntryAuthor] = useState<string>("");
   const [datepickerOpen, setDatepickerOpen] = useState(false);
-  const updateWatchMutation = useUpdateWatch(WatchStatus.COMPLETED);
+  const updateWatchMutation = useUpdateWatch([WatchStatus.COMPLETED]);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
@@ -528,7 +528,7 @@ export function ToWatchTableRowActions<TData>({
   const [entryImg, setEntryImg] = useState<string | undefined>(undefined);
   const [entryLink, setEntryLink] = useState<string>("");
   const [entryAuthor, setEntryAuthor] = useState<string>("");
-  const updateWatchMutation = useUpdateWatch(WatchStatus.PLAN_TO_WATCH);
+  const updateWatchMutation = useUpdateWatch([WatchStatus.PLAN_TO_WATCH]);
   const startWatchMutation = useStartWatch();
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({

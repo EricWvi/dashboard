@@ -6,19 +6,21 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
 export default function DroppedList() {
-  const { data: watches, isLoading } = useWatches(WatchStatus.DROPPED);
+  const { data: watches, isPending } = useWatches(WatchStatus.DROPPED);
   const recoverWatchMutation = useRecoverWatch();
   const [showLoading, setShowLoading] = useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isPending) {
       setTimeout(() => {
         setShowLoading(false);
       }, 200);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isPending]);
 
   return (
-    <div className="aspect-[5/4] rounded-lg sm:aspect-[16/9]">
+    <div className="aspect-[2/3] min-w-0 overflow-scroll sm:aspect-square">
       {showLoading ? (
         <Skeleton className="size-full" />
       ) : (
@@ -26,9 +28,9 @@ export default function DroppedList() {
           {watches?.map((watch) => (
             <div
               key={watch.id}
-              className="bg-card flex items-center justify-between rounded-sm border py-2 pr-2 pl-4 text-sm"
+              className="bg-card flex items-center justify-between gap-1 rounded-sm border py-2 pr-2 pl-4 text-sm"
             >
-              <div>
+              <div className="min-w-0">
                 {watch.type} · {watch.title}
                 <span className="text-muted-foreground ml-1 text-xs">
                   {`(dropped on ${dateString(

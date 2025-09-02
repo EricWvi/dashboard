@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Blog() {
   const isMobile = useIsMobile();
-  const { data: blogs } = useBlogs();
+  const { data: blogs, isPending } = useBlogs();
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
@@ -28,7 +28,7 @@ export default function Blog() {
         data={blogs ?? []}
         columns={blogColumns}
         toolbar="blog"
-        isLoading={blogs ? false : true} // Show loading state if data is not available
+        isPending={isPending}
         defaultPageSize={defaultPageSize}
       />
     </div>

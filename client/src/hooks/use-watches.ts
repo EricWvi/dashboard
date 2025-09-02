@@ -171,7 +171,7 @@ export function useDeleteWatch() {
   });
 }
 
-export function useUpdateWatch(status: WatchStatus) {
+export function useUpdateWatch(status: WatchStatus[]) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -182,8 +182,10 @@ export function useUpdateWatch(status: WatchStatus) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: keyWatchesOfStatus(status),
+      status.map((s) => {
+        queryClient.invalidateQueries({
+          queryKey: keyWatchesOfStatus(s),
+        });
       });
     },
   });

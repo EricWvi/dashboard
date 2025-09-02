@@ -42,7 +42,7 @@ import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor"
 export const QuickNoteList = () => {
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
-  const { data: notes, isLoading } = useQuickNotes();
+  const { data: notes, isPending } = useQuickNotes();
   const [editTitleDialogOpen, setEditTitleDialogOpen] = useState(false);
   const updateQuickNoteMutation = useUpdateQuickNote();
   const bottomQuickNoteMutation = useBottomQuickNote();
@@ -109,7 +109,7 @@ export const QuickNoteList = () => {
         <div
           className={`flex flex-col rounded-sm ${isMobile ? "min-h-20" : "h-120 overflow-scroll"}`}
         >
-          {isLoading ? (
+          {isPending ? (
             <>
               <div className="space-y-2">
                 <Skeleton className="h-10 rounded-sm" />

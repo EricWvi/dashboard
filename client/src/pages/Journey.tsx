@@ -31,7 +31,7 @@ function WatchingTab() {
 
 function ToWatchTab() {
   const isMobile = useIsMobile();
-  const { data: watches } = useWatches(WatchStatus.PLAN_TO_WATCH);
+  const { data: watches, isPending } = useWatches(WatchStatus.PLAN_TO_WATCH);
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
@@ -45,7 +45,7 @@ function ToWatchTab() {
         data={watches ?? []}
         columns={towatchColumns}
         toolbar="towatch"
-        isLoading={watches ? false : true} // Show loading state if data is not available
+        isPending={isPending}
         defaultPageSize={defaultPageSize}
       />
       <div
@@ -80,7 +80,7 @@ function ToWatchTab() {
 }
 
 function WatchedTab() {
-  const { data: watches } = useWatches(WatchStatus.COMPLETED);
+  const { data: watches, isPending } = useWatches(WatchStatus.COMPLETED);
   // compute default pageSize on mobile
   const defaultPageSize =
     window.innerWidth < 768
@@ -92,7 +92,7 @@ function WatchedTab() {
       data={watches ?? []}
       columns={watchedColumns}
       toolbar="watched"
-      isLoading={watches ? false : true} // Show loading state if data is not available
+      isPending={isPending}
       defaultPageSize={defaultPageSize}
     />
   );

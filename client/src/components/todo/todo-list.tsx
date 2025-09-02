@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  invalidToday,
+  removeTodayQuery,
   listAllTodos,
   useCollection,
   useCollections,
@@ -59,7 +59,7 @@ const TodoList = ({
 } & { headerContent?: React.ReactNode }) => {
   const isMobile = useIsMobile();
   const { data: todos } = useTodos(collectionId);
-  const { data: collection } = useCollection(collectionId);
+  const { data: collection, isPending } = useCollection(collectionId);
   const [isComposing, setIsComposing] = useState(false);
 
   const createTodoMutation = useCreateTodo();
@@ -103,10 +103,10 @@ const TodoList = ({
               <CardTitle>
                 {headerContent ? (
                   headerContent
-                ) : !!collection ? (
-                  <div className="h-8 text-2xl">{collection.name}</div>
-                ) : (
+                ) : isPending ? (
                   <Skeleton className="h-8 w-32 rounded-md" />
+                ) : (
+                  <div className="h-8 text-2xl">{collection?.name}</div>
                 )}
               </CardTitle>
 
@@ -361,17 +361,22 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
 
 export const TodayTodoList = () => {
   const isMobile = useIsMobile();
-  const { data: today, isLoading } = useToday();
-  const [loadingFlag, setLoadingFlag] = useState(false); // loading animation for second day's refetch
+  const { data: today, isPending } = useToday();
+  const [showLoading, setShowLoading] = useState(true);
+  useEffect(() => {
+    if (!isPending) {
+      setTimeout(() => {
+        setShowLoading(false);
+      }, 200);
+    } else {
+      setShowLoading(true);
+    }
+  }, [isPending]);
   const [todayDate, setTodayDate] = useState(new Date().toDateString());
   usePageVisibility(() => {
     if (new Date().toDateString() !== todayDate) {
       setTodayDate(new Date().toDateString());
-      setLoadingFlag(true);
-      setTimeout(() => {
-        setLoadingFlag(false);
-      }, 300);
-      invalidToday();
+      removeTodayQuery();
     }
   });
 
@@ -442,7 +447,7 @@ export const TodayTodoList = () => {
         >
           {/* 1. UI library components have complex nested DOM structures that make `h-full` problematic. */}
           {/* 2. min-h-0 lets flex items shrink as needed, fixing overflow and scrolling issues in flex layouts. */}
-          {loadingFlag || isLoading ? (
+          {showLoading ? (
             <>
               <div className="space-y-2">
                 <Skeleton className="h-5 w-16 rounded-sm" />

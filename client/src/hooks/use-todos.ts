@@ -65,8 +65,8 @@ export function useToday() {
   });
 }
 
-export function invalidToday() {
-  queryClient.invalidateQueries({ queryKey: keyTodayTodo() });
+export function removeTodayQuery() {
+  queryClient.removeQueries({ queryKey: keyTodayTodo() });
 }
 
 export function useCompleted(collectionId: number) {

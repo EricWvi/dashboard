@@ -38,7 +38,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   toolbar: "towatch" | "watched" | "bookmark" | "blog";
-  isLoading: boolean;
+  isPending: boolean;
   defaultPageSize: number;
 }
 
@@ -46,7 +46,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   toolbar,
-  isLoading,
+  isPending,
   defaultPageSize,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
@@ -65,12 +65,14 @@ export function DataTable<TData, TValue>({
 
   const [showLoading, setShowLoading] = React.useState(true); // controls animation
   React.useEffect(() => {
-    if (!isLoading) {
+    if (!isPending) {
       setTimeout(() => {
         setShowLoading(false);
       }, 200);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isPending]);
 
   const getTagsFacetedUniqueValues = (
     table: RTable<TData>,

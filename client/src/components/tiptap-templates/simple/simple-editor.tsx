@@ -314,6 +314,17 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
     };
   }, []);
 
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [editor]);
+
   const handleSave = async () => {
     if (editor) {
       if (isDirtyRef.current) {
@@ -458,15 +469,17 @@ function ReadOnlyTiptap({ draft }: { draft: any }) {
 
 export function ContentHtml({ id }: { id: number }) {
   const isMobile = useIsMobile();
-  const { data: draft, isLoading } = useDraft(id);
+  const { data: draft, isFetching } = useDraft(id);
   const [showLoading, setShowLoading] = React.useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isFetching) {
       setTimeout(() => {
         setShowLoading(false);
       }, 200);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isFetching]);
 
   // do not keep draft in cache
   useEffect(() => {

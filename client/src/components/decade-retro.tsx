@@ -60,19 +60,21 @@ const Years = ({
 }) => {
   const isMobile = useIsMobile();
   const { start: currDecadeStart, end: currDecadeEnd } = getDecadePair();
-  const { data: years, isLoading } = useEchoesOfQuestion(
+  const { data: years, isPending } = useEchoesOfQuestion(
     questionId,
     EchoEnum.DECADE,
   );
 
   const [showLoading, setShowLoading] = useState(true);
   useEffect(() => {
-    if (!isLoading) {
+    if (!isPending) {
       setTimeout(() => {
         setShowLoading(false);
       }, 400);
+    } else {
+      setShowLoading(true);
     }
-  }, [isLoading]);
+  }, [isPending]);
   const {
     id,
     setId: setEditorId,
