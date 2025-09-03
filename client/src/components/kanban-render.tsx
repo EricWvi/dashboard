@@ -188,8 +188,8 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
   }, []);
 
   const handleSave = () => {
-    if (isDirtyRef.current) {
-      isDirtyRef.current = false;
+    isDirtyRef.current = false;
+    if (isChanged.current) {
       syncKanban({
         id: data.id,
         content: {
@@ -205,9 +205,6 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
         removeKanbanQuery(data.id);
       });
     } else {
-      if (isChanged.current) {
-        toast.success("Kanban saved successfully");
-      }
       setKanbanId(0);
       setKanbanDialogOpen(false);
       removeKanbanQuery(data.id);

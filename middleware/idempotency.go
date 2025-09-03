@@ -80,7 +80,7 @@ func startCacheCleaner(interval time.Duration) {
 			}
 			mu.Unlock()
 			if count > 0 {
-				log.Infof(service.WorkerCtx, "idemCache clean %d keys", count)
+				log.Debugf(service.IdemCtx, "idemCache clean %d keys", count)
 			}
 		}
 	}()

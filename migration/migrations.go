@@ -127,7 +127,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddTimestampColumnToTiptap,
 			Down:    RemoveTimestampColumnFromTiptap,
 		},
+		{
+			Version: "v1.1.0",
+			Name:    "Add history column to tiptap",
+			Up:      AddHistoryColumnToTiptap,
+			Down:    RemoveHistoryColumnFromTiptap,
+		},
 	}
+}
+
+// -------------------- v1.1.0 -------------------
+func AddHistoryColumnToTiptap(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_tiptap
+		ADD COLUMN history JSONB DEFAULT '[]'::jsonb NOT NULL;
+	`).Error
+}
+
+func RemoveHistoryColumnFromTiptap(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_tiptap
+		DROP COLUMN IF EXISTS history;
+	`).Error
 }
 
 // -------------------- v1.0.0 -------------------

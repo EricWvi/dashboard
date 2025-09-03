@@ -51,6 +51,18 @@ export async function syncDraft(
   return postRequest("/api/tiptap?Action=UpdateTiptap", { ...data });
 }
 
+export async function getHistory(id: number, ts: number) {
+  return getRequest(`/api/tiptap?Action=GetHistory&id=${id}&ts=${ts}`);
+}
+
+export async function restoreHistory(id: number, ts: number) {
+  return postRequest("/api/tiptap?Action=RestoreHistory", { id, ts });
+}
+
+export async function listHistory(id: number) {
+  return getRequest(`/api/tiptap?Action=ListHistory&id=${id}`);
+}
+
 export function removeDraftQuery(id: number) {
   queryClient.removeQueries({
     queryKey: keyDraft(id),

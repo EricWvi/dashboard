@@ -22,6 +22,7 @@ import { getSessionStatus, syncSessionStatus } from "@/hooks/use-user";
 
 export default function TabbedApp() {
   const isMobile = useIsMobile();
+  const [tabBarOpen, setTabBarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const activeTabRef = useRef("dashboard");
   useEffect(() => {
@@ -55,10 +56,20 @@ export default function TabbedApp() {
       <div className="fixed top-0 left-1/2 z-50 hidden -translate-x-1/2 transform md:block">
         <div className="group">
           {/* Hover trigger area */}
-          <div className="h-8 w-300 bg-transparent" />
+          <div
+            className="h-8 w-300 bg-transparent"
+            onClick={() => {
+              setTabBarOpen(true);
+              setTimeout(() => {
+                setTabBarOpen(false);
+              }, 3000);
+            }}
+          />
 
           {/* Tabs container with animation - moved higher to hide shadow completely */}
-          <div className="absolute top-0 left-1/2 w-160 -translate-x-1/2 -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0">
+          <div
+            className={`absolute top-0 left-1/2 w-160 -translate-x-1/2 -translate-y-full transform transition-transform duration-300 ease-in-out group-hover:translate-y-0 ${tabBarOpen ? "translate-y-1/2" : ""}`}
+          >
             <div className="bg-background/95 -translate-y-2 transform rounded-b-lg border-b shadow-md backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-0">
               <Tabs
                 value={activeTab}

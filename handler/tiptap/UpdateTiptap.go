@@ -5,6 +5,7 @@ import (
 
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/handler"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,12 @@ func (b Base) UpdateTiptap(c *gin.Context, req *UpdateTiptapRequest) *UpdateTipt
 		})
 		c.Abort()
 		return nil
+	}
+
+	if req.Prev == -1 {
+		if err := tiptap.SaveHistory(config.ContextDB(c), m); err != nil {
+			log.Errorf(c, "failed to save tiptap history: %v", err)
+		}
 	}
 
 	return &UpdateTiptapResponse{}

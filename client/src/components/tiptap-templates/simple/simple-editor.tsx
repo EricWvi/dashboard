@@ -68,6 +68,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
+import { HistoryPopover } from "@/components/tiptap-templates/simple/history-popover";
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
@@ -96,12 +97,14 @@ const MainToolbarContent = ({
   isMobile,
   onSave,
   dropChange,
+  id,
 }: {
   onHighlighterClick: () => void;
   onLinkClick: () => void;
   isMobile: boolean;
   onSave: () => void;
   dropChange: () => void;
+  id: number;
 }) => {
   return (
     <>
@@ -187,6 +190,7 @@ const MainToolbarContent = ({
         <Button data-style="ghost" onClick={dropChange}>
           <Eraser className="size-4" />
         </Button>
+        <HistoryPopover id={id} />
         <ThemeToggle />
       </ToolbarGroup>
     </>
@@ -327,8 +331,8 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
 
   const handleSave = async () => {
     if (editor) {
-      if (isDirtyRef.current) {
-        isDirtyRef.current = false;
+      isDirtyRef.current = false;
+      if (isChanged.current) {
         syncDraft({
           id,
           content: editor.getJSON(),
@@ -341,9 +345,6 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
           removeDraftQuery(id);
         });
       } else {
-        if (isChanged.current) {
-          toast.success("Draft saved successfully");
-        }
         setId(0);
         setOpen(false);
         removeDraftQuery(id);
@@ -382,6 +383,7 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
                   isMobile={isMobile}
                   onSave={handleSave}
                   dropChange={handleDrop}
+                  id={id}
                 />
               ) : (
                 <MobileToolbarContent
@@ -433,7 +435,7 @@ const extensionSetup = [
   }),
 ];
 
-function ReadOnlyTiptap({ draft }: { draft: any }) {
+export function ReadOnlyTiptap({ draft }: { draft: any }) {
   const editor = useEditor({
     editable: false,
     immediatelyRender: false,
