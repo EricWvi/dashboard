@@ -7,7 +7,6 @@ import (
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/model"
-	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,9 +15,9 @@ var emailToID map[string]uint
 var lock sync.RWMutex
 
 func InitJWTMap() {
-	m, err := model.CreateEmailToIDMap(config.ContextDB(service.WorkerCtx))
+	m, err := model.CreateEmailToIDMap(config.ContextDB(log.WorkerCtx))
 	if err != nil {
-		log.Error(service.WorkerCtx, err.Error())
+		log.Error(log.WorkerCtx, err.Error())
 		os.Exit(1)
 	}
 	emailToID = m
@@ -37,9 +36,9 @@ func writeMap(email string) uint {
 	if id, ok := emailToID[email]; ok {
 		return id
 	} else {
-		id, err := model.CreateUser(config.ContextDB(service.WorkerCtx), email)
+		id, err := model.CreateUser(config.ContextDB(log.WorkerCtx), email)
 		if err != nil {
-			log.Error(service.WorkerCtx, err.Error())
+			log.Error(log.WorkerCtx, err.Error())
 		}
 		emailToID[email] = id
 		return id

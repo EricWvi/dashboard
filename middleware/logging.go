@@ -26,8 +26,8 @@ func Logging() gin.HandlerFunc {
 
 		// set RequestId and Action
 		// Get existing ID or generate new
-		if c.GetString("RequestId") == "" {
-			c.Set("RequestId", uuid.NewString())
+		if c.GetString(log.RequestIDCtxKey) == "" {
+			c.Set(log.RequestIDCtxKey, uuid.NewString())
 		}
 		action := c.Request.URL.Query().Get("Action")
 		if len(action) == 0 {

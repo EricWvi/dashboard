@@ -2,6 +2,7 @@ package media
 
 import (
 	"github.com/EricWvi/dashboard/config"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/EricWvi/dashboard/service"
@@ -45,7 +46,7 @@ func Upload(c *gin.Context) {
 			Key:          fileKey,
 			PresignedURL: presignedUrl,
 		}
-		err = m.Create(config.ContextDB(service.MediaCtx))
+		err = m.Create(config.ContextDB(log.MediaCtx))
 		if err != nil {
 			c.JSON(500, gin.H{"message": err.Error()})
 			return

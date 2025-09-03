@@ -25,7 +25,7 @@ func (b Base) UpdateTiptap(c *gin.Context, req *UpdateTiptapRequest) *UpdateTipt
 
 	if err := tiptap.Update(config.ContextDB(c), m); err != nil {
 		c.JSON(http.StatusConflict, handler.Response{
-			RequestId: c.GetString("RequestId"),
+			RequestId: c.GetString(log.RequestIDCtxKey),
 			Code:      http.StatusConflict,
 			Message:   err.Error(),
 		})

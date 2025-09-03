@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/EricWvi/dashboard/log"
-	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -80,7 +79,7 @@ func startCacheCleaner(interval time.Duration) {
 			}
 			mu.Unlock()
 			if count > 0 {
-				log.Debugf(service.IdemCtx, "idemCache clean %d keys", count)
+				log.Debugf(log.IdemCtx, "idemCache clean %d keys", count)
 			}
 		}
 	}()
@@ -94,7 +93,7 @@ func Idempotency() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("RequestId", key)
+		c.Set(log.RequestIDCtxKey, key)
 
 		// Check cache
 		checkCache(c, key)

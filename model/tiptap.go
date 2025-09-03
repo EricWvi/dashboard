@@ -80,6 +80,24 @@ func ListTiptapHistory(db *gorm.DB, where map[string]any) ([]int64, error) {
 	return timestamps, nil
 }
 
+func PruneTiptapHistory(db *gorm.DB, expireTs int64) (int64, error) {
+	// Update rows where history has length > 0, filtering out entries older than expireTs
+	// Uses PostgreSQL's JSONB path query to filter array elements
+	path := `$[*] ? (@.time >= $expireTs)`
+	rst := db.Table(Tiptap_Table).
+		Where("jsonb_array_length(history) > 0").
+		UpdateColumn(
+			Tiptap_History,
+			gorm.Expr("jsonb_path_query_array(history, ?, jsonb_build_object('expireTs', ?::bigint))", path, expireTs),
+		)
+
+	if rst.Error != nil {
+		return 0, fmt.Errorf("failed to prune tiptap history: %w", rst.Error)
+	}
+
+	return rst.RowsAffected, nil
+}
+
 func (t *Tiptap) Create(db *gorm.DB) error {
 	return db.Create(t).Error
 }

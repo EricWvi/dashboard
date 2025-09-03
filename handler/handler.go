@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/EricWvi/dashboard/log"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,7 +35,7 @@ func Dispatch(c *gin.Context, base any) {
 	rst := method.Call([]reflect.Value{ctx, reflect.ValueOf(ptr)})[0]
 	if !c.IsAborted() {
 		c.JSON(http.StatusOK, Response{
-			RequestId: c.GetString("RequestId"),
+			RequestId: c.GetString(log.RequestIDCtxKey),
 			Code:      http.StatusOK,
 			Message:   rst.Interface(),
 		})
@@ -43,7 +44,7 @@ func Dispatch(c *gin.Context, base any) {
 
 func ReplyError(c *gin.Context, code int, msg string) {
 	c.JSON(code, Response{
-		RequestId: c.GetString("RequestId"),
+		RequestId: c.GetString(log.RequestIDCtxKey),
 		Code:      code,
 		Message:   msg,
 	})
@@ -51,7 +52,7 @@ func ReplyError(c *gin.Context, code int, msg string) {
 
 func ReplyString(c *gin.Context, code int, msg string) {
 	c.JSON(http.StatusOK, Response{
-		RequestId: c.GetString("RequestId"),
+		RequestId: c.GetString(log.RequestIDCtxKey),
 		Code:      code,
 		Message:   msg,
 	})

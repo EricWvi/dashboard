@@ -40,7 +40,7 @@ func TestIdempotency(t *testing.T) {
 		idempotencyHandler(c)
 
 		assert.False(t, c.IsAborted())
-		assert.Equal(t, "", c.GetString("RequestId"))
+		assert.Equal(t, "", c.GetString(log.RequestIDCtxKey))
 	})
 
 	t.Run("Request with empty Idempotency-Key should pass through", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestIdempotency(t *testing.T) {
 		idempotencyHandler(c)
 
 		assert.False(t, c.IsAborted())
-		assert.Equal(t, "", c.GetString("RequestId"))
+		assert.Equal(t, "", c.GetString(log.RequestIDCtxKey))
 	})
 
 	t.Run("First request with Idempotency-Key should set RequestId and create cache entry", func(t *testing.T) {

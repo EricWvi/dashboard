@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/EricWvi/dashboard/log"
-	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -46,7 +45,7 @@ func InitDB() {
 }
 
 func ContextDB(ctx context.Context) *gorm.DB {
-	gormLogger := logger.NewSlogLogger(slogger.With("requestId", ctx.Value("RequestId")), loggerConfig)
+	gormLogger := logger.NewSlogLogger(slogger.With(log.RequestIDKey, ctx.Value(log.RequestIDCtxKey)), loggerConfig)
 	return db.Session(&gorm.Session{Logger: gormLogger})
 }
 
@@ -58,27 +57,27 @@ func openDB(host, port, username, password, name string) *gorm.DB {
 		name,
 		port,
 		time.Local)
-	log.Info(service.WorkerCtx, "db connection uses timezone "+time.Local.String())
+	log.Info(log.WorkerCtx, "db connection uses timezone "+time.Local.String())
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.NewSlogLogger(slogger.With("requestId", service.WorkerCtx), loggerConfig),
+		Logger: logger.NewSlogLogger(slogger.With(log.RequestIDKey, log.WorkerLogId), loggerConfig),
 	})
 	if err != nil {
-		log.Error(service.WorkerCtx, err.Error())
-		log.Errorf(service.WorkerCtx, "Database connection failed. Database name: %s", name)
+		log.Error(log.WorkerCtx, err.Error())
+		log.Errorf(log.WorkerCtx, "Database connection failed. Database name: %s", name)
 		os.Exit(1)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Error(service.WorkerCtx, err.Error())
-		log.Error(service.WorkerCtx, "SetMaxIdleConns get an error.")
+		log.Error(log.WorkerCtx, err.Error())
+		log.Error(log.WorkerCtx, "SetMaxIdleConns get an error.")
 	} else {
 		sqlDB.SetMaxOpenConns(20000)
 		sqlDB.SetMaxIdleConns(100)
 	}
 
-	log.Info(service.WorkerCtx, "db connected")
+	log.Info(log.WorkerCtx, "db connected")
 
 	return db
 }

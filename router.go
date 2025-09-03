@@ -17,7 +17,6 @@ import (
 	"github.com/EricWvi/dashboard/handler/watch"
 	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
-	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -46,7 +45,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 			return nil
 		})
 	if err != nil {
-		log.Error(service.WorkerCtx, err.Error())
+		log.Error(log.WorkerCtx, err.Error())
 		os.Exit(1)
 	}
 

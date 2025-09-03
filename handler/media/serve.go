@@ -4,16 +4,16 @@ import (
 	"net/http"
 
 	"github.com/EricWvi/dashboard/config"
+	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
-	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 )
 
 func Serve(c *gin.Context) {
 	link := c.Param("link")
 	m := &model.Media{}
-	err := m.Get(config.ContextDB(service.MediaCtx), gin.H{
+	err := m.Get(config.ContextDB(log.MediaCtx), gin.H{
 		model.Media_Link: link,
 		model.CreatorId:  middleware.GetUserId(c),
 	})
