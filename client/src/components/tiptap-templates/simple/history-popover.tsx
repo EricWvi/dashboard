@@ -119,9 +119,9 @@ export const HistoryPopover = ({ id }: { id: number }) => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">
+              <div className="text-muted-foreground px-4 text-sm">
                 No history available
-              </p>
+              </div>
             )}
           </div>
         </SheetContent>

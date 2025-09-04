@@ -80,6 +80,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { createKanban } from "@/hooks/use-kanban";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
 
 const TodoTitle = ({
   todo,
@@ -615,7 +616,9 @@ export const TodoEntry = ({
   // confirm dialog state
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState("");
-  const [action, setAction] = useState(() => () => {}); // lazy initializer: func will execute immediately
+  const [action, setAction] = useState<() => Promise<any>>(
+    () => () => Promise.resolve(),
+  ); // lazy initializer: func will execute immediately
 
   if (!todo) return null;
 
@@ -1094,8 +1097,20 @@ export const TodoEntry = ({
             <Button
               variant={confirmAction === "delete" ? "destructive" : undefined}
               onClick={() => {
-                action();
-                setConfirmDialogOpen(false);
+                action().then(() => {
+                  setConfirmDialogOpen(false);
+                  if (confirmAction === "complete") {
+                    if (todo) {
+                      if (todo.count >= 20) {
+                        SchoolPride();
+                      } else if (todo.count >= 10) {
+                        CannonMix();
+                      } else {
+                        BasicCannon();
+                      }
+                    }
+                  }
+                });
               }}
             >
               Confirm

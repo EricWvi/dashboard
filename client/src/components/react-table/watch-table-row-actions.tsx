@@ -997,9 +997,6 @@ export function BookmarkTableRowActions<TData>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={() => handleEditBookmarkDialogOpen(true)}>
-          Edit
-        </DropdownMenuItem>
         {!!bookmark.payload.draft && (
           <DropdownMenuItem
             onClick={() => {
@@ -1010,6 +1007,9 @@ export function BookmarkTableRowActions<TData>({
             Cheat Sheet
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={() => handleEditBookmarkDialogOpen(true)}>
+          Edit
+        </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setConfirmDialogOpen(true)}

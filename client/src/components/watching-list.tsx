@@ -48,6 +48,7 @@ import { fileUpload } from "@/lib/file-upload";
 import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
 import WatchCheckpoints from "@/components/watch-checkpoint";
+import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
 
 const WatchingItem = ({ watch }: { watch: Watch }) => {
   const isMobile = useIsMobile();
@@ -586,7 +587,26 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
               </Button>
               <Button
                 onClick={() => {
-                  completeWatch().then(() => handleCompleteWatchOpen(false));
+                  completeWatch().then(() => {
+                    handleCompleteWatchOpen(false);
+                    if (watch.payload.checkpoints) {
+                      const start = new Date(watch.payload.checkpoints[0][0]);
+                      const end = new Date();
+                      const diffTime = Math.abs(
+                        end.getTime() - start.getTime(),
+                      );
+                      const diffDays = Math.ceil(
+                        diffTime / (1000 * 60 * 60 * 24),
+                      );
+                      if (diffDays >= 60) {
+                        SchoolPride();
+                      } else if (diffDays >= 30) {
+                        CannonMix();
+                      } else {
+                        BasicCannon();
+                      }
+                    }
+                  });
                 }}
                 disabled={completeWatchMutation.isPending}
               >
