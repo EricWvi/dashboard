@@ -15,6 +15,7 @@ import {
   EchoEnum,
   useCreateEcho,
   useEchoes,
+  useToggleEchoMark,
   useYears,
 } from "@/hooks/use-echoes";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { PenLine } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, getWeekRange, getWeekYearPair } from "@/lib/utils";
+import { MarkIcon } from "@/components/ui/icons";
 
 export const WeeklyRetro = () => {
   const isMobile = useIsMobile();
@@ -98,6 +100,13 @@ const Weeks = ({ year }: { year: number }) => {
   const [dialogWeekRange, setDialogWeekRange] = useState("");
   const [dialogWeek, setDialogWeek] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMark, setDialogMark] = useState(false);
+  const [dialogWeekId, setDialogWeekId] = useState(0);
+
+  const useToggleEchoMarkMutation = useToggleEchoMark(year, EchoEnum.WEEK);
+  const toggleMark = (id: number, mark: boolean) => {
+    return useToggleEchoMarkMutation.mutateAsync({ id, mark });
+  };
 
   const currWeekDraft =
     (weeks ?? [])[0]?.sub === currWeek ? (weeks ?? [])[0]?.draft : undefined;
@@ -147,17 +156,28 @@ const Weeks = ({ year }: { year: number }) => {
       {weeks
         ?.filter((week) => year !== currYear || week.sub !== currWeek)
         .map((week) => (
-          <Button
-            variant="secondary"
-            key={week.id}
-            onClick={() => {
-              const { start, end } = getWeekRange(year, week.sub);
-              setDialogWeekRange(`(${dateString(start)} - ${dateString(end)})`);
-              setDialogWeek(week.sub);
-              setDialogOpen(true);
-              setEditorId(week.draft);
-            }}
-          >{`Week ${week.sub}`}</Button>
+          <div className="relative w-fit overflow-hidden">
+            <Button
+              variant="secondary"
+              key={week.id}
+              onClick={() => {
+                const { start, end } = getWeekRange(year, week.sub);
+                setDialogWeekRange(
+                  `(${dateString(start)} - ${dateString(end)})`,
+                );
+                setDialogWeek(week.sub);
+                setDialogOpen(true);
+                setDialogMark(week.mark);
+                setDialogWeekId(week.id);
+                setEditorId(week.draft);
+              }}
+            >{`Week ${week.sub}`}</Button>
+            <div className="absolute -top-2 right-0">
+              {week.mark && (
+                <MarkIcon className="size-6 fill-[var(--mark-icon-fill)] stroke-[var(--mark-icon-stroke)]" />
+              )}
+            </div>
+          </div>
         ))}
 
       {/* the last week in last year */}
@@ -188,6 +208,18 @@ const Weeks = ({ year }: { year: number }) => {
             (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
           }}
         >
+          <div
+            className="absolute -top-1 -left-1 cursor-pointer"
+            onClick={() => {
+              toggleMark(dialogWeekId, !dialogMark).then(() =>
+                setDialogMark(!dialogMark),
+              );
+            }}
+          >
+            <MarkIcon
+              className={`size-8 ${dialogMark ? "fill-[var(--mark-icon-fill)] stroke-[var(--mark-icon-stroke)]" : "stroke-border"}`}
+            />
+          </div>
           <DialogHeader>
             <DialogTitle className="text-left">
               <div className="relative">

@@ -133,7 +133,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddHistoryColumnToTiptap,
 			Down:    RemoveHistoryColumnFromTiptap,
 		},
+		{
+			Version: "v1.2.0",
+			Name:    "Add mark column to echo",
+			Up:      AddMarkColumnToEcho,
+			Down:    RemoveMarkColumnFromEcho,
+		},
 	}
+}
+
+// -------------------- v1.2.0 -------------------
+func AddMarkColumnToEcho(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_echo
+		ADD COLUMN mark BOOLEAN DEFAULT FALSE;
+	`).Error
+}
+
+func RemoveMarkColumnFromEcho(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_echo
+		DROP COLUMN IF EXISTS mark;
+	`).Error
 }
 
 // -------------------- v1.1.0 -------------------

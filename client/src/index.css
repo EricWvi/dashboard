@@ -81,6 +81,8 @@
 
   --github-fill: #24292f;
   --dashed-borderColor: oklch(55.4% 0.046 257.417);
+  --mark-icon-fill: url(#gradient-light);
+  --mark-icon-stroke: #a78bfa;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -121,6 +123,8 @@
 
     --github-fill: #fff;
     --dashed-borderColor: oklch(86.9% 0.022 252.894);
+    --mark-icon-fill: url(#gradient-dark);
+    --mark-icon-stroke: #3b82f6;
   }
 }
 

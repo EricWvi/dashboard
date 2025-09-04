@@ -16,6 +16,7 @@ type EchoField struct {
 	Sub   int    `gorm:"type:int;not null" json:"sub"`
 	Draft int    `gorm:"type:int;default:0;not null" json:"draft"`
 	Type  string `gorm:"column:e_type;type:varchar(64);not null" json:"type"`
+	Mark  bool   `json:"mark"`
 	// CreatorId is inherited from MetaField
 }
 
@@ -25,6 +26,7 @@ const (
 	Echo_Sub   = "sub"
 	Echo_Draft = "draft"
 	Echo_Type  = "e_type"
+	Echo_Mark  = "mark"
 )
 
 func (e *Echo) TableName() string {
@@ -66,6 +68,10 @@ func (e *Echo) Create(db *gorm.DB) error {
 
 func (e *Echo) Update(db *gorm.DB, where map[string]any) error {
 	return db.Where(where).Updates(e).Error
+}
+
+func (e *Echo) ToggleMark(db *gorm.DB, where map[string]any) error {
+	return db.Table(Echo_Table).Where(where).UpdateColumn(Echo_Mark, e.Mark).Error
 }
 
 func (e *Echo) Delete(db *gorm.DB, where map[string]any) error {

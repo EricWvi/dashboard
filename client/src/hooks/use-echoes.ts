@@ -7,6 +7,7 @@ export type Echo = {
   year: number;
   sub: number;
   draft: number;
+  mark: boolean;
 };
 
 export type EchoType = "Week" | "Year" | "Decade";
@@ -77,7 +78,7 @@ export function useCreateEcho(year: number, type: EchoType) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Echo, "id" | "type" | "year">) => {
+    mutationFn: async (data: Omit<Echo, "id" | "type" | "year" | "mark">) => {
       const response = await postRequest("/api/echo?Action=CreateEcho", {
         ...data,
         type,
@@ -97,7 +98,7 @@ export function useCreateQuestionEcho(sub: number, type: EchoType) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Echo, "id" | "type" | "sub">) => {
+    mutationFn: async (data: Omit<Echo, "id" | "type" | "sub" | "mark">) => {
       const response = await postRequest("/api/echo?Action=CreateEcho", {
         ...data,
         type,
@@ -108,6 +109,25 @@ export function useCreateQuestionEcho(sub: number, type: EchoType) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: keyEchoesOfQuestion(sub, type),
+      });
+    },
+  });
+}
+
+export function useToggleEchoMark(year: number, type: EchoType) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; mark: boolean }) => {
+      const response = await postRequest("/api/echo?Action=ToggleEchoMark", {
+        id: data.id,
+        mark: data.mark,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyEchoes(year, type),
       });
     },
   });

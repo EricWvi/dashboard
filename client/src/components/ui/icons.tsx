@@ -1,4 +1,6 @@
-export const BingLogo = () => (
+import React from "react";
+
+export const BingLogo = React.memo(() => (
   <svg
     viewBox="0 0 218.302 330"
     xmlns="http://www.w3.org/2000/svg"
@@ -55,9 +57,9 @@ export const BingLogo = () => (
       fill="url(#c)"
     />
   </svg>
-);
+));
 
-export const GoogleLogo = () => (
+export const GoogleLogo = React.memo(() => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     height="24"
@@ -82,9 +84,9 @@ export const GoogleLogo = () => (
     />
     <path d="M1 1h22v22H1z" fill="none" />
   </svg>
-);
+));
 
-export const BaiduLogo = () => (
+export const BaiduLogo = React.memo(() => (
   <svg
     width="46"
     height="46"
@@ -124,18 +126,18 @@ export const BaiduLogo = () => (
       </clipPath>
     </defs>
   </svg>
-);
+));
 
-export const TranslateLogo = () => (
+export const TranslateLogo = React.memo(() => (
   <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path
       fill="#EA4C89"
       d="M8.607 4.008h-1.75v1.749H3.539v5.85h3.318v2.534h1.75v-2.533h3.317V5.757H8.607Zm-1.75 3.498H5.289V9.86h1.568Zm1.75 2.353V7.506h1.568V9.86Zm12.065 10.133-3.68-9.229h-1.75l-3.68 9.23h1.87l.954-2.474h3.462l.954 2.473zm-3.499-4.222-1.056-2.738-1.056 2.738zm-9.471 4.222h2.594v-1.749H7.702a1.57 1.57 0 0 1-1.569-1.568v-1.75h-1.75v1.75a3.32 3.32 0 0 0 3.319 3.317m5.851-15.14v1.75h2.594c.867 0 1.569.702 1.569 1.568v1.81h1.75V8.17a3.32 3.32 0 0 0-3.319-3.318zM0 3.75A3.75 3.75 0 0 1 3.75 0h16.5A3.75 3.75 0 0 1 24 3.75v16.5A3.75 3.75 0 0 1 20.25 24H3.75A3.75 3.75 0 0 1 0 20.25Z"
     />
   </svg>
-);
+));
 
-export const GitHubLogo = () => (
+export const GitHubLogo = React.memo(() => (
   <svg
     width="98"
     height="96"
@@ -149,9 +151,9 @@ export const GitHubLogo = () => (
       fill="var(--github-fill)"
     />
   </svg>
-);
+));
 
-export const XiaoHongShuLogo = () => (
+export const XiaoHongShuLogo = React.memo(() => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
     <path
       d="M289.44 256h188.23c17.93 0 33.86 15.57 34.33 33.48v188.24A35.09 35.09 0 0 1 477.66 512H289.5a35.14 35.14 0 0 1-33.5-34.36V289.56c.43-17.63 15.81-33.06 33.44-33.56m16.73 91.44c-.13 19.87-.06 39.75-.16 59.63a2.1 2.1 0 0 1-2.13 2.6c-2.39.14-4.79.06-7.19.08 1.61 4 3.35 7.86 5.15 11.73 4.52-.15 9.68.79 13.54-2.17 3.47-2.58 4.58-7.17 4.51-11.3 0-20.19 0-40.39-.09-60.58-4.54-.02-9.09-.03-13.63.01m56.08-.9q-5.08 11.67-10.36 23.24c-1 2.31-2.21 5.37-.11 7.46 2.69 2.44 6.64 1.5 9.94 1.72-2.29 5.78-5.3 11.27-7.23 17.19-1.07 2.92 1.6 5.89 4.52 5.92 5.29.36 10.6 0 15.9.14 1.73-3.87 3.47-7.73 5.17-11.62-3.09 0-6.21.22-9.25-.39 3.29-8.26 7.19-16.25 10.68-24.41-4.27-.5-9.1.89-13-.77 1.9-6.4 5.36-12.27 7.8-18.5-4.7-.02-9.38-.05-14.06.02m72.75.05v5.21h-9.18v13.93c3.07 0 6.13 0 9.19.06q.12 6 0 12.08c-4.6.09-9.21 0-13.81.07-.06 4.64-.05 9.27 0 13.9 4.61.05 9.23 0 13.84 0v29.59h13.85v-29.57c6.74 0 13.47-.1 20.21 0 2.37-.2 5.08 1.46 5 4.07a111 111 0 0 1 0 11.08 2.26 2.26 0 0 1-2.12 2.39c-3.85.28-7.71 0-11.57.13 1.7 4 3.35 8 5.28 11.95 6.35-.33 14.11 1.27 18.95-4 4.6-4.26 3.22-11 3.41-16.56-.29-5.85 1.14-12.46-2.49-17.58-3.09-4.34-8.66-5.52-13.68-5.61-.3-7 1.37-15.19-3.78-20.88-4.8-5.38-12.53-5.4-19.17-5.14v-5.2c-4.7.05-9.32.06-13.93.08m-49.42 5.22v13.92h8.69v41.74c-4.15.07-8.31 0-12.46.05-2.15 4.62-4.25 9.26-6.34 13.9 15.48.06 31 0 46.44 0v-13.9c-4.45 0-8.91 0-13.36-.05V365.7h8.72v-13.93c-10.54.02-21.11 0-31.69.04m91.35 1.28c-3.88 2.94-2.61 8.32-2.78 12.51 2.59 0 5.19.14 7.78-.09 4.16-.38 7.29-5.23 5.62-9.15-1.31-4.3-7.12-6.17-10.62-3.27M283 365.72c-.7 9.12-1.41 18.23-2.07 27.35a22.1 22.1 0 0 1-1.32 6.06c2.34 5.35 4.68 10.7 7.18 16 5.6-7.49 7.68-16.93 8.26-26.1.49-7.8 1.36-15.59 1.64-23.4-4.59.16-9.15.05-13.69.09m46.13 0 2 25.37c.73 8.48 2.92 17.12 8.1 24 2.47-5.29 4.83-10.63 7.17-16A21.7 21.7 0 0 1 345 393c-.66-9.09-1.38-18.18-2.08-27.27q-6.92-.04-13.82-.01Zm17.16 54.69c7.08 2.09 14.58.66 21.85 1.05 2.14-4.63 4.27-9.27 6.35-13.93-7.27-.28-14.67.76-21.8-1.07q-3.27 6.95-6.43 13.95Z"
@@ -174,9 +176,9 @@ export const XiaoHongShuLogo = () => (
       fill="#fff"
     />
   </svg>
-);
+));
 
-export const BilibiliLogo = () => (
+export const BilibiliLogo = React.memo(() => (
   <svg
     width="48"
     height="48"
@@ -200,9 +202,9 @@ export const BilibiliLogo = () => (
       strokeLinecap="round"
     />
   </svg>
-);
+));
 
-export const ZhihuLogo = () => (
+export const ZhihuLogo = React.memo(() => (
   <svg
     width="46"
     height="46"
@@ -227,29 +229,31 @@ export const ZhihuLogo = () => (
       fill="#1570E1"
     />
   </svg>
+));
+
+export const DashboardIcon = React.memo(
+  ({ className }: { className?: string }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+      <path d="M10 4l4 16" />
+      <path d="M12 12l-8 2" />
+    </svg>
+  ),
 );
 
-export const DashboardIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
-    <path d="M10 4l4 16" />
-    <path d="M12 12l-8 2" />
-  </svg>
-);
-
-export const TodoIcon = ({ className }: { className?: string }) => (
+export const TodoIcon = React.memo(({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -266,53 +270,57 @@ export const TodoIcon = ({ className }: { className?: string }) => (
     <path d="M9 11l3 3l8 -8" />
     <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9" />
   </svg>
+));
+
+export const JourneyIcon = React.memo(
+  ({ className }: { className?: string }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+      <path d="M8 4l0 16" />
+      <path d="M16 4l0 16" />
+      <path d="M4 8l4 0" />
+      <path d="M4 16l4 0" />
+      <path d="M4 12l16 0" />
+      <path d="M16 8l4 0" />
+      <path d="M16 16l4 0" />
+    </svg>
+  ),
 );
 
-export const JourneyIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
-    <path d="M8 4l0 16" />
-    <path d="M16 4l0 16" />
-    <path d="M4 8l4 0" />
-    <path d="M4 16l4 0" />
-    <path d="M4 12l16 0" />
-    <path d="M16 8l4 0" />
-    <path d="M16 16l4 0" />
-  </svg>
+export const BookmarkIcon = React.memo(
+  ({ className }: { className?: string }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M15 10v11l-5 -3l-5 3v-11a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3z" />
+      <path d="M11 3h5a3 3 0 0 1 3 3v11" />
+    </svg>
+  ),
 );
 
-export const BookmarkIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <path d="M15 10v11l-5 -3l-5 3v-11a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3z" />
-    <path d="M11 3h5a3 3 0 0 1 3 3v11" />
-  </svg>
-);
-
-export const EchoIcon = ({ className }: { className?: string }) => (
+export const EchoIcon = React.memo(({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -329,4 +337,29 @@ export const EchoIcon = ({ className }: { className?: string }) => (
     <path d="M17.802 17.292s.077 -.055 .2 -.149c1.843 -1.425 3 -3.49 3 -5.789c0 -4.286 -4.03 -7.764 -9 -7.764c-4.97 0 -9 3.478 -9 7.764c0 4.288 4.03 7.646 9 7.646c.424 0 1.12 -.028 2.088 -.084c1.262 .82 3.104 1.493 4.716 1.493c.499 0 .734 -.41 .414 -.828c-.486 -.596 -1.156 -1.551 -1.416 -2.29z" />
     <path d="M7.5 13.5c2.5 2.5 6.5 2.5 9 0" />
   </svg>
-);
+));
+
+export const MarkIcon = React.memo(({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M7 4C7 2.89543 7.89543 2 9 2H15C16.1046 2 17 2.89543 17 4V22L12 18L7 22V4Z"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <defs>
+      <linearGradient id="gradient-dark" x1="12" y1="2" x2="12" y2="22">
+        <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.9" />
+        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.95" />
+      </linearGradient>
+      <linearGradient id="gradient-light" x1="12" y1="2" x2="12" y2="22">
+        <stop offset="0%" stop-color="#c084fc" stop-opacity="0.95" />
+        <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.9" />
+      </linearGradient>
+    </defs>
+  </svg>
+));
