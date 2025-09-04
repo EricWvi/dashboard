@@ -9,13 +9,17 @@ import (
 
 type User struct {
 	gorm.Model
+	UserField
 	Email      string `gorm:"size:100;uniqueIndex;not null"`
-	Avatar     string `gorm:"size:1024" json:"avatar"`
-	Username   string `gorm:"size:1024" json:"username"`
 	RssToken   string `gorm:"column:rss_token;size:255" json:"rssToken"`
 	EmailToken string `gorm:"column:email_token;size:255" json:"emailToken"`
 	EmailFeed  string `gorm:"column:email_feed;size:255" json:"emailFeed"`
-	Language   string `gorm:"column:language;size:10;default:'zh-CN';not null" json:"language"`
+}
+
+type UserField struct {
+	Avatar   string `gorm:"size:1024" json:"avatar"`
+	Language string `gorm:"column:language;size:10;default:'zh-CN';not null" json:"language"`
+	Username string `gorm:"size:1024" json:"username"`
 }
 
 const (

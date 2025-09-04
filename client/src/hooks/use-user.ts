@@ -80,7 +80,7 @@ export function useSignUp() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { avatar: string; username: string }) => {
-      const response = await postRequest("/api/user?Action=SignUp", data);
+      const response = await postRequest("/api/user?Action=UpdateUser", data);
       return response.json();
     },
     onSuccess: () => {
@@ -92,8 +92,12 @@ export function useSignUp() {
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { avatar: string; username: string }) => {
-      const response = await postRequest("/api/user?Action=SignUp", data);
+    mutationFn: async (data: {
+      avatar: string;
+      username: string;
+      language: UserLang;
+    }) => {
+      const response = await postRequest("/api/user?Action=UpdateUser", data);
       return response.json();
     },
     onSuccess: () => {
@@ -126,6 +130,19 @@ export function useUpdateRssToken() {
         "/api/user?Action=UpdateRssToken",
         data,
       );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keyUser() });
+    },
+  });
+}
+
+export function useUpdateLanguage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { language: UserLang }) => {
+      const response = await postRequest("/api/user?Action=UpdateUser", data);
       return response.json();
     },
     onSuccess: () => {

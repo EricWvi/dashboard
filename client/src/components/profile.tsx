@@ -29,6 +29,7 @@ import {
   invalidMailCount,
   invalidRSSCount,
   useMailCount,
+  UserLangEnum,
   useRSSCount,
   useUpdateEmailToken,
   useUpdateProfile,
@@ -40,9 +41,10 @@ import { Plus, X } from "lucide-react";
 import { fileUpload } from "@/lib/file-upload";
 import { formatMediaUrl } from "@/lib/utils";
 import { useUserContext } from "@/user-provider";
+import { LanguageSwitch } from "./language-switch";
 
 export const Profile = () => {
-  const { user } = useUserContext();
+  const { user, language } = useUserContext();
   const [openDropdown, setOpenDropdown] = useState(false);
   // edit rss token
   const [rssTokenDialogOpen, setRssTokenDialogOpen] = useState(false);
@@ -75,6 +77,7 @@ export const Profile = () => {
   const updateProfileMutation = useUpdateProfile();
   const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
   const [username, setUsername] = useState("");
+  const [userLang, setUserLang] = useState(UserLangEnum.ZHCN);
   const [avatar, setAvatar] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const handleFileUpload = async (
@@ -91,12 +94,14 @@ export const Profile = () => {
   const handleEditProfileDialogOpen = () => {
     setUsername(user.username);
     setAvatar(user.avatar);
+    setUserLang(user.language);
     setEditProfileDialogOpen(true);
   };
   const updateProfile = () => {
     return updateProfileMutation.mutateAsync({
       avatar: avatar.trim(),
       username: username.trim(),
+      language: userLang,
     });
   };
 
@@ -111,40 +116,32 @@ export const Profile = () => {
               <AvatarFallback />
             </Avatar>
 
-            <div
-              className={`${openDropdown ? "" : "opacity-0"} bg-accent border-border absolute right-[18%] bottom-[18%] size-10 translate-1/2 cursor-pointer rounded-full border group-hover:opacity-100`}
-            >
-              <div
-                className="flex size-full items-center justify-center"
-                onClick={() => {}}
-              >
-                <DropdownMenu
-                  open={openDropdown}
-                  onOpenChange={setOpenDropdown}
+            <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
+              <DropdownMenuTrigger asChild>
+                <div
+                  className={`${openDropdown ? "" : "opacity-0"} bg-accent border-border absolute right-[18%] bottom-[18%] size-10 translate-1/2 cursor-pointer rounded-full border group-hover:opacity-100`}
                 >
-                  <DropdownMenuTrigger asChild>
+                  <div className="flex size-full items-center justify-center">
                     <div className="mt-[2px] text-2xl leading-none">⚙️</div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[160px]">
-                    <DropdownMenuItem onClick={handleEditProfileDialogOpen}>
-                      Edit Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleRssTokenDialogOpen}>
-                      Set Miniflux Token
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEmailTokenDialogOpen}>
-                      Set QQMail Token
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <div className="text-muted-foreground">
-                        {__APP_VERSION__}
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuItem onClick={handleEditProfileDialogOpen}>
+                  {i18nText[language].editProfile}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRssTokenDialogOpen}>
+                  {i18nText[language].minifluxToken}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleEmailTokenDialogOpen}>
+                  {i18nText[language].qqMailToken}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <div className="text-muted-foreground">{__APP_VERSION__}</div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           {/* greeting */}
           <div>
@@ -293,13 +290,20 @@ export const Profile = () => {
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-8">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-profile-username">Username</Label>
-              <Input
-                id="edit-profile-username"
-                value={username}
-                disabled={updateProfileMutation.isPending}
-                onChange={(e) => setUsername(e.target.value)}
+            <div className="flex items-end justify-between gap-6">
+              <div className="mb-[2px] flex flex-1 flex-col gap-2">
+                <Label htmlFor="edit-profile-username">Username</Label>
+                <Input
+                  id="edit-profile-username"
+                  value={username}
+                  disabled={updateProfileMutation.isPending}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+
+              <LanguageSwitch
+                defaultLanguage={userLang}
+                onLanguageChange={setUserLang}
               />
             </div>
 
@@ -526,4 +530,17 @@ const QQMailSheet = (props: React.ComponentProps<"div">) => {
       )}
     </div>
   );
+};
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    editProfile: "个人信息",
+    minifluxToken: "Miniflux Token",
+    qqMailToken: "QQ 邮箱 Token",
+  },
+  [UserLangEnum.ENUS]: {
+    editProfile: "Edit Profile",
+    minifluxToken: "Set Miniflux Token",
+    qqMailToken: "Set QQMail Token",
+  },
 };

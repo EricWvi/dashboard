@@ -8,10 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (b Base) SignUp(c *gin.Context, req *SignUpRequest) *SignUpResponse {
+func (b Base) UpdateUser(c *gin.Context, req *UpdateUserRequest) *UpdateUserResponse {
 	user := &model.User{}
-	user.Avatar = req.Avatar
-	user.Username = req.Username
+	user.UserField = req.UserField
 	m := model.WhereMap{}
 	m.Eq(model.Id, middleware.GetUserId(c))
 
@@ -20,13 +19,12 @@ func (b Base) SignUp(c *gin.Context, req *SignUpRequest) *SignUpResponse {
 		return nil
 	}
 
-	return &SignUpResponse{}
+	return &UpdateUserResponse{}
 }
 
-type SignUpRequest struct {
-	Avatar   string `json:"avatar"`
-	Username string `json:"username"`
+type UpdateUserRequest struct {
+	model.UserField
 }
 
-type SignUpResponse struct {
+type UpdateUserResponse struct {
 }

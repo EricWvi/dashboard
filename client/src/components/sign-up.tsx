@@ -1,19 +1,28 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSignUp } from "@/hooks/use-user";
+import {
+  UserLangEnum,
+  useSignUp,
+  useUpdateLanguage,
+  type UserLang,
+} from "@/hooks/use-user";
 import { fileUpload } from "@/lib/file-upload";
 import { formatMediaUrl } from "@/lib/utils";
+import { useUserContext } from "@/user-provider";
 import { ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { LanguageSwitch } from "@/components/language-switch";
 
 export default function SignUp() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatar, setAvatar] = useState("");
   const signUpMutation = useSignUp();
+  const changeLangMutation = useUpdateLanguage();
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -38,12 +47,23 @@ export default function SignUp() {
     }
   };
 
+  const changeLang = (language: UserLang) => {
+    changeLangMutation.mutateAsync({ language });
+  };
+
   useEffect(() => {
     inputRef.current?.focus();
   }, [inputRef]);
 
   return (
     <div className="flex size-full flex-col">
+      <div className="fixed top-4 right-4">
+        <LanguageSwitch
+          defaultLanguage={language}
+          onLanguageChange={changeLang}
+        />
+      </div>
+
       <div
         className={`flex min-h-0 flex-1/1 items-center justify-center ${isMobile ? "flex-col gap-4" : "flex-row gap-16"}`}
       >
@@ -77,13 +97,15 @@ export default function SignUp() {
               className="absolute bottom-0 left-10 flex text-2xl font-semibold"
               style={{ fontFamily: "CormorantGaramond" }}
             >
-              <span className="mr-1 whitespace-nowrap">You are</span>
+              <span className="mr-1 whitespace-nowrap">
+                {i18nText[language].youAre}
+              </span>
               <span
                 ref={inputRef}
                 contentEditable
                 className="min-w-2 border-none whitespace-nowrap [caret-color:var(--tt-cursor-color)] outline-none"
               ></span>
-              .
+              {i18nText[language].period}
             </div>
           </div>
           <Button
@@ -91,7 +113,7 @@ export default function SignUp() {
             className="text-xl font-medium underline"
             onClick={signUp}
           >
-            Got you!
+            {i18nText[language].gotYou}
           </Button>
         </div>
       </div>
@@ -99,3 +121,16 @@ export default function SignUp() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    youAre: "你是",
+    period: "。",
+    gotYou: "开始同步!",
+  },
+  [UserLangEnum.ENUS]: {
+    youAre: "You are",
+    period: ".",
+    gotYou: "Got you!",
+  },
+};
