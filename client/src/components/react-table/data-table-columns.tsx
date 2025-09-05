@@ -46,6 +46,7 @@ import {
 import { dateString } from "@/lib/utils";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 import { BlogEnum, type Blog } from "@/hooks/use-blogs";
+import { useTTContext } from "@/components/editor";
 
 export const ratings = [
   {
@@ -612,10 +613,21 @@ export const blogColumns: ColumnDef<Blog>[] = [
       <DataTableColumnHeader column={column} title="Title" />
     ),
     cell: ({ row }) => {
+      const { setId: setEditorId, setOpen: setEditorDialogOpen } =
+        useTTContext();
+
       return (
         <div className="flex gap-2">
           <div className="max-w-[600px] truncate font-medium">
-            {row.getValue("title")}
+            <span
+              className="cursor-pointer"
+              onClick={() => {
+                setEditorId(row.original.draft);
+                setEditorDialogOpen(true);
+              }}
+            >
+              {row.getValue("title")}
+            </span>
             <Badge
               variant={
                 row.original.visibility === BlogEnum.PUBLIC

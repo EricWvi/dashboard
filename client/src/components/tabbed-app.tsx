@@ -18,9 +18,15 @@ import {
   TodoIcon,
 } from "@/components/ui/icons";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
-import { getSessionStatus, syncSessionStatus } from "@/hooks/use-user";
+import {
+  getSessionStatus,
+  syncSessionStatus,
+  UserLangEnum,
+} from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export default function TabbedApp() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [tabBarOpen, setTabBarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -81,37 +87,43 @@ export default function TabbedApp() {
                     value="dashboard"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
-                    <span className="lg:inline">Dashboard</span>
+                    <span className="lg:inline">
+                      {i18nText[language].dashboard}
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="todo"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
-                    <span className="lg:inline">Todo</span>
+                    <span className="lg:inline">{i18nText[language].todo}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="journey"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
-                    <span className="lg:inline">Journey</span>
+                    <span className="lg:inline">
+                      {i18nText[language].journey}
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="bookmark"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
-                    <span className="lg:inline">Bookmark</span>
+                    <span className="lg:inline">
+                      {i18nText[language].bookmark}
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="echo"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
-                    <span className="lg:inline">Echo</span>
+                    <span className="lg:inline">{i18nText[language].echo}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="blog"
                     className="data-[state=active]:bg-accent flex items-center gap-2"
                   >
-                    <span className="lg:inline">Blog</span>
+                    <span className="lg:inline">{i18nText[language].blog}</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -135,7 +147,9 @@ export default function TabbedApp() {
               <DashboardIcon
                 className={`size-6 ${activeTab === "dashboard" ? "" : "dark:text-muted-foreground text-gray-700"}`}
               />
-              {activeTab === "dashboard" && <div className="">Dashboard</div>}
+              {activeTab === "dashboard" && (
+                <div className="">{i18nText[language].dashboard}</div>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="todo"
@@ -144,7 +158,9 @@ export default function TabbedApp() {
               <TodoIcon
                 className={`size-6 ${activeTab === "todo" ? "" : "dark:text-muted-foreground text-gray-700"}`}
               />
-              {activeTab === "todo" && <div className="">Todo</div>}
+              {activeTab === "todo" && (
+                <div className="">{i18nText[language].todo}</div>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="journey"
@@ -153,7 +169,9 @@ export default function TabbedApp() {
               <JourneyIcon
                 className={`size-6 ${activeTab === "journey" ? "" : "dark:text-muted-foreground text-gray-700"}`}
               />
-              {activeTab === "journey" && <div className="">Journey</div>}
+              {activeTab === "journey" && (
+                <div className="">{i18nText[language].journey}</div>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="bookmark"
@@ -162,7 +180,9 @@ export default function TabbedApp() {
               <BookmarkIcon
                 className={`size-6 ${activeTab === "bookmark" ? "" : "dark:text-muted-foreground text-gray-700"}`}
               />
-              {activeTab === "bookmark" && <div className="">Bookmark</div>}
+              {activeTab === "bookmark" && (
+                <div className="">{i18nText[language].bookmark}</div>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="echo"
@@ -171,7 +191,9 @@ export default function TabbedApp() {
               <EchoIcon
                 className={`size-6 ${activeTab === "echo" ? "" : "dark:text-muted-foreground text-gray-700"}`}
               />
-              {activeTab === "echo" && <div className="">Echo</div>}
+              {activeTab === "echo" && (
+                <div className="">{i18nText[language].echo}</div>
+              )}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -226,3 +248,22 @@ export default function TabbedApp() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    dashboard: "首页",
+    todo: "待办",
+    journey: "探索",
+    bookmark: "书签",
+    echo: "回声",
+    blog: "博客",
+  },
+  [UserLangEnum.ENUS]: {
+    dashboard: "Dashboard",
+    todo: "Todo",
+    journey: "Journey",
+    bookmark: "Bookmark",
+    echo: "Echo",
+    blog: "Blog",
+  },
+};

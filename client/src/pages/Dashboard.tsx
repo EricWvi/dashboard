@@ -12,23 +12,36 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const { user } = useUserContext();
   const [greetingHour, setGreetingHour] = useState(new Date().getHours());
-  const [greeting, setGreeting] = useState(refinedGreeting());
+  const [greeting, setGreeting] = useState(refinedGreeting()[user.language]);
   usePageVisibility(() => {
     if (new Date().getHours() !== greetingHour) {
       setGreetingHour(new Date().getHours());
-      setGreeting(refinedGreeting());
+      setGreeting(refinedGreeting()[user.language]);
     }
   });
 
   return (
     <div
-      className={`flex size-full flex-col gap-2 ${isMobile ? "pt-6" : "p-8"}`}
+      className={`flex size-full flex-col gap-2 ${isMobile ? "pt-4" : "p-8"}`}
     >
       {isMobile && (
         <div className="px-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <Avatar className="border border-gray-300">
+            <div>
+              <span
+                className="mr-3 text-[36px] font-bold"
+                style={{ fontFamily: "Allura" }}
+              >
+                Hi,
+              </span>
+              <span
+                className="text-3xl font-semibold"
+                style={{ fontFamily: "CormorantGaramond" }}
+              >
+                {user.username}
+              </span>
+            </div>
+            <Avatar className="mb-2 border border-gray-300">
               <AvatarImage src={user.avatar} />
               <AvatarFallback />
             </Avatar>

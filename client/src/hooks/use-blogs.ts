@@ -46,7 +46,7 @@ const blogInitialContent = (title: string) => [
   {
     type: "heading",
     attrs: {
-      level: 3,
+      level: 1,
       textAlign: null,
     },
     content: [

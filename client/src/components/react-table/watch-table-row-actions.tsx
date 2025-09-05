@@ -1182,7 +1182,6 @@ export function BlogTableRowActions<TData>({
   const [blogName, setBlogName] = useState("");
   const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
   const [selectedHows, setSelectedHows] = useState<string[]>([]);
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const updateBlogMutation = useUpdateBlog();
   const updateBlog = () => {
     return updateBlogMutation.mutateAsync({
@@ -1252,6 +1251,9 @@ export function BlogTableRowActions<TData>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
+        <DropdownMenuItem onClick={() => handleEditBlogDialogOpen(true)}>
+          Rename
+        </DropdownMenuItem>
         {blog.visibility === BlogEnum.PRIVATE && (
           <DropdownMenuItem
             onClick={() => {
@@ -1274,17 +1276,6 @@ export function BlogTableRowActions<TData>({
             Unpublish
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={() => handleEditBlogDialogOpen(true)}>
-          Edit Properties
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            setEditorId(blog.draft ?? 0);
-            setEditorDialogOpen(true);
-          }}
-        >
-          Edit Contents
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => {

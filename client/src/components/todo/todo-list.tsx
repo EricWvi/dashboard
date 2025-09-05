@@ -48,8 +48,10 @@ import {
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import { isDisabledPlan, isSetToday } from "@/lib/utils";
+import { fullDateString, isDisabledPlan, isSetToday } from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 const TodoList = ({
   collectionId,
@@ -360,6 +362,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
 };
 
 export const TodayTodoList = () => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: today, isPending } = useToday();
   const [showLoading, setShowLoading] = useState(true);
@@ -427,7 +430,7 @@ export const TodayTodoList = () => {
       <CardHeader>
         <CardTitle>
           <div className="flex justify-between">
-            <div className="text-xl">Today</div>
+            <div className="text-xl">{i18nText[language].today}</div>
             <Button
               variant={"ghost"}
               size="icon"
@@ -465,7 +468,7 @@ export const TodayTodoList = () => {
             (today.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">
-                  No Scheduled Tasks...
+                  {i18nText[language].noSchedule}
                 </div>
                 <div className="min-h-0 flex-1"></div>
               </div>
@@ -518,19 +521,12 @@ export const TodayTodoList = () => {
         <DialogContent className="sm:max-w-md" showCloseButton={false}>
           <div className="flex items-start justify-between">
             <DialogHeader className="text-left">
-              <DialogTitle>My Day</DialogTitle>
+              <DialogTitle>{i18nText[language].myDay}</DialogTitle>
               <DialogDescription>
-                {new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {fullDateString(new Date(), language)}
               </DialogDescription>
             </DialogHeader>
-            <Button className="px-6" onClick={planSelectedIds}>
-              Plan
-            </Button>
+            <Button onClick={planSelectedIds}>{i18nText[language].plan}</Button>
           </div>
           <div className="h-140 space-y-6 overflow-scroll sm:h-180">
             {Object.entries(
@@ -581,6 +577,21 @@ export const TodayTodoList = () => {
       </Dialog>
     </Card>
   );
+};
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    today: "今日",
+    noSchedule: "暂无待办事项...",
+    myDay: "我的一天",
+    plan: "规 划",
+  },
+  [UserLangEnum.ENUS]: {
+    today: "Today",
+    noSchedule: "No Scheduled Tasks...",
+    myDay: "My Day",
+    plan: "Plan",
+  },
 };
 
 export default TodoList;

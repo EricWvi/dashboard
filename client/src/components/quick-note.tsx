@@ -38,8 +38,11 @@ import {
 } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export const QuickNoteList = () => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const { data: notes, isPending } = useQuickNotes();
@@ -91,7 +94,7 @@ export const QuickNoteList = () => {
       <CardHeader>
         <CardTitle>
           <div className="flex justify-between">
-            <div className="text-xl">Quick Note</div>
+            <div className="text-xl">{i18nText[language].quickNote}</div>
             <Button
               variant={"ghost"}
               size="icon"
@@ -124,7 +127,7 @@ export const QuickNoteList = () => {
             (notes.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">
-                  No quick notes...
+                  {i18nText[language].noQuickNotes}
                 </div>
                 <div className="min-h-0 flex-1"></div>
               </div>
@@ -170,7 +173,7 @@ export const QuickNoteList = () => {
                           onClick={() => handleEditTitleDialogOpen(note)}
                         >
                           <Edit />
-                          Rename
+                          {i18nText[language].rename}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
@@ -179,14 +182,14 @@ export const QuickNoteList = () => {
                           }}
                         >
                           <NotepadText />
-                          Edit Note
+                          {i18nText[language].editNote}
                         </DropdownMenuItem>
                         {idx !== notes.length - 1 && (
                           <DropdownMenuItem
                             onClick={() => moveToBottom(note.id)}
                           >
                             <CornerRightDown />
-                            Bottom
+                            {i18nText[language].bottom}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -199,7 +202,7 @@ export const QuickNoteList = () => {
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="text-destructive" />
-                          Delete
+                          {i18nText[language].delete}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -215,9 +218,9 @@ export const QuickNoteList = () => {
       <Dialog open={editTitleDialogOpen} onOpenChange={setEditTitleDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename Quick Note</DialogTitle>
+            <DialogTitle>{`${i18nText[language].rename} ${i18nText[language].quickNote}`}</DialogTitle>
             <DialogDescription>
-              Enter a new name for your quick note.
+              {i18nText[language].enterNewName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -240,13 +243,13 @@ export const QuickNoteList = () => {
                 variant="outline"
                 onClick={() => setEditTitleDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={onRename}
                 disabled={!noteName.trim() || updateQuickNoteMutation.isPending}
               >
-                Rename
+                {i18nText[language].rename}
               </Button>
             </div>
           </div>
@@ -257,9 +260,9 @@ export const QuickNoteList = () => {
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogTitle>{i18nText[language].confirmAction}</DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              {`Are you sure you want to {delete} [${noteName}]`}
+              {`${i18nText[language].confirmDeleteDescStart}${noteName}${i18nText[language].confirmDeleteDescEnd}`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -267,7 +270,7 @@ export const QuickNoteList = () => {
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {i18nText[language].cancel}
             </Button>
             <Button
               variant="destructive"
@@ -278,13 +281,44 @@ export const QuickNoteList = () => {
                 setConfirmDialogOpen(false);
               }}
             >
-              Confirm
+              {i18nText[language].confirm}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </Card>
   );
+};
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    quickNote: "速记",
+    noQuickNotes: "暂无速记...",
+    rename: "重命名",
+    editNote: "编辑",
+    bottom: "置底",
+    delete: "删除",
+    enterNewName: "为你的速记输入一个新名称",
+    confirmAction: "确认操作",
+    confirmDeleteDescStart: "你确定要删除「",
+    confirmDeleteDescEnd: "」吗？",
+    cancel: "取消",
+    confirm: "确认",
+  },
+  [UserLangEnum.ENUS]: {
+    quickNote: "Quick Note",
+    noQuickNotes: "No quick notes...",
+    rename: "Rename",
+    editNote: "Edit Note",
+    bottom: "Bottom",
+    delete: "Delete",
+    enterNewName: "Enter a new name for your quick note.",
+    confirmAction: "Confirm Action",
+    confirmDeleteDescStart: "Are you sure you want to {delete} [",
+    confirmDeleteDescEnd: "]?",
+    cancel: "Cancel",
+    confirm: "Confirm",
+  },
 };
 
 export default QuickNoteList;
