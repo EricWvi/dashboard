@@ -39,7 +39,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
-import { domains, getTypes } from "@/components/react-table/data-table-columns";
+import { domains, types } from "@/components/react-table/data-table-columns";
 import {
   useDeleteWatch,
   useStartWatch,
@@ -51,8 +51,10 @@ import {
   type Watch,
   useCreateToWatch,
   type WatchMeasure,
+  WatchTypeText,
+  WatchMeasureText,
 } from "@/hooks/use-watches";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, formatMediaUrl, todayStart } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
@@ -68,6 +70,7 @@ import { createTiptap } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
 import { BlogEnum, useUpdateBlog, type Blog } from "@/hooks/use-blogs";
 import { useUserContext } from "@/user-provider";
+import { UserLangEnum } from "@/hooks/use-user";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -76,7 +79,6 @@ interface DataTableRowActionsProps<TData> {
 export function WatchedTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const watch = row.original as Watch;
   const [entryName, setEntryName] = useState("");
@@ -91,8 +93,6 @@ export function WatchedTableRowActions<TData>({
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const updateWatchMutation = useUpdateWatch([WatchStatus.COMPLETED]);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
-
-  const types = useMemo(() => getTypes(language), [language]);
 
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
@@ -529,6 +529,67 @@ export function WatchedTableRowActions<TData>({
   );
 }
 
+const watchI18nText = {
+  [UserLangEnum.ZHCN]: {
+    edit: "编辑",
+    review: "评论",
+    moveToTop: "置顶",
+    startWatching: "标记在看",
+    delete: "删除",
+    editToWatchEntry: "编辑想看",
+    name: "名称",
+    namePlaceholder: "输入名称...",
+    author: "作者",
+    authorPlaceholder: "输入作者...",
+    type: "类别",
+    typePlaceholder: "选择类别",
+    year: "年份",
+    yearPlaceholder: "输入年份...",
+    link: "链接",
+    linkPlaceholder: "输入链接...",
+    cancel: "取消",
+    update: "更新",
+    start: "开始",
+    measure: "进度单位",
+    measurePlaceholder: "选择进度单位",
+    range: "总量",
+    measureRangePlaceholder: "输入进度总量...",
+    confirmDeletion: "确认删除",
+    confirmDeletionStart: "确定要删除「",
+    confirmDeletionEnd: "」吗？",
+    confirm: "确认",
+  },
+  [UserLangEnum.ENUS]: {
+    edit: "Edit",
+    review: "Review",
+    moveToTop: "Move to Top",
+    startWatching: "Start Watching",
+    delete: "Delete",
+    editToWatchEntry: "Edit ToWatch Entry",
+    name: "Name",
+    namePlaceholder: "Enter entry name...",
+    author: "Author",
+    authorPlaceholder: "Enter entry author...",
+    type: "Type",
+    typePlaceholder: "Select entry type",
+    year: "Year",
+    yearPlaceholder: "Enter entry year...",
+    link: "Link",
+    linkPlaceholder: "Enter entry link...",
+    cancel: "Cancel",
+    update: "Update",
+    start: "Start",
+    measure: "Measure",
+    measurePlaceholder: "Select measure type",
+    range: "Range",
+    measureRangePlaceholder: "Enter measure range...",
+    confirmDeletion: "Confirm Deletion",
+    confirmDeletionStart: "Are you sure you want to delete [",
+    confirmDeletionEnd: "]?",
+    confirm: "Confirm",
+  },
+};
+
 export function ToWatchTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
@@ -544,8 +605,6 @@ export function ToWatchTableRowActions<TData>({
   const [entryAuthor, setEntryAuthor] = useState<string>("");
   const updateWatchMutation = useUpdateWatch([WatchStatus.PLAN_TO_WATCH]);
   const startWatchMutation = useStartWatch();
-
-  const types = useMemo(() => getTypes(language), [language]);
 
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
@@ -667,21 +726,23 @@ export function ToWatchTableRowActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
-          Edit
+          {watchI18nText[language].edit}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={reviewWatch}>Review</DropdownMenuItem>
+        <DropdownMenuItem onClick={reviewWatch}>
+          {watchI18nText[language].review}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => moveToTop()}>
-          Move to Top
+          {watchI18nText[language].moveToTop}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleStartWatchingDialogOpen(true)}>
-          Start Watching
+          {watchI18nText[language].startWatching}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setConfirmDialogOpen(true)}
         >
-          Delete
+          {watchI18nText[language].delete}
         </DropdownMenuItem>
       </DropdownMenuContent>
 
@@ -692,13 +753,17 @@ export function ToWatchTableRowActions<TData>({
       >
         <DialogContent className="gap-1 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Start {watch.title}</DialogTitle>
+            <DialogTitle>
+              {watchI18nText[language].start} {watch.title}
+            </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-start-watch-measure">Measure</Label>
+                <Label htmlFor="towatch-start-watch-measure">
+                  {watchI18nText[language].measure}
+                </Label>
                 <Select
                   value={entryMeasure}
                   onValueChange={(v: string) => {
@@ -708,7 +773,11 @@ export function ToWatchTableRowActions<TData>({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="towatch-start-watch-measure"
-                      placeholder={!isMobile ? "Select measure type" : ""}
+                      placeholder={
+                        !isMobile
+                          ? watchI18nText[language].measurePlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -716,7 +785,7 @@ export function ToWatchTableRowActions<TData>({
                       {Object.entries(WatchMeasureEnum).map(
                         ([_key, value], idx) => (
                           <SelectItem key={idx} value={value}>
-                            {value}
+                            {WatchMeasureText[value][language]}
                           </SelectItem>
                         ),
                       )}
@@ -725,10 +794,16 @@ export function ToWatchTableRowActions<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-start-watch-range">Range</Label>
+                <Label htmlFor="towatch-start-watch-range">
+                  {watchI18nText[language].range}
+                </Label>
                 <Input
                   id="towatch-start-watch-range"
-                  placeholder={!isMobile ? "Enter measure range..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? watchI18nText[language].measureRangePlaceholder
+                      : ""
+                  }
                   value={measureRange}
                   disabled={startWatchMutation.isPending}
                   onChange={(e) => setMeasureRange(e.target.value)}
@@ -751,7 +826,7 @@ export function ToWatchTableRowActions<TData>({
                 variant="outline"
                 onClick={() => handleStartWatchingDialogOpen(false)}
               >
-                Cancel
+                {watchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -759,7 +834,7 @@ export function ToWatchTableRowActions<TData>({
                 }}
                 disabled={startWatchMutation.isPending}
               >
-                Update
+                {watchI18nText[language].update}
               </Button>
             </div>
           </div>
@@ -770,9 +845,11 @@ export function ToWatchTableRowActions<TData>({
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>{watchI18nText[language].confirmDeletion}</DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              Are you sure you want to delete [{watch.title}]?
+              {watchI18nText[language].confirmDeletionStart}
+              {watch.title}
+              {watchI18nText[language].confirmDeletionEnd}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -780,7 +857,7 @@ export function ToWatchTableRowActions<TData>({
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {watchI18nText[language].cancel}
             </Button>
             <Button
               variant="destructive"
@@ -788,7 +865,7 @@ export function ToWatchTableRowActions<TData>({
                 deleteWatch().then(() => setConfirmDialogOpen(false));
               }}
             >
-              Confirm
+              {watchI18nText[language].confirm}
             </Button>
           </div>
         </DialogContent>
@@ -807,28 +884,36 @@ export function ToWatchTableRowActions<TData>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Edit ToWatch Entry</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the entries that matter most to you.
-            </DialogDescription>
+            <DialogTitle>
+              {watchI18nText[language].editToWatchEntry}
+            </DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-edit-watch-name">Name</Label>
+                <Label htmlFor="towatch-edit-watch-name">
+                  {watchI18nText[language].name}
+                </Label>
                 <Input
                   id="towatch-edit-watch-name"
-                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  placeholder={
+                    !isMobile ? watchI18nText[language].namePlaceholder : ""
+                  }
                   value={entryName}
                   disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-edit-watch-author">Author</Label>
+                <Label htmlFor="towatch-edit-watch-author">
+                  {watchI18nText[language].author}
+                </Label>
                 <Input
                   id="towatch-edit-watch-author"
-                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  placeholder={
+                    !isMobile ? watchI18nText[language].authorPlaceholder : ""
+                  }
                   value={entryAuthor}
                   disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryAuthor(e.target.value)}
@@ -838,7 +923,9 @@ export function ToWatchTableRowActions<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-edit-watch-type">Type</Label>
+                <Label htmlFor="towatch-edit-watch-type">
+                  {watchI18nText[language].type}
+                </Label>
                 <Select
                   value={entryType}
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
@@ -846,7 +933,9 @@ export function ToWatchTableRowActions<TData>({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="towatch-edit-watch-type"
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      placeholder={
+                        !isMobile ? watchI18nText[language].typePlaceholder : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -854,7 +943,7 @@ export function ToWatchTableRowActions<TData>({
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -862,10 +951,14 @@ export function ToWatchTableRowActions<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-edit-watch-year">Year</Label>
+                <Label htmlFor="towatch-edit-watch-year">
+                  {watchI18nText[language].year}
+                </Label>
                 <Input
                   id="towatch-edit-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  placeholder={
+                    !isMobile ? watchI18nText[language].yearPlaceholder : ""
+                  }
                   type="number"
                   min={1900}
                   max={2099}
@@ -876,10 +969,14 @@ export function ToWatchTableRowActions<TData>({
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="towatch-edit-watch-link">Link</Label>
+              <Label htmlFor="towatch-edit-watch-link">
+                {watchI18nText[language].link}
+              </Label>
               <Input
                 id="towatch-edit-watch-link"
-                placeholder={!isMobile ? "Enter entry link..." : ""}
+                placeholder={
+                  !isMobile ? watchI18nText[language].linkPlaceholder : ""
+                }
                 type="text"
                 value={entryLink}
                 disabled={updateWatchMutation.isPending}

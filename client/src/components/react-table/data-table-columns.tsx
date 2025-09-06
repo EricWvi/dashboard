@@ -53,6 +53,7 @@ import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor"
 import { BlogEnum, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export const ratings = [
   {
@@ -81,34 +82,32 @@ export const ratings = [
   },
 ];
 
-export const getTypes = (language: UserLang) => [
+export const types = [
   {
-    value: WatchTypeText[WatchEnum.MOVIE][language],
+    value: WatchEnum.MOVIE,
     icon: Projector,
   },
   {
-    value: WatchTypeText[WatchEnum.SERIES][language],
+    value: WatchEnum.SERIES,
     icon: Clapperboard,
   },
   {
-    value: WatchTypeText[WatchEnum.DOCUMENTARY][language],
+    value: WatchEnum.DOCUMENTARY,
     icon: Tv,
   },
   {
-    value: WatchTypeText[WatchEnum.BOOK][language],
+    value: WatchEnum.BOOK,
     icon: LibraryBig,
   },
   {
-    value: WatchTypeText[WatchEnum.GAME][language],
+    value: WatchEnum.GAME,
     icon: Gamepad2,
   },
   {
-    value: WatchTypeText[WatchEnum.MANGA][language],
+    value: WatchEnum.MANGA,
     icon: Brush,
   },
 ];
-
-export const types = getTypes(UserLangEnum.ENUS); // default to ENUS
 
 export const domains = [
   {
@@ -153,13 +152,33 @@ export const domains = [
   },
 ];
 
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    type: "类别",
+    name: "名称",
+    author: "作者",
+  },
+  [UserLangEnum.ENUS]: {
+    type: "Type",
+    name: "Name",
+    author: "Author",
+  },
+};
+
 export const watchedColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "type",
     size: 300,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Type" className="ml-2" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].type}
+          className="ml-2"
+        />
+      );
+    },
     cell: ({ row }) => {
       const type = types.find((type) => type.value === row.getValue("type"));
 
@@ -342,10 +361,18 @@ export const towatchColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "type",
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Type" className="ml-2" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].type}
+          className="ml-2"
+        />
+      );
+    },
     cell: ({ row }) => {
+      const { language } = useUserContext();
       const type = types.find((type) => type.value === row.getValue("type"));
 
       if (!type) {
@@ -355,7 +382,7 @@ export const towatchColumns: ColumnDef<Watch>[] = [
       return (
         <div className="ml-2 flex items-center gap-2">
           <type.icon className="text-muted-foreground size-4" />
-          <span>{type.value}</span>
+          <span>{WatchTypeText[type.value][language]}</span>
         </div>
       );
     },
@@ -368,9 +395,15 @@ export const towatchColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "title",
     size: 300,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Title" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].name}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -409,9 +442,15 @@ export const towatchColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "author",
     size: 250,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Author" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].author}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">

@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { WatchTypeText } from "@/hooks/use-watches";
+import { useUserContext } from "@/user-provider";
+import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -30,6 +33,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
+  getOptionLabel: (value: string, language: UserLang) => string;
 }
 
 export function DataTableFacetedFilter<TData, TValue>({
@@ -37,7 +41,9 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   showEmptyFilter = true,
   options,
+  getOptionLabel,
 }: DataTableFacetedFilterProps<TData, TValue>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
@@ -67,7 +73,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {selectedValues.size} {i18nText[language].selected}
                   </Badge>
                 ) : (
                   options
@@ -78,7 +84,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >
-                        {option.value}
+                        {getOptionLabel(option.value, language)}
                       </Badge>
                     ))
                 )}
@@ -137,7 +143,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     {option.icon && (
                       <option.icon className="text-muted-foreground size-4" />
                     )}
-                    <span>{option.value}</span>
+                    <span>{getOptionLabel(option.value, language)}</span>
                     {facets?.get(option.value) && (
                       <span className="text-muted-foreground ml-auto flex size-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}
@@ -155,7 +161,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     onSelect={() => column?.setFilterValue(undefined)}
                     className="justify-center text-center"
                   >
-                    Clear filters
+                    {i18nText[language].clearFilters}
                   </CommandItem>
                 </CommandGroup>
               </>
@@ -166,3 +172,14 @@ export function DataTableFacetedFilter<TData, TValue>({
     </Popover>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    selected: "选择",
+    clearFilters: "清除筛选",
+  },
+  [UserLangEnum.ENUS]: {
+    selected: "selected",
+    clearFilters: "Clear filters",
+  },
+};

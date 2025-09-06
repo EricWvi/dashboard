@@ -39,7 +39,7 @@ import { Input } from "@/components/ui/input";
 import {
   ratings,
   domains,
-  getTypes,
+  types,
 } from "@/components/react-table/data-table-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { useState, useMemo } from "react";
@@ -49,6 +49,8 @@ import {
   WatchStatus,
   WatchEnum,
   type WatchType,
+  WatchTypeText,
+  RatingText,
 } from "@/hooks/use-watches";
 import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -86,8 +88,6 @@ export function WatchedTableToolbar<TData>({
   const [entryMark, setEntryMark] = useState<Date | undefined>(undefined);
   const [entryAuthor, setEntryAuthor] = useState<string>("");
 
-  const types = useMemo(() => getTypes(language), [language]);
-
   const handleAddEntryDialogOpen = () => {
     setEntryName("");
     setEntryType(WatchEnum.MOVIE);
@@ -118,7 +118,7 @@ export function WatchedTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter watches..."
+            placeholder={WatchI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -135,21 +135,23 @@ export function WatchedTableToolbar<TData>({
         {table.getColumn("type") && (
           <DataTableFacetedFilter
             column={table.getColumn("type")}
-            title="Type"
+            title={WatchI18nText[language].type}
             options={types}
+            getOptionLabel={(value) => WatchTypeText[value][language]}
           />
         )}
         {table.getColumn("rate") && (
           <DataTableFacetedFilter
             column={table.getColumn("rate")}
-            title="Rate"
+            title={WatchI18nText[language].rate}
             options={ratings}
+            getOptionLabel={(value) => RatingText[value][language]}
           />
         )}
         {table.getColumn("createdAt") && (
           <DataTableFacetedFilter
             column={table.getColumn("createdAt")}
-            title="Year"
+            title={WatchI18nText[language].year}
             options={(() => {
               const column = table.getColumn("createdAt");
               const minMaxValues = column?.getFacetedMinMaxValues();
@@ -161,6 +163,7 @@ export function WatchedTableToolbar<TData>({
                   )
                 : [];
             })()}
+            getOptionLabel={(value) => value}
           />
         )}
         {isFiltered && !isMobile && (
@@ -172,7 +175,7 @@ export function WatchedTableToolbar<TData>({
               table.resetColumnFilters();
             }}
           >
-            <span>Reset</span>
+            <span>{WatchI18nText[language].reset}</span>
             <X />
           </Button>
         )}
@@ -195,7 +198,7 @@ export function WatchedTableToolbar<TData>({
             {!isMobile ? (
               <>
                 <Clapperboard />
-                Add
+                {WatchI18nText[language].add}
               </>
             ) : (
               <Plus />
@@ -208,28 +211,42 @@ export function WatchedTableToolbar<TData>({
       <Dialog open={addEntryDialogOpen} onOpenChange={setAddEntryDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Watched Entry</DialogTitle>
+            <DialogTitle>
+              {WatchI18nText[language].addWatchedEntryTitle}
+            </DialogTitle>
             <DialogDescription>
-              Stay up to date with the entries that matter most to you.
+              {WatchI18nText[language].description}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-name">Name</Label>
+                <Label htmlFor="watched-add-watch-name">
+                  {WatchI18nText[language].name}
+                </Label>
                 <Input
                   id="watched-add-watch-name"
-                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryNamePlaceholder
+                      : ""
+                  }
                   value={entryName}
                   disabled={createEntryMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-author">Author</Label>
+                <Label htmlFor="watched-add-watch-author">
+                  {WatchI18nText[language].author}
+                </Label>
                 <Input
                   id="watched-add-watch-author"
-                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryAuthorPlaceholder
+                      : ""
+                  }
                   value={entryAuthor}
                   disabled={createEntryMutation.isPending}
                   onChange={(e) => setEntryAuthor(e.target.value)}
@@ -239,14 +256,20 @@ export function WatchedTableToolbar<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-type">Type</Label>
+                <Label htmlFor="watched-add-watch-type">
+                  {WatchI18nText[language].type}
+                </Label>
                 <Select
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="watched-add-watch-type"
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      placeholder={
+                        !isMobile
+                          ? WatchI18nText[language].entryTypePlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -254,7 +277,7 @@ export function WatchedTableToolbar<TData>({
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -262,10 +285,16 @@ export function WatchedTableToolbar<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-year">Year</Label>
+                <Label htmlFor="watched-add-watch-year">
+                  {WatchI18nText[language].year}
+                </Label>
                 <Input
                   id="watched-add-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryYearPlaceholder
+                      : ""
+                  }
                   type="number"
                   min={1900}
                   max={2099}
@@ -277,7 +306,7 @@ export function WatchedTableToolbar<TData>({
             </div>
             <div className="mb-6 flex flex-col gap-2">
               <Label htmlFor="watched-add-watch-rating">
-                Rating: {(entryRate / 2).toFixed(1)}
+                {WatchI18nText[language].rating} {(entryRate / 2).toFixed(1)}
               </Label>
               <Slider
                 id="watched-add-watch-rating"
@@ -289,11 +318,17 @@ export function WatchedTableToolbar<TData>({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-mark">Mark</Label>
+                <Label htmlFor="watched-add-watch-mark">
+                  {WatchI18nText[language].mark}
+                </Label>
                 <div className="relative">
                   <Input
                     id="watched-add-watch-mark"
-                    placeholder={!isMobile ? "Enter completed date..." : ""}
+                    placeholder={
+                      !isMobile
+                        ? WatchI18nText[language].completedDatePlaceholder
+                        : ""
+                    }
                     value={entryMarkInput}
                     disabled={createEntryMutation.isPending}
                     onChange={(e) => {
@@ -342,7 +377,7 @@ export function WatchedTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddEntryDialogOpen(false)}
               >
-                Cancel
+                {WatchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -350,7 +385,7 @@ export function WatchedTableToolbar<TData>({
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
               >
-                Create
+                {WatchI18nText[language].create}
               </Button>
             </div>
           </div>
@@ -360,12 +395,18 @@ export function WatchedTableToolbar<TData>({
   );
 }
 
-const toWatchI18nText = {
+const WatchI18nText = {
   [UserLangEnum.ZHCN]: {
+    rate: "评分",
+    rating: "评分：",
+    mark: "标记日期",
     add: "添加",
+    reset: "重置",
     type: "类别",
     searchPlaceholder: "搜索",
     addEntryTitle: "添加想看",
+    addWatchedEntryTitle: "添加已看",
+    description: "记录重要的条目",
     name: "名称",
     entryNamePlaceholder: "输入名称...",
     author: "作者",
@@ -378,12 +419,19 @@ const toWatchI18nText = {
     entryLinkPlaceholder: "输入链接...",
     cancel: "取消",
     create: "创建",
+    completedDatePlaceholder: "输入标记日期",
   },
   [UserLangEnum.ENUS]: {
+    rate: "Rate",
+    rating: "Rating:",
+    mark: "Mark",
     add: "Add",
+    reset: "Reset",
     type: "Type",
     searchPlaceholder: "Filter watches...",
     addEntryTitle: "Add ToWatch Entry",
+    addWatchedEntryTitle: "Add Watched Entry",
+    description: "Stay up to date with the entries that matter most to you.",
     name: "Name",
     entryNamePlaceholder: "Enter entry name...",
     author: "Author",
@@ -396,6 +444,7 @@ const toWatchI18nText = {
     entryLinkPlaceholder: "Enter entry link...",
     cancel: "Cancel",
     create: "Create",
+    completedDatePlaceholder: "Enter completed date...",
   },
 };
 
@@ -414,8 +463,6 @@ export function ToWatchTableToolbar<TData>({
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryLink, setEntryLink] = useState<string>("");
   const [entryAuthor, setEntryAuthor] = useState<string>("");
-
-  const types = useMemo(() => getTypes(language), [language]);
 
   const handleAddEntryDialogOpen = () => {
     setEntryName("");
@@ -442,7 +489,7 @@ export function ToWatchTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder={toWatchI18nText[language].searchPlaceholder}
+            placeholder={WatchI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -459,8 +506,9 @@ export function ToWatchTableToolbar<TData>({
         {table.getColumn("type") && (
           <DataTableFacetedFilter
             column={table.getColumn("type")}
-            title={toWatchI18nText[language].type}
+            title={WatchI18nText[language].type}
             options={types}
+            getOptionLabel={(value) => WatchTypeText[value][language]}
           />
         )}
         {isFiltered && (
@@ -472,7 +520,9 @@ export function ToWatchTableToolbar<TData>({
               table.resetColumnFilters();
             }}
           >
-            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
+            <span className={`${isMobile ? "hidden" : ""}`}>
+              {WatchI18nText[language].reset}
+            </span>
             <X />
           </Button>
         )}
@@ -483,7 +533,7 @@ export function ToWatchTableToolbar<TData>({
           {!isMobile ? (
             <>
               <Clapperboard />
-              {toWatchI18nText[language].add}
+              {WatchI18nText[language].add}
             </>
           ) : (
             <Plus />
@@ -495,20 +545,20 @@ export function ToWatchTableToolbar<TData>({
       <Dialog open={addEntryDialogOpen} onOpenChange={setAddEntryDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{toWatchI18nText[language].addEntryTitle}</DialogTitle>
+            <DialogTitle>{WatchI18nText[language].addEntryTitle}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="towatch-add-watch-name">
-                  {toWatchI18nText[language].name}
+                  {WatchI18nText[language].name}
                 </Label>
                 <Input
                   id="towatch-add-watch-name"
                   placeholder={
                     !isMobile
-                      ? toWatchI18nText[language].entryNamePlaceholder
+                      ? WatchI18nText[language].entryNamePlaceholder
                       : ""
                   }
                   value={entryName}
@@ -518,13 +568,13 @@ export function ToWatchTableToolbar<TData>({
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="towatch-add-watch-author">
-                  {toWatchI18nText[language].author}
+                  {WatchI18nText[language].author}
                 </Label>
                 <Input
                   id="towatch-add-watch-author"
                   placeholder={
                     !isMobile
-                      ? toWatchI18nText[language].entryAuthorPlaceholder
+                      ? WatchI18nText[language].entryAuthorPlaceholder
                       : ""
                   }
                   value={entryAuthor}
@@ -536,7 +586,7 @@ export function ToWatchTableToolbar<TData>({
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="towatch-add-watch-type">
-                  {toWatchI18nText[language].entryType}
+                  {WatchI18nText[language].entryType}
                 </Label>
                 <Select
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
@@ -546,7 +596,7 @@ export function ToWatchTableToolbar<TData>({
                       id="towatch-add-watch-type"
                       placeholder={
                         !isMobile
-                          ? toWatchI18nText[language].entryTypePlaceholder
+                          ? WatchI18nText[language].entryTypePlaceholder
                           : ""
                       }
                     />
@@ -556,7 +606,7 @@ export function ToWatchTableToolbar<TData>({
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -565,13 +615,13 @@ export function ToWatchTableToolbar<TData>({
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="towatch-add-watch-year">
-                  {toWatchI18nText[language].year}
+                  {WatchI18nText[language].year}
                 </Label>
                 <Input
                   id="towatch-add-watch-year"
                   placeholder={
                     !isMobile
-                      ? toWatchI18nText[language].entryYearPlaceholder
+                      ? WatchI18nText[language].entryYearPlaceholder
                       : ""
                   }
                   type="number"
@@ -585,14 +635,12 @@ export function ToWatchTableToolbar<TData>({
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="towatch-add-watch-link">
-                {toWatchI18nText[language].link}
+                {WatchI18nText[language].link}
               </Label>
               <Input
                 id="towatch-add-watch-link"
                 placeholder={
-                  !isMobile
-                    ? toWatchI18nText[language].entryLinkPlaceholder
-                    : ""
+                  !isMobile ? WatchI18nText[language].entryLinkPlaceholder : ""
                 }
                 type="text"
                 value={entryLink}
@@ -606,7 +654,7 @@ export function ToWatchTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddEntryDialogOpen(false)}
               >
-                {toWatchI18nText[language].cancel}
+                {WatchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -614,7 +662,7 @@ export function ToWatchTableToolbar<TData>({
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
               >
-                {toWatchI18nText[language].create}
+                {WatchI18nText[language].create}
               </Button>
             </div>
           </div>

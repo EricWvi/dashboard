@@ -1,11 +1,19 @@
-import { useRecoverWatch, useWatches, WatchStatus } from "@/hooks/use-watches";
+import {
+  useRecoverWatch,
+  useWatches,
+  WatchStatus,
+  WatchTypeText,
+} from "@/hooks/use-watches";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dateString } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { useUserContext } from "@/user-provider";
+import { UserLangEnum } from "@/hooks/use-user";
 
 export default function DroppedList() {
+  const { language } = useUserContext();
   const { data: watches, isPending } = useWatches(WatchStatus.DROPPED);
   const recoverWatchMutation = useRecoverWatch();
   const [showLoading, setShowLoading] = useState(true);
@@ -31,9 +39,9 @@ export default function DroppedList() {
               className="bg-card flex items-center justify-between gap-1 rounded-sm border py-2 pr-2 pl-4 text-sm"
             >
               <div className="min-w-0">
-                {watch.type} · {watch.title}
+                {WatchTypeText[watch.type][language]} · {watch.title}
                 <span className="text-muted-foreground ml-1 text-xs">
-                  {`(dropped on ${dateString(
+                  {`(${i18nText[language].dropOn} ${dateString(
                     watch.payload.checkpoints![
                       watch.payload.checkpoints!.length - 1
                     ][0],
@@ -54,3 +62,12 @@ export default function DroppedList() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    dropOn: "放弃于",
+  },
+  [UserLangEnum.ENUS]: {
+    dropOn: "dropped on",
+  },
+};

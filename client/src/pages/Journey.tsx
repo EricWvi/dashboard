@@ -32,6 +32,7 @@ function WatchingTab() {
 }
 
 function ToWatchTab() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: watches, isPending } = useWatches(WatchStatus.PLAN_TO_WATCH);
   // compute default pageSize on mobile
@@ -71,7 +72,7 @@ function ToWatchTab() {
           }}
         >
           <DialogHeader>
-            <DialogTitle>Dropped Watches</DialogTitle>
+            <DialogTitle>{i18nText[language].droppedWatches}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <DroppedList />
@@ -171,11 +172,13 @@ const i18nText = {
     watching: "在看",
     toWatch: "想看",
     watched: "已看",
+    droppedWatches: "弃看",
   },
   [UserLangEnum.ENUS]: {
     diveAndExplore: "Dive and Explore !",
     watching: "Watching",
     toWatch: "To Watch",
     watched: "Watched",
+    droppedWatches: "Dropped Watches",
   },
 };

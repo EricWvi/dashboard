@@ -111,6 +111,33 @@ export const Rating = {
   Zero: "Zero Star",
 };
 
+export const RatingText = {
+  [Rating.Five]: {
+    [UserLangEnum.ZHCN]: "五星",
+    [UserLangEnum.ENUS]: "Five Stars",
+  },
+  [Rating.Four]: {
+    [UserLangEnum.ZHCN]: "四星",
+    [UserLangEnum.ENUS]: "Four Stars",
+  },
+  [Rating.Three]: {
+    [UserLangEnum.ZHCN]: "三星",
+    [UserLangEnum.ENUS]: "Three Stars",
+  },
+  [Rating.Two]: {
+    [UserLangEnum.ZHCN]: "二星",
+    [UserLangEnum.ENUS]: "Two Stars",
+  },
+  [Rating.One]: {
+    [UserLangEnum.ZHCN]: "一星",
+    [UserLangEnum.ENUS]: "One Star",
+  },
+  [Rating.Zero]: {
+    [UserLangEnum.ZHCN]: "零星",
+    [UserLangEnum.ENUS]: "Zero Star",
+  },
+};
+
 export type WatchMeasure =
   | "Chapter"
   | "Episode"
