@@ -20,6 +20,11 @@ export type User = {
   session: string;
 };
 
+export type I18nText = {
+  [UserLangEnum.ENUS]: string;
+  [UserLangEnum.ZHCN]: string;
+};
+
 const keyUser = () => ["/meta/user"];
 const keyRSSCount = () => ["/api/rss/count"];
 const keyMailCount = () => ["/api/mail/count"];

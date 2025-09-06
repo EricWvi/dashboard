@@ -1,4 +1,4 @@
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type I18nText, type UserLang } from "@/hooks/use-user";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -145,9 +145,12 @@ export function dotColor(level: number, difficulty: number): string {
 export const formatDate = (
   date: Date | string | null | undefined,
   done: boolean,
-): { label: string; color: string } => {
+): { label: I18nText; color: string } => {
   const today_default = {
-    label: "Today",
+    label: {
+      [UserLangEnum.ENUS]: "Today",
+      [UserLangEnum.ZHCN]: "今日",
+    },
     color:
       "opacity-0 group-hover:opacity-50 border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
   };
@@ -157,7 +160,10 @@ export const formatDate = (
   const inDate = new Date(date);
   if (isSetToday(inDate)) {
     return {
-      label: "Today",
+      label: {
+        [UserLangEnum.ENUS]: "Today",
+        [UserLangEnum.ZHCN]: "今日",
+      },
       color: done
         ? "opacity-100 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
         : "opacity-100 border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
@@ -169,25 +175,45 @@ export const formatDate = (
     );
     if (diffDays === 1) {
       return {
-        label: "Tomorrow",
+        label: {
+          [UserLangEnum.ENUS]: "Tomorrow",
+          [UserLangEnum.ZHCN]: "明日",
+        },
         color:
           "opacity-100 border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
       };
     } else if (diffDays <= 6) {
       return {
-        label: `In ${diffDays} days`,
+        label: {
+          [UserLangEnum.ENUS]: `In ${diffDays} days`,
+          [UserLangEnum.ZHCN]: `${diffDays} 日后`,
+        },
         color:
           "opacity-100 border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
       };
     } else {
-      const t = inDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      return { label: t, color: "opacity-100" };
+      return {
+        label: {
+          [UserLangEnum.ENUS]: inDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          [UserLangEnum.ZHCN]: inDate.toLocaleDateString("zh-CN", {
+            month: "short",
+            day: "numeric",
+          }),
+        },
+        color: "opacity-100",
+      };
     }
   } else if (isDisabledPlan(inDate)) {
-    return { label: "No Plan", color: "opacity-100" };
+    return {
+      label: {
+        [UserLangEnum.ENUS]: "No Plan",
+        [UserLangEnum.ZHCN]: "无规划",
+      },
+      color: "opacity-100",
+    };
   }
   return today_default;
 };
