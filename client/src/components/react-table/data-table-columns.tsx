@@ -2,7 +2,12 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 
-import { Rating, WatchEnum, type Watch } from "@/hooks/use-watches";
+import {
+  Rating,
+  WatchEnum,
+  WatchTypeText,
+  type Watch,
+} from "@/hooks/use-watches";
 import { type Bookmark, clickBookmark, Domain } from "@/hooks/use-bookmarks";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
@@ -47,6 +52,7 @@ import { dateString } from "@/lib/utils";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 import { BlogEnum, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
+import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 
 export const ratings = [
   {
@@ -75,32 +81,34 @@ export const ratings = [
   },
 ];
 
-export const types = [
+export const getTypes = (language: UserLang) => [
   {
-    value: WatchEnum.MOVIE,
+    value: WatchTypeText[WatchEnum.MOVIE][language],
     icon: Projector,
   },
   {
-    value: WatchEnum.SERIES,
+    value: WatchTypeText[WatchEnum.SERIES][language],
     icon: Clapperboard,
   },
   {
-    value: WatchEnum.DOCUMENTARY,
+    value: WatchTypeText[WatchEnum.DOCUMENTARY][language],
     icon: Tv,
   },
   {
-    value: WatchEnum.BOOK,
+    value: WatchTypeText[WatchEnum.BOOK][language],
     icon: LibraryBig,
   },
   {
-    value: WatchEnum.GAME,
+    value: WatchTypeText[WatchEnum.GAME][language],
     icon: Gamepad2,
   },
   {
-    value: WatchEnum.MANGA,
+    value: WatchTypeText[WatchEnum.MANGA][language],
     icon: Brush,
   },
 ];
+
+export const types = getTypes(UserLangEnum.ENUS); // default to ENUS
 
 export const domains = [
   {

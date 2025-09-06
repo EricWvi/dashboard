@@ -1141,9 +1141,15 @@ export const TodoEntry = ({
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogTitle>
+              {todoEntryI18NText[language].confirmAction}
+            </DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              {`Are you sure you want to {${confirmAction}} [${todo.title}]`}
+              {`${todoEntryI18NText[language].confirmActionDescStart}${
+                confirmAction === "delete"
+                  ? todoEntryI18NText[language].deleteAction
+                  : todoEntryI18NText[language].completeAction
+              }${todo.title}${todoEntryI18NText[language].confirmActionDescEnd}`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -1151,7 +1157,7 @@ export const TodoEntry = ({
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {todoEntryI18NText[language].cancel}
             </Button>
             <Button
               variant={confirmAction === "delete" ? "destructive" : undefined}
@@ -1172,7 +1178,7 @@ export const TodoEntry = ({
                 });
               }}
             >
-              Confirm
+              {todoEntryI18NText[language].confirm}
             </Button>
           </div>
         </DialogContent>
@@ -1218,8 +1224,10 @@ const todoEntryI18NText = {
     setDateDescEnd: "」设置一个日期",
     selectDate: "选择日期",
     confirmAction: "确认操作",
-    confirmActionDescription:
-      "您确定要 {action} [{todo.title}] 吗？将 {action} 和 {todo.title} 替换为实际的操作和标题。",
+    confirmActionDescStart: "确定要",
+    confirmActionDescEnd: "」吗？",
+    deleteAction: "删除「",
+    completeAction: "完成「",
     confirm: "确认",
   },
   [UserLangEnum.ENUS]: {
@@ -1258,8 +1266,10 @@ const todoEntryI18NText = {
     setDateDescEnd: "].",
     selectDate: "Select date",
     confirmAction: "Confirm Action",
-    confirmActionDescription:
-      "Are you sure you want to {action} [{todo.title}]? Replace {action} and {todo.title} with the actual action and title.",
+    confirmActionDescStart: "Are you sure you want to ",
+    confirmActionDescEnd: "]?",
+    deleteAction: "{delete} [",
+    completeAction: "{complete} [",
     confirm: "Confirm",
   },
 };

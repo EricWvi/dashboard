@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { CollectionsQuery } from "@/hooks/use-todos";
 import { dateString } from "@/lib/utils";
+import { UserLangEnum, type I18nText } from "./use-user";
 
 export type Watch = {
   id: number;
@@ -50,6 +51,40 @@ export const WatchEnum: {
   MANGA: "Manga",
 };
 
+export const WatchTypeText: {
+  [WatchEnum.MOVIE]: I18nText;
+  [WatchEnum.SERIES]: I18nText;
+  [WatchEnum.DOCUMENTARY]: I18nText;
+  [WatchEnum.BOOK]: I18nText;
+  [WatchEnum.GAME]: I18nText;
+  [WatchEnum.MANGA]: I18nText;
+} = {
+  [WatchEnum.MOVIE]: {
+    [UserLangEnum.ZHCN]: "电影",
+    [UserLangEnum.ENUS]: "Movie",
+  },
+  [WatchEnum.SERIES]: {
+    [UserLangEnum.ZHCN]: "剧集",
+    [UserLangEnum.ENUS]: "Series",
+  },
+  [WatchEnum.DOCUMENTARY]: {
+    [UserLangEnum.ZHCN]: "纪录片",
+    [UserLangEnum.ENUS]: "Documentary",
+  },
+  [WatchEnum.BOOK]: {
+    [UserLangEnum.ZHCN]: "书籍",
+    [UserLangEnum.ENUS]: "Book",
+  },
+  [WatchEnum.GAME]: {
+    [UserLangEnum.ZHCN]: "游戏",
+    [UserLangEnum.ENUS]: "Game",
+  },
+  [WatchEnum.MANGA]: {
+    [UserLangEnum.ZHCN]: "漫画",
+    [UserLangEnum.ENUS]: "Manga",
+  },
+};
+
 export type WatchStatus =
   | "Watching"
   | "Completed"
@@ -84,7 +119,7 @@ export type WatchMeasure =
   | "Percentage"
   | "Trophy"
   | "Volume";
-export const WatchMeasure: {
+export const WatchMeasureEnum: {
   CHAPTER: WatchMeasure;
   EPISODE: WatchMeasure;
   MINUTE: WatchMeasure;
@@ -100,6 +135,45 @@ export const WatchMeasure: {
   PERCENTAGE: "Percentage",
   TROPHY: "Trophy",
   VOLUME: "Volume",
+};
+
+export const WatchMeasureText: {
+  [WatchMeasureEnum.CHAPTER]: I18nText;
+  [WatchMeasureEnum.EPISODE]: I18nText;
+  [WatchMeasureEnum.MINUTE]: I18nText;
+  [WatchMeasureEnum.PAGE]: I18nText;
+  [WatchMeasureEnum.PERCENTAGE]: I18nText;
+  [WatchMeasureEnum.TROPHY]: I18nText;
+  [WatchMeasureEnum.VOLUME]: I18nText;
+} = {
+  [WatchMeasureEnum.CHAPTER]: {
+    [UserLangEnum.ZHCN]: "章",
+    [UserLangEnum.ENUS]: "Chapter",
+  },
+  [WatchMeasureEnum.EPISODE]: {
+    [UserLangEnum.ZHCN]: "集",
+    [UserLangEnum.ENUS]: "Episode",
+  },
+  [WatchMeasureEnum.MINUTE]: {
+    [UserLangEnum.ZHCN]: "分钟",
+    [UserLangEnum.ENUS]: "Minute",
+  },
+  [WatchMeasureEnum.PAGE]: {
+    [UserLangEnum.ZHCN]: "页",
+    [UserLangEnum.ENUS]: "Page",
+  },
+  [WatchMeasureEnum.PERCENTAGE]: {
+    [UserLangEnum.ZHCN]: "百分比",
+    [UserLangEnum.ENUS]: "Percentage",
+  },
+  [WatchMeasureEnum.TROPHY]: {
+    [UserLangEnum.ZHCN]: "奖杯",
+    [UserLangEnum.ENUS]: "Trophy",
+  },
+  [WatchMeasureEnum.VOLUME]: {
+    [UserLangEnum.ZHCN]: "卷",
+    [UserLangEnum.ENUS]: "Volume",
+  },
 };
 
 const keyWatchesOfStatus = (status: WatchStatus) => ["/api/watches", status];

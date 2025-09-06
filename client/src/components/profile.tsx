@@ -111,7 +111,15 @@ export const Profile = () => {
         <div className="flex w-full flex-col items-center justify-center">
           {/* avatar */}
           <div className="group relative mx-auto mb-6 aspect-square h-auto w-30 xl:w-1/2">
-            <Avatar className="border-border size-full border-2 shadow-md">
+            <Avatar
+              className="border-border size-full border-2 shadow-md"
+              onClick={() => {
+                setOpenDropdown(true);
+                setTimeout(() => {
+                  setOpenDropdown(false);
+                }, 3000);
+              }}
+            >
               <AvatarImage src={user.avatar} />
               <AvatarFallback />
             </Avatar>

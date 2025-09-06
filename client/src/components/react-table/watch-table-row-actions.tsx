@@ -39,19 +39,20 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
-import { domains, types } from "@/components/react-table/data-table-columns";
+import { domains, getTypes } from "@/components/react-table/data-table-columns";
 import {
   useDeleteWatch,
   useStartWatch,
   useUpdateWatch,
-  WatchMeasure,
+  WatchMeasureEnum,
   WatchStatus,
   WatchEnum,
   type WatchType,
   type Watch,
   useCreateToWatch,
+  type WatchMeasure,
 } from "@/hooks/use-watches";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, formatMediaUrl, todayStart } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
@@ -66,6 +67,7 @@ import {
 import { createTiptap } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
 import { BlogEnum, useUpdateBlog, type Blog } from "@/hooks/use-blogs";
+import { useUserContext } from "@/user-provider";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -74,6 +76,7 @@ interface DataTableRowActionsProps<TData> {
 export function WatchedTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const watch = row.original as Watch;
   const [entryName, setEntryName] = useState("");
@@ -88,6 +91,9 @@ export function WatchedTableRowActions<TData>({
   const [datepickerOpen, setDatepickerOpen] = useState(false);
   const updateWatchMutation = useUpdateWatch([WatchStatus.COMPLETED]);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+
+  const types = useMemo(() => getTypes(language), [language]);
+
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
@@ -304,7 +310,14 @@ export function WatchedTableRowActions<TData>({
             <DialogTitle>Timeline</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
-          <WatchCheckpoints checkpoints={watch.payload.checkpoints ?? []} />
+          <WatchCheckpoints
+            type={watch.type}
+            measure={
+              (watch.payload.measure ??
+                WatchMeasureEnum.PERCENTAGE) as WatchMeasure
+            }
+            checkpoints={watch.payload.checkpoints ?? []}
+          />
         </DialogContent>
       </Dialog>
 
@@ -519,6 +532,7 @@ export function WatchedTableRowActions<TData>({
 export function ToWatchTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const watch = row.original as Watch;
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
@@ -530,6 +544,9 @@ export function ToWatchTableRowActions<TData>({
   const [entryAuthor, setEntryAuthor] = useState<string>("");
   const updateWatchMutation = useUpdateWatch([WatchStatus.PLAN_TO_WATCH]);
   const startWatchMutation = useStartWatch();
+
+  const types = useMemo(() => getTypes(language), [language]);
+
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
@@ -583,7 +600,8 @@ export function ToWatchTableRowActions<TData>({
       id: watch.id,
       payload: {
         ...watch.payload,
-        measure: entryMeasure === "" ? WatchMeasure.PERCENTAGE : entryMeasure,
+        measure:
+          entryMeasure === "" ? WatchMeasureEnum.PERCENTAGE : entryMeasure,
         range: isNaN(Number(measureRange)) ? 0 : Number(measureRange),
         progress: 0,
         checkpoints: [[dateString(new Date(), "-"), 0]],
@@ -695,7 +713,7 @@ export function ToWatchTableRowActions<TData>({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {Object.entries(WatchMeasure).map(
+                      {Object.entries(WatchMeasureEnum).map(
                         ([_key, value], idx) => (
                           <SelectItem key={idx} value={value}>
                             {value}

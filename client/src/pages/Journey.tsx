@@ -18,6 +18,8 @@ import { WatchingList } from "@/components/watching-list";
 import { Package2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DroppedList from "@/components/dropped-watch";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 function WatchingTab() {
   const isMobile = useIsMobile();
@@ -99,6 +101,7 @@ function WatchedTab() {
 }
 
 export default function Journey() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("watching");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
@@ -119,7 +122,7 @@ export default function Journey() {
       >
         <div className="flex flex-col gap-1">
           <h2 className="text-3xl font-semibold tracking-tight">
-            Dive and Explore !
+            {i18nText[language].diveAndExplore}
           </h2>
         </div>
       </div>
@@ -127,13 +130,13 @@ export default function Journey() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className={`${isMobile ? "w-full" : ""}`}>
             <TabsTrigger value="watching" className="px-4">
-              Watching
+              {i18nText[language].watching}
             </TabsTrigger>
             <TabsTrigger value="towatch" className="px-4">
-              To Watch
+              {i18nText[language].toWatch}
             </TabsTrigger>
             <TabsTrigger value="watched" className="px-4">
-              Watched
+              {i18nText[language].watched}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -161,3 +164,18 @@ export default function Journey() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    diveAndExplore: "探索未知！",
+    watching: "在看",
+    toWatch: "想看",
+    watched: "已看",
+  },
+  [UserLangEnum.ENUS]: {
+    diveAndExplore: "Dive and Explore !",
+    watching: "Watching",
+    toWatch: "To Watch",
+    watched: "Watched",
+  },
+};
