@@ -79,6 +79,7 @@ interface DataTableRowActionsProps<TData> {
 export function WatchedTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const watch = row.original as Watch;
   const [entryName, setEntryName] = useState("");
@@ -214,26 +215,30 @@ export function WatchedTableRowActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onClick={() => handleEditEntryDialogOpen(true)}>
-          Edit
+          {watchI18nText[language].edit}
         </DropdownMenuItem>
         {watch.type === WatchEnum.BOOK && (
-          <DropdownMenuItem onClick={editQuotes}>Quotes</DropdownMenuItem>
+          <DropdownMenuItem onClick={editQuotes}>
+            {watchI18nText[language].quotes}
+          </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={reviewWatch}>Review</DropdownMenuItem>
+        <DropdownMenuItem onClick={reviewWatch}>
+          {watchI18nText[language].review}
+        </DropdownMenuItem>
         {watch.payload.checkpoints && (
           <DropdownMenuItem onClick={() => setTimelineDialogOpen(true)}>
-            Timeline
+            {watchI18nText[language].timeline}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => setWatchAgainDialogOpen(true)}>
-          Watch Again
+          {watchI18nText[language].watchAgain}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setConfirmDialogOpen(true)}
         >
-          Delete
+          {watchI18nText[language].delete}
         </DropdownMenuItem>
       </DropdownMenuContent>
 
@@ -241,9 +246,11 @@ export function WatchedTableRowActions<TData>({
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>{watchI18nText[language].confirmDeletion}</DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              Are you sure you want to delete [{watch.title}]?
+              {watchI18nText[language].confirmDeletionStart}
+              {watch.title}
+              {watchI18nText[language].confirmDeletionEnd}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -251,7 +258,7 @@ export function WatchedTableRowActions<TData>({
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {watchI18nText[language].cancel}
             </Button>
             <Button
               variant="destructive"
@@ -259,7 +266,7 @@ export function WatchedTableRowActions<TData>({
                 deleteWatch().then(() => setConfirmDialogOpen(false));
               }}
             >
-              Confirm
+              {watchI18nText[language].confirm}
             </Button>
           </div>
         </DialogContent>
@@ -272,9 +279,11 @@ export function WatchedTableRowActions<TData>({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Watch Again</DialogTitle>
+            <DialogTitle>{watchI18nText[language].watchAgain}</DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              Do you want to watch [{watch.title}] again?
+              {watchI18nText[language].watchAgainStart}
+              {watch.title}
+              {watchI18nText[language].watchAgainEnd}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -282,7 +291,7 @@ export function WatchedTableRowActions<TData>({
               variant="outline"
               onClick={() => setWatchAgainDialogOpen(false)}
             >
-              Cancel
+              {watchI18nText[language].cancel}
             </Button>
             <Button
               onClick={() => {
@@ -291,7 +300,7 @@ export function WatchedTableRowActions<TData>({
                 });
               }}
             >
-              Confirm
+              {watchI18nText[language].confirm}
             </Button>
           </div>
         </DialogContent>
@@ -307,7 +316,7 @@ export function WatchedTableRowActions<TData>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Timeline</DialogTitle>
+            <DialogTitle>{watchI18nText[language].timeline}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <WatchCheckpoints
@@ -334,26 +343,36 @@ export function WatchedTableRowActions<TData>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Edit Watched Entry</DialogTitle>
+            <DialogTitle>
+              {watchI18nText[language].editWatchedEntry}
+            </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-edit-watch-name">Name</Label>
+                <Label htmlFor="watched-edit-watch-name">
+                  {watchI18nText[language].name}
+                </Label>
                 <Input
                   id="watched-edit-watch-name"
-                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  placeholder={
+                    !isMobile ? watchI18nText[language].namePlaceholder : ""
+                  }
                   value={entryName}
                   disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-edit-watch-author">Author</Label>
+                <Label htmlFor="watched-edit-watch-author">
+                  {watchI18nText[language].author}
+                </Label>
                 <Input
                   id="watched-edit-watch-author"
-                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  placeholder={
+                    !isMobile ? watchI18nText[language].authorPlaceholder : ""
+                  }
                   value={entryAuthor}
                   disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryAuthor(e.target.value)}
@@ -363,7 +382,9 @@ export function WatchedTableRowActions<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-edit-watch-type">Type</Label>
+                <Label htmlFor="watched-edit-watch-type">
+                  {watchI18nText[language].type}
+                </Label>
                 <Select
                   value={entryType}
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
@@ -371,7 +392,9 @@ export function WatchedTableRowActions<TData>({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="watched-edit-watch-type"
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      placeholder={
+                        !isMobile ? watchI18nText[language].typePlaceholder : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -379,7 +402,7 @@ export function WatchedTableRowActions<TData>({
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -387,10 +410,14 @@ export function WatchedTableRowActions<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-edit-watch-year">Year</Label>
+                <Label htmlFor="watched-edit-watch-year">
+                  {watchI18nText[language].year}
+                </Label>
                 <Input
                   id="watched-edit-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  placeholder={
+                    !isMobile ? watchI18nText[language].yearPlaceholder : ""
+                  }
                   type="number"
                   min={1900}
                   max={2099}
@@ -402,7 +429,7 @@ export function WatchedTableRowActions<TData>({
             </div>
             <div className="mb-6 flex flex-col gap-2">
               <Label htmlFor="watched-edit-watch-rating">
-                Rating: {(entryRate / 2).toFixed(1)}
+                {watchI18nText[language].rating} {(entryRate / 2).toFixed(1)}
               </Label>
               <Slider
                 id="watched-edit-watch-rating"
@@ -415,7 +442,9 @@ export function WatchedTableRowActions<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-edit-watch-mark">Mark</Label>
+                <Label htmlFor="watched-edit-watch-mark">
+                  {watchI18nText[language].mark}
+                </Label>
                 <div className="relative">
                   <Input
                     id="watched-edit-watch-mark"
@@ -511,7 +540,7 @@ export function WatchedTableRowActions<TData>({
                 variant="outline"
                 onClick={() => handleEditEntryDialogOpen(false)}
               >
-                Cancel
+                {watchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -519,7 +548,7 @@ export function WatchedTableRowActions<TData>({
                 }}
                 disabled={!entryName.trim() || updateWatchMutation.isPending}
               >
-                Update
+                {watchI18nText[language].update}
               </Button>
             </div>
           </div>
@@ -533,10 +562,16 @@ const watchI18nText = {
   [UserLangEnum.ZHCN]: {
     edit: "编辑",
     review: "评论",
+    quotes: "书摘",
+    timeline: "时间线",
+    watchAgain: "再看一次",
+    watchAgainStart: "你想要再看一遍「",
+    watchAgainEnd: "」吗？",
     moveToTop: "置顶",
     startWatching: "标记在看",
     delete: "删除",
     editToWatchEntry: "编辑想看",
+    editWatchedEntry: "编辑已看",
     name: "名称",
     namePlaceholder: "输入名称...",
     author: "作者",
@@ -545,6 +580,8 @@ const watchI18nText = {
     typePlaceholder: "选择类别",
     year: "年份",
     yearPlaceholder: "输入年份...",
+    rating: "评分：",
+    mark: "完成日期",
     link: "链接",
     linkPlaceholder: "输入链接...",
     cancel: "取消",
@@ -562,10 +599,16 @@ const watchI18nText = {
   [UserLangEnum.ENUS]: {
     edit: "Edit",
     review: "Review",
+    quotes: "Quotes",
+    timeline: "Timeline",
+    watchAgain: "Watch Again",
+    watchAgainStart: "Do you want to watch [",
+    watchAgainEnd: "] again?",
     moveToTop: "Move to Top",
     startWatching: "Start Watching",
     delete: "Delete",
     editToWatchEntry: "Edit ToWatch Entry",
+    editWatchedEntry: "Edit Watched Entry",
     name: "Name",
     namePlaceholder: "Enter entry name...",
     author: "Author",
@@ -574,6 +617,8 @@ const watchI18nText = {
     typePlaceholder: "Select entry type",
     year: "Year",
     yearPlaceholder: "Enter entry year...",
+    rating: "Rating:",
+    mark: "Mark",
     link: "Link",
     linkPlaceholder: "Enter entry link...",
     cancel: "Cancel",

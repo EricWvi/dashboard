@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { WatchTypeText } from "@/hooks/use-watches";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 

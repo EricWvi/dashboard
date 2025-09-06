@@ -68,6 +68,14 @@ const checkpointText = (
   value: number,
   language: UserLang,
 ) => {
+  if (value === -1) {
+    if (language === UserLangEnum.ZHCN) {
+      return "标记弃看";
+    } else if (language === UserLangEnum.ENUS) {
+      return "dropped";
+    }
+    return "";
+  }
   const action = [WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
     ? i18nText[language].read
     : type === WatchEnum.GAME

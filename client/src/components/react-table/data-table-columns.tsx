@@ -157,11 +157,29 @@ const i18nText = {
     type: "类别",
     name: "名称",
     author: "作者",
+    rate: "评分",
+    mark: "标记日期",
+    review: "评论",
+    quotes: "书摘",
+    domain: "领域",
+    title: "标题",
+    link: "链接",
+    what: "一级标签",
+    how: "二级标签",
   },
   [UserLangEnum.ENUS]: {
     type: "Type",
     name: "Name",
     author: "Author",
+    rate: "Rate",
+    mark: "Mark",
+    review: "Review",
+    quotes: "Quotes",
+    domain: "Domain",
+    title: "Title",
+    link: "Link",
+    what: "What",
+    how: "How",
   },
 };
 
@@ -180,6 +198,7 @@ export const watchedColumns: ColumnDef<Watch>[] = [
       );
     },
     cell: ({ row }) => {
+      const { language } = useUserContext();
       const type = types.find((type) => type.value === row.getValue("type"));
 
       if (!type) {
@@ -189,7 +208,7 @@ export const watchedColumns: ColumnDef<Watch>[] = [
       return (
         <div className="ml-2 flex items-center gap-2">
           <type.icon className="text-muted-foreground size-4" />
-          <span>{type.value}</span>
+          <span>{WatchTypeText[type.value][language]}</span>
         </div>
       );
     },
@@ -202,9 +221,15 @@ export const watchedColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "title",
     size: 600,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Title" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].name}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -241,9 +266,15 @@ export const watchedColumns: ColumnDef<Watch>[] = [
   {
     accessorKey: "author",
     size: 500,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Author" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].author}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -263,10 +294,17 @@ export const watchedColumns: ColumnDef<Watch>[] = [
     accessorKey: "rate",
     accessorFn: (row) => ratings[Math.ceil((20 - Number(row.rate)) / 4)].value,
     size: 300,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Rate" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].rate}
+        />
+      );
+    },
     cell: ({ row }) => {
+      const { language } = useUserContext();
       const rating = ratings[Math.ceil((20 - Number(row.original.rate)) / 4)];
 
       return (
@@ -279,7 +317,7 @@ export const watchedColumns: ColumnDef<Watch>[] = [
             <Dialog>
               <DialogTrigger>
                 <div className="cursor-pointer font-medium underline decoration-1">
-                  quotes
+                  {i18nText[language].quotes.toLowerCase()}
                 </div>
               </DialogTrigger>
               <DialogContent
@@ -290,7 +328,7 @@ export const watchedColumns: ColumnDef<Watch>[] = [
                 }}
               >
                 <DialogHeader>
-                  <DialogTitle>Quotes</DialogTitle>
+                  <DialogTitle>{i18nText[language].quotes}</DialogTitle>
                   <DialogDescription></DialogDescription>
                 </DialogHeader>
                 <ContentHtml id={row.original.payload.quotes ?? 0} />
@@ -303,7 +341,7 @@ export const watchedColumns: ColumnDef<Watch>[] = [
             <Dialog>
               <DialogTrigger>
                 <div className="cursor-pointer font-medium underline decoration-1">
-                  review
+                  {i18nText[language].review.toLowerCase()}
                 </div>
               </DialogTrigger>
               <DialogContent
@@ -314,7 +352,7 @@ export const watchedColumns: ColumnDef<Watch>[] = [
                 }}
               >
                 <DialogHeader>
-                  <DialogTitle>Review</DialogTitle>
+                  <DialogTitle>{i18nText[language].review}</DialogTitle>
                   <DialogDescription></DialogDescription>
                 </DialogHeader>
                 <ContentHtml id={row.original.payload.review ?? 0} />
@@ -334,9 +372,15 @@ export const watchedColumns: ColumnDef<Watch>[] = [
     accessorKey: "createdAt",
     accessorFn: (row) => String(new Date(row.createdAt).getFullYear()),
     size: 300,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Mark" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].mark}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex w-[100px] items-center gap-2">
@@ -477,9 +521,16 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
   {
     accessorKey: "domain",
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Domain" className="ml-2" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].domain}
+          className="ml-2"
+        />
+      );
+    },
     cell: ({ row }) => {
       const type = domains.find(
         (domain) => domain.value === row.getValue("domain"),
@@ -505,9 +556,15 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
   {
     accessorKey: "title",
     size: 200,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Title" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].title}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -534,9 +591,15 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
   {
     accessorKey: "url",
     size: 300,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Link" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].link}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -581,9 +644,15 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
     accessorKey: "what",
     accessorFn: (row) => row.payload.whats ?? [],
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="What" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].what}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -607,9 +676,12 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
     accessorKey: "how",
     accessorFn: (row) => row.payload.hows ?? [],
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="How" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader column={column} title={i18nText[language].how} />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">

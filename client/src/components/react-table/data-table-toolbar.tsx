@@ -672,9 +672,29 @@ export function ToWatchTableToolbar<TData>({
   );
 }
 
+const bookmarkI18nText = {
+  [UserLangEnum.ZHCN]: {
+    domain: "领域",
+    what: "一级标签",
+    how: "二级标签",
+    reset: "重置",
+    add: "添加",
+    searchPlaceholder: "搜索",
+  },
+  [UserLangEnum.ENUS]: {
+    domain: "Domain",
+    what: "What",
+    how: "How",
+    reset: "Reset",
+    add: "Add",
+    searchPlaceholder: "Filter bookmarks...",
+  },
+};
+
 export function BookmarkTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: tags } = useTags();
 
@@ -723,7 +743,7 @@ export function BookmarkTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter bookmarks..."
+            placeholder={bookmarkI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -740,24 +760,27 @@ export function BookmarkTableToolbar<TData>({
         {table.getColumn("domain") && (
           <DataTableFacetedFilter
             column={table.getColumn("domain")}
-            title="Domain"
+            title={bookmarkI18nText[language].domain}
             options={domains}
+            getOptionLabel={(value) => value}
           />
         )}
         {table.getColumn("what") && (
           <DataTableFacetedFilter
             column={table.getColumn("what")}
-            title="What"
+            title={bookmarkI18nText[language].what}
             showEmptyFilter={false}
             options={tags?.whatTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {table.getColumn("how") && (
           <DataTableFacetedFilter
             column={table.getColumn("how")}
-            title="How"
+            title={bookmarkI18nText[language].how}
             showEmptyFilter={false}
             options={tags?.howTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {isFiltered && !isMobile && (
@@ -769,7 +792,7 @@ export function BookmarkTableToolbar<TData>({
               table.resetColumnFilters();
             }}
           >
-            <span>Reset</span>
+            <span>{bookmarkI18nText[language].reset}</span>
             <X />
           </Button>
         )}
@@ -796,7 +819,7 @@ export function BookmarkTableToolbar<TData>({
             {!isMobile ? (
               <>
                 <Link2 />
-                Add
+                {bookmarkI18nText[language].add}
               </>
             ) : (
               <Plus />
