@@ -2,8 +2,11 @@ import { DataTable } from "@/components/react-table/data-table";
 import { bookmarkColumns } from "@/components/react-table/data-table-columns";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export default function Bookmark() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: bookmarks, isPending } = useBookmarks();
   // compute default pageSize on mobile
@@ -20,7 +23,9 @@ export default function Bookmark() {
         className={`flex items-center justify-between gap-2 ${isMobile ? "px-6" : ""}`}
       >
         <div className="flex flex-col gap-1">
-          <h2 className="text-3xl font-semibold">Bookmark</h2>
+          <h2 className="text-3xl font-semibold">
+            {i18nText[language].bookmark}
+          </h2>
         </div>
       </div>
 
@@ -34,3 +39,12 @@ export default function Bookmark() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    bookmark: "书签",
+  },
+  [UserLangEnum.ENUS]: {
+    bookmark: "Bookmark",
+  },
+};

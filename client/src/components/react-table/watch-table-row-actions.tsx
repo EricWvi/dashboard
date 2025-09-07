@@ -1093,9 +1093,53 @@ export function ToWatchTableRowActions<TData>({
   );
 }
 
+const bookmarkI18nText = {
+  [UserLangEnum.ZHCN]: {
+    edit: "编辑",
+    delete: "删除",
+    confirm: "确认",
+    cancel: "取消",
+    confirmDeletion: "确认删除",
+    confirmDeletionStart: "确定要删除「",
+    confirmDeletionEnd: "」吗？",
+    domain: "领域",
+    what: "一级标签",
+    how: "二级标签",
+    searchPlaceholder: "搜索",
+    editBookmark: "编辑书签",
+    title: "标题",
+    titlePlaceholder: "输入书签标题...",
+    domainPlaceholder: "选择领域",
+    link: "链接",
+    linkPlaceholder: "输入书签链接...",
+    update: "更新",
+  },
+  [UserLangEnum.ENUS]: {
+    edit: "Edit",
+    delete: "Delete",
+    confirm: "Confirm",
+    cancel: "Cancel",
+    confirmDeletion: "Confirm Deletion",
+    confirmDeletionStart: "Are you sure you want to delete [",
+    confirmDeletionEnd: "]?",
+    domain: "Domain",
+    what: "What",
+    how: "How",
+    searchPlaceholder: "Filter bookmarks...",
+    editBookmark: "Edit Bookmark",
+    title: "Title",
+    titlePlaceholder: "Enter bookmark title...",
+    domainPlaceholder: "Select domain",
+    link: "Link",
+    linkPlaceholder: "Enter bookmark link...",
+    update: "Update",
+  },
+};
+
 export function BookmarkTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: tags } = useTags();
   const bookmark = row.original as Bookmark;
@@ -1168,13 +1212,13 @@ export function BookmarkTableRowActions<TData>({
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => handleEditBookmarkDialogOpen(true)}>
-          Edit
+          {bookmarkI18nText[language].edit}
         </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setConfirmDialogOpen(true)}
         >
-          Delete
+          {bookmarkI18nText[language].delete}
         </DropdownMenuItem>
       </DropdownMenuContent>
 
@@ -1182,9 +1226,13 @@ export function BookmarkTableRowActions<TData>({
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>
+              {bookmarkI18nText[language].confirmDeletion}
+            </DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              Are you sure you want to delete [{bookmark.title}]?
+              {bookmarkI18nText[language].confirmDeletionStart}
+              {bookmark.title}
+              {bookmarkI18nText[language].confirmDeletionEnd}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -1192,7 +1240,7 @@ export function BookmarkTableRowActions<TData>({
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {bookmarkI18nText[language].cancel}
             </Button>
             <Button
               variant="destructive"
@@ -1201,7 +1249,7 @@ export function BookmarkTableRowActions<TData>({
                 deleteBookmark().then(() => setConfirmDialogOpen(false));
               }}
             >
-              Confirm
+              {bookmarkI18nText[language].confirm}
             </Button>
           </div>
         </DialogContent>
@@ -1220,25 +1268,29 @@ export function BookmarkTableRowActions<TData>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Edit Bookmark</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the bookmarks that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{bookmarkI18nText[language].editBookmark}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-edit-title">Title</Label>
+                <Label htmlFor="bookmark-edit-title">
+                  {bookmarkI18nText[language].title}
+                </Label>
                 <Input
                   id="bookmark-edit-title"
-                  placeholder={!isMobile ? "Enter bookmark title..." : ""}
+                  placeholder={
+                    !isMobile ? bookmarkI18nText[language].titlePlaceholder : ""
+                  }
                   value={bookmarkName}
                   disabled={updateBookmarkMutation.isPending}
                   onChange={(e) => setBookmarkName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-edit-domain">Domain</Label>
+                <Label htmlFor="bookmark-edit-domain">
+                  {bookmarkI18nText[language].domain}
+                </Label>
                 <Select
                   value={bookmarkType}
                   onValueChange={(v: string) =>
@@ -1248,7 +1300,11 @@ export function BookmarkTableRowActions<TData>({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="bookmark-edit-domain"
-                      placeholder={!isMobile ? "Select domain" : ""}
+                      placeholder={
+                        !isMobile
+                          ? bookmarkI18nText[language].domainPlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -1267,10 +1323,14 @@ export function BookmarkTableRowActions<TData>({
 
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-edit-link">Link</Label>
+                <Label htmlFor="bookmark-edit-link">
+                  {bookmarkI18nText[language].link}
+                </Label>
                 <Input
                   id="bookmark-edit-link"
-                  placeholder={!isMobile ? "Enter bookmark link..." : ""}
+                  placeholder={
+                    !isMobile ? bookmarkI18nText[language].linkPlaceholder : ""
+                  }
                   type="text"
                   value={bookmarkLink}
                   disabled={
@@ -1281,7 +1341,9 @@ export function BookmarkTableRowActions<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-edit-what">What</Label>
+                <Label htmlFor="bookmark-edit-what">
+                  {bookmarkI18nText[language].what}
+                </Label>
                 <MultiSelect
                   id="bookmark-edit-what"
                   options={tags?.whatTags ?? []}
@@ -1293,7 +1355,9 @@ export function BookmarkTableRowActions<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-edit-how">How</Label>
+                <Label htmlFor="bookmark-edit-how">
+                  {bookmarkI18nText[language].how}
+                </Label>
                 <MultiSelect
                   id="bookmark-edit-how"
                   options={tags?.howTags ?? []}
@@ -1311,7 +1375,7 @@ export function BookmarkTableRowActions<TData>({
                 variant="outline"
                 onClick={() => handleEditBookmarkDialogOpen(false)}
               >
-                Cancel
+                {bookmarkI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -1323,7 +1387,7 @@ export function BookmarkTableRowActions<TData>({
                   !bookmarkName.trim() || updateBookmarkMutation.isPending
                 }
               >
-                Update
+                {bookmarkI18nText[language].update}
               </Button>
             </div>
           </div>
@@ -1333,9 +1397,56 @@ export function BookmarkTableRowActions<TData>({
   );
 }
 
+const blogI18nText = {
+  [UserLangEnum.ZHCN]: {
+    what: "一级标签",
+    how: "二级标签",
+    rename: "重命名",
+    archive: "归档",
+    unarchive: "取消归档",
+    publish: "公开发布",
+    unpublish: "私有可见",
+    confirmAction: "确认操作",
+    confirmActionDescStart: "确定要",
+    confirmActionDescEnd: "」吗？",
+    archiveAction: "归档「",
+    unarchiveAction: "取消归档「",
+    publishAction: "发布「",
+    unpublishAction: "取消发布「",
+    confirm: "确认",
+    cancel: "取消",
+    update: "更新",
+    editBlog: "编辑博客",
+    title: "标题",
+    titlePlaceholder: "输入博客标题...",
+  },
+  [UserLangEnum.ENUS]: {
+    what: "What",
+    how: "How",
+    rename: "Rename",
+    archive: "Archive",
+    unarchive: "Unarchive",
+    publish: "Publish",
+    unpublish: "Unpublish",
+    confirmAction: "Confirm Action",
+    confirmActionDescStart: "Are you sure you want to ",
+    confirmActionDescEnd: "]?",
+    archiveAction: "{archive} [",
+    unarchiveAction: "{unarchive} [",
+    publishAction: "{publish} [",
+    unpublishAction: "{unpublish} [",
+    confirm: "Confirm",
+    cancel: "Cancel",
+    update: "Update",
+    editBlog: "Edit Blog",
+    title: "Title",
+    titlePlaceholder: "Enter blog title...",
+  },
+};
 export function BlogTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: tags } = useTags();
   const blog = row.original as Blog;
@@ -1412,7 +1523,7 @@ export function BlogTableRowActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onClick={() => handleEditBlogDialogOpen(true)}>
-          Rename
+          {blogI18nText[language].rename}
         </DropdownMenuItem>
         {blog.visibility === BlogEnum.PRIVATE && (
           <DropdownMenuItem
@@ -1422,7 +1533,7 @@ export function BlogTableRowActions<TData>({
               setConfirmDialogOpen(true);
             }}
           >
-            Publish
+            {blogI18nText[language].publish}
           </DropdownMenuItem>
         )}
         {blog.visibility === BlogEnum.PUBLIC && (
@@ -1433,7 +1544,7 @@ export function BlogTableRowActions<TData>({
               setConfirmDialogOpen(true);
             }}
           >
-            Unpublish
+            {blogI18nText[language].unpublish}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
@@ -1450,7 +1561,9 @@ export function BlogTableRowActions<TData>({
           }}
         >
           <div className="text-yellow-700 hover:text-yellow-700 dark:text-yellow-600 dark:hover:text-yellow-600">
-            {blog.visibility === BlogEnum.ARCHIVED ? "Unarchive" : "Archive"}
+            {blog.visibility === BlogEnum.ARCHIVED
+              ? blogI18nText[language].unarchive
+              : blogI18nText[language].archive}
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -1459,9 +1572,17 @@ export function BlogTableRowActions<TData>({
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogTitle>{blogI18nText[language].confirmAction}</DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              {`Are you sure you want to {${confirmAction.toLowerCase()}} [${blog.title}]?`}
+              {`${blogI18nText[language].confirmActionDescStart}${
+                confirmAction === "Publish"
+                  ? blogI18nText[language].publishAction
+                  : confirmAction === "Archive"
+                    ? blogI18nText[language].archiveAction
+                    : confirmAction === "Unarchive"
+                      ? blogI18nText[language].unarchiveAction
+                      : blogI18nText[language].unpublishAction
+              }${blog.title}${blogI18nText[language].confirmActionDescEnd}`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -1469,7 +1590,7 @@ export function BlogTableRowActions<TData>({
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {blogI18nText[language].cancel}
             </Button>
             <Button
               disabled={updateBlogMutation.isPending}
@@ -1477,7 +1598,7 @@ export function BlogTableRowActions<TData>({
                 action().then(() => setConfirmDialogOpen(false));
               }}
             >
-              {confirmAction}
+              {blogI18nText[language].confirm}
             </Button>
           </div>
         </DialogContent>
@@ -1493,17 +1614,19 @@ export function BlogTableRowActions<TData>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Edit Blog</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the blogs that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{blogI18nText[language].editBlog}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-edit-title">Title</Label>
+              <Label htmlFor="blog-edit-title">
+                {blogI18nText[language].title}
+              </Label>
               <Input
                 id="blog-edit-title"
-                placeholder={!isMobile ? "Enter blog title..." : ""}
+                placeholder={
+                  !isMobile ? blogI18nText[language].titlePlaceholder : ""
+                }
                 value={blogName}
                 disabled={updateBlogMutation.isPending}
                 onChange={(e) => setBlogName(e.target.value)}
@@ -1511,7 +1634,9 @@ export function BlogTableRowActions<TData>({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-edit-what">What</Label>
+              <Label htmlFor="blog-edit-what">
+                {blogI18nText[language].what}
+              </Label>
               <MultiSelect
                 id="blog-edit-what"
                 options={tags?.whatTags ?? []}
@@ -1523,7 +1648,9 @@ export function BlogTableRowActions<TData>({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-edit-how">How</Label>
+              <Label htmlFor="blog-edit-how">
+                {blogI18nText[language].how}
+              </Label>
               <MultiSelect
                 id="blog-edit-how"
                 options={tags?.howTags ?? []}
@@ -1540,7 +1667,7 @@ export function BlogTableRowActions<TData>({
                 variant="outline"
                 onClick={() => handleEditBlogDialogOpen(false)}
               >
-                Cancel
+                {blogI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -1548,7 +1675,7 @@ export function BlogTableRowActions<TData>({
                 }}
                 disabled={!blogName.trim() || updateBlogMutation.isPending}
               >
-                Update
+                {blogI18nText[language].update}
               </Button>
             </div>
           </div>

@@ -2,8 +2,11 @@ import { DataTable } from "@/components/react-table/data-table";
 import { blogColumns } from "@/components/react-table/data-table-columns";
 import { useBlogs } from "@/hooks/use-blogs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export default function Blog() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: blogs, isPending } = useBlogs();
   // compute default pageSize on mobile
@@ -20,7 +23,7 @@ export default function Blog() {
         className={`flex items-center justify-between gap-2 ${isMobile ? "px-6" : ""}`}
       >
         <div className="flex flex-col gap-1">
-          <h2 className="text-3xl font-semibold">Blog</h2>
+          <h2 className="text-3xl font-semibold">{i18nText[language].blog}</h2>
         </div>
       </div>
 
@@ -34,3 +37,12 @@ export default function Blog() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    blog: "博客",
+  },
+  [UserLangEnum.ENUS]: {
+    blog: "Blog",
+  },
+};

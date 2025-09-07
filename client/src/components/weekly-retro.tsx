@@ -28,6 +28,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, getWeekRange, getWeekYearPair } from "@/lib/utils";
 import { MarkIcon } from "@/components/ui/icons";
+import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export const WeeklyRetro = () => {
   const isMobile = useIsMobile();
@@ -68,7 +70,15 @@ export const WeeklyRetro = () => {
   );
 };
 
+const getWeekLabel = (week: number, language: UserLang) => {
+  if (language === UserLangEnum.ZHCN) {
+    return `第 ${week} 周`;
+  }
+  return `Week ${week}`;
+};
+
 const Weeks = ({ year }: { year: number }) => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { week: currWeek, year: currYear } = getWeekYearPair();
   const lastWeekOfLastYear = getWeekYearPair(
@@ -123,7 +133,7 @@ const Weeks = ({ year }: { year: number }) => {
           onClick={async () => {
             let draft = currWeekDraft;
             if (!draft) {
-              draft = await createTiptap(weeklyReviewInitial);
+              draft = await createTiptap(weeklyReviewInitial(language));
               createEchoMutation.mutateAsync({
                 sub: currWeek,
                 draft,
@@ -132,7 +142,9 @@ const Weeks = ({ year }: { year: number }) => {
             setEditorId(draft);
             setEditorDialogOpen(true);
           }}
-        >{`Week ${currWeek}`}</Button>
+        >
+          {getWeekLabel(currWeek, language)}
+        </Button>
       )}
       {/* last week */}
       {year === currYear &&
@@ -142,7 +154,7 @@ const Weeks = ({ year }: { year: number }) => {
             variant="outline"
             className="border-dashed"
             onClick={async () => {
-              const draft = await createTiptap(weeklyReviewInitial);
+              const draft = await createTiptap(weeklyReviewInitial(language));
               createEchoMutation.mutateAsync({
                 sub: currWeek - 1,
                 draft,
@@ -150,16 +162,17 @@ const Weeks = ({ year }: { year: number }) => {
               setEditorId(draft);
               setEditorDialogOpen(true);
             }}
-          >{`Week ${currWeek - 1}`}</Button>
+          >
+            {getWeekLabel(currWeek - 1, language)}
+          </Button>
         )}
 
       {weeks
         ?.filter((week) => year !== currYear || week.sub !== currWeek)
         .map((week) => (
-          <div className="relative w-fit overflow-hidden">
+          <div key={week.id} className="relative w-fit overflow-hidden">
             <Button
               variant="secondary"
-              key={week.id}
               onClick={() => {
                 const { start, end } = getWeekRange(year, week.sub);
                 setDialogWeekRange(
@@ -171,7 +184,9 @@ const Weeks = ({ year }: { year: number }) => {
                 setDialogWeekId(week.id);
                 setEditorId(week.draft);
               }}
-            >{`Week ${week.sub}`}</Button>
+            >
+              {getWeekLabel(week.sub, language)}
+            </Button>
             <div className="absolute -top-2 right-0">
               {week.mark && (
                 <MarkIcon className="size-6 fill-[var(--mark-icon-fill)] stroke-[var(--mark-icon-stroke)]" />
@@ -188,7 +203,7 @@ const Weeks = ({ year }: { year: number }) => {
             variant="outline"
             className="border-dashed"
             onClick={async () => {
-              const draft = await createTiptap(weeklyReviewInitial);
+              const draft = await createTiptap(weeklyReviewInitial(language));
               createEchoMutation.mutateAsync({
                 sub: lastWeekOfLastYear,
                 draft,
@@ -196,7 +211,9 @@ const Weeks = ({ year }: { year: number }) => {
               setEditorId(draft);
               setEditorDialogOpen(true);
             }}
-          >{`Week ${lastWeekOfLastYear}`}</Button>
+          >
+            {getWeekLabel(lastWeekOfLastYear, language)}
+          </Button>
         )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -223,11 +240,10 @@ const Weeks = ({ year }: { year: number }) => {
           <DialogHeader>
             <DialogTitle className="text-left">
               <div className="relative">
-                {`Week ${dialogWeek} `}
+                {getWeekLabel(dialogWeek, language)}{" "}
                 <span className="text-muted-foreground text-sm">
                   {dialogWeekRange}
                 </span>
-
                 {/* only allow edit the last week's echo */}
                 {(currWeek - 1 === dialogWeek ||
                   (currWeek === 1 &&
@@ -263,62 +279,67 @@ const Weeks = ({ year }: { year: number }) => {
 const questions = [
   {
     id: 1,
-    "zh-CN": "本周哪些时刻让我觉得最有意义或最难忘？",
-    "en-US": "What moments this week felt the most meaningful or memorable?",
+    [UserLangEnum.ZHCN]: "本周哪些时刻让我觉得最有意义或最难忘？",
+    [UserLangEnum.ENUS]:
+      "What moments this week felt the most meaningful or memorable?",
   },
   {
     id: 2,
-    "zh-CN": "什么对我挑战最大，我是如何应对的？",
-    "en-US": "What challenged me the most, and how did I respond?",
+    [UserLangEnum.ZHCN]: "什么对我挑战最大，我是如何应对的？",
+    [UserLangEnum.ENUS]: "What challenged me the most, and how did I respond?",
   },
   {
     id: 3,
-    "zh-CN": "我做了什么让自己感到骄傲的事情，无论多小？",
-    "en-US": "What did I do that I’m proud of, no matter how small?",
+    [UserLangEnum.ZHCN]: "我做了什么让自己感到骄傲的事情，无论多小？",
+    [UserLangEnum.ENUS]:
+      "What did I do that I’m proud of, no matter how small?",
   },
   {
     id: 4,
-    "zh-CN": "我在哪里感受到了快乐、轻松或感激？",
-    "en-US": "Where did I notice joy, ease, or gratitude?",
+    [UserLangEnum.ZHCN]: "我在哪里感受到了快乐、轻松或感激？",
+    [UserLangEnum.ENUS]: "Where did I notice joy, ease, or gratitude?",
   },
   {
     id: 5,
-    "zh-CN": "什么消耗了我的精力，下周我可能会做些什么不同的事？",
-    "en-US": "What drained me, and what might I do differently next week?",
+    [UserLangEnum.ZHCN]: "什么消耗了我的精力，下周我可能会做些什么不同的事？",
+    [UserLangEnum.ENUS]:
+      "What drained me, and what might I do differently next week?",
   },
   {
     id: 6,
-    "zh-CN": "这周谁或什么支持了我？",
-    "en-US": "Who or what supported me this week?",
+    [UserLangEnum.ZHCN]: "这周谁或什么支持了我？",
+    [UserLangEnum.ENUS]: "Who or what supported me this week?",
   },
   {
     id: 7,
-    "zh-CN": "我会带着什么样的教训、见解或提醒继续前进？",
-    "en-US": "What lesson, insight, or reminder will I carry forward?",
+    [UserLangEnum.ZHCN]: "我会带着什么样的教训、见解或提醒继续前进？",
+    [UserLangEnum.ENUS]:
+      "What lesson, insight, or reminder will I carry forward?",
   },
   {
     id: 8,
-    "zh-CN": "还有什么...",
-    "en-US": "What’s more...",
+    [UserLangEnum.ZHCN]: "还有什么...",
+    [UserLangEnum.ENUS]: "What’s more...",
   },
 ];
 
-const weeklyReviewInitial = questions.flatMap((q) => [
-  {
-    type: "heading",
-    attrs: {
-      level: 3,
-      textAlign: null,
-    },
-    content: [
-      {
-        text: q["en-US"],
-        type: "text",
+const weeklyReviewInitial = (language: UserLang) =>
+  questions.flatMap((q) => [
+    {
+      type: "heading",
+      attrs: {
+        level: 3,
+        textAlign: null,
       },
-    ],
-  },
-  {
-    type: "paragraph",
-    attrs: { textAlign: null },
-  },
-]);
+      content: [
+        {
+          text: q[language],
+          type: "text",
+        },
+      ],
+    },
+    {
+      type: "paragraph",
+      attrs: { textAlign: null },
+    },
+  ]);

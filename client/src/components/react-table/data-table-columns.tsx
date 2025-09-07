@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
-import { BlogEnum, type Blog } from "@/hooks/use-blogs";
+import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
@@ -166,6 +166,8 @@ const i18nText = {
     link: "链接",
     what: "一级标签",
     how: "二级标签",
+    created: "创建时间",
+    updated: "更新时间",
   },
   [UserLangEnum.ENUS]: {
     type: "Type",
@@ -180,6 +182,8 @@ const i18nText = {
     link: "Link",
     what: "What",
     how: "How",
+    created: "Created",
+    updated: "Updated",
   },
 };
 
@@ -712,9 +716,16 @@ export const blogColumns: ColumnDef<Blog>[] = [
   {
     accessorKey: "createdAt",
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created" className="ml-2" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].created}
+          className="ml-2"
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="ml-2 flex items-center gap-2">
@@ -728,10 +739,17 @@ export const blogColumns: ColumnDef<Blog>[] = [
   {
     accessorKey: "title",
     size: 300,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Title" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].title}
+        />
+      );
+    },
     cell: ({ row }) => {
+      const { language } = useUserContext();
       const { setId: setEditorId, setOpen: setEditorDialogOpen } =
         useTTContext();
 
@@ -755,7 +773,7 @@ export const blogColumns: ColumnDef<Blog>[] = [
               }
               className="ml-2"
             >
-              {row.original.visibility}
+              {BlogTypeText[row.original.visibility][language]}
             </Badge>
           </div>
         </div>
@@ -768,9 +786,15 @@ export const blogColumns: ColumnDef<Blog>[] = [
     accessorKey: "what",
     accessorFn: (row) => row.payload.whats ?? [],
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="What" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].what}
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -794,9 +818,12 @@ export const blogColumns: ColumnDef<Blog>[] = [
     accessorKey: "how",
     accessorFn: (row) => row.payload.hows ?? [],
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="How" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader column={column} title={i18nText[language].how} />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">
@@ -819,9 +846,16 @@ export const blogColumns: ColumnDef<Blog>[] = [
   {
     accessorKey: "updatedAt",
     size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Updated" className="ml-2" />
-    ),
+    header: ({ column }) => {
+      const { language } = useUserContext();
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={i18nText[language].updated}
+          className="ml-2"
+        />
+      );
+    },
     cell: ({ row }) => {
       return (
         <div className="ml-2 flex items-center gap-2">

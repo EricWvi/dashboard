@@ -680,6 +680,14 @@ const bookmarkI18nText = {
     reset: "重置",
     add: "添加",
     searchPlaceholder: "搜索",
+    addBookmark: "添加书签",
+    title: "标题",
+    titlePlaceholder: "输入书签标题...",
+    domainPlaceholder: "选择领域",
+    link: "链接",
+    linkPlaceholder: "输入书签链接...",
+    cancel: "取消",
+    create: "创建",
   },
   [UserLangEnum.ENUS]: {
     domain: "Domain",
@@ -688,6 +696,14 @@ const bookmarkI18nText = {
     reset: "Reset",
     add: "Add",
     searchPlaceholder: "Filter bookmarks...",
+    addBookmark: "Add Bookmark",
+    title: "Title",
+    titlePlaceholder: "Enter bookmark title...",
+    domainPlaceholder: "Select domain",
+    link: "Link",
+    linkPlaceholder: "Enter bookmark link...",
+    cancel: "Cancel",
+    create: "Create",
   },
 };
 
@@ -835,25 +851,29 @@ export function BookmarkTableToolbar<TData>({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Bookmark</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the bookmarks that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{bookmarkI18nText[language].addBookmark}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-name">Title</Label>
+                <Label htmlFor="bookmark-add-name">
+                  {bookmarkI18nText[language].title}
+                </Label>
                 <Input
                   id="bookmark-add-name"
-                  placeholder={!isMobile ? "Enter bookmark title..." : ""}
+                  placeholder={
+                    !isMobile ? bookmarkI18nText[language].titlePlaceholder : ""
+                  }
                   value={bookmarkName}
                   disabled={createBookmarkMutation.isPending}
                   onChange={(e) => setBookmarkName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-domain">Domain</Label>
+                <Label htmlFor="bookmark-add-domain">
+                  {bookmarkI18nText[language].domain}
+                </Label>
                 <Select
                   onValueChange={(v: string) =>
                     setBookmarkType(v as DomainType)
@@ -862,7 +882,11 @@ export function BookmarkTableToolbar<TData>({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="bookmark-add-domain"
-                      placeholder={!isMobile ? "Select domain" : ""}
+                      placeholder={
+                        !isMobile
+                          ? bookmarkI18nText[language].domainPlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -881,10 +905,14 @@ export function BookmarkTableToolbar<TData>({
 
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-link">Link</Label>
+                <Label htmlFor="bookmark-add-link">
+                  {bookmarkI18nText[language].link}
+                </Label>
                 <Input
                   id="bookmark-add-link"
-                  placeholder={!isMobile ? "Enter bookmark link..." : ""}
+                  placeholder={
+                    !isMobile ? bookmarkI18nText[language].linkPlaceholder : ""
+                  }
                   type="text"
                   value={bookmarkLink}
                   disabled={createBookmarkMutation.isPending}
@@ -892,7 +920,9 @@ export function BookmarkTableToolbar<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-what">What</Label>
+                <Label htmlFor="bookmark-add-what">
+                  {bookmarkI18nText[language].what}
+                </Label>
                 <MultiSelect
                   id="bookmark-add-what"
                   placeholder=""
@@ -905,7 +935,9 @@ export function BookmarkTableToolbar<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-how">How</Label>
+                <Label htmlFor="bookmark-add-how">
+                  {bookmarkI18nText[language].how}
+                </Label>
                 <MultiSelect
                   id="bookmark-add-how"
                   placeholder=""
@@ -924,7 +956,7 @@ export function BookmarkTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddBookmarkDialogOpen(false)}
               >
-                Cancel
+                {bookmarkI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -940,7 +972,7 @@ export function BookmarkTableToolbar<TData>({
                   !bookmarkName.trim() || createBookmarkMutation.isPending
                 }
               >
-                Create
+                {bookmarkI18nText[language].create}
               </Button>
             </div>
           </div>
@@ -950,9 +982,39 @@ export function BookmarkTableToolbar<TData>({
   );
 }
 
+const blogI18nText = {
+  [UserLangEnum.ZHCN]: {
+    what: "一级标签",
+    how: "二级标签",
+    reset: "重置",
+    add: "添加",
+    searchPlaceholder: "搜索",
+    addBlog: "添加博客",
+    title: "标题",
+    titlePlaceholder: "输入博客标题...",
+    cancel: "取消",
+    create: "创建",
+    rename: "重命名",
+  },
+  [UserLangEnum.ENUS]: {
+    what: "What",
+    how: "How",
+    reset: "Reset",
+    add: "Add",
+    searchPlaceholder: "Filter blogs...",
+    addBlog: "Add Blog",
+    title: "Title",
+    titlePlaceholder: "Enter blog title...",
+    cancel: "Cancel",
+    create: "Create",
+    rename: "Rename",
+  },
+};
+
 export function BlogTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: tags } = useTags();
 
@@ -987,7 +1049,7 @@ export function BlogTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter blogs..."
+            placeholder={blogI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -1004,17 +1066,19 @@ export function BlogTableToolbar<TData>({
         {table.getColumn("what") && (
           <DataTableFacetedFilter
             column={table.getColumn("what")}
-            title="What"
+            title={blogI18nText[language].what}
             showEmptyFilter={false}
             options={tags?.whatTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {table.getColumn("how") && (
           <DataTableFacetedFilter
             column={table.getColumn("how")}
-            title="How"
+            title={blogI18nText[language].how}
             showEmptyFilter={false}
             options={tags?.howTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {isFiltered && !isMobile && (
@@ -1049,7 +1113,7 @@ export function BlogTableToolbar<TData>({
             {!isMobile ? (
               <>
                 <LetterText />
-                Add
+                {blogI18nText[language].add}
               </>
             ) : (
               <Plus />
@@ -1062,17 +1126,19 @@ export function BlogTableToolbar<TData>({
       <Dialog open={addBlogDialogOpen} onOpenChange={setAddBlogDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Blog</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the blogs that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{blogI18nText[language].addBlog}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-add-name">Title</Label>
+              <Label htmlFor="blog-add-name">
+                {blogI18nText[language].title}
+              </Label>
               <Input
                 id="blog-add-name"
-                placeholder={!isMobile ? "Enter blog title..." : ""}
+                placeholder={
+                  !isMobile ? blogI18nText[language].titlePlaceholder : ""
+                }
                 value={blogName}
                 disabled={createBlogMutation.isPending}
                 onChange={(e) => setBlogName(e.target.value)}
@@ -1080,7 +1146,9 @@ export function BlogTableToolbar<TData>({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-add-what">What</Label>
+              <Label htmlFor="blog-add-what">
+                {blogI18nText[language].what}
+              </Label>
               <MultiSelect
                 id="blog-add-what"
                 placeholder=""
@@ -1093,7 +1161,7 @@ export function BlogTableToolbar<TData>({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-add-how">How</Label>
+              <Label htmlFor="blog-add-how">{blogI18nText[language].how}</Label>
               <MultiSelect
                 id="blog-add-how"
                 placeholder=""
@@ -1111,7 +1179,7 @@ export function BlogTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddBlogDialogOpen(false)}
               >
-                Cancel
+                {blogI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -1121,7 +1189,7 @@ export function BlogTableToolbar<TData>({
                 }}
                 disabled={!blogName.trim() || createBlogMutation.isPending}
               >
-                Create
+                {blogI18nText[language].create}
               </Button>
             </div>
           </div>
