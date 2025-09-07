@@ -42,7 +42,7 @@ import {
   types,
 } from "@/components/react-table/data-table-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   useCreateToWatch,
   useCreateWatched,

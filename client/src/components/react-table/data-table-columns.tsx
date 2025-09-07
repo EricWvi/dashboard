@@ -52,7 +52,7 @@ import { dateString } from "@/lib/utils";
 import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 
 export const ratings = [
