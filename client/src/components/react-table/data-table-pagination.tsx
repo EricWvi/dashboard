@@ -15,14 +15,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
 }
 
+const pageStatus = (index: number, count: number, language: UserLang) => {
+  if (language === UserLangEnum.ZHCN) {
+    return `第 ${index + 1} / ${count} 页`;
+  }
+  return `Page ${index + 1} of ${count}`;
+};
+
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
 
   return (
@@ -35,7 +45,9 @@ export function DataTablePagination<TData>({
       </div> */}
       <div className="flex items-center space-x-6 lg:space-x-8">
         <div className="hidden items-center space-x-2 lg:flex">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">
+            {i18nText[language].rowsPerPage}
+          </p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -55,8 +67,11 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          {pageStatus(
+            table.getState().pagination.pageIndex,
+            table.getPageCount(),
+            language,
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -104,3 +119,12 @@ export function DataTablePagination<TData>({
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    rowsPerPage: "每页显示",
+  },
+  [UserLangEnum.ENUS]: {
+    rowsPerPage: "Rows per page",
+  },
+};

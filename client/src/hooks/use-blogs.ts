@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { createTiptap } from "./use-draft";
 import { keyTags, TagsQueryOptions } from "./use-bookmarks";
+import { UserLangEnum, type I18nText } from "./use-user";
 
 export type Blog = {
   id: number;
@@ -22,6 +23,25 @@ export const BlogEnum: {
   PRIVATE: "Private",
   PUBLIC: "Public",
   ARCHIVED: "Archived",
+};
+
+export const BlogTypeText: {
+  [BlogEnum.PRIVATE]: I18nText;
+  [BlogEnum.PUBLIC]: I18nText;
+  [BlogEnum.ARCHIVED]: I18nText;
+} = {
+  [BlogEnum.PRIVATE]: {
+    [UserLangEnum.ZHCN]: "未发布",
+    [UserLangEnum.ENUS]: "Private",
+  },
+  [BlogEnum.PUBLIC]: {
+    [UserLangEnum.ZHCN]: "公开可见",
+    [UserLangEnum.ENUS]: "Public",
+  },
+  [BlogEnum.ARCHIVED]: {
+    [UserLangEnum.ZHCN]: "已归档",
+    [UserLangEnum.ENUS]: "Archived",
+  },
 };
 
 type Payload = {
@@ -46,7 +66,7 @@ const blogInitialContent = (title: string) => [
   {
     type: "heading",
     attrs: {
-      level: 3,
+      level: 1,
       textAlign: null,
     },
     content: [

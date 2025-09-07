@@ -4,8 +4,11 @@ import {
   type Watch,
   WatchEnum,
   type WatchType,
-  WatchMeasure,
+  WatchMeasureEnum,
   useCompleteWatch,
+  WatchTypeText,
+  type WatchMeasure,
+  WatchMeasureText,
 } from "@/hooks/use-watches";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { types } from "@/components/react-table/data-table-columns";
@@ -49,8 +52,78 @@ import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
 import WatchCheckpoints from "@/components/watch-checkpoint";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
+import { useUserContext } from "@/user-provider";
+import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    reading: "阅读",
+    playing: "游玩",
+    watching: "观看",
+    done: "标记已阅",
+    continue: "继续",
+    updateProgress: "更新进度",
+    update: "更新",
+    cancel: "取消",
+    editEntry: "编辑条目",
+    name: "名称",
+    namePlaceholder: "输入名称...",
+    year: "年份",
+    yearPlaceholder: "输入年份...",
+    type: "类别",
+    typePlaceholder: "选择类别...",
+    link: "链接",
+    linkPlaceholder: "输入链接...",
+    measure: "进度单位",
+    range: "总量",
+    measureRangePlaceholder: "输入进度总量...",
+    progress: "进度：",
+    review: "评论",
+    completeWatch: "标记完成",
+    rating: "评分：",
+  },
+  [UserLangEnum.ENUS]: {
+    reading: "Reading",
+    playing: "Playing",
+    watching: "Watching",
+    done: "Done",
+    continue: "Continue ",
+    updateProgress: "Update Watching Progress",
+    update: "Update",
+    cancel: "Cancel",
+    editEntry: "Edit Watching Entry",
+    name: "Name",
+    namePlaceholder: "Enter entry name...",
+    year: "Year",
+    yearPlaceholder: "Enter entry year...",
+    type: "Type",
+    typePlaceholder: "Select entry type",
+    link: "Link",
+    linkPlaceholder: "Enter entry link...",
+    measure: "Measure",
+    range: "Range",
+    measureRangePlaceholder: "Enter measure range...",
+    progress: "Progress: ",
+    review: "Review",
+    completeWatch: "Complete Watch",
+    rating: "Rating: ",
+  },
+};
+
+const progressText = (watch: Watch, language: UserLang) => {
+  if (watch.payload.measure === WatchMeasureEnum.PERCENTAGE) {
+    return "";
+  }
+  if (language === UserLangEnum.ZHCN) {
+    return `第 ${watch.payload.progress} / ${watch.payload.range} ${WatchMeasureText[watch.payload.measure as WatchMeasure][language]}`;
+  } else if (language === UserLangEnum.ENUS) {
+    return `${WatchMeasureText[watch.payload.measure as WatchMeasure][language]} ${watch.payload.progress} of ${watch.payload.range}`;
+  }
+  return "";
+};
 
 const WatchingItem = ({ watch }: { watch: Watch }) => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const type = types.find((type) => type.value === watch.type);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
@@ -105,21 +178,28 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
   const updateProgress = () => {
     // if today already have progress, update it
     let curr: [string, number][] = watch.payload.checkpoints ?? [];
+    let range = measureRange;
+    if (entryMeasure === WatchMeasureEnum.PERCENTAGE) {
+      range = 100;
+    }
     if (curr.length > 0) {
       const today = dateString(new Date(), "-");
       const existing = curr.findIndex(([date]) => date === today);
       if (existing !== -1) {
         curr[existing][1] = watchProgress;
       } else {
-        curr.push([today, watchProgress]);
+        if (curr[curr.length - 1][1] !== watchProgress) {
+          curr.push([today, watchProgress]);
+        }
       }
     }
     return updateWatchMutation.mutateAsync({
       id: watch.id,
       payload: {
         ...watch.payload,
-        measure: entryMeasure === "" ? WatchMeasure.PERCENTAGE : entryMeasure,
-        range: measureRange >= watchProgress ? measureRange : watchProgress,
+        measure:
+          entryMeasure === "" ? WatchMeasureEnum.PERCENTAGE : entryMeasure,
+        range: range >= watchProgress ? range : watchProgress,
         progress: watchProgress,
         checkpoints: curr,
       },
@@ -205,7 +285,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
             >
               <span className="flex items-center gap-1">
                 {type && <type.icon className="size-4" />}
-                {watch.type}
+                {WatchTypeText[watch.type][language]}
               </span>
             </Badge>
           </div>
@@ -229,7 +309,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
             >
               <div className="flex justify-between">
                 <span className="text-muted-foreground text-sm font-medium">
-                  {`${watch.payload.measure} ${watch.payload.progress} of ${watch.payload.range}`}
+                  {progressText(watch, language)}
                 </span>
                 <span className="text-sm font-medium">
                   {(
@@ -266,12 +346,12 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   ) : (
                     <Play />
                   )}
-                  Continue{" "}
+                  {i18nText[language].continue}
                   {[WatchEnum.BOOK, WatchEnum.MANGA].includes(watch.type)
-                    ? "Reading"
+                    ? i18nText[language].reading
                     : watch.type === WatchEnum.GAME
-                      ? "Playing"
-                      : "Watching"}
+                      ? i18nText[language].playing
+                      : i18nText[language].watching}
                 </Button>
               </a>
             ) : (
@@ -281,7 +361,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 onClick={() => handleCompleteWatchOpen(true)}
               >
                 <TicketCheck />
-                Done
+                {i18nText[language].done}
               </Button>
             )}
           </CardContent>
@@ -301,28 +381,34 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
           }}
         >
           <DialogHeader>
-            <DialogTitle>Edit Watching Entry</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the entries that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{i18nText[language].editEntry}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watching-edit-watch-name">Name</Label>
+                <Label htmlFor="watching-edit-watch-name">
+                  {i18nText[language].name}
+                </Label>
                 <Input
                   id="watching-edit-watch-name"
-                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  placeholder={
+                    !isMobile ? i18nText[language].namePlaceholder : ""
+                  }
                   value={entryName}
                   disabled={updateWatchMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watching-edit-watch-year">Year</Label>
+                <Label htmlFor="watching-edit-watch-year">
+                  {i18nText[language].year}
+                </Label>
                 <Input
                   id="watching-edit-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  placeholder={
+                    !isMobile ? i18nText[language].yearPlaceholder : ""
+                  }
                   type="number"
                   min={1900}
                   max={2099}
@@ -335,7 +421,9 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watching-edit-watch-type">Type</Label>
+                <Label htmlFor="watching-edit-watch-type">
+                  {i18nText[language].type}
+                </Label>
                 <Select
                   value={entryType}
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
@@ -343,7 +431,9 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="watching-edit-watch-type"
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      placeholder={
+                        !isMobile ? i18nText[language].typePlaceholder : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -351,7 +441,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -359,10 +449,14 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watching-edit-watch-link">Link</Label>
+                <Label htmlFor="watching-edit-watch-link">
+                  {i18nText[language].link}
+                </Label>
                 <Input
                   id="watching-edit-watch-link"
-                  placeholder={!isMobile ? "Enter entry link..." : ""}
+                  placeholder={
+                    !isMobile ? i18nText[language].linkPlaceholder : ""
+                  }
                   type="text"
                   value={entryLink}
                   disabled={updateWatchMutation.isPending}
@@ -426,7 +520,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   variant="outline"
                   onClick={() => handleEditEntryDialogOpen(false)}
                 >
-                  Cancel
+                  {i18nText[language].cancel}
                 </Button>
                 <Button
                   onClick={() => {
@@ -434,7 +528,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   }}
                   disabled={!entryName.trim() || updateWatchMutation.isPending}
                 >
-                  Update
+                  {i18nText[language].update}
                 </Button>
               </div>
             </div>
@@ -446,14 +540,14 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
       <Dialog open={updateProgressOpen} onOpenChange={handleUpdateProgressOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Watching Progress</DialogTitle>
+            <DialogTitle>{i18nText[language].updateProgress}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="watching-update-progress-measure">
-                  Measure
+                  {i18nText[language].measure}
                 </Label>
                 <Select
                   value={entryMeasure}
@@ -464,15 +558,17 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="watching-update-progress-measure"
-                      placeholder={!isMobile ? "Select measure type" : ""}
+                      placeholder={
+                        !isMobile ? i18nText[language].typePlaceholder : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {Object.entries(WatchMeasure).map(
+                      {Object.entries(WatchMeasureEnum).map(
                         ([_key, value], idx) => (
                           <SelectItem key={idx} value={value}>
-                            {value}
+                            {WatchMeasureText[value][language]}
                           </SelectItem>
                         ),
                       )}
@@ -481,12 +577,23 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watching-update-progress-range">Range</Label>
+                <Label htmlFor="watching-update-progress-range">
+                  {i18nText[language].range}
+                </Label>
                 <Input
                   id="watching-update-progress-range"
-                  placeholder={!isMobile ? "Enter measure range..." : ""}
-                  value={measureRange}
-                  disabled={updateWatchMutation.isPending}
+                  placeholder={
+                    !isMobile ? i18nText[language].measureRangePlaceholder : ""
+                  }
+                  value={
+                    entryMeasure === WatchMeasureEnum.PERCENTAGE
+                      ? 100
+                      : measureRange
+                  }
+                  disabled={
+                    entryMeasure === WatchMeasureEnum.PERCENTAGE ||
+                    updateWatchMutation.isPending
+                  }
                   onChange={(e) => setMeasureRange(Number(e.target.value))}
                 />
               </div>
@@ -494,7 +601,8 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
 
             <div className="mb-6 flex flex-col gap-4">
               <Label htmlFor="watching-edit-watch-progress">
-                Progress: {watchProgress}
+                {i18nText[language].progress}
+                {watchProgress}
               </Label>
               <div className="flex gap-2">
                 <Button
@@ -528,7 +636,11 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
             </div>
 
             {/* checkpoints display */}
-            <WatchCheckpoints checkpoints={watch.payload.checkpoints ?? []} />
+            <WatchCheckpoints
+              type={watch.type}
+              measure={watch.payload.measure as WatchMeasure}
+              checkpoints={watch.payload.checkpoints ?? []}
+            />
 
             <div className="flex justify-between gap-2">
               <Button variant="secondary" onClick={reviewWatch}>
@@ -539,7 +651,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   variant="outline"
                   onClick={() => handleUpdateProgressOpen(false)}
                 >
-                  Cancel
+                  {i18nText[language].cancel}
                 </Button>
                 <Button
                   onClick={() => {
@@ -549,7 +661,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                   }}
                   disabled={updateWatchMutation.isPending}
                 >
-                  Update
+                  {i18nText[language].update}
                 </Button>
               </div>
             </div>
@@ -561,13 +673,14 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
       <Dialog open={completeWatchOpen} onOpenChange={handleCompleteWatchOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Complete Watch</DialogTitle>
+            <DialogTitle>{i18nText[language].completeWatch}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="mb-6 flex flex-col gap-4">
               <Label htmlFor="watching-complete-watch-rating">
-                Rating: {(entryRate / 2).toFixed(1)}
+                {i18nText[language].rating}
+                {(entryRate / 2).toFixed(1)}
               </Label>
               <Slider
                 id="watching-complete-watch-rating"
@@ -583,7 +696,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 variant="outline"
                 onClick={() => handleCompleteWatchOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -610,7 +723,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
                 }}
                 disabled={completeWatchMutation.isPending}
               >
-                Update
+                {i18nText[language].update}
               </Button>
             </div>
           </div>

@@ -357,8 +357,8 @@ export const MarkIcon = React.memo(({ className }: { className?: string }) => (
         <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.95" />
       </linearGradient>
       <linearGradient id="gradient-light" x1="12" y1="2" x2="12" y2="22">
-        <stop offset="0%" stop-color="#c084fc" stop-opacity="0.95" />
-        <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.9" />
+        <stop offset="0%" stopColor="#c084fc" stopOpacity="0.95" />
+        <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.9" />
       </linearGradient>
     </defs>
   </svg>

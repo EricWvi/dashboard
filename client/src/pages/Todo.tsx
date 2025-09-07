@@ -20,8 +20,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, FolderPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export default function Todo() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
@@ -79,7 +82,7 @@ export default function Todo() {
                 className="gap-1"
               >
                 <FolderPlus />
-                New List
+                {i18nText[language].newList}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -119,7 +122,7 @@ export default function Todo() {
                     onClick={() => setNewListDialogOpen(true)}
                   >
                     <FolderPlus />
-                    New List
+                    {i18nText[language].newList}
                   </Button>
                 </div>
               </div>
@@ -147,14 +150,16 @@ export default function Todo() {
       <Dialog open={newListDialogOpen} onOpenChange={setNewListDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-left">Create New List</DialogTitle>
+            <DialogTitle className="text-left">
+              {i18nText[language].createNewList}
+            </DialogTitle>
             <DialogDescription className="text-left">
-              Ready to organize your tasks?
+              {i18nText[language].createNewListDesc}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter list name..."
+              placeholder={i18nText[language].enterListName}
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
               onCompositionStart={() => setIsComposing(true)}
@@ -171,7 +176,7 @@ export default function Todo() {
                 variant="outline"
                 onClick={() => setNewListDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={createNewList}
@@ -179,7 +184,7 @@ export default function Todo() {
                   !newListName.trim() || createCollectionMutation.isPending
                 }
               >
-                Create
+                {i18nText[language].create}
               </Button>
             </div>
           </div>
@@ -188,3 +193,22 @@ export default function Todo() {
     </>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    newList: "创建集合",
+    createNewList: "创建新集合",
+    createNewListDesc: "准备好组织你的任务了吗？",
+    enterListName: "输入集合名称...",
+    cancel: "取消",
+    create: "创建",
+  },
+  [UserLangEnum.ENUS]: {
+    newList: "New List",
+    createNewList: "Create New List",
+    createNewListDesc: "Ready to organize your tasks?",
+    enterListName: "Enter list name...",
+    cancel: "Cancel",
+    create: "Create",
+  },
+};

@@ -27,6 +27,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 /**
  * Animation types and configurations
@@ -344,6 +346,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     },
     ref,
   ) => {
+    const { language } = useUserContext();
     const [selectedValues, setSelectedValues] =
       React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
@@ -1114,7 +1117,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
             <Command>
               {searchable && (
                 <CommandInput
-                  placeholder="Search options..."
+                  placeholder={i18nText[language].searchPlaceholder}
                   onCompositionStart={() => setIsComposing(true)}
                   onCompositionEnd={() => setIsComposing(false)}
                   onKeyDown={handleInputKeyDown}
@@ -1283,7 +1286,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       className="cursor-pointer"
                     >
                       <Plus className="text-muted-foreground mr-2 h-4 w-4" />
-                      <span>Create "{searchValue.trim()}"</span>
+                      <span>
+                        {i18nText[language].create} "{searchValue.trim()}"
+                      </span>
                     </CommandItem>
                   </CommandGroup>
                 )}
@@ -1298,7 +1303,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           onSelect={handleClear}
                           className="flex-1 cursor-pointer justify-center"
                         >
-                          Clear
+                          {i18nText[language].clear}
                         </CommandItem>
                         <Separator
                           orientation="vertical"
@@ -1311,7 +1316,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       onSelect={() => setIsPopoverOpen(false)}
                       className="max-w-full flex-1 cursor-pointer justify-center"
                     >
-                      Close
+                      {i18nText[language].close}
                     </CommandItem>
                   </div>
                 </CommandGroup>
@@ -1332,6 +1337,21 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     );
   },
 );
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    close: "关闭",
+    searchPlaceholder: "搜索...",
+    create: "创建",
+    clear: "清除",
+  },
+  [UserLangEnum.ENUS]: {
+    close: "Close",
+    searchPlaceholder: "Search options...",
+    create: "Create",
+    clear: "Clear",
+  },
+};
 
 MultiSelect.displayName = "MultiSelect";
 export type { MultiSelectOption, MultiSelectGroup, MultiSelectProps };

@@ -37,18 +37,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import {
-  types,
   ratings,
   domains,
+  types,
 } from "@/components/react-table/data-table-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useCreateToWatch,
   useCreateWatched,
   WatchStatus,
   WatchEnum,
   type WatchType,
+  WatchTypeText,
+  RatingText,
 } from "@/hooks/use-watches";
 import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -60,6 +62,8 @@ import {
 } from "@/hooks/use-bookmarks";
 import { createTiptap } from "@/hooks/use-draft";
 import { useCreateBlog } from "@/hooks/use-blogs";
+import { useUserContext } from "@/user-provider";
+import { UserLangEnum } from "@/hooks/use-user";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -68,6 +72,7 @@ export interface DataTableToolbarProps<TData> {
 export function WatchedTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,7 +118,7 @@ export function WatchedTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter watches..."
+            placeholder={WatchI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -130,21 +135,23 @@ export function WatchedTableToolbar<TData>({
         {table.getColumn("type") && (
           <DataTableFacetedFilter
             column={table.getColumn("type")}
-            title="Type"
+            title={WatchI18nText[language].type}
             options={types}
+            getOptionLabel={(value) => WatchTypeText[value][language]}
           />
         )}
         {table.getColumn("rate") && (
           <DataTableFacetedFilter
             column={table.getColumn("rate")}
-            title="Rate"
+            title={WatchI18nText[language].rate}
             options={ratings}
+            getOptionLabel={(value) => RatingText[value][language]}
           />
         )}
         {table.getColumn("createdAt") && (
           <DataTableFacetedFilter
             column={table.getColumn("createdAt")}
-            title="Year"
+            title={WatchI18nText[language].year}
             options={(() => {
               const column = table.getColumn("createdAt");
               const minMaxValues = column?.getFacetedMinMaxValues();
@@ -156,6 +163,7 @@ export function WatchedTableToolbar<TData>({
                   )
                 : [];
             })()}
+            getOptionLabel={(value) => value}
           />
         )}
         {isFiltered && !isMobile && (
@@ -167,7 +175,7 @@ export function WatchedTableToolbar<TData>({
               table.resetColumnFilters();
             }}
           >
-            <span>Reset</span>
+            <span>{WatchI18nText[language].reset}</span>
             <X />
           </Button>
         )}
@@ -190,7 +198,7 @@ export function WatchedTableToolbar<TData>({
             {!isMobile ? (
               <>
                 <Clapperboard />
-                Add
+                {WatchI18nText[language].add}
               </>
             ) : (
               <Plus />
@@ -203,28 +211,42 @@ export function WatchedTableToolbar<TData>({
       <Dialog open={addEntryDialogOpen} onOpenChange={setAddEntryDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Watched Entry</DialogTitle>
+            <DialogTitle>
+              {WatchI18nText[language].addWatchedEntryTitle}
+            </DialogTitle>
             <DialogDescription>
-              Stay up to date with the entries that matter most to you.
+              {WatchI18nText[language].description}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-name">Name</Label>
+                <Label htmlFor="watched-add-watch-name">
+                  {WatchI18nText[language].name}
+                </Label>
                 <Input
                   id="watched-add-watch-name"
-                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryNamePlaceholder
+                      : ""
+                  }
                   value={entryName}
                   disabled={createEntryMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-author">Author</Label>
+                <Label htmlFor="watched-add-watch-author">
+                  {WatchI18nText[language].author}
+                </Label>
                 <Input
                   id="watched-add-watch-author"
-                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryAuthorPlaceholder
+                      : ""
+                  }
                   value={entryAuthor}
                   disabled={createEntryMutation.isPending}
                   onChange={(e) => setEntryAuthor(e.target.value)}
@@ -234,14 +256,20 @@ export function WatchedTableToolbar<TData>({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-type">Type</Label>
+                <Label htmlFor="watched-add-watch-type">
+                  {WatchI18nText[language].type}
+                </Label>
                 <Select
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="watched-add-watch-type"
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      placeholder={
+                        !isMobile
+                          ? WatchI18nText[language].entryTypePlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -249,7 +277,7 @@ export function WatchedTableToolbar<TData>({
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -257,10 +285,16 @@ export function WatchedTableToolbar<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-year">Year</Label>
+                <Label htmlFor="watched-add-watch-year">
+                  {WatchI18nText[language].year}
+                </Label>
                 <Input
                   id="watched-add-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryYearPlaceholder
+                      : ""
+                  }
                   type="number"
                   min={1900}
                   max={2099}
@@ -272,7 +306,7 @@ export function WatchedTableToolbar<TData>({
             </div>
             <div className="mb-6 flex flex-col gap-2">
               <Label htmlFor="watched-add-watch-rating">
-                Rating: {(entryRate / 2).toFixed(1)}
+                {WatchI18nText[language].rating} {(entryRate / 2).toFixed(1)}
               </Label>
               <Slider
                 id="watched-add-watch-rating"
@@ -284,11 +318,17 @@ export function WatchedTableToolbar<TData>({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="watched-add-watch-mark">Mark</Label>
+                <Label htmlFor="watched-add-watch-mark">
+                  {WatchI18nText[language].mark}
+                </Label>
                 <div className="relative">
                   <Input
                     id="watched-add-watch-mark"
-                    placeholder={!isMobile ? "Enter completed date..." : ""}
+                    placeholder={
+                      !isMobile
+                        ? WatchI18nText[language].completedDatePlaceholder
+                        : ""
+                    }
                     value={entryMarkInput}
                     disabled={createEntryMutation.isPending}
                     onChange={(e) => {
@@ -337,7 +377,7 @@ export function WatchedTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddEntryDialogOpen(false)}
               >
-                Cancel
+                {WatchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -345,7 +385,7 @@ export function WatchedTableToolbar<TData>({
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
               >
-                Create
+                {WatchI18nText[language].create}
               </Button>
             </div>
           </div>
@@ -355,9 +395,63 @@ export function WatchedTableToolbar<TData>({
   );
 }
 
+const WatchI18nText = {
+  [UserLangEnum.ZHCN]: {
+    rate: "评分",
+    rating: "评分：",
+    mark: "标记日期",
+    add: "添加",
+    reset: "重置",
+    type: "类别",
+    searchPlaceholder: "搜索",
+    addEntryTitle: "添加想看",
+    addWatchedEntryTitle: "添加已看",
+    description: "记录重要的条目",
+    name: "名称",
+    entryNamePlaceholder: "输入名称...",
+    author: "作者",
+    entryAuthorPlaceholder: "输入作者...",
+    entryType: "类别",
+    entryTypePlaceholder: "选择类别",
+    year: "年份",
+    entryYearPlaceholder: "输入年份...",
+    link: "链接",
+    entryLinkPlaceholder: "输入链接...",
+    cancel: "取消",
+    create: "创建",
+    completedDatePlaceholder: "输入标记日期",
+  },
+  [UserLangEnum.ENUS]: {
+    rate: "Rate",
+    rating: "Rating:",
+    mark: "Mark",
+    add: "Add",
+    reset: "Reset",
+    type: "Type",
+    searchPlaceholder: "Filter watches...",
+    addEntryTitle: "Add ToWatch Entry",
+    addWatchedEntryTitle: "Add Watched Entry",
+    description: "Stay up to date with the entries that matter most to you.",
+    name: "Name",
+    entryNamePlaceholder: "Enter entry name...",
+    author: "Author",
+    entryAuthorPlaceholder: "Enter entry author...",
+    entryType: "Type",
+    entryTypePlaceholder: "Select entry type",
+    year: "Year",
+    entryYearPlaceholder: "Enter entry year...",
+    link: "Link",
+    entryLinkPlaceholder: "Enter entry link...",
+    cancel: "Cancel",
+    create: "Create",
+    completedDatePlaceholder: "Enter completed date...",
+  },
+};
+
 export function ToWatchTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -395,7 +489,7 @@ export function ToWatchTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter watches..."
+            placeholder={WatchI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -412,8 +506,9 @@ export function ToWatchTableToolbar<TData>({
         {table.getColumn("type") && (
           <DataTableFacetedFilter
             column={table.getColumn("type")}
-            title="Type"
+            title={WatchI18nText[language].type}
             options={types}
+            getOptionLabel={(value) => WatchTypeText[value][language]}
           />
         )}
         {isFiltered && (
@@ -425,7 +520,9 @@ export function ToWatchTableToolbar<TData>({
               table.resetColumnFilters();
             }}
           >
-            <span className={`${isMobile ? "hidden" : ""}`}>Reset</span>
+            <span className={`${isMobile ? "hidden" : ""}`}>
+              {WatchI18nText[language].reset}
+            </span>
             <X />
           </Button>
         )}
@@ -436,7 +533,7 @@ export function ToWatchTableToolbar<TData>({
           {!isMobile ? (
             <>
               <Clapperboard />
-              Add
+              {WatchI18nText[language].add}
             </>
           ) : (
             <Plus />
@@ -448,28 +545,38 @@ export function ToWatchTableToolbar<TData>({
       <Dialog open={addEntryDialogOpen} onOpenChange={setAddEntryDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add ToWatch Entry</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the entries that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{WatchI18nText[language].addEntryTitle}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-add-watch-name">Name</Label>
+                <Label htmlFor="towatch-add-watch-name">
+                  {WatchI18nText[language].name}
+                </Label>
                 <Input
                   id="towatch-add-watch-name"
-                  placeholder={!isMobile ? "Enter entry name..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryNamePlaceholder
+                      : ""
+                  }
                   value={entryName}
                   disabled={createEntryMutation.isPending}
                   onChange={(e) => setEntryName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-add-watch-author">Author</Label>
+                <Label htmlFor="towatch-add-watch-author">
+                  {WatchI18nText[language].author}
+                </Label>
                 <Input
                   id="towatch-add-watch-author"
-                  placeholder={!isMobile ? "Enter entry author..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryAuthorPlaceholder
+                      : ""
+                  }
                   value={entryAuthor}
                   disabled={createEntryMutation.isPending}
                   onChange={(e) => setEntryAuthor(e.target.value)}
@@ -478,14 +585,20 @@ export function ToWatchTableToolbar<TData>({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-add-watch-type">Type</Label>
+                <Label htmlFor="towatch-add-watch-type">
+                  {WatchI18nText[language].entryType}
+                </Label>
                 <Select
                   onValueChange={(v: string) => setEntryType(v as WatchType)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="towatch-add-watch-type"
-                      placeholder={!isMobile ? "Select entry type" : ""}
+                      placeholder={
+                        !isMobile
+                          ? WatchI18nText[language].entryTypePlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -493,7 +606,7 @@ export function ToWatchTableToolbar<TData>({
                       {types.map((type, idx) => (
                         <SelectItem key={idx} value={type.value}>
                           <type.icon />
-                          {type.value}
+                          {WatchTypeText[type.value][language]}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -501,10 +614,16 @@ export function ToWatchTableToolbar<TData>({
                 </Select>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="towatch-add-watch-year">Year</Label>
+                <Label htmlFor="towatch-add-watch-year">
+                  {WatchI18nText[language].year}
+                </Label>
                 <Input
                   id="towatch-add-watch-year"
-                  placeholder={!isMobile ? "Enter entry year..." : ""}
+                  placeholder={
+                    !isMobile
+                      ? WatchI18nText[language].entryYearPlaceholder
+                      : ""
+                  }
                   type="number"
                   min={1900}
                   max={2099}
@@ -515,10 +634,14 @@ export function ToWatchTableToolbar<TData>({
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="towatch-add-watch-link">Link</Label>
+              <Label htmlFor="towatch-add-watch-link">
+                {WatchI18nText[language].link}
+              </Label>
               <Input
                 id="towatch-add-watch-link"
-                placeholder={!isMobile ? "Enter entry link..." : ""}
+                placeholder={
+                  !isMobile ? WatchI18nText[language].entryLinkPlaceholder : ""
+                }
                 type="text"
                 value={entryLink}
                 disabled={createEntryMutation.isPending}
@@ -531,7 +654,7 @@ export function ToWatchTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddEntryDialogOpen(false)}
               >
-                Cancel
+                {WatchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -539,7 +662,7 @@ export function ToWatchTableToolbar<TData>({
                 }}
                 disabled={!entryName.trim() || createEntryMutation.isPending}
               >
-                Create
+                {WatchI18nText[language].create}
               </Button>
             </div>
           </div>
@@ -549,9 +672,45 @@ export function ToWatchTableToolbar<TData>({
   );
 }
 
+const bookmarkI18nText = {
+  [UserLangEnum.ZHCN]: {
+    domain: "领域",
+    what: "一级标签",
+    how: "二级标签",
+    reset: "重置",
+    add: "添加",
+    searchPlaceholder: "搜索",
+    addBookmark: "添加书签",
+    title: "标题",
+    titlePlaceholder: "输入书签标题...",
+    domainPlaceholder: "选择领域",
+    link: "链接",
+    linkPlaceholder: "输入书签链接...",
+    cancel: "取消",
+    create: "创建",
+  },
+  [UserLangEnum.ENUS]: {
+    domain: "Domain",
+    what: "What",
+    how: "How",
+    reset: "Reset",
+    add: "Add",
+    searchPlaceholder: "Filter bookmarks...",
+    addBookmark: "Add Bookmark",
+    title: "Title",
+    titlePlaceholder: "Enter bookmark title...",
+    domainPlaceholder: "Select domain",
+    link: "Link",
+    linkPlaceholder: "Enter bookmark link...",
+    cancel: "Cancel",
+    create: "Create",
+  },
+};
+
 export function BookmarkTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: tags } = useTags();
 
@@ -600,7 +759,7 @@ export function BookmarkTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter bookmarks..."
+            placeholder={bookmarkI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -617,24 +776,27 @@ export function BookmarkTableToolbar<TData>({
         {table.getColumn("domain") && (
           <DataTableFacetedFilter
             column={table.getColumn("domain")}
-            title="Domain"
+            title={bookmarkI18nText[language].domain}
             options={domains}
+            getOptionLabel={(value) => value}
           />
         )}
         {table.getColumn("what") && (
           <DataTableFacetedFilter
             column={table.getColumn("what")}
-            title="What"
+            title={bookmarkI18nText[language].what}
             showEmptyFilter={false}
             options={tags?.whatTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {table.getColumn("how") && (
           <DataTableFacetedFilter
             column={table.getColumn("how")}
-            title="How"
+            title={bookmarkI18nText[language].how}
             showEmptyFilter={false}
             options={tags?.howTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {isFiltered && !isMobile && (
@@ -646,7 +808,7 @@ export function BookmarkTableToolbar<TData>({
               table.resetColumnFilters();
             }}
           >
-            <span>Reset</span>
+            <span>{bookmarkI18nText[language].reset}</span>
             <X />
           </Button>
         )}
@@ -673,7 +835,7 @@ export function BookmarkTableToolbar<TData>({
             {!isMobile ? (
               <>
                 <Link2 />
-                Add
+                {bookmarkI18nText[language].add}
               </>
             ) : (
               <Plus />
@@ -689,25 +851,29 @@ export function BookmarkTableToolbar<TData>({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Bookmark</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the bookmarks that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{bookmarkI18nText[language].addBookmark}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-name">Title</Label>
+                <Label htmlFor="bookmark-add-name">
+                  {bookmarkI18nText[language].title}
+                </Label>
                 <Input
                   id="bookmark-add-name"
-                  placeholder={!isMobile ? "Enter bookmark title..." : ""}
+                  placeholder={
+                    !isMobile ? bookmarkI18nText[language].titlePlaceholder : ""
+                  }
                   value={bookmarkName}
                   disabled={createBookmarkMutation.isPending}
                   onChange={(e) => setBookmarkName(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-domain">Domain</Label>
+                <Label htmlFor="bookmark-add-domain">
+                  {bookmarkI18nText[language].domain}
+                </Label>
                 <Select
                   onValueChange={(v: string) =>
                     setBookmarkType(v as DomainType)
@@ -716,7 +882,11 @@ export function BookmarkTableToolbar<TData>({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       id="bookmark-add-domain"
-                      placeholder={!isMobile ? "Select domain" : ""}
+                      placeholder={
+                        !isMobile
+                          ? bookmarkI18nText[language].domainPlaceholder
+                          : ""
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -735,10 +905,14 @@ export function BookmarkTableToolbar<TData>({
 
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-link">Link</Label>
+                <Label htmlFor="bookmark-add-link">
+                  {bookmarkI18nText[language].link}
+                </Label>
                 <Input
                   id="bookmark-add-link"
-                  placeholder={!isMobile ? "Enter bookmark link..." : ""}
+                  placeholder={
+                    !isMobile ? bookmarkI18nText[language].linkPlaceholder : ""
+                  }
                   type="text"
                   value={bookmarkLink}
                   disabled={createBookmarkMutation.isPending}
@@ -746,7 +920,9 @@ export function BookmarkTableToolbar<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-what">What</Label>
+                <Label htmlFor="bookmark-add-what">
+                  {bookmarkI18nText[language].what}
+                </Label>
                 <MultiSelect
                   id="bookmark-add-what"
                   placeholder=""
@@ -759,7 +935,9 @@ export function BookmarkTableToolbar<TData>({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bookmark-add-how">How</Label>
+                <Label htmlFor="bookmark-add-how">
+                  {bookmarkI18nText[language].how}
+                </Label>
                 <MultiSelect
                   id="bookmark-add-how"
                   placeholder=""
@@ -778,7 +956,7 @@ export function BookmarkTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddBookmarkDialogOpen(false)}
               >
-                Cancel
+                {bookmarkI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -794,7 +972,7 @@ export function BookmarkTableToolbar<TData>({
                   !bookmarkName.trim() || createBookmarkMutation.isPending
                 }
               >
-                Create
+                {bookmarkI18nText[language].create}
               </Button>
             </div>
           </div>
@@ -804,9 +982,39 @@ export function BookmarkTableToolbar<TData>({
   );
 }
 
+const blogI18nText = {
+  [UserLangEnum.ZHCN]: {
+    what: "一级标签",
+    how: "二级标签",
+    reset: "重置",
+    add: "添加",
+    searchPlaceholder: "搜索",
+    addBlog: "添加博客",
+    title: "标题",
+    titlePlaceholder: "输入博客标题...",
+    cancel: "取消",
+    create: "创建",
+    rename: "重命名",
+  },
+  [UserLangEnum.ENUS]: {
+    what: "What",
+    how: "How",
+    reset: "Reset",
+    add: "Add",
+    searchPlaceholder: "Filter blogs...",
+    addBlog: "Add Blog",
+    title: "Title",
+    titlePlaceholder: "Enter blog title...",
+    cancel: "Cancel",
+    create: "Create",
+    rename: "Rename",
+  },
+};
+
 export function BlogTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: tags } = useTags();
 
@@ -841,7 +1049,7 @@ export function BlogTableToolbar<TData>({
       <div className="flex flex-wrap items-center gap-2">
         {!isMobile && (
           <Input
-            placeholder="Filter blogs..."
+            placeholder={blogI18nText[language].searchPlaceholder}
             value={searchTerm}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -858,17 +1066,19 @@ export function BlogTableToolbar<TData>({
         {table.getColumn("what") && (
           <DataTableFacetedFilter
             column={table.getColumn("what")}
-            title="What"
+            title={blogI18nText[language].what}
             showEmptyFilter={false}
             options={tags?.whatTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {table.getColumn("how") && (
           <DataTableFacetedFilter
             column={table.getColumn("how")}
-            title="How"
+            title={blogI18nText[language].how}
             showEmptyFilter={false}
             options={tags?.howTags ?? []}
+            getOptionLabel={(value) => value}
           />
         )}
         {isFiltered && !isMobile && (
@@ -903,7 +1113,7 @@ export function BlogTableToolbar<TData>({
             {!isMobile ? (
               <>
                 <LetterText />
-                Add
+                {blogI18nText[language].add}
               </>
             ) : (
               <Plus />
@@ -916,17 +1126,19 @@ export function BlogTableToolbar<TData>({
       <Dialog open={addBlogDialogOpen} onOpenChange={setAddBlogDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Blog</DialogTitle>
-            <DialogDescription>
-              Stay up to date with the blogs that matter most to you.
-            </DialogDescription>
+            <DialogTitle>{blogI18nText[language].addBlog}</DialogTitle>
+            <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-add-name">Title</Label>
+              <Label htmlFor="blog-add-name">
+                {blogI18nText[language].title}
+              </Label>
               <Input
                 id="blog-add-name"
-                placeholder={!isMobile ? "Enter blog title..." : ""}
+                placeholder={
+                  !isMobile ? blogI18nText[language].titlePlaceholder : ""
+                }
                 value={blogName}
                 disabled={createBlogMutation.isPending}
                 onChange={(e) => setBlogName(e.target.value)}
@@ -934,7 +1146,9 @@ export function BlogTableToolbar<TData>({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-add-what">What</Label>
+              <Label htmlFor="blog-add-what">
+                {blogI18nText[language].what}
+              </Label>
               <MultiSelect
                 id="blog-add-what"
                 placeholder=""
@@ -947,7 +1161,7 @@ export function BlogTableToolbar<TData>({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="blog-add-how">How</Label>
+              <Label htmlFor="blog-add-how">{blogI18nText[language].how}</Label>
               <MultiSelect
                 id="blog-add-how"
                 placeholder=""
@@ -965,7 +1179,7 @@ export function BlogTableToolbar<TData>({
                 variant="outline"
                 onClick={() => setAddBlogDialogOpen(false)}
               >
-                Cancel
+                {blogI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -975,7 +1189,7 @@ export function BlogTableToolbar<TData>({
                 }}
                 disabled={!blogName.trim() || createBlogMutation.isPending}
               >
-                Create
+                {blogI18nText[language].create}
               </Button>
             </div>
           </div>

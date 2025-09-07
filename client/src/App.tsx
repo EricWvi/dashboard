@@ -14,7 +14,10 @@ import { useEffect } from "react";
 
 const MainPage = () => {
   const { user } = useUserContext();
-  const { needRefresh, updateServiceWorker } = useRegisterSW({
+  const {
+    needRefresh: [needRefresh, _] = [false, () => {}],
+    updateServiceWorker,
+  } = useRegisterSW({
     onRegistered(r) {
       console.log("Service Worker registered", r);
     },

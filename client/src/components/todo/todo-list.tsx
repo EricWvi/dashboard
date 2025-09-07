@@ -48,8 +48,10 @@ import {
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import { isDisabledPlan, isSetToday } from "@/lib/utils";
+import { fullDateString, isDisabledPlan, isSetToday } from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 const TodoList = ({
   collectionId,
@@ -57,6 +59,7 @@ const TodoList = ({
 }: {
   collectionId: number;
 } & { headerContent?: React.ReactNode }) => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: todos } = useTodos(collectionId);
   const { data: collection, isPending } = useCollection(collectionId);
@@ -126,20 +129,23 @@ const TodoList = ({
                       }}
                     >
                       <Edit />
-                      Rename List
+                      {i18nText[language].renameList}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setCompletedTodoOpen((prev) => !prev)}
                     >
                       <CheckCheck />
-                      {completedTodoOpen ? "Hide" : "Show"} Completed
+                      {completedTodoOpen
+                        ? i18nText[language].hide
+                        : i18nText[language].show}
+                      {i18nText[language].completed}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setDeleteListDialogOpen(true)}
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="text-destructive" />
-                      Delete List
+                      {i18nText[language].deleteList}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -151,7 +157,7 @@ const TodoList = ({
             {/* Add new task */}
             <div className="flex gap-2 space-y-6">
               <Input
-                placeholder="Add a new task..."
+                placeholder={i18nText[language].addNewTask}
                 value={newTodo}
                 disabled={createTodoMutation.isPending}
                 onChange={(e) => setNewTodo(e.target.value)}
@@ -181,7 +187,7 @@ const TodoList = ({
                 (todos.length === 0 ? (
                   <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col text-lg">
                     <div className="flex min-h-0 flex-1 items-center justify-center">
-                      All Done!
+                      {i18nText[language].allDone}
                     </div>
                     <div className="min-h-0 flex-1"></div>
                   </div>
@@ -218,14 +224,14 @@ const TodoList = ({
           >
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Rename Todo List</DialogTitle>
+                <DialogTitle>{i18nText[language].renameTodoList}</DialogTitle>
                 <DialogDescription>
-                  Enter a new name for your todo list.
+                  {i18nText[language].enterNewName}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
-                  placeholder="Enter new name..."
+                  placeholder={i18nText[language].newNamePlaceholder}
                   value={editListName}
                   disabled={updateCollectionMutation.isPending}
                   onChange={(e) => setEditListName(e.target.value)}
@@ -244,7 +250,7 @@ const TodoList = ({
                     variant="outline"
                     onClick={() => setEditListDialogOpen(false)}
                   >
-                    Cancel
+                    {i18nText[language].cancel}
                   </Button>
                   <Button
                     onClick={() => {
@@ -255,7 +261,7 @@ const TodoList = ({
                       !editListName.trim() || updateCollectionMutation.isPending
                     }
                   >
-                    Rename
+                    {i18nText[language].rename}
                   </Button>
                 </div>
               </div>
@@ -269,14 +275,20 @@ const TodoList = ({
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Todo List</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {i18nText[language].deleteTodoList}
+                </AlertDialogTitle>
                 <AlertDialogDescription className="wrap-anywhere">
-                  Are you sure you want to delete [{collection?.name}]? <br />
-                  This action cannot be undone.
+                  {i18nText[language].deleteConfirmStart}
+                  {collection?.name}
+                  {i18nText[language].deleteConfirmEnd}
+                  <br />
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>
+                  {i18nText[language].cancel}
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
                     onDelete();
@@ -284,7 +296,7 @@ const TodoList = ({
                   }}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
                 >
-                  Delete
+                  {i18nText[language].delete}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -302,6 +314,7 @@ const TodoList = ({
 };
 
 const CompletedList = ({ collectionId }: { collectionId: number }) => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: completed } = useCompleted(collectionId);
 
@@ -312,7 +325,9 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
       <CardHeader className={`${isMobile ? "px-0" : ""}`}>
         <CardTitle>
           <div className="flex items-end justify-between">
-            <div className="text-muted-foreground h-8 text-xl">Completed</div>
+            <div className="text-muted-foreground flex h-8 items-end text-xl">
+              {i18nText[language].completed}
+            </div>
             {!!completed && (
               <div className="flex items-center gap-2">
                 {completed.length > 0 && (
@@ -321,7 +336,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
                     size="sm"
                     className="text-muted-foreground h-fit"
                   >
-                    Clear {completed.length} todos
+                    {`${i18nText[language].clear} ${completed.length} ${i18nText[language].todos}`}
                   </Button>
                 )}
               </div>
@@ -349,7 +364,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
           ) : (
             <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
               <div className="flex min-h-0 flex-1 items-center justify-center">
-                No Completed Tasks...
+                {i18nText[language].noCompleted}
               </div>
               <div className="min-h-0 flex-1"></div>
             </div>
@@ -360,6 +375,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
 };
 
 export const TodayTodoList = () => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: today, isPending } = useToday();
   const [showLoading, setShowLoading] = useState(true);
@@ -427,7 +443,7 @@ export const TodayTodoList = () => {
       <CardHeader>
         <CardTitle>
           <div className="flex justify-between">
-            <div className="text-xl">Today</div>
+            <div className="text-xl">{i18nText[language].today}</div>
             <Button
               variant={"ghost"}
               size="icon"
@@ -465,7 +481,7 @@ export const TodayTodoList = () => {
             (today.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">
-                  No Scheduled Tasks...
+                  {i18nText[language].noSchedule}
                 </div>
                 <div className="min-h-0 flex-1"></div>
               </div>
@@ -518,19 +534,12 @@ export const TodayTodoList = () => {
         <DialogContent className="sm:max-w-md" showCloseButton={false}>
           <div className="flex items-start justify-between">
             <DialogHeader className="text-left">
-              <DialogTitle>My Day</DialogTitle>
+              <DialogTitle>{i18nText[language].myDay}</DialogTitle>
               <DialogDescription>
-                {new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {fullDateString(new Date(), language)}
               </DialogDescription>
             </DialogHeader>
-            <Button className="px-6" onClick={planSelectedIds}>
-              Plan
-            </Button>
+            <Button onClick={planSelectedIds}>{i18nText[language].plan}</Button>
           </div>
           <div className="h-140 space-y-6 overflow-scroll sm:h-180">
             {Object.entries(
@@ -581,6 +590,59 @@ export const TodayTodoList = () => {
       </Dialog>
     </Card>
   );
+};
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    today: "今日",
+    noSchedule: "暂无待办事项...",
+    myDay: "我的一天",
+    plan: "规 划",
+    renameList: "重命名",
+    deleteList: "删除集合",
+    show: "显示",
+    hide: "隐藏",
+    completed: "归档事项",
+    addNewTask: "添加新事项...",
+    allDone: "没有提醒事项",
+    renameTodoList: "重命名集合",
+    enterNewName: "请输入待办事项集合的新名称",
+    newNamePlaceholder: "输入新名称...",
+    cancel: "取消",
+    rename: "重命名",
+    delete: "删除",
+    deleteTodoList: "删除集合",
+    deleteConfirmStart: "确定要删除「",
+    deleteConfirmEnd: "」吗？此操作无法撤销。",
+    noCompleted: "没有归档事项",
+    clear: "清除",
+    todos: "项归档",
+  },
+  [UserLangEnum.ENUS]: {
+    today: "Today",
+    noSchedule: "No Scheduled Tasks...",
+    myDay: "My Day",
+    plan: "Plan",
+    renameList: "Rename List",
+    deleteList: "Delete List",
+    show: "Show",
+    hide: "Hide",
+    completed: "Completed",
+    addNewTask: "Add a new task...",
+    allDone: "All Done!",
+    renameTodoList: "Rename Todo List",
+    enterNewName: "Enter a new name for your todo list.",
+    newNamePlaceholder: "Enter new name...",
+    cancel: "Cancel",
+    rename: "Rename",
+    delete: "Delete",
+    deleteTodoList: "Delete Todo List",
+    deleteConfirmStart: "Are you sure you want to delete [",
+    deleteConfirmEnd: "]? This action cannot be undone.",
+    noCompleted: "No Completed Tasks...",
+    clear: "Clear",
+    todos: "todos",
+  },
 };
 
 export default TodoList;

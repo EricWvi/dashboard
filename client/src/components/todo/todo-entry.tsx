@@ -72,6 +72,7 @@ import {
   underlineColor,
   noPlanStart,
   isDisabledPlan,
+  fullDateString,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { useKanbanContext } from "@/components/kanban";
@@ -81,6 +82,8 @@ import { Label } from "@/components/ui/label";
 import { createKanban } from "@/hooks/use-kanban";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 const TodoTitle = ({
   todo,
@@ -147,7 +150,47 @@ export const PlanTodoView = ({
   );
 };
 
+const todayTodoViewI18N = {
+  [UserLangEnum.ZHCN]: {
+    start: "开始",
+    renameTodo: "重命名待办事项",
+    enterNewName: "输入待办事项的新名称",
+    enterNewNamePlaceholder: "输入新名称...",
+    rename: "重命名",
+    cancel: "取消",
+    link: "链接",
+    changeLink: "更改链接",
+    changeLinkDesc: "设置以在新页面中打开链接",
+    changeLinkPlaceholder: "输入新链接...",
+    set: "设置",
+    draft: "草稿",
+    kanban: "看板",
+    done: "完成",
+    undone: "未完成",
+    unsetDate: "取消日期",
+  },
+  [UserLangEnum.ENUS]: {
+    start: "Start",
+    renameTodo: "Rename Todo",
+    enterNewName: "Enter a new name for your todo.",
+    enterNewNamePlaceholder: "Enter new name...",
+    rename: "Rename",
+    cancel: "Cancel",
+    link: "Link",
+    changeLink: "Change Link",
+    changeLinkDesc: "Set a link to redirect.",
+    changeLinkPlaceholder: "Enter new link...",
+    set: "Set",
+    draft: "Draft",
+    kanban: "Kanban",
+    done: "Done",
+    undone: "Undone",
+    unsetDate: "Unset Date",
+  },
+};
+
 export const TodayTodoView = ({ id }: { id: number }) => {
+  const { language } = useUserContext();
   const [isComposing, setIsComposing] = useState(false);
   const { data: todo } = useTodo(id);
 
@@ -209,24 +252,24 @@ export const TodayTodoView = ({ id }: { id: number }) => {
           }}
         >
           <Timer />
-          Start
+          {todayTodoViewI18N[language].start}
         </ContextMenuItem>
       )}
       {todo.done ? (
         <ContextMenuItem onClick={undoneTodo}>
           <Undo2 />
-          Undone
+          {todayTodoViewI18N[language].undone}
         </ContextMenuItem>
       ) : (
         <ContextMenuItem onClick={doneTodo}>
           <CircleCheckBig />
-          Done
+          {todayTodoViewI18N[language].done}
         </ContextMenuItem>
       )}
       {!todo.done && (
         <ContextMenuItem onClick={unsetScheduleDate}>
           <X />
-          Unset Date
+          {todayTodoViewI18N[language].unsetDate}
         </ContextMenuItem>
       )}
       <ContextMenuSeparator />
@@ -237,7 +280,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         }}
       >
         <Edit />
-        Rename
+        {todayTodoViewI18N[language].rename}
       </ContextMenuItem>
       <ContextMenuItem
         onClick={() => {
@@ -246,7 +289,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         }}
       >
         <Link />
-        Link
+        {todayTodoViewI18N[language].link}
       </ContextMenuItem>
       <ContextMenuItem
         onClick={async () => {
@@ -262,7 +305,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         }}
       >
         <NotepadText />
-        Draft
+        {todayTodoViewI18N[language].draft}
       </ContextMenuItem>
       <ContextMenuItem
         onClick={async () => {
@@ -278,7 +321,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         }}
       >
         <SquareKanban />
-        Kanban
+        {todayTodoViewI18N[language].kanban}
       </ContextMenuItem>
     </ContextMenuContent>
   );
@@ -332,14 +375,14 @@ export const TodayTodoView = ({ id }: { id: number }) => {
       <Dialog open={editTodoDialogOpen} onOpenChange={setEditTodoDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename Todo</DialogTitle>
+            <DialogTitle>{todayTodoViewI18N[language].renameTodo}</DialogTitle>
             <DialogDescription>
-              Enter a new name for your todo.
+              {todayTodoViewI18N[language].enterNewName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new name..."
+              placeholder={todayTodoViewI18N[language].enterNewNamePlaceholder}
               value={editTodoName}
               disabled={updateTodoMutation.isPending}
               onChange={(e) => setEditTodoName(e.target.value)}
@@ -358,7 +401,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                 variant="outline"
                 onClick={() => setEditTodoDialogOpen(false)}
               >
-                Cancel
+                {todayTodoViewI18N[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -367,7 +410,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                 }}
                 disabled={!editTodoName.trim() || updateTodoMutation.isPending}
               >
-                Rename
+                {todayTodoViewI18N[language].rename}
               </Button>
             </div>
           </div>
@@ -378,12 +421,14 @@ export const TodayTodoView = ({ id }: { id: number }) => {
       <Dialog open={editLinkDialogOpen} onOpenChange={setEditLinkDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Link</DialogTitle>
-            <DialogDescription>Set a link to redirect.</DialogDescription>
+            <DialogTitle>{todayTodoViewI18N[language].changeLink}</DialogTitle>
+            <DialogDescription>
+              {todayTodoViewI18N[language].changeLinkDesc}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new link..."
+              placeholder={todayTodoViewI18N[language].changeLinkPlaceholder}
               value={editLinkName}
               disabled={updateTodoMutation.isPending}
               onChange={(e) => setEditLinkName(e.target.value)}
@@ -402,7 +447,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                 variant="outline"
                 onClick={() => setEditLinkDialogOpen(false)}
               >
-                Cancel
+                {todayTodoViewI18N[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -411,7 +456,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                 }}
                 disabled={updateTodoMutation.isPending}
               >
-                Set
+                {todayTodoViewI18N[language].set}
               </Button>
             </div>
           </div>
@@ -421,6 +466,17 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   );
 };
 
+const completedTodoViewI18N = {
+  [UserLangEnum.ZHCN]: {
+    restore: "恢复",
+    delete: "删除",
+  },
+  [UserLangEnum.ENUS]: {
+    restore: "Restore",
+    delete: "Delete",
+  },
+};
+
 export const CompletedTodoView = ({
   id,
   collectionId,
@@ -428,6 +484,7 @@ export const CompletedTodoView = ({
   id: number;
   collectionId: number;
 }) => {
+  const { language } = useUserContext();
   const { data: todo } = useTodo(id);
 
   const restoreTodoMutation = useRestoreTodo();
@@ -502,14 +559,14 @@ export const CompletedTodoView = ({
         <ContextMenuContent>
           <ContextMenuItem onClick={restoreTodo}>
             <ArchiveRestore />
-            Restore
+            {completedTodoViewI18N[language].restore}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={deleteTodo}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="text-destructive" />
-            Delete
+            {completedTodoViewI18N[language].delete}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -526,6 +583,7 @@ export const TodoEntry = ({
   collectionId: number;
   top: boolean;
 }) => {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
@@ -630,23 +688,23 @@ export const TodoEntry = ({
             <>
               <ContextMenuItem onClick={undoneTodo}>
                 <Undo2 />
-                Undone
+                {todoEntryI18NText[language].undone}
               </ContextMenuItem>
               <ContextMenuItem onClick={completeTodo}>
                 <Archive />
-                Complete
+                {todoEntryI18NText[language].complete}
               </ContextMenuItem>
             </>
           ) : (
             <ContextMenuItem onClick={doneTodo}>
               <CircleCheckBig />
-              Done
+              {todoEntryI18NText[language].done}
             </ContextMenuItem>
           )
         ) : (
           <ContextMenuItem onClick={completeTodo}>
             <Archive />
-            Complete
+            {todoEntryI18NText[language].complete}
           </ContextMenuItem>
         ))}
       {/* set today and completed: false  -->  ["Reset Date","Unset Date"] */}
@@ -663,12 +721,12 @@ export const TodoEntry = ({
               }}
             >
               <CalendarDays />
-              Reset Date
+              {todoEntryI18NText[language].resetDate}
             </ContextMenuItem>
             {!todo.done && (
               <ContextMenuItem onClick={unsetScheduleDate}>
                 <X />
-                Unset Date
+                {todoEntryI18NText[language].unsetDate}
               </ContextMenuItem>
             )}
           </>
@@ -681,7 +739,7 @@ export const TodoEntry = ({
               }}
             >
               <CalendarIcon />
-              Set Date
+              {todoEntryI18NText[language].setDate}
             </ContextMenuItem>
             {!isDisabledPlan(todo.schedule) ? (
               <ContextMenuItem
@@ -690,12 +748,12 @@ export const TodoEntry = ({
                 }}
               >
                 <CalendarOff />
-                No Plan
+                {todoEntryI18NText[language].noPlan}
               </ContextMenuItem>
             ) : (
               <ContextMenuItem onClick={unsetScheduleDate}>
                 <CalendarPlus />
-                Use Plan
+                {todoEntryI18NText[language].usePlan}
               </ContextMenuItem>
             )}
           </>
@@ -708,7 +766,7 @@ export const TodoEntry = ({
         }}
       >
         <Edit />
-        Rename
+        {todoEntryI18NText[language].rename}
       </ContextMenuItem>
       <ContextMenuItem
         onClick={() => {
@@ -717,7 +775,7 @@ export const TodoEntry = ({
         }}
       >
         <Link />
-        Link
+        {todoEntryI18NText[language].link}
       </ContextMenuItem>
       <ContextMenuItem
         onClick={async () => {
@@ -733,7 +791,7 @@ export const TodoEntry = ({
         }}
       >
         <NotepadText />
-        Draft
+        {todoEntryI18NText[language].draft}
       </ContextMenuItem>
       <ContextMenuItem
         onClick={async () => {
@@ -749,20 +807,20 @@ export const TodoEntry = ({
         }}
       >
         <SquareKanban />
-        Kanban
+        {todoEntryI18NText[language].kanban}
       </ContextMenuItem>
       <ContextMenuSeparator />
       {!top && (
         <ContextMenuItem onClick={topTodo}>
           <CornerLeftUp />
-          Top
+          {todoEntryI18NText[language].top}
         </ContextMenuItem>
       )}
       <ContextMenuSub>
         <ContextMenuSubTrigger>
           <div className="flex items-center gap-2">
             <ListEnd className="text-muted-foreground" />
-            Move To
+            {todoEntryI18NText[language].moveTo}
           </div>
         </ContextMenuSubTrigger>
         <ContextMenuSubContent>
@@ -784,7 +842,7 @@ export const TodoEntry = ({
         className="text-destructive focus:text-destructive"
       >
         <Trash2 className="text-destructive" />
-        Delete
+        {todoEntryI18NText[language].delete}
       </ContextMenuItem>
     </ContextMenuContent>
   );
@@ -818,12 +876,12 @@ export const TodoEntry = ({
                   className={`text-muted-foreground ml-1 text-xs opacity-0 ${difficultyLabel !== 0 ? "opacity-100" : ""}`}
                 >
                   {difficultyLabel === 1
-                    ? "Easy"
+                    ? todoEntryI18NText[language].easy
                     : difficultyLabel === 2
-                      ? "Medium"
+                      ? todoEntryI18NText[language].medium
                       : difficultyLabel === 3
-                        ? "Hard"
-                        : "Very Hard"}
+                        ? todoEntryI18NText[language].hard
+                        : todoEntryI18NText[language].veryHard}
                 </span>
               </div>
             </TodoTitle>
@@ -855,7 +913,7 @@ export const TodoEntry = ({
                       : ""
                   } ${!isSetDate(todo.schedule) && !isDisabledPlan(todo.schedule) ? "hidden xl:inline" : "inline"} ${formatDate(todo.schedule, todo.done).color}`}
                 >
-                  {formatDate(todo.schedule, todo.done).label}
+                  {formatDate(todo.schedule, todo.done).label[language]}
                 </Badge>
               )}
               {todo.kanban !== 0 && (
@@ -901,14 +959,14 @@ export const TodoEntry = ({
       <Dialog open={editTodoDialogOpen} onOpenChange={setEditTodoDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename Todo</DialogTitle>
+            <DialogTitle>{todoEntryI18NText[language].renameTodo}</DialogTitle>
             <DialogDescription>
-              Enter a new name for your todo.
+              {todoEntryI18NText[language].enterNewName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new name..."
+              placeholder={todoEntryI18NText[language].enterNewNamePlaceholder}
               value={editTodoName}
               disabled={updateTodoMutation.isPending}
               onChange={(e) => setEditTodoName(e.target.value)}
@@ -927,7 +985,7 @@ export const TodoEntry = ({
                 variant="outline"
                 onClick={() => setEditTodoDialogOpen(false)}
               >
-                Cancel
+                {todoEntryI18NText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -936,7 +994,7 @@ export const TodoEntry = ({
                 }}
                 disabled={!editTodoName.trim() || updateTodoMutation.isPending}
               >
-                Rename
+                {todoEntryI18NText[language].rename}
               </Button>
             </div>
           </div>
@@ -947,12 +1005,14 @@ export const TodoEntry = ({
       <Dialog open={editLinkDialogOpen} onOpenChange={setEditLinkDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Link</DialogTitle>
-            <DialogDescription>Set a link to redirect.</DialogDescription>
+            <DialogTitle>{todoEntryI18NText[language].changeLink}</DialogTitle>
+            <DialogDescription>
+              {todoEntryI18NText[language].setLinkDescription}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new link..."
+              placeholder={todoEntryI18NText[language].enterNewLinkPlaceholder}
               value={editLinkName}
               disabled={updateTodoMutation.isPending}
               onChange={(e) => setEditLinkName(e.target.value)}
@@ -971,7 +1031,7 @@ export const TodoEntry = ({
                 variant="outline"
                 onClick={() => setEditLinkDialogOpen(false)}
               >
-                Cancel
+                {todoEntryI18NText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -980,7 +1040,7 @@ export const TodoEntry = ({
                 }}
                 disabled={updateTodoMutation.isPending}
               >
-                Set
+                {todoEntryI18NText[language].set}
               </Button>
             </div>
           </div>
@@ -991,9 +1051,13 @@ export const TodoEntry = ({
       <Dialog open={editDateDialogOpen} onOpenChange={setEditDateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Set Date</DialogTitle>
+            <DialogTitle>
+              {todoEntryI18NText[language].setDateTitle}
+            </DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              Set a date for the todo item [{todo.title}].
+              {todoEntryI18NText[language].setDateDescStart}
+              {todo.title}
+              {todoEntryI18NText[language].setDateDescEnd}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1003,13 +1067,13 @@ export const TodoEntry = ({
                   variant="secondary"
                   onClick={() => setScheduleDate(todayStart())}
                 >
-                  Today
+                  {todoEntryI18NText[language].today}
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => setScheduleDate(tomorrowStart())}
                 >
-                  Tomorrow
+                  {todoEntryI18NText[language].tomorrow}
                 </Button>
               </div>
               <Popover open={openCalendar} onOpenChange={setOpenCalendar}>
@@ -1021,17 +1085,12 @@ export const TodoEntry = ({
                     {scheduleDate && isSetDate(scheduleDate) ? (
                       <>
                         <CalendarDays className="text-muted-foreground" />
-                        {new Date(scheduleDate).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {fullDateString(scheduleDate, language)}
                       </>
                     ) : (
                       <>
                         <CalendarIcon className="text-muted-foreground" />
-                        Select date
+                        {todoEntryI18NText[language].selectDate}
                       </>
                     )}
                   </Button>
@@ -1062,7 +1121,7 @@ export const TodoEntry = ({
                 variant="outline"
                 onClick={() => setEditDateDialogOpen(false)}
               >
-                Cancel
+                {todoEntryI18NText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -1071,7 +1130,7 @@ export const TodoEntry = ({
                 }}
                 disabled={updateTodoMutation.isPending}
               >
-                Apply
+                {todoEntryI18NText[language].apply}
               </Button>
             </div>
           </div>
@@ -1082,9 +1141,15 @@ export const TodoEntry = ({
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogTitle>
+              {todoEntryI18NText[language].confirmAction}
+            </DialogTitle>
             <DialogDescription className="wrap-anywhere">
-              {`Are you sure you want to {${confirmAction}} [${todo.title}]`}
+              {`${todoEntryI18NText[language].confirmActionDescStart}${
+                confirmAction === "delete"
+                  ? todoEntryI18NText[language].deleteAction
+                  : todoEntryI18NText[language].completeAction
+              }${todo.title}${todoEntryI18NText[language].confirmActionDescEnd}`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
@@ -1092,7 +1157,7 @@ export const TodoEntry = ({
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {todoEntryI18NText[language].cancel}
             </Button>
             <Button
               variant={confirmAction === "delete" ? "destructive" : undefined}
@@ -1113,11 +1178,98 @@ export const TodoEntry = ({
                 });
               }}
             >
-              Confirm
+              {todoEntryI18NText[language].confirm}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </Card>
   );
+};
+
+const todoEntryI18NText = {
+  [UserLangEnum.ZHCN]: {
+    easy: "简单",
+    medium: "中等",
+    hard: "困难",
+    veryHard: "非常困难",
+    done: "完成",
+    undone: "未完成",
+    top: "置顶",
+    complete: "归档",
+    setDate: "设置日期",
+    resetDate: "更改日期",
+    unsetDate: "取消日期",
+    noPlan: "取消规划",
+    usePlan: "恢复规划",
+    renameTodo: "重命名待办事项",
+    enterNewName: "输入待办事项的新名称",
+    enterNewNamePlaceholder: "输入新名称...",
+    cancel: "取消",
+    rename: "重命名",
+    link: "链接",
+    draft: "草稿",
+    moveTo: "移动到",
+    delete: "删除",
+    kanban: "看板",
+    changeLink: "更改链接",
+    setLinkDescription: "设置以在新页面中打开链接",
+    enterNewLinkPlaceholder: "输入新链接...",
+    set: "设置",
+    apply: "应用",
+    today: "今天",
+    tomorrow: "明天",
+    setDateTitle: "设置日期",
+    setDateDescStart: "为待办事项「",
+    setDateDescEnd: "」设置一个日期",
+    selectDate: "选择日期",
+    confirmAction: "确认操作",
+    confirmActionDescStart: "确定要",
+    confirmActionDescEnd: "」吗？",
+    deleteAction: "删除「",
+    completeAction: "完成「",
+    confirm: "确认",
+  },
+  [UserLangEnum.ENUS]: {
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
+    veryHard: "Very Hard",
+    done: "Done",
+    undone: "Undone",
+    top: "Top",
+    complete: "Complete",
+    setDate: "Set Date",
+    resetDate: "Reset Date",
+    unsetDate: "Unset Date",
+    noPlan: "No Plan",
+    usePlan: "Use Plan",
+    renameTodo: "Rename Todo",
+    enterNewName: "Enter a new name for your todo.",
+    enterNewNamePlaceholder: "Enter new name...",
+    cancel: "Cancel",
+    rename: "Rename",
+    link: "Link",
+    draft: "Draft",
+    moveTo: "Move To",
+    delete: "Delete",
+    kanban: "Kanban",
+    changeLink: "Change Link",
+    setLinkDescription: "Set a link to redirect.",
+    enterNewLinkPlaceholder: "Enter new link...",
+    set: "Set",
+    apply: "Apply",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    setDateTitle: "Set Date",
+    setDateDescStart: "Set a date for the todo item [",
+    setDateDescEnd: "].",
+    selectDate: "Select date",
+    confirmAction: "Confirm Action",
+    confirmActionDescStart: "Are you sure you want to ",
+    confirmActionDescEnd: "]?",
+    deleteAction: "{delete} [",
+    completeAction: "{complete} [",
+    confirm: "Confirm",
+  },
 };

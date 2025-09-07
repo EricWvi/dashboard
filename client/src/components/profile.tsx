@@ -29,6 +29,7 @@ import {
   invalidMailCount,
   invalidRSSCount,
   useMailCount,
+  UserLangEnum,
   useRSSCount,
   useUpdateEmailToken,
   useUpdateProfile,
@@ -40,9 +41,10 @@ import { Plus, X } from "lucide-react";
 import { fileUpload } from "@/lib/file-upload";
 import { formatMediaUrl } from "@/lib/utils";
 import { useUserContext } from "@/user-provider";
+import { LanguageSwitch } from "./language-switch";
 
 export const Profile = () => {
-  const { user } = useUserContext();
+  const { user, language } = useUserContext();
   const [openDropdown, setOpenDropdown] = useState(false);
   // edit rss token
   const [rssTokenDialogOpen, setRssTokenDialogOpen] = useState(false);
@@ -75,6 +77,7 @@ export const Profile = () => {
   const updateProfileMutation = useUpdateProfile();
   const [editProfileDialogOpen, setEditProfileDialogOpen] = useState(false);
   const [username, setUsername] = useState("");
+  const [userLang, setUserLang] = useState(UserLangEnum.ZHCN);
   const [avatar, setAvatar] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const handleFileUpload = async (
@@ -91,12 +94,14 @@ export const Profile = () => {
   const handleEditProfileDialogOpen = () => {
     setUsername(user.username);
     setAvatar(user.avatar);
+    setUserLang(user.language);
     setEditProfileDialogOpen(true);
   };
   const updateProfile = () => {
     return updateProfileMutation.mutateAsync({
       avatar: avatar.trim(),
       username: username.trim(),
+      language: userLang,
     });
   };
 
@@ -106,45 +111,45 @@ export const Profile = () => {
         <div className="flex w-full flex-col items-center justify-center">
           {/* avatar */}
           <div className="group relative mx-auto mb-6 aspect-square h-auto w-30 xl:w-1/2">
-            <Avatar className="border-border size-full border-2 shadow-md">
+            <Avatar
+              className="border-border size-full border-2 shadow-md"
+              onClick={() => {
+                setOpenDropdown(true);
+                setTimeout(() => {
+                  setOpenDropdown(false);
+                }, 3000);
+              }}
+            >
               <AvatarImage src={user.avatar} />
               <AvatarFallback />
             </Avatar>
 
-            <div
-              className={`${openDropdown ? "" : "opacity-0"} bg-accent border-border absolute right-[18%] bottom-[18%] size-10 translate-1/2 cursor-pointer rounded-full border group-hover:opacity-100`}
-            >
-              <div
-                className="flex size-full items-center justify-center"
-                onClick={() => {}}
-              >
-                <DropdownMenu
-                  open={openDropdown}
-                  onOpenChange={setOpenDropdown}
+            <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
+              <DropdownMenuTrigger asChild>
+                <div
+                  className={`${openDropdown ? "" : "opacity-0"} bg-accent border-border absolute right-[18%] bottom-[18%] size-10 translate-1/2 cursor-pointer rounded-full border group-hover:opacity-100`}
                 >
-                  <DropdownMenuTrigger asChild>
+                  <div className="flex size-full items-center justify-center">
                     <div className="mt-[2px] text-2xl leading-none">⚙️</div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[160px]">
-                    <DropdownMenuItem onClick={handleEditProfileDialogOpen}>
-                      Edit Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleRssTokenDialogOpen}>
-                      Set Miniflux Token
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEmailTokenDialogOpen}>
-                      Set QQMail Token
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <div className="text-muted-foreground">
-                        {__APP_VERSION__}
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuItem onClick={handleEditProfileDialogOpen}>
+                  {i18nText[language].editProfile}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRssTokenDialogOpen}>
+                  {i18nText[language].minifluxToken}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleEmailTokenDialogOpen}>
+                  {i18nText[language].qqMailToken}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <div className="text-muted-foreground">{__APP_VERSION__}</div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           {/* greeting */}
           <div>
@@ -188,7 +193,7 @@ export const Profile = () => {
       <Dialog open={rssTokenDialogOpen} onOpenChange={setRssTokenDialogOpen}>
         <DialogContent className="gap-1 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Miniflux Token</DialogTitle>
+            <DialogTitle>{i18nText[language].updateMinifluxToken}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -208,7 +213,7 @@ export const Profile = () => {
                 variant="outline"
                 onClick={() => setRssTokenDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -216,7 +221,7 @@ export const Profile = () => {
                 }}
                 disabled={updateRssTokenMutation.isPending}
               >
-                Update
+                {i18nText[language].update}
               </Button>
             </div>
           </div>
@@ -230,12 +235,14 @@ export const Profile = () => {
       >
         <DialogContent className="gap-1 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Update QQMail Token</DialogTitle>
+            <DialogTitle>{i18nText[language].updateQQMailToken}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="update-qqmail-address">Address</Label>
+              <Label htmlFor="update-qqmail-address">
+                {i18nText[language].address}
+              </Label>
               <div className="flex">
                 <Input
                   id="update-qqmail-address"
@@ -251,7 +258,9 @@ export const Profile = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="update-qqmail-token">Token</Label>
+              <Label htmlFor="update-qqmail-token">
+                {i18nText[language].token}
+              </Label>
               <Input
                 id="update-qqmail-token"
                 type="password"
@@ -267,7 +276,7 @@ export const Profile = () => {
                 variant="outline"
                 onClick={() => setEmailTokenDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -275,7 +284,7 @@ export const Profile = () => {
                 }}
                 disabled={updateEmailTokenMutation.isPending}
               >
-                Update
+                {i18nText[language].update}
               </Button>
             </div>
           </div>
@@ -289,17 +298,24 @@ export const Profile = () => {
       >
         <DialogContent className="gap-1 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogTitle>{i18nText[language].editProfile}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-8">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-profile-username">Username</Label>
-              <Input
-                id="edit-profile-username"
-                value={username}
-                disabled={updateProfileMutation.isPending}
-                onChange={(e) => setUsername(e.target.value)}
+            <div className="flex items-end justify-between gap-6">
+              <div className="mb-[2px] flex flex-1 flex-col gap-2">
+                <Label htmlFor="edit-profile-username">Username</Label>
+                <Input
+                  id="edit-profile-username"
+                  value={username}
+                  disabled={updateProfileMutation.isPending}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+
+              <LanguageSwitch
+                defaultLanguage={userLang}
+                onLanguageChange={setUserLang}
               />
             </div>
 
@@ -347,7 +363,7 @@ export const Profile = () => {
                 variant="outline"
                 onClick={() => setEditProfileDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -355,7 +371,7 @@ export const Profile = () => {
                 }}
                 disabled={updateProfileMutation.isPending}
               >
-                Update
+                {i18nText[language].update}
               </Button>
             </div>
           </div>
@@ -526,4 +542,29 @@ const QQMailSheet = (props: React.ComponentProps<"div">) => {
       )}
     </div>
   );
+};
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    editProfile: "个人信息",
+    minifluxToken: "Miniflux Token",
+    updateMinifluxToken: "更新 Miniflux Token",
+    updateQQMailToken: "更新 QQ 邮箱 Token",
+    address: "地址",
+    token: "Token",
+    qqMailToken: "QQ 邮箱 Token",
+    update: "更新",
+    cancel: "取消",
+  },
+  [UserLangEnum.ENUS]: {
+    editProfile: "Edit Profile",
+    minifluxToken: "Set Miniflux Token",
+    updateMinifluxToken: "Update Miniflux Token",
+    updateQQMailToken: "Update QQMail Token",
+    qqMailToken: "Set QQMail Token",
+    address: "Address",
+    token: "Token",
+    update: "Update",
+    cancel: "Cancel",
+  },
 };

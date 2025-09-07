@@ -4,8 +4,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeeklyRetro } from "@/components/weekly-retro";
 import { AnnualRetro } from "@/components/annual-retro";
 import { DecadeRetro } from "@/components/decade-retro";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export default function Echo() {
+  const { language } = useUserContext();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("week");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(
@@ -25,7 +28,9 @@ export default function Echo() {
         className={`flex items-center justify-between gap-2 ${isMobile ? "px-6" : ""}`}
       >
         <div className="flex flex-col gap-1">
-          <h2 className="text-3xl font-semibold">Echoes</h2>
+          <h2 className="text-3xl font-semibold">
+            {i18nText[language].echoes}
+          </h2>
         </div>
       </div>
 
@@ -33,13 +38,13 @@ export default function Echo() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className={`${isMobile ? "w-full" : ""}`}>
             <TabsTrigger value="week" className="px-4">
-              Week
+              {i18nText[language].week}
             </TabsTrigger>
             <TabsTrigger value="year" className="px-4">
-              Year
+              {i18nText[language].year}
             </TabsTrigger>
             <TabsTrigger value="decade" className="px-4">
-              Decade
+              {i18nText[language].decade}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -67,3 +72,18 @@ export default function Echo() {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    echoes: "回声",
+    week: "周",
+    year: "年",
+    decade: "秩",
+  },
+  [UserLangEnum.ENUS]: {
+    echoes: "Echoes",
+    week: "Week",
+    year: "Year",
+    decade: "Decade",
+  },
+};
