@@ -708,7 +708,10 @@ export function ToWatchTableRowActions<TData>({
           entryMeasure === "" ? WatchMeasureEnum.PERCENTAGE : entryMeasure,
         range: isNaN(Number(measureRange)) ? 0 : Number(measureRange),
         progress: 0,
-        checkpoints: [[dateString(new Date(), "-"), 0]],
+        checkpoints: [
+          ...(watch.payload.checkpoints ?? []),
+          [dateString(new Date(), "-"), 0],
+        ],
       },
       title: watch.title,
       type: watch.type,

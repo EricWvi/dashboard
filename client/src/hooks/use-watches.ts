@@ -369,10 +369,6 @@ export function useRecoverWatch() {
         payload: {
           ...data.payload,
           progress: 0,
-          checkpoints: [
-            ...(data.payload.checkpoints ?? []),
-            [dateString(new Date(), "-"), 0],
-          ],
         },
       });
       return response.json();
