@@ -123,20 +123,33 @@ const TodoTitle = ({
 export const PlanTodoView = ({
   todo,
   disabled,
+  isFuture,
   handleCheck,
 }: {
   todo: Todo;
   disabled: boolean;
+  isFuture: boolean;
   handleCheck: (id: number, checked: boolean) => void;
 }) => {
+  const { language } = useUserContext();
   return (
     <div className="flex items-center gap-2">
-      <Checkbox
-        id={String(todo.id)}
-        defaultChecked={disabled}
-        disabled={disabled}
-        onCheckedChange={(checked: boolean) => handleCheck(todo.id, checked)}
-      />
+      {isFuture ? (
+        <Badge
+          variant="outline"
+          className={`text-xs ${formatDate(todo.schedule, todo.done).color}`}
+        >
+          {formatDate(todo.schedule, todo.done).label[language]}
+        </Badge>
+      ) : (
+        <Checkbox
+          id={String(todo.id)}
+          defaultChecked={disabled}
+          disabled={disabled}
+          className="cursor-pointer"
+          onCheckedChange={(checked: boolean) => handleCheck(todo.id, checked)}
+        />
+      )}
       <div className="min-w-0 flex-1">
         <Label htmlFor={String(todo.id)}>
           <div

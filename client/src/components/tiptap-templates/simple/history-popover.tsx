@@ -38,8 +38,11 @@ import {
   restoreHistory,
 } from "@/hooks/use-draft";
 import { RestoreIcon } from "@/components/tiptap-icons/restore-icon";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export const HistoryPopover = ({ id }: { id: number }) => {
+  const { language } = useUserContext();
   const [history, setHistory] = useState<number[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -85,13 +88,13 @@ export const HistoryPopover = ({ id }: { id: number }) => {
     <>
       <Sheet open={isOpen} onOpenChange={handleOpenChange}>
         <SheetTrigger asChild>
-          <Button data-style="ghost" data-tooltip="History">
+          <Button data-style="ghost" tooltip={i18nText[language].history}>
             <History className="size-4" />
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-80 gap-2">
           <SheetHeader>
-            <SheetTitle>Document History</SheetTitle>
+            <SheetTitle>{i18nText[language].documentHistory}</SheetTitle>
             <SheetDescription></SheetDescription>
           </SheetHeader>
           <div>
@@ -110,17 +113,17 @@ export const HistoryPopover = ({ id }: { id: number }) => {
                     onClick={() => handleHistoryClick(timestamp)}
                   >
                     <div className="font-medium">
-                      Version {history.length - index}
+                      {i18nText[language].version} {history.length - index}
                     </div>
                     <div className="text-muted-foreground mt-1 text-xs">
-                      {`${dateString(new Date(timestamp))} · ${new Date(timestamp).toLocaleTimeString()}`}
+                      {`${dateString(new Date(timestamp))} · ${new Date(timestamp).toLocaleTimeString("zh-CN")}`}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-muted-foreground px-4 text-sm">
-                No history available
+                {i18nText[language].noHistory}
               </div>
             )}
           </div>
@@ -139,9 +142,9 @@ export const HistoryPopover = ({ id }: { id: number }) => {
           <DialogHeader>
             <DialogTitle className="text-left">
               <div className="relative">
-                {`Version ${getVersionNumber(selectedTimestamp)} `}
+                {`${i18nText[language].version} ${getVersionNumber(selectedTimestamp)} `}
                 <span className="text-muted-foreground text-sm">
-                  {`(${dateString(new Date(selectedTimestamp))} · ${new Date(selectedTimestamp).toLocaleTimeString()})`}
+                  {`(${dateString(new Date(selectedTimestamp))} · ${new Date(selectedTimestamp).toLocaleTimeString("zh-CN")})`}
                 </span>
 
                 <UIButton
@@ -168,14 +171,15 @@ export const HistoryPopover = ({ id }: { id: number }) => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Restore History</AlertDialogTitle>
+            <AlertDialogTitle>
+              {i18nText[language].restoreHistory}
+            </AlertDialogTitle>
             <AlertDialogDescription className="wrap-anywhere">
-              Are you sure you want to restore this version? <br />
-              This action cannot be undone.
+              {i18nText[language].confirmRestore}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{i18nText[language].cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 restoreHistory(id, selectedTimestamp).then(() =>
@@ -183,7 +187,7 @@ export const HistoryPopover = ({ id }: { id: number }) => {
                 );
               }}
             >
-              Restore
+              {i18nText[language].restore}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -239,3 +243,27 @@ export function HistoryContent({ id, ts }: { id: number; ts: number }) {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    history: "历史记录",
+    documentHistory: "文档历史",
+    noHistory: "暂无历史记录",
+    version: "版本",
+    restoreHistory: "恢复历史",
+    cancel: "取消",
+    restore: "恢复",
+    confirmRestore: "确定要恢复此版本吗？\n此操作不可撤销。",
+  },
+  [UserLangEnum.ENUS]: {
+    history: "History",
+    documentHistory: "Document History",
+    noHistory: "No history available",
+    version: "Version",
+    restoreHistory: "Restore History",
+    cancel: "Cancel",
+    restore: "Restore",
+    confirmRestore:
+      "Are you sure you want to restore this version?\nThis action cannot be undone.",
+  },
+};

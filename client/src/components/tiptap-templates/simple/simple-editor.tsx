@@ -106,10 +106,15 @@ const MainToolbarContent = ({
   dropChange: () => void;
   id: number;
 }) => {
+  const { language } = useUserContext();
   return (
     <>
       <ToolbarGroup>
-        <Button data-style="ghost" onClick={onSave}>
+        <Button
+          data-style="ghost"
+          tooltip={i18nText[language].save}
+          onClick={onSave}
+        >
           <Save className="size-4" />
         </Button>
       </ToolbarGroup>
@@ -125,7 +130,7 @@ const MainToolbarContent = ({
 
       {isMobile && (
         <ToolbarGroup>
-          <ImageUploadButton text="Add" />
+          <ImageUploadButton />
         </ToolbarGroup>
       )}
 
@@ -177,7 +182,7 @@ const MainToolbarContent = ({
       {!isMobile && (
         <>
           <ToolbarGroup>
-            <ImageUploadButton text="Add" />
+            <ImageUploadButton />
           </ToolbarGroup>
 
           <Spacer />
@@ -187,7 +192,11 @@ const MainToolbarContent = ({
       {isMobile && <ToolbarSeparator />}
 
       <ToolbarGroup>
-        <Button data-style="ghost" onClick={dropChange}>
+        <Button
+          data-style="ghost"
+          tooltip={i18nText[language].drop}
+          onClick={dropChange}
+        >
           <Eraser className="size-4" />
         </Button>
         <HistoryPopover id={id} />
@@ -267,7 +276,9 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
         limit: 9,
         upload: handleImageUpload,
         onError: (error) =>
-          toast.error("Upload failed", { description: error.message }),
+          toast.error(i18nText[language].uploadFailed, {
+            description: error.message,
+          }),
       }),
     ],
     content: draft,
@@ -339,7 +350,7 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
           prev: -1,
           curr: Date.now(),
         }).then(() => {
-          toast.success("Draft saved successfully");
+          toast.success(i18nText[language].success);
           setId(0);
           setOpen(false);
           removeDraftQuery(id);
@@ -360,7 +371,7 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
       prev: -1,
       curr: Date.now(),
     }).then(() => {
-      toast.success("Draft dropped successfully");
+      toast.success(i18nText[language].dropSuccess);
       setId(0);
       setOpen(false);
       removeDraftQuery(id);
@@ -510,9 +521,19 @@ export function ContentHtml({ id }: { id: number }) {
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
+    save: "保存",
+    drop: "取消更改",
     outOfSync: "🔄 文档内容有更新！",
+    uploadFailed: "上传失败",
+    success: "文档保存成功",
+    dropSuccess: "文档已还原",
   },
   [UserLangEnum.ENUS]: {
+    save: "Save",
+    drop: "Drop",
     outOfSync: "🔄 Draft content is out of sync!",
+    uploadFailed: "Upload failed",
+    success: "Draft saved successfully",
+    dropSuccess: "Draft dropped successfully",
   },
 };

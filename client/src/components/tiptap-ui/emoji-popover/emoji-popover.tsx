@@ -19,6 +19,8 @@ import {
   useEmoji,
   EMOJI_LIST,
 } from "@/components/tiptap-ui/emoji-button/use-emoji";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export interface EmojiPopoverContentProps {
   /**
@@ -54,22 +56,25 @@ export interface EmojiPopoverProps extends Omit<ButtonProps, "type"> {
 export const EmojiPopoverButton = React.forwardRef<
   HTMLButtonElement,
   ButtonProps
->(({ className, children, ...props }, ref) => (
-  <Button
-    type="button"
-    className={className}
-    data-style="ghost"
-    data-appearance="default"
-    role="button"
-    tabIndex={-1}
-    aria-label="Insert emoji"
-    tooltip="Emoji"
-    ref={ref}
-    {...props}
-  >
-    {children ?? <EmojiIcon className="tiptap-button-icon" />}
-  </Button>
-));
+>(({ className, children, ...props }, ref) => {
+  const { language } = useUserContext();
+  return (
+    <Button
+      type="button"
+      className={className}
+      data-style="ghost"
+      data-appearance="default"
+      role="button"
+      tabIndex={-1}
+      aria-label="Insert emoji"
+      tooltip={i18nText[language].tooltip}
+      ref={ref}
+      {...props}
+    >
+      {children ?? <EmojiIcon className="tiptap-button-icon" />}
+    </Button>
+  );
+});
 
 EmojiPopoverButton.displayName = "EmojiPopoverButton";
 
@@ -172,5 +177,14 @@ export const EmojiPopover = React.forwardRef<
     );
   },
 );
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    tooltip: "表情",
+  },
+  [UserLangEnum.ENUS]: {
+    tooltip: "Emoji",
+  },
+};
 
 EmojiPopover.displayName = "EmojiPopover";

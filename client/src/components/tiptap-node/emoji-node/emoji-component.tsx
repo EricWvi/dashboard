@@ -29,6 +29,7 @@ export const EmojiComponent: React.FC<NodeViewProps> = ({ node }) => {
         height={20}
         style={{ display: "inline-block", verticalAlign: "top" }}
         contentEditable={false}
+        draggable={false}
         data-emoji-id={emojiId}
       />
     </NodeViewWrapper>

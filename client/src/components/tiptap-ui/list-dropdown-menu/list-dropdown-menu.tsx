@@ -1,51 +1,53 @@
-import * as React from "react"
-import { type Editor } from "@tiptap/react"
+import * as React from "react";
+import { type Editor } from "@tiptap/react";
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 // --- Icons ---
-import { ChevronDownIcon } from "@/components/tiptap-icons/chevron-down-icon"
+import { ChevronDownIcon } from "@/components/tiptap-icons/chevron-down-icon";
 
 // --- Tiptap UI ---
-import { ListButton, type ListType } from "@/components/tiptap-ui/list-button"
+import { ListButton, type ListType } from "@/components/tiptap-ui/list-button";
 
-import { useListDropdownMenu } from "./use-list-dropdown-menu"
+import { useListDropdownMenu } from "./use-list-dropdown-menu";
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button, ButtonGroup } from "@/components/tiptap-ui-primitive/button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
+import { Button, ButtonGroup } from "@/components/tiptap-ui-primitive/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/tiptap-ui-primitive/dropdown-menu"
-import { Card, CardBody } from "@/components/tiptap-ui-primitive/card"
+} from "@/components/tiptap-ui-primitive/dropdown-menu";
+import { Card, CardBody } from "@/components/tiptap-ui-primitive/card";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export interface ListDropdownMenuProps extends Omit<ButtonProps, "type"> {
   /**
    * The Tiptap editor instance.
    */
-  editor?: Editor
+  editor?: Editor;
   /**
    * The list types to display in the dropdown.
    */
-  types?: ListType[]
+  types?: ListType[];
   /**
    * Whether the dropdown should be hidden when no list types are available
    * @default false
    */
-  hideWhenUnavailable?: boolean
+  hideWhenUnavailable?: boolean;
   /**
    * Callback for when the dropdown opens or closes
    */
-  onOpenChange?: (isOpen: boolean) => void
+  onOpenChange?: (isOpen: boolean) => void;
   /**
    * Whether to render the dropdown menu in a portal
    * @default false
    */
-  portal?: boolean
+  portal?: boolean;
 }
 
 export function ListDropdownMenu({
@@ -56,26 +58,27 @@ export function ListDropdownMenu({
   portal = false,
   ...props
 }: ListDropdownMenuProps) {
-  const { editor } = useTiptapEditor(providedEditor)
-  const [isOpen, setIsOpen] = React.useState(false)
+  const { language } = useUserContext();
+  const { editor } = useTiptapEditor(providedEditor);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const { filteredLists, canToggle, isActive, isVisible, Icon } =
     useListDropdownMenu({
       editor,
       types,
       hideWhenUnavailable,
-    })
+    });
 
   const handleOnOpenChange = React.useCallback(
     (open: boolean) => {
-      setIsOpen(open)
-      onOpenChange?.(open)
+      setIsOpen(open);
+      onOpenChange?.(open);
     },
-    [onOpenChange]
-  )
+    [onOpenChange],
+  );
 
   if (!isVisible || !editor || !editor.isEditable) {
-    return null
+    return null;
   }
 
   return (
@@ -90,7 +93,7 @@ export function ListDropdownMenu({
           disabled={!canToggle}
           data-disabled={!canToggle}
           aria-label="List options"
-          tooltip="List"
+          tooltip={i18nText[language].list}
           {...props}
         >
           <Icon className="tiptap-button-icon" />
@@ -107,7 +110,11 @@ export function ListDropdownMenu({
                   <ListButton
                     editor={editor}
                     type={option.type}
-                    text={option.label}
+                    text={
+                      i18nText[language][
+                        option.label as keyof (typeof i18nText)[typeof language]
+                      ]
+                    }
                     showTooltip={false}
                   />
                 </DropdownMenuItem>
@@ -117,7 +124,22 @@ export function ListDropdownMenu({
         </Card>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
-export default ListDropdownMenu
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    list: "列表",
+    "Bullet List": "无序列表",
+    "Ordered List": "有序列表",
+    "Task List": "任务列表",
+  },
+  [UserLangEnum.ENUS]: {
+    list: "List",
+    "Bullet List": "Bullet List",
+    "Ordered List": "Ordered List",
+    "Task List": "Task List",
+  },
+};
+
+export default ListDropdownMenu;

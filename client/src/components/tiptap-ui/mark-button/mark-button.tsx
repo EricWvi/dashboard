@@ -1,19 +1,24 @@
-import * as React from "react"
+import * as React from "react";
 
 // --- Lib ---
-import { parseShortcutKeys } from "@/lib/tiptap-utils"
+import { parseShortcutKeys } from "@/lib/tiptap-utils";
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 // --- Tiptap UI ---
-import type { Mark, UseMarkConfig } from "@/components/tiptap-ui/mark-button"
-import { MARK_SHORTCUT_KEYS, useMark } from "@/components/tiptap-ui/mark-button"
+import type { Mark, UseMarkConfig } from "@/components/tiptap-ui/mark-button";
+import {
+  MARK_SHORTCUT_KEYS,
+  useMark,
+} from "@/components/tiptap-ui/mark-button";
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap-ui-primitive/badge"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
+import { Button } from "@/components/tiptap-ui-primitive/button";
+import { Badge } from "@/components/tiptap-ui-primitive/badge";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
 
 export interface MarkButtonProps
   extends Omit<ButtonProps, "type">,
@@ -21,22 +26,22 @@ export interface MarkButtonProps
   /**
    * Optional text to display alongside the icon.
    */
-  text?: string
+  text?: string;
   /**
    * Optional show shortcut keys in the button.
    * @default false
    */
-  showShortcut?: boolean
+  showShortcut?: boolean;
 }
 
 export function MarkShortcutBadge({
   type,
   shortcutKeys = MARK_SHORTCUT_KEYS[type],
 }: {
-  type: Mark
-  shortcutKeys?: string
+  type: Mark;
+  shortcutKeys?: string;
 }) {
-  return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
+  return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
 /**
@@ -57,9 +62,10 @@ export const MarkButton = React.forwardRef<HTMLButtonElement, MarkButtonProps>(
       children,
       ...buttonProps
     },
-    ref
+    ref,
   ) => {
-    const { editor } = useTiptapEditor(providedEditor)
+    const { language } = useUserContext();
+    const { editor } = useTiptapEditor(providedEditor);
     const {
       isVisible,
       handleMark,
@@ -73,19 +79,19 @@ export const MarkButton = React.forwardRef<HTMLButtonElement, MarkButtonProps>(
       type,
       hideWhenUnavailable,
       onToggled,
-    })
+    });
 
     const handleClick = React.useCallback(
       (event: React.MouseEvent<HTMLButtonElement>) => {
-        onClick?.(event)
-        if (event.defaultPrevented) return
-        handleMark()
+        onClick?.(event);
+        if (event.defaultPrevented) return;
+        handleMark();
       },
-      [handleMark, onClick]
-    )
+      [handleMark, onClick],
+    );
 
     if (!isVisible) {
-      return null
+      return null;
     }
 
     return (
@@ -99,7 +105,9 @@ export const MarkButton = React.forwardRef<HTMLButtonElement, MarkButtonProps>(
         tabIndex={-1}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip={label}
+        tooltip={
+          i18nText[language][label as keyof (typeof i18nText)[typeof language]]
+        }
         onClick={handleClick}
         {...buttonProps}
         ref={ref}
@@ -114,8 +122,31 @@ export const MarkButton = React.forwardRef<HTMLButtonElement, MarkButtonProps>(
           </>
         )}
       </Button>
-    )
-  }
-)
+    );
+  },
+);
 
-MarkButton.displayName = "MarkButton"
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    Bold: "加粗",
+    Italic: "斜体",
+    Underline: "下划线",
+    Strike: "删除线",
+    Code: "代码",
+    Highlight: "高亮",
+    Superscript: "上标",
+    Subscript: "下标",
+  },
+  [UserLangEnum.ENUS]: {
+    Bold: "Bold",
+    Italic: "Italic",
+    Underline: "Underline",
+    Strike: "Strike",
+    Code: "Code",
+    Highlight: "Highlight",
+    Superscript: "Superscript",
+    Subscript: "Subscript",
+  },
+};
+
+MarkButton.displayName = "MarkButton";

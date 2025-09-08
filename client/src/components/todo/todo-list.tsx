@@ -48,7 +48,12 @@ import {
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import { fullDateString, isDisabledPlan, isSetToday } from "@/lib/utils";
+import {
+  fullDateString,
+  isDisabledPlan,
+  isSetToday,
+  isSetDate,
+} from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
@@ -568,7 +573,10 @@ export const TodayTodoList = () => {
                     <PlanTodoView
                       key={todo.id}
                       todo={todo}
-                      disabled={isSetToday(todo.schedule)}
+                      disabled={isSetDate(todo.schedule)}
+                      isFuture={
+                        isSetDate(todo.schedule) && !isSetToday(todo.schedule)
+                      }
                       handleCheck={(id: number, checked: boolean) => {
                         setCheckedIds((prev) => {
                           const newSet = new Set(prev);
