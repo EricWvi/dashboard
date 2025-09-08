@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { CollectionsQuery } from "@/hooks/use-todos";
-import { dateString } from "@/lib/utils";
 import { UserLangEnum, type I18nText } from "./use-user";
 
 export type Watch = {
@@ -369,10 +368,6 @@ export function useRecoverWatch() {
         payload: {
           ...data.payload,
           progress: 0,
-          checkpoints: [
-            ...(data.payload.checkpoints ?? []),
-            [dateString(new Date(), "-"), 0],
-          ],
         },
       });
       return response.json();

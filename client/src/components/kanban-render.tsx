@@ -199,7 +199,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
         prev: -1,
         curr: Date.now(),
       }).then(() => {
-        toast.success("Kanban saved successfully");
+        toast.success(i18nText[language].success);
         setKanbanId(0);
         setKanbanDialogOpen(false);
         removeKanbanQuery(data.id);
@@ -833,6 +833,7 @@ const i18nText = {
     rename: "重命名",
     update: "更新",
     delete: "删除",
+    success: "看板保存成功",
   },
   [UserLangEnum.ENUS]: {
     outOfSync: "🔄 Kanban content is out of sync!",
@@ -861,5 +862,6 @@ const i18nText = {
     rename: "Rename",
     update: "Update",
     delete: "Delete",
+    success: "Kanban saved successfully",
   },
 };
