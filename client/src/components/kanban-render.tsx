@@ -255,7 +255,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                       }}
                     >
                       <ListPlus />
-                      Add Item
+                      {i18nText[language].addItem}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
@@ -265,7 +265,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                       }}
                     >
                       <Edit />
-                      Rename Board
+                      {i18nText[language].renameBoard}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
@@ -275,7 +275,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="text-destructive" />
-                      Delete Board
+                      {i18nText[language].deleteBoard}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -320,14 +320,14 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
       <Dialog open={addBoardDialogOpen} onOpenChange={setAddBoardDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Board</DialogTitle>
+            <DialogTitle>{i18nText[language].addBoard}</DialogTitle>
             <DialogDescription>
-              Enter a name for your new board.
+              {i18nText[language].addBoardDesc}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new name..."
+              placeholder={i18nText[language].enterNewName}
               value={addBoardName}
               onChange={(e) => setAddBoardName(e.target.value)}
               onCompositionStart={() => setIsComposing(true)}
@@ -345,7 +345,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                 variant="outline"
                 onClick={() => setAddBoardDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -354,7 +354,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                 }}
                 disabled={!addBoardName.trim()}
               >
-                Add
+                {i18nText[language].add}
               </Button>
             </div>
           </div>
@@ -365,14 +365,14 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
       <Dialog open={addItemDialogOpen} onOpenChange={setAddItemDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Item</DialogTitle>
+            <DialogTitle>{i18nText[language].addItem}</DialogTitle>
             <DialogDescription>
-              Enter a name for your new item.
+              {i18nText[language].addItemDesc}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new name..."
+              placeholder={i18nText[language].enterNewName}
               value={addItemName}
               onChange={(e) => setAddItemName(e.target.value)}
               onCompositionStart={() => setIsComposing(true)}
@@ -390,7 +390,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                 variant="outline"
                 onClick={() => setAddItemDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -399,7 +399,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                 }}
                 disabled={!addItemName.trim()}
               >
-                Add
+                {i18nText[language].add}
               </Button>
             </div>
           </div>
@@ -410,14 +410,14 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
       <Dialog open={editListDialogOpen} onOpenChange={setEditListDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename Board</DialogTitle>
+            <DialogTitle>{i18nText[language].renameBoard}</DialogTitle>
             <DialogDescription>
-              Enter a new name for your board.
+              {i18nText[language].renameBoardDesc}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new name..."
+              placeholder={i18nText[language].enterNewName}
               value={editListName}
               onChange={(e) => setEditListName(e.target.value)}
               onCompositionStart={() => setIsComposing(true)}
@@ -435,7 +435,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                 variant="outline"
                 onClick={() => setEditListDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -444,7 +444,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
                 }}
                 disabled={!editListName.trim()}
               >
-                Rename
+                {i18nText[language].rename}
               </Button>
             </div>
           </div>
@@ -458,14 +458,19 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Board</AlertDialogTitle>
+            <AlertDialogTitle>
+              {i18nText[language].deleteBoard}
+            </AlertDialogTitle>
             <AlertDialogDescription className="wrap-anywhere">
-              Are you sure you want to delete [{actionObjName}]? <br />
-              This action cannot be undone.
+              {i18nText[language].deleteBoardDescStart}
+              {actionObjName}
+              {i18nText[language].deleteBoardDescEnd}
+              <br />
+              {i18nText[language].alert}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{i18nText[language].cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 onDelete();
@@ -473,7 +478,7 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
             >
-              Delete
+              {i18nText[language].delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -491,6 +496,7 @@ const KanbanItem = ({
   columnName: string;
   setColumns: (value: React.SetStateAction<Record<string, Task[]>>) => void;
 }) => {
+  const { language } = useUserContext();
   const [isComposing, setIsComposing] = useState(false);
   const [editItemDialogOpen, setEditItemDialogOpen] = useState(false);
   const [editItemName, setEditItemName] = useState("");
@@ -638,7 +644,7 @@ const KanbanItem = ({
                       }}
                     >
                       <TextCursorInput className="text-muted-foreground" />
-                      Rename Item
+                      {i18nText[language].renameItem}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onMouseDown={(e) => {
@@ -654,7 +660,7 @@ const KanbanItem = ({
                       }}
                     >
                       <Edit />
-                      Edit Detail
+                      {i18nText[language].editDetail}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onMouseDown={(e) => {
@@ -670,7 +676,7 @@ const KanbanItem = ({
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="text-destructive" />
-                      Delete Item
+                      {i18nText[language].deleteItem}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -684,14 +690,14 @@ const KanbanItem = ({
       <Dialog open={editItemDialogOpen} onOpenChange={setEditItemDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename Item</DialogTitle>
+            <DialogTitle>{i18nText[language].renameItem}</DialogTitle>
             <DialogDescription>
-              Enter a new name for your item.
+              {i18nText[language].renameItemDesc}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Enter new name..."
+              placeholder={i18nText[language].enterNewName}
               value={editItemName}
               onChange={(e) => setEditItemName(e.target.value)}
               onCompositionStart={() => setIsComposing(true)}
@@ -709,7 +715,7 @@ const KanbanItem = ({
                 variant="outline"
                 onClick={() => setEditItemDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -718,7 +724,7 @@ const KanbanItem = ({
                 }}
                 disabled={!editItemName.trim()}
               >
-                Rename
+                {i18nText[language].rename}
               </Button>
             </div>
           </div>
@@ -732,12 +738,14 @@ const KanbanItem = ({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Details</DialogTitle>
-            <DialogDescription>Enter details for your item.</DialogDescription>
+            <DialogTitle>{i18nText[language].editDetail}</DialogTitle>
+            <DialogDescription>
+              {i18nText[language].editDetailDesc}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Textarea
-              placeholder="Enter new details..."
+              placeholder={i18nText[language].enterDetails}
               value={itemDetail}
               onChange={(e) => setItemDetail(e.target.value)}
               autoFocus
@@ -747,7 +755,7 @@ const KanbanItem = ({
                 variant="outline"
                 onClick={() => setEditDetailDialogOpen(false)}
               >
-                Cancel
+                {i18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -756,7 +764,7 @@ const KanbanItem = ({
                 }}
                 disabled={!itemDetail.trim()}
               >
-                Update
+                {i18nText[language].update}
               </Button>
             </div>
           </div>
@@ -770,14 +778,17 @@ const KanbanItem = ({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogTitle>{i18nText[language].deleteItem}</AlertDialogTitle>
             <AlertDialogDescription className="wrap-anywhere">
-              Are you sure you want to delete [{task.title}]? <br />
-              This action cannot be undone.
+              {i18nText[language].deleteItemDescStart}
+              {task.title}
+              {i18nText[language].deleteItemDescEnd}
+              <br />
+              {i18nText[language].alert}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{i18nText[language].cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 onDelete();
@@ -785,7 +796,7 @@ const KanbanItem = ({
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
             >
-              Delete
+              {i18nText[language].delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -797,8 +808,58 @@ const KanbanItem = ({
 const i18nText = {
   [UserLangEnum.ZHCN]: {
     outOfSync: "🔄 看板内容有更新！",
+    addItem: "添加事项",
+    renameBoard: "重命名看板",
+    deleteBoard: "删除看板",
+    renameItem: "重命名事项",
+    editDetail: "编辑详情",
+    deleteItem: "删除事项",
+    addBoard: "添加看板",
+    addBoardDesc: "请输入新看板的名称。",
+    addItemDesc: "请输入新事项的名称。",
+    renameBoardDesc: "请输入看板的新名称。",
+    renameItemDesc: "请输入事项的新名称。",
+    editDetailDesc: "请输入事项的详情。",
+    deleteBoardTitle: "删除看板",
+    deleteBoardDescStart: "你确定要删除 [",
+    deleteBoardDescEnd: "] 吗？",
+    deleteItemDescStart: "你确定要删除 [",
+    deleteItemDescEnd: "] 吗？",
+    alert: "此操作无法撤销。",
+    enterNewName: "输入新名称...",
+    enterDetails: "输入详情...",
+    cancel: "取消",
+    add: "添加",
+    rename: "重命名",
+    update: "更新",
+    delete: "删除",
   },
   [UserLangEnum.ENUS]: {
     outOfSync: "🔄 Kanban content is out of sync!",
+    addItem: "Add Item",
+    renameBoard: "Rename Board",
+    deleteBoard: "Delete Board",
+    renameItem: "Rename Item",
+    editDetail: "Edit Details",
+    deleteItem: "Delete Item",
+    addBoard: "Add Board",
+    addBoardDesc: "Enter a name for your new board.",
+    addItemDesc: "Enter a name for your new item.",
+    renameBoardDesc: "Enter a new name for your board.",
+    renameItemDesc: "Enter a new name for your item.",
+    editDetailDesc: "Enter details for your item.",
+    deleteBoardTitle: "Delete Board",
+    deleteBoardDescStart: "Are you sure you want to delete [",
+    deleteBoardDescEnd: "]?",
+    deleteItemDescStart: "Are you sure you want to delete [",
+    deleteItemDescEnd: "]?",
+    alert: "This action cannot be undone.",
+    enterNewName: "Enter new name...",
+    enterDetails: "Enter new details...",
+    cancel: "Cancel",
+    add: "Add",
+    rename: "Rename",
+    update: "Update",
+    delete: "Delete",
   },
 };

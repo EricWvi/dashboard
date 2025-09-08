@@ -253,7 +253,7 @@ const i18nText = {
     restoreHistory: "恢复历史",
     cancel: "取消",
     restore: "恢复",
-    confirmRestore: "确定要恢复此版本吗？\n此操作不可撤销。",
+    confirmRestore: "确定要恢复此版本吗？此操作不可撤销。",
   },
   [UserLangEnum.ENUS]: {
     history: "History",
@@ -264,6 +264,6 @@ const i18nText = {
     cancel: "Cancel",
     restore: "Restore",
     confirmRestore:
-      "Are you sure you want to restore this version?\nThis action cannot be undone.",
+      "Are you sure you want to restore this version? This action cannot be undone.",
   },
 };

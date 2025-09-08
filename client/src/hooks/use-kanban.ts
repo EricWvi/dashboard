@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
+import { UserLangEnum, type UserLang } from "./use-user";
 
 export interface Task {
   id: string;
@@ -38,15 +39,37 @@ export function useKanban(id: number) {
   });
 }
 
-export async function createKanban() {
+const enDefault = {
+  Backlog: [],
+  "In Progress": [],
+  Done: [],
+};
+
+const cnDefault = {
+  待办: [],
+  进行中: [],
+  已完成: [],
+};
+
+const getDefaultColumns = (language: UserLang) => {
+  if (language === UserLangEnum.ZHCN) {
+    return ["待办", "进行中", "已完成"];
+  }
+  return ["Backlog", "In Progress", "Done"];
+};
+
+const getDefaultColumnValue = (language: UserLang) => {
+  if (language === UserLangEnum.ZHCN) {
+    return cnDefault;
+  }
+  return enDefault;
+};
+
+export async function createKanban(language: UserLang) {
   const response = await postRequest("/api/tiptap?Action=CreateTiptap", {
     content: {
-      columns: ["Backlog", "In Progress", "Done"],
-      columnValue: {
-        Backlog: [],
-        "In Progress": [],
-        Done: [],
-      },
+      columns: getDefaultColumns(language),
+      columnValue: getDefaultColumnValue(language),
     },
   });
   const rst = await response.json();

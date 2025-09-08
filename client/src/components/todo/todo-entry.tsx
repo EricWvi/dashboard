@@ -326,7 +326,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
             setKanbanId(todo.kanban);
             setKanbanDialogOpen(true);
           } else {
-            const kanbanId = await createKanban();
+            const kanbanId = await createKanban(language);
             setKanbanId(kanbanId);
             setKanbanDialogOpen(true);
             updateTodoKanban(kanbanId);
@@ -812,7 +812,7 @@ export const TodoEntry = ({
             setKanbanId(todo.kanban);
             setKanbanDialogOpen(true);
           } else {
-            const kanbanId = await createKanban();
+            const kanbanId = await createKanban(language);
             setKanbanId(kanbanId);
             setKanbanDialogOpen(true);
             updateTodoKanban(kanbanId);
