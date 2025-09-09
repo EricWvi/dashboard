@@ -40,6 +40,7 @@ import {
   useTodos,
   useUpdateCollection,
   type Todo,
+  useClearTodos,
 } from "@/hooks/use-todos";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -321,7 +322,15 @@ const TodoList = ({
 const CompletedList = ({ collectionId }: { collectionId: number }) => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
+  const { data: collection } = useCollection(collectionId);
   const { data: completed } = useCompleted(collectionId);
+  const deleteCompletedMutation = useClearTodos(collectionId);
+  const [deleteCompletedDialogOpen, setDeleteCompletedDialogOpen] =
+    useState(false);
+
+  const clearCompleted = async () => {
+    return deleteCompletedMutation.mutateAsync();
+  };
 
   return (
     <Card
@@ -340,6 +349,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
                     variant="link"
                     size="sm"
                     className="text-muted-foreground h-fit"
+                    onClick={() => setDeleteCompletedDialogOpen(true)}
                   >
                     {`${i18nText[language].clear} ${completed.length} ${i18nText[language].todos}`}
                   </Button>
@@ -375,6 +385,39 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
             </div>
           ))}
       </CardContent>
+
+      {/* Delete Completed Todos Confirmation Dialog */}
+      <AlertDialog
+        open={deleteCompletedDialogOpen}
+        onOpenChange={setDeleteCompletedDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {i18nText[language].deleteCompleted}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="wrap-anywhere">
+              {i18nText[language].deleteCompletedStart}
+              {collection?.name}
+              {i18nText[language].deleteCompletedEnd}
+              <br />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{i18nText[language].cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                clearCompleted().then(() =>
+                  setDeleteCompletedDialogOpen(false),
+                );
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive-hover"
+            >
+              {i18nText[language].delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
@@ -622,6 +665,9 @@ const i18nText = {
     deleteTodoList: "删除集合",
     deleteConfirmStart: "确定要删除「",
     deleteConfirmEnd: "」吗？此操作无法撤销。",
+    deleteCompleted: "删除归档事项",
+    deleteCompletedStart: "确定要删除「",
+    deleteCompletedEnd: "」中所有归档事项吗？此操作无法撤销。",
     noCompleted: "没有归档事项",
     clear: "清除",
     todos: "项归档",
@@ -647,6 +693,10 @@ const i18nText = {
     deleteTodoList: "Delete Todo List",
     deleteConfirmStart: "Are you sure you want to delete [",
     deleteConfirmEnd: "]? This action cannot be undone.",
+    deleteCompleted: "Delete Completed",
+    deleteCompletedStart:
+      "Are you sure you want to delete all completed todos of [",
+    deleteCompletedEnd: "]? This action cannot be undone.",
     noCompleted: "No Completed Tasks...",
     clear: "Clear",
     todos: "todos",

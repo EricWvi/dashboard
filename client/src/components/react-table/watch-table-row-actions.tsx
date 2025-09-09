@@ -1349,6 +1349,7 @@ export function BookmarkTableRowActions<TData>({
                 </Label>
                 <MultiSelect
                   id="bookmark-edit-what"
+                  placeholder=""
                   options={tags?.whatTags ?? []}
                   onValueChange={setSelectedWhats}
                   defaultValue={selectedWhats}
@@ -1363,6 +1364,7 @@ export function BookmarkTableRowActions<TData>({
                 </Label>
                 <MultiSelect
                   id="bookmark-edit-how"
+                  placeholder=""
                   options={tags?.howTags ?? []}
                   onValueChange={setSelectedHows}
                   defaultValue={selectedHows}
@@ -1642,6 +1644,7 @@ export function BlogTableRowActions<TData>({
               </Label>
               <MultiSelect
                 id="blog-edit-what"
+                placeholder=""
                 options={tags?.whatTags ?? []}
                 onValueChange={setSelectedWhats}
                 defaultValue={selectedWhats}
@@ -1656,6 +1659,7 @@ export function BlogTableRowActions<TData>({
               </Label>
               <MultiSelect
                 id="blog-edit-how"
+                placeholder=""
                 options={tags?.howTags ?? []}
                 onValueChange={setSelectedHows}
                 defaultValue={selectedHows}

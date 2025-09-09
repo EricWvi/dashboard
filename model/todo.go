@@ -96,6 +96,14 @@ func ListCompleted(db *gorm.DB, where map[string]any) ([]Todo, error) {
 	return todos, nil
 }
 
+func DeleteCompleted(db *gorm.DB, where map[string]any) error {
+	if err := db.Where(where).Where(Todo_Completed, true).
+		Delete(&Todo{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (e *Todo) Create(db *gorm.DB) error {
 	return db.Create(e).Error
 }

@@ -305,6 +305,21 @@ export function useDeleteTodo(collectionId: number, completed = false) {
   });
 }
 
+export function useClearTodos(collectionId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await postRequest("/api/todo?Action=ClearTodos", { collectionId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keyCompletedOfCollection(collectionId),
+      });
+    },
+  });
+}
+
 export async function listAllTodos() {
   const response = await getRequest("/api/collection?Action=ListAll");
   const data = await response.json();

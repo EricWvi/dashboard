@@ -838,7 +838,7 @@ export const TodoEntry = ({
         </ContextMenuSubTrigger>
         <ContextMenuSubContent>
           {collections
-            ?.filter((c) => c.id !== collectionId)
+            ?.filter((c) => c.id !== collectionId && c.id !== 0)
             .map((collection) => (
               <ContextMenuItem
                 key={collection.id}
