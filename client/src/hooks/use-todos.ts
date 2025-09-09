@@ -195,6 +195,9 @@ export function useCompleteTodo() {
         queryKey: keyTodosOfCollection(variables.collectionId),
       });
       queryClient.invalidateQueries({
+        queryKey: keyTodayTodo(),
+      });
+      queryClient.invalidateQueries({
         queryKey: keyCompletedOfCollection(variables.collectionId),
       });
     },

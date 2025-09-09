@@ -45,6 +45,7 @@ import {
   Minus,
   TicketCheck,
   MessageSquareQuote,
+  TextQuote,
 } from "lucide-react";
 import { dateString, formatMediaUrl } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
@@ -159,6 +160,21 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
         ],
       },
     });
+  };
+  const editQuotes = async () => {
+    if (!watch.payload.quotes) {
+      const draftId = await createTiptap();
+      updateWatchMutation.mutateAsync({
+        id: watch.id,
+        payload: { ...watch.payload, quotes: draftId },
+      });
+      setEditorId(draftId);
+      setEditorDialogOpen(true);
+    } else {
+      setEditorId(watch.payload.quotes);
+      setEditorDialogOpen(true);
+    }
+    handleUpdateProgressOpen(false);
   };
   const reviewWatch = async () => {
     if (!watch.payload.review) {
@@ -643,9 +659,16 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
             />
 
             <div className="flex justify-between gap-2">
-              <Button variant="secondary" onClick={reviewWatch}>
-                <MessageSquareQuote />
-              </Button>
+              <div className="space-x-2">
+                {watch.type === WatchEnum.BOOK && (
+                  <Button variant="secondary" onClick={editQuotes}>
+                    <TextQuote />
+                  </Button>
+                )}
+                <Button variant="secondary" onClick={reviewWatch}>
+                  <MessageSquareQuote />
+                </Button>
+              </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
