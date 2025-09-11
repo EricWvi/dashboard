@@ -139,7 +139,40 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddMarkColumnToEcho,
 			Down:    RemoveMarkColumnFromEcho,
 		},
+		{
+			Version: "v2.0.0",
+			Name:    "Add entry table",
+			Up:      AddEntryTable,
+			Down:    RemoveEntryTable,
+		},
 	}
+}
+
+// ------------------- v2.0.0 -------------------
+func AddEntryTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_entry (
+			id serial4 NOT NULL,
+			creator_id int4 NOT NULL,
+			draft INTEGER DEFAULT 0,
+			visibility varchar(10) DEFAULT 'PUBLIC'::character varying(10) NOT NULL,
+			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+			created_at timestamptz DEFAULT now() NULL,
+			updated_at timestamptz DEFAULT now() NULL,
+			deleted_at timestamptz NULL,
+			word_count int4 DEFAULT 0 NOT NULL,
+			CONSTRAINT entry_pkey PRIMARY KEY (id)
+		);
+
+		CREATE INDEX idx_entry_creator_created_at
+    		ON public.d_entry (creator_id, created_at DESC);
+	`).Error
+}
+
+func RemoveEntryTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_entry CASCADE;
+	`).Error
 }
 
 // -------------------- v1.2.0 -------------------
