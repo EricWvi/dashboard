@@ -200,9 +200,8 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
     }
     if (curr.length > 0) {
       const today = dateString(new Date(), "-");
-      const existing = curr.findIndex(([date]) => date === today);
-      if (existing !== -1) {
-        curr[existing][1] = watchProgress;
+      if (curr[curr.length - 1][0] === today) {
+        curr[curr.length - 1][1] = watchProgress;
       } else {
         if (curr[curr.length - 1][1] !== watchProgress) {
           curr.push([today, watchProgress]);
