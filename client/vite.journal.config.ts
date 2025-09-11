@@ -3,12 +3,15 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
-import { version } from "./package.json";
 
 // https://vite.dev/config/
 export default defineConfig({
-  define: {
-    __APP_VERSION__: JSON.stringify(version),
+  publicDir: "public-journal",
+  build: {
+    outDir: "journal",
+    rollupOptions: {
+      input: path.resolve(__dirname, "journal.html"),
+    },
   },
   server: {
     host: "0.0.0.0",
@@ -35,13 +38,14 @@ export default defineConfig({
           "fonts/**/*.{woff,woff2,ttf,otf}",
         ],
       },
-      includeAssets: ["favicon.svg", "apple-touch-icon.png"],
+      includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
-        name: "Only Dashboard",
-        short_name: "Only",
-        description: "Only Dashboard",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        name: "Journal App",
+        short_name: "Journal",
+        description:
+          "Capture and write about the details of everyday moments and special events.",
+        background_color: "#0a0913",
+        theme_color: "#0a0913",
         display: "standalone",
         icons: [
           {
@@ -54,18 +58,8 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
           },
-          {
-            src: "favicon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-          },
         ],
       },
-      // devOptions: {
-      //   enabled: true, // Enable PWA in development
-      //   type: "module",
-      //   navigateFallback: "index.html",
-      // },
     }),
   ],
   resolve: {

@@ -1,6 +1,40 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { EmojiComponent } from "./emoji-component.tsx";
+import { wechatEmojis } from "@/components/emoji/wechat-emoji";
+
+export type EmojiAttributes = {
+  src: string;
+  alt: string;
+  title: string;
+  width: string;
+  height: string;
+  style: string;
+  contenteditable: string;
+  draggable: string;
+  "data-emoji-id": string;
+};
+
+export const emojiAttributeGetter = (
+  emojiId: string,
+): EmojiAttributes | null => {
+  if (!emojiId) return null;
+
+  const emoji = wechatEmojis.find((e) => e.id === emojiId);
+  if (!emoji) return null;
+
+  return {
+    src: emoji.url,
+    alt: emoji.name,
+    title: emoji.name,
+    width: "20",
+    height: "20",
+    style: "display: inline-block; vertical-align: top;",
+    contenteditable: "false",
+    draggable: "false",
+    "data-emoji-id": emojiId,
+  };
+};
 
 export interface EmojiOptions {
   HTMLAttributes: Record<string, any>;
@@ -60,9 +94,19 @@ export const EmojiExtension = Node.create<EmojiOptions>({
   },
 
   renderHTML({ HTMLAttributes }) {
+    const emojiId = HTMLAttributes["data-emoji-id"];
+    const emojiAttrs = emojiAttributeGetter(emojiId);
+
+    if (!emojiAttrs) {
+      return [
+        "img",
+        mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
+      ];
+    }
+
     return [
       "img",
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
+      mergeAttributes(this.options.HTMLAttributes, emojiAttrs, HTMLAttributes),
     ];
   },
 

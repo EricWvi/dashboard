@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest } from "@/lib/queryClient";
-import { CollectionsQuery } from "@/hooks/use-todos";
-import { UserLangEnum, type I18nText } from "./use-user";
+import { UserLangEnum, UserQueryOptions, type I18nText } from "./use-user";
+import { keyTodosOfCollection } from "./use-todos";
 
 export type Watch = {
   id: number;
@@ -317,17 +317,17 @@ export function useStartWatch() {
       queryClient.invalidateQueries({
         queryKey: keyWatchesOfStatus(WatchStatus.WATCHING),
       });
-      const collections = await queryClient.fetchQuery(CollectionsQuery);
-      const collection = collections.find((collection) =>
-        collection.name.includes("娱乐"),
+      const user = await queryClient.fetchQuery(UserQueryOptions);
+      postRequest("/api/todo?Action=CreateTodo", {
+        title:
+          WatchTypeText[variables.type][user.language] + ": " + variables.title,
+        link: variables.link,
+        collectionId: 0,
+      }).then(() =>
+        queryClient.invalidateQueries({
+          queryKey: keyTodosOfCollection(0),
+        }),
       );
-      if (collection) {
-        postRequest("/api/todo?Action=CreateTodo", {
-          title: variables.type + ": " + variables.title,
-          link: variables.link,
-          collectionId: collection.id,
-        });
-      }
     },
   });
 }

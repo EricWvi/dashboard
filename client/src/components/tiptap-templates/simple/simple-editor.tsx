@@ -131,6 +131,7 @@ const MainToolbarContent = ({
       {isMobile && (
         <ToolbarGroup>
           <ImageUploadButton />
+          <EmojiPopover />
         </ToolbarGroup>
       )}
 
@@ -158,7 +159,7 @@ const MainToolbarContent = ({
           <ColorHighlightPopoverButton onClick={onHighlighterClick} />
         )}
         {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
-        <EmojiPopover />
+        {!isMobile && <EmojiPopover />}
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -235,7 +236,17 @@ const MobileToolbarContent = ({
   </>
 );
 
-export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
+export function SimpleEditor({
+  draft,
+  ts,
+  showToast,
+  removeCache,
+}: {
+  draft: any;
+  ts: number;
+  showToast: boolean;
+  removeCache: boolean;
+}) {
   const { language } = useUserContext();
   const { id, setId, setOpen } = useTTContext();
   const isChanged = useRef(false);
@@ -270,6 +281,10 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
     },
     extensions: [
       ...extensionSetup,
+      TOCExtension.configure({
+        levels: [2, 3, 4],
+        scrollBehavior: "smooth",
+      }),
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
@@ -350,15 +365,21 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
           prev: -1,
           curr: Date.now(),
         }).then(() => {
-          toast.success(i18nText[language].success);
+          if (showToast) toast.success(i18nText[language].success);
           setId(0);
           setOpen(false);
-          removeDraftQuery(id);
+          if (removeCache) {
+            removeDraftQuery(id);
+          } else {
+            invalidateDraftQuery(id);
+          }
         });
       } else {
         setId(0);
         setOpen(false);
-        removeDraftQuery(id);
+        if (removeCache) {
+          removeDraftQuery(id);
+        }
       }
     }
   };
@@ -371,10 +392,14 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
       prev: -1,
       curr: Date.now(),
     }).then(() => {
-      toast.success(i18nText[language].dropSuccess);
+      if (showToast) toast.success(i18nText[language].dropSuccess);
       setId(0);
       setOpen(false);
-      removeDraftQuery(id);
+      if (removeCache) {
+        removeDraftQuery(id);
+      } else {
+        invalidateDraftQuery(id);
+      }
     });
   };
 
@@ -421,7 +446,7 @@ export function SimpleEditor({ draft, ts }: { draft: any; ts: number }) {
   );
 }
 
-const extensionSetup = [
+export const extensionSetup = [
   StarterKit.configure({
     horizontalRule: false,
     link: {
@@ -440,10 +465,6 @@ const extensionSetup = [
   Subscript,
   EmojiExtension,
   Selection,
-  TOCExtension.configure({
-    levels: [2, 3, 4],
-    scrollBehavior: "smooth",
-  }),
 ];
 
 export function ReadOnlyTiptap({ draft }: { draft: any }) {

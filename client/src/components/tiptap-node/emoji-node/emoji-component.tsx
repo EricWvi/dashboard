@@ -1,6 +1,6 @@
 import React from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { wechatEmojis } from "@/components/emoji/wechat-emoji";
+import { emojiAttributeGetter } from "./emoji-extension";
 
 interface EmojiAttrs {
   emojiId: string;
@@ -8,29 +8,27 @@ interface EmojiAttrs {
 
 export const EmojiComponent: React.FC<NodeViewProps> = ({ node }) => {
   const { emojiId } = node.attrs as EmojiAttrs;
+  const emojiAttrs = emojiAttributeGetter(emojiId);
 
-  if (!emojiId) {
-    return null;
-  }
-
-  const emoji = wechatEmojis.find((e) => e.id === emojiId);
-
-  if (!emoji) {
+  if (!emojiAttrs) {
     return null;
   }
 
   return (
     <NodeViewWrapper className="emoji-node-view inline">
       <img
-        src={emoji.url}
-        alt={emoji.name}
-        title={emoji.name}
-        width={20}
-        height={20}
-        style={{ display: "inline-block", verticalAlign: "top" }}
+        src={emojiAttrs.src}
+        alt={emojiAttrs.alt}
+        title={emojiAttrs.title}
+        width={emojiAttrs.width}
+        height={emojiAttrs.height}
+        style={{
+          display: "inline-block",
+          verticalAlign: "top",
+        }}
         contentEditable={false}
         draggable={false}
-        data-emoji-id={emojiId}
+        data-emoji-id={emojiAttrs["data-emoji-id"]}
       />
     </NodeViewWrapper>
   );

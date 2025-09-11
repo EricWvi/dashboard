@@ -17,7 +17,7 @@ export type Todo = {
   createdAt: Date;
 };
 
-const keyTodosOfCollection = (collectionId: number) => [
+export const keyTodosOfCollection = (collectionId: number) => [
   "/api/todos",
   collectionId,
 ];
@@ -355,20 +355,20 @@ const inbox = {
   name: "📥 Inbox",
 };
 
-export const CollectionsQuery = {
-  queryKey: keyAllCollection(),
-  queryFn: async () => {
-    const response = await getRequest("/api/collection?Action=ListCollections");
-    const data = await response.json();
-    (data.message.collections as Collection[]).map((collection) => {
-      queryClient.setQueryData(keyCollection(collection.id), collection);
-    });
-    return [inbox, ...data.message.collections] as Collection[];
-  },
-};
-
 export function useCollections() {
-  return useQuery(CollectionsQuery);
+  return useQuery({
+    queryKey: keyAllCollection(),
+    queryFn: async () => {
+      const response = await getRequest(
+        "/api/collection?Action=ListCollections",
+      );
+      const data = await response.json();
+      (data.message.collections as Collection[]).map((collection) => {
+        queryClient.setQueryData(keyCollection(collection.id), collection);
+      });
+      return [inbox, ...data.message.collections] as Collection[];
+    },
+  });
 }
 
 export function useCollection(id: number) {

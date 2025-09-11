@@ -45,6 +45,16 @@ const SearchEngines = [
   },
   {
     name: {
+      [UserLangEnum.ENUS]: "LDOCE",
+      [UserLangEnum.ZHCN]: "朗文当代",
+    },
+    logo: <Icon.LdoceLogo />,
+    shortcut: "ld",
+    onSelect: (s: string) =>
+      window.open("https://ldoce.onlyquant.top/word/" + s, "_blank"),
+  },
+  {
+    name: {
       [UserLangEnum.ENUS]: "Translate",
       [UserLangEnum.ZHCN]: "翻译",
     },

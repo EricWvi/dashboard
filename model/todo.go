@@ -39,7 +39,7 @@ const (
 	Todo_Count        = "d_count"
 )
 
-const PageSize = 6
+const todoPageSize = 6
 
 func (e *Todo) TableName() string {
 	return Todo_Table
@@ -168,22 +168,22 @@ func FindTodos(db *gorm.DB, where map[string]any, page uint) ([]*Todo, bool, err
 	if page < 1 {
 		return nil, false, errors.New("page number must be greater than 0")
 	}
-	todos := make([]*Todo, 0, PageSize+1)
-	offset := (page - 1) * PageSize
+	todos := make([]*Todo, 0, todoPageSize+1)
+	offset := (page - 1) * todoPageSize
 
 	// Retrieve one extra to check if there are more todos
 	if err := db.Where(where).
 		Order("created_at DESC").
 		Offset(int(offset)).
-		Limit(PageSize + 1).
+		Limit(todoPageSize + 1).
 		Find(&todos).Error; err != nil {
 		return nil, false, err
 	}
 
 	hasMore := false
-	if len(todos) > PageSize {
+	if len(todos) > todoPageSize {
 		hasMore = true
-		todos = todos[:PageSize]
+		todos = todos[:todoPageSize]
 	}
 
 	return todos, hasMore, nil

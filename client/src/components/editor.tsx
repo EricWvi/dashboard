@@ -28,7 +28,13 @@ export const useTTContext = () => {
   return context;
 };
 
-export const SimpleEditorWrapper = () => {
+export const SimpleEditorWrapper = ({
+  showToast = true,
+  removeCache = true,
+}: {
+  showToast?: boolean;
+  removeCache?: boolean;
+}) => {
   const { open, id } = useTTContext();
   const { data: draft } = useDraft(id);
   return (
@@ -38,7 +44,13 @@ export const SimpleEditorWrapper = () => {
         {/* removing `overflow-auto` from the fixed overlay and instead 
           constraining the editor’s height and making it scrollable 
           solves the mobile overlay + sticky toolbar problem */}
-        <SimpleEditor key={draft.ts} draft={draft.content} ts={draft.ts} />
+        <SimpleEditor
+          key={draft.ts}
+          draft={draft.content}
+          ts={draft.ts}
+          showToast={showToast}
+          removeCache={removeCache}
+        />
       </div>
     )
   );

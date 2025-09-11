@@ -32,11 +32,15 @@ const keyMailCount = () => ["/api/mail/count"];
 export const UserQueryOptions = {
   queryKey: keyUser(),
   queryFn: async () => {
-    const response = await getRequest("/api/user?Action=GetUser", false);
+    const response = await getRequest(
+      "/api/user?Action=GetUser",
+      localStorage.getItem("onlyTokenString") || crypto.randomUUID(),
+    );
     const data = await response.json();
     if (data.code !== 200) {
       window.open("https://auth.onlyquant.top/", "_blank");
     }
+    localStorage.setItem("onlyTokenString", data.message.session);
     return data.message as User;
   },
 };
@@ -66,7 +70,7 @@ export function useMailCount() {
     queryFn: async () => {
       const response = await getRequest(
         "/api/user?Action=GetQQMailCount",
-        true,
+        "",
         3,
         4000,
         5000,

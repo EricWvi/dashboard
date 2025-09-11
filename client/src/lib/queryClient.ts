@@ -11,7 +11,7 @@ async function throwIfResNotOk(res: Response) {
 
 export async function getRequest(
   url: string,
-  token: boolean = true,
+  token: string = "",
   retries = 3,
   baseTimeout = 2000,
   maxTimeout = 10000,
@@ -20,8 +20,8 @@ export async function getRequest(
   let errorMsg = `${method} ${url} failed after ${retries} attempts`;
   let resCode = 0;
 
-  let sessionToken = "";
-  if (token) {
+  let sessionToken = token;
+  if (token === "") {
     const user = await queryClient.fetchQuery(UserQueryOptions);
     sessionToken = user.session;
   }

@@ -10,6 +10,7 @@ import (
 	"github.com/EricWvi/dashboard/handler/bookmark"
 	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/echo"
+	"github.com/EricWvi/dashboard/handler/entry"
 	"github.com/EricWvi/dashboard/handler/media"
 	"github.com/EricWvi/dashboard/handler/tiptap"
 	"github.com/EricWvi/dashboard/handler/todo"
@@ -88,6 +89,8 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.POST("/bookmark", bookmark.DefaultHandler)
 	back.GET("/blog", blog.DefaultHandler)
 	back.POST("/blog", blog.DefaultHandler)
+	back.GET("/entry", entry.DefaultHandler)
+	back.POST("/entry", entry.DefaultHandler)
 
 	// Handle 404 for all unmatched routes
 	g.NoRoute(func(c *gin.Context) {
