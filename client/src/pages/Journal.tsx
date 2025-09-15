@@ -11,6 +11,9 @@ import {
 } from "@/hooks/use-entries";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
+import { useCloseActionContext } from "@/close-action-provider";
+import type { Editor } from "@tiptap/react";
+import { countWords } from "alfaaz";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -67,17 +70,13 @@ export default function Journal() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
-  const {
-    setId: setEditorId,
-    open: editorDialogOpen,
-    setOpen: setEditorDialogOpen,
-  } = useTTContext();
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOnClose } = useCloseActionContext();
 
   const [entries, setEntries] = useState<entryWrapper[]>([]);
   const [condition, _setCondition] = useState<QueryCondition[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const [created, setCreated] = useState(false);
   const loading = useRef(false);
 
   useEffect(() => {
@@ -90,13 +89,6 @@ export default function Journal() {
     setHasMore(true);
     loadInitialData();
   };
-
-  useEffect(() => {
-    if (!editorDialogOpen && created) {
-      refresh();
-      setCreated(false);
-    }
-  }, [editorDialogOpen]);
 
   const loadInitialData = async () => {
     loading.current = true;
@@ -135,7 +127,11 @@ export default function Journal() {
 
   const handleCreateEntry = async () => {
     createEntry().then((draft) => {
-      setCreated(true);
+      setOnClose(() => (e: Editor) => {
+        countWords(e.getText());
+        refresh();
+        setOnClose(() => () => {});
+      });
       setEditorId(draft);
       setEditorDialogOpen(true);
     });

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import { Editor, EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
@@ -241,11 +241,13 @@ export function SimpleEditor({
   ts,
   showToast,
   removeCache,
+  onClose,
 }: {
   draft: any;
   ts: number;
   showToast: boolean;
   removeCache: boolean;
+  onClose: (e: Editor) => void;
 }) {
   const { language } = useUserContext();
   const { id, setId, setOpen } = useTTContext();
@@ -373,6 +375,7 @@ export function SimpleEditor({
           } else {
             invalidateDraftQuery(id);
           }
+          onClose(editor);
         });
       } else {
         setId(0);
@@ -380,27 +383,31 @@ export function SimpleEditor({
         if (removeCache) {
           removeDraftQuery(id);
         }
+        onClose(editor);
       }
     }
   };
 
   const handleDrop = async () => {
-    isDirtyRef.current = false;
-    syncDraft({
-      id,
-      content: draft,
-      prev: -1,
-      curr: Date.now(),
-    }).then(() => {
-      if (showToast) toast.success(i18nText[language].dropSuccess);
-      setId(0);
-      setOpen(false);
-      if (removeCache) {
-        removeDraftQuery(id);
-      } else {
-        invalidateDraftQuery(id);
-      }
-    });
+    if (editor) {
+      isDirtyRef.current = false;
+      syncDraft({
+        id,
+        content: draft,
+        prev: -1,
+        curr: Date.now(),
+      }).then(() => {
+        if (showToast) toast.success(i18nText[language].dropSuccess);
+        setId(0);
+        setOpen(false);
+        if (removeCache) {
+          removeDraftQuery(id);
+        } else {
+          invalidateDraftQuery(id);
+        }
+        onClose(editor);
+      });
+    }
   };
 
   return (

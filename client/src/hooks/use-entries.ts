@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
+import { createTiptap } from "./use-draft";
 
 export type Entry = {
   id: number;
@@ -93,9 +94,11 @@ export function useEntry(id: number) {
 }
 
 export async function createEntry(): Promise<number> {
-  const response = await getRequest("/api/entry?Action=CreateEntry");
-  const data = await response.json();
-  return data["message"].draft;
+  const draft = await createTiptap();
+  await postRequest("/api/entry?Action=CreateEntry", {
+    draft,
+  });
+  return draft;
 }
 
 export function useUpdateEntry() {

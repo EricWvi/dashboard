@@ -3,11 +3,13 @@ import { ImageList } from "@/components/journal/image-list";
 import { useEffect, useRef, useState } from "react";
 import { Icon, More, MoreArrow } from "@/components/journal/icon";
 import { useDraft } from "@/hooks/use-draft";
-import { generateHTML, type JSONContent } from "@tiptap/react";
+import { Editor, generateHTML, type JSONContent } from "@tiptap/react";
+import { countWords } from "alfaaz";
 import { extensionSetup } from "@/components/tiptap-templates/simple/simple-editor";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import { useTTContext } from "@/components/editor";
+import { useCloseActionContext } from "@/close-action-provider";
 
 const filterText = (doc: JSONContent) => {
   return {
@@ -79,10 +81,15 @@ export default function EntryCard({
 
   const { data: draft } = useDraft(meta.draft);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOnClose } = useCloseActionContext();
 
   const handleEditEntry = (draft: number) => {
     setEditorId(draft);
     setEditorDialogOpen(true);
+    setOnClose(() => (e: Editor) => {
+      const count = countWords(e.getText());
+      setOnClose(() => () => {});
+    });
   };
 
   const collapseHeight = 144; // Default height when collapsed

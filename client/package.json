@@ -51,6 +51,7 @@
     "@tiptap/pm": "^3.0.7",
     "@tiptap/react": "^3.0.7",
     "@tiptap/starter-kit": "^3.0.7",
+    "alfaaz": "^1.1.0",
     "browser-image-compression": "^2.0.2",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
@@ -64,6 +65,7 @@
     "react-day-picker": "^9.8.1",
     "react-dom": "^19.1.0",
     "react-hotkeys-hook": "^5.1.0",
+    "react-infinite-scroll-component": "^6.1.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11"

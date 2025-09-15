@@ -1,5 +1,6 @@
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { useDraft } from "@/hooks/use-draft";
+import type { Editor } from "@tiptap/react";
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 type TTEditorContext = {
@@ -31,9 +32,11 @@ export const useTTContext = () => {
 export const SimpleEditorWrapper = ({
   showToast = true,
   removeCache = true,
+  onClose = () => {},
 }: {
   showToast?: boolean;
   removeCache?: boolean;
+  onClose?: (e: Editor) => void;
 }) => {
   const { open, id } = useTTContext();
   const { data: draft } = useDraft(id);
@@ -50,6 +53,7 @@ export const SimpleEditorWrapper = ({
           ts={draft.ts}
           showToast={showToast}
           removeCache={removeCache}
+          onClose={onClose}
         />
       </div>
     )
