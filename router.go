@@ -49,9 +49,26 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 		log.Error(log.WorkerCtx, err.Error())
 		os.Exit(1)
 	}
+	dir = viper.GetString("route.journal.dir")
+	err = filepath.Walk(dir,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				p := strings.TrimPrefix(path, dir)
+				g.StaticFile("/journal"+p, path)
+			}
+			return nil
+		})
+	if err != nil {
+		log.Error(log.WorkerCtx, err.Error())
+		os.Exit(1)
+	}
 
 	// serve index.html at root path
 	g.StaticFile("/", viper.GetString("route.front.index"))
+	g.StaticFile("/journal/", viper.GetString("route.journal.index"))
 
 	g.GET("/ping", handler.Ping)
 	// middleware.BodyWriter retrieves response body

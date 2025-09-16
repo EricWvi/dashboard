@@ -12,6 +12,9 @@ route:
   front:
     dir: "dist"
     index: "dist/index.html"
+  journal:
+    dir: "journal"
+    index: "journal/journal.html"
 db:
   name: dashboard
   host: postgres

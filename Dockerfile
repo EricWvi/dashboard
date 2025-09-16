@@ -11,7 +11,8 @@ RUN npm install
 
 # Copy frontend source and build
 COPY client/ ./
-RUN npm run build
+RUN npm run build:dashboard
+RUN npm run build:journal
 
 # --- Stage 2: Backend Builder ---
 FROM golang:1.24-alpine AS backend-builder
@@ -38,6 +39,8 @@ WORKDIR /app
 
 # Copy the built frontend from frontend-builder
 COPY --from=frontend-builder /app/client/dist ./dist
+COPY --from=frontend-builder /app/client/journal ./journal
+RUN sed -i 's/e\.NavigationRoute(e\.createHandlerBoundToURL("index\.html"))/e.NavigationRoute(e.createHandlerBoundToURL("journal.html"))/g' ./journal/sw.js
 # Copy the binary and config from backend-builder
 COPY --from=backend-builder /app/dashboard .
 COPY --from=backend-builder /app/config.prod.yaml config.yaml
