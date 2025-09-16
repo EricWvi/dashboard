@@ -50,11 +50,12 @@ func (js *JobScheduler) Stop() {
 func (js *JobScheduler) RePresignExpiredMedia() {
 	log.Info(log.MediaCtx, "Starting media re-presigning job")
 
-	// Find all media files where LastPresignedTime is older than 3 days
-	threeDaysAgo := time.Now().AddDate(0, 0, -3)
+	// Find all media files where LastPresignedTime is older than 5 days
+	fiveDaysAgo := time.Now().AddDate(0, 0, -5)
+	fiveDaysAgo = fiveDaysAgo.Add(time.Minute * 10) // Add a 10-minute offset to avoid edge cases
 
 	var expiredMedia []model.Media
-	result := js.db.Where(model.Media_LastPresignedTime+" < ?", threeDaysAgo).Find(&expiredMedia)
+	result := js.db.Where(model.Media_LastPresignedTime+" < ?", fiveDaysAgo).Find(&expiredMedia)
 
 	if result.Error != nil {
 		log.Errorf(log.MediaCtx, "Failed to query expired media: %v", result.Error)

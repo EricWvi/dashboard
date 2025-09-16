@@ -2,10 +2,10 @@ addr: :8765
 miniflux: http://miniflux:8080
 minio:
   endpoint: minio.onlyquant.top
-  accessKeyID: EEp8KIkr012QqiR05c8
-  bucket: dashboard
+  accessKeyID: 2EugvoLWSgyJDZ
+  bucket: journal
   secure: true
-  expiry: 120h
+  expiry: 160h
 route:
   back:
     base: "/api"
