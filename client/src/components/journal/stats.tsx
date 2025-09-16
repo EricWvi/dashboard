@@ -7,16 +7,16 @@ import {
   Quote,
   VerticalBar,
 } from "./icon";
-// import {
-//   useGetEntryDate,
-//   useGetEntriesCount,
-//   useGetWordsCount,
-// } from "@/hooks/use-metas";
+import {
+  useGetEntryDate,
+  useGetEntriesCount,
+  useGetWordsCount,
+} from "@/hooks/use-entries";
 
 const Stats = () => {
-  // const { data: entryCount } = useGetEntriesCount(new Date().getFullYear());
-  // const { data: wordCount } = useGetWordsCount();
-  // const { data: entryDates } = useGetEntryDate();
+  const { data: entryCount } = useGetEntriesCount(new Date().getFullYear());
+  const { data: wordCount } = useGetWordsCount();
+  const { data: entryDates } = useGetEntryDate();
   return (
     <div className="flex items-center space-x-2">
       <div className="mr-4 flex flex-col">
@@ -24,7 +24,7 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Entries />
           </Icon>
-          <Number>{0}</Number>
+          <Number>{entryCount ?? 0}</Number>
         </div>
         <Description>Entries This Year</Description>
       </div>
@@ -36,7 +36,7 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Quote />
           </Icon>
-          <Number>{0}</Number>
+          <Number>{wordCount ?? 0}</Number>
         </div>
         <Description>Words Written</Description>
       </div>
@@ -48,7 +48,7 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Calendar />
           </Icon>
-          <Number>{0}</Number>
+          <Number>{entryDates?.length ?? 0}</Number>
         </div>
         <Description>Days Journaled</Description>
       </div>

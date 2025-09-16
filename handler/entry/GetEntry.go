@@ -10,11 +10,11 @@ import (
 
 func (b Base) GetEntry(c *gin.Context, req *GetEntryRequest) *GetEntryResponse {
 	e := &model.Entry{}
-	err := e.Get(config.ContextDB(c), gin.H{
-		model.Entry_CreatorId: middleware.GetUserId(c),
-		model.Entry_Id:        req.Id,
-	})
-	if err != nil {
+	m := model.WhereMap{}
+	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq(model.Id, req.Id)
+
+	if err := e.Get(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

@@ -19,7 +19,9 @@ func (b Base) CreateEntry(c *gin.Context, req *CreateEntryRequest) *CreateEntryR
 		return nil
 	}
 
-	return &CreateEntryResponse{}
+	return &CreateEntryResponse{
+		Id: entry.ID,
+	}
 }
 
 type CreateEntryRequest struct {
@@ -27,4 +29,5 @@ type CreateEntryRequest struct {
 }
 
 type CreateEntryResponse struct {
+	Id uint `json:"id"`
 }

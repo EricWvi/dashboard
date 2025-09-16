@@ -8,6 +8,8 @@ import {
   EntryMeta,
   type QueryCondition,
   listEntries,
+  useUpdateEntry,
+  refreshMeta,
 } from "@/hooks/use-entries";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
@@ -79,6 +81,8 @@ export default function Journal() {
   const [page, setPage] = useState(0);
   const loading = useRef(false);
 
+  const updateEntryMutation = useUpdateEntry();
+
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -97,12 +101,6 @@ export default function Journal() {
       setEntries(buildWrapper([], metas));
       setHasMore(more);
       setPage(2);
-      setTimeout(() => {
-        const el = scrollableDivRef.current;
-        if (el && el.scrollHeight <= el.clientHeight && more) {
-          fetchMoreData(2);
-        }
-      }, 500);
     } catch (err) {
       console.error("Error loading initial data:", err);
     } finally {
@@ -126,10 +124,18 @@ export default function Journal() {
   };
 
   const handleCreateEntry = async () => {
-    createEntry().then((draft) => {
+    createEntry().then(([id, draft]) => {
       setOnClose(() => (e: Editor) => {
-        countWords(e.getText());
-        refresh();
+        updateEntryMutation
+          .mutateAsync({
+            id,
+            wordCount: countWords(e.getText()),
+          })
+          .then(() => {
+            refreshMeta();
+            refresh();
+          });
+
         setOnClose(() => () => {});
       });
       setEditorId(draft);

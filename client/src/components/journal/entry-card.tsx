@@ -1,4 +1,9 @@
-import { EntryMeta, useEntry } from "@/hooks/use-entries";
+import {
+  EntryMeta,
+  refreshMeta,
+  useEntry,
+  useUpdateEntry,
+} from "@/hooks/use-entries";
 import { ImageList } from "@/components/journal/image-list";
 import { useEffect, useRef, useState } from "react";
 import { Icon, More, MoreArrow } from "@/components/journal/icon";
@@ -83,11 +88,21 @@ export default function EntryCard({
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const { setOnClose } = useCloseActionContext();
 
-  const handleEditEntry = (draft: number) => {
+  const updateEntryMutation = useUpdateEntry();
+
+  const handleEditEntry = (id: number, draft: number) => {
     setEditorId(draft);
     setEditorDialogOpen(true);
     setOnClose(() => (e: Editor) => {
-      const count = countWords(e.getText());
+      updateEntryMutation
+        .mutateAsync({
+          id,
+          wordCount: countWords(e.getText()),
+        })
+        .then(() => {
+          refreshMeta();
+        });
+
       setOnClose(() => () => {});
     });
   };
@@ -177,7 +192,7 @@ export default function EntryCard({
               <span>· {formatTime(entry.createdAt)}</span>
             </div>
           </div>
-          <div onClick={() => handleEditEntry(meta.draft)}>
+          <div onClick={() => handleEditEntry(meta.id, meta.draft)}>
             <Icon className="h-5 w-5">
               <More className="fill-more-arrow" />
             </Icon>

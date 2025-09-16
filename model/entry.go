@@ -20,13 +20,11 @@ type EntryField struct {
 	WordCount  int            `gorm:"column:word_count;not null" json:"wordCount"`
 }
 
-const entryPageSize = 6
+const entryPageSize = 8
 
 const (
 	Entry_Table      = "d_entry"
 	Entry_Visibility = "visibility"
-	Entry_CreatorId  = "creator_id"
-	Entry_Id         = "id"
 )
 
 const (
@@ -44,7 +42,7 @@ func (e *Entry) Get(db *gorm.DB, where map[string]any) error {
 		return rst.Error
 	}
 	if rst.RowsAffected == 0 {
-		return fmt.Errorf("can not find entry with id %d", e.ID)
+		return fmt.Errorf("can not find entry")
 	}
 	return nil
 }
@@ -86,11 +84,11 @@ func FindDates(db *gorm.DB, where map[string]any) ([]string, error) {
 func CountEntries(db *gorm.DB, where map[string]any) (int64, error) {
 	var count int64
 	query := db.Model(&Entry{})
-	if where["year"] != nil {
+	if where["year"] != 0 {
 		query = query.Where("EXTRACT(YEAR FROM created_at) = ?", where["year"])
 	}
-	if where[Entry_CreatorId] != nil {
-		query = query.Where(Entry_CreatorId+" = ?", where[Entry_CreatorId])
+	if where[CreatorId] != nil {
+		query = query.Where(CreatorId+" = ?", where[CreatorId])
 	}
 	if err := query.Count(&count).Error; err != nil {
 		return 0, err

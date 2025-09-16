@@ -12,11 +12,11 @@ func (b Base) UpdateEntry(c *gin.Context, req *UpdateEntryRequest) *UpdateEntryR
 	entry := &model.Entry{
 		EntryField: req.EntryField,
 	}
-	err := entry.Update(config.ContextDB(c), gin.H{
-		model.Entry_CreatorId: middleware.GetUserId(c),
-		model.Entry_Id:        req.Id,
-	})
-	if err != nil {
+	m := model.WhereMap{}
+	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq(model.Id, req.Id)
+
+	if err := entry.Update(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

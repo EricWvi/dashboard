@@ -10,11 +10,11 @@ import (
 
 func (b Base) DeleteEntry(c *gin.Context, req *DeleteEntryRequest) *DeleteEntryResponse {
 	entry := &model.Entry{}
-	entry.ID = req.Id
-	err := entry.Delete(config.ContextDB(c), gin.H{
-		model.Entry_CreatorId: middleware.GetUserId(c),
-	})
-	if err != nil {
+	m := model.WhereMap{}
+	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq(model.Id, req.Id)
+
+	if err := entry.Delete(config.ContextDB(c), m); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}

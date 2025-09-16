@@ -10,7 +10,7 @@ import (
 
 func (b Base) GetEntryDate(c *gin.Context, req *GetEntryDateRequest) *GetEntryDateResponse {
 	dates, err := model.FindDates(config.ContextDB(c), gin.H{
-		model.Entry_CreatorId: middleware.GetUserId(c),
+		model.CreatorId: middleware.GetUserId(c),
 	})
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())

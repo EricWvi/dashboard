@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
-import { createTiptap } from "./use-draft";
+import { createTiptap, keyDraft, type Draft } from "./use-draft";
 
 export type Entry = {
   id: number;
   draft: number;
   visibility: string;
   createdAt: string;
+  wordCount: number;
 };
 
 export class EntryMeta {
@@ -57,6 +58,7 @@ export interface QueryCondition {
 }
 
 const keyEntry = (id: number) => ["/api/entry", id];
+const keyMetaItem = (item: string) => ["/api/meta", item];
 const keyMeta = () => ["/api/meta"];
 
 export async function listEntries(
@@ -67,6 +69,9 @@ export async function listEntries(
     `/api/entry?Action=GetEntries&page=${page}&condition=${condition}`,
   );
   const data = await response.json();
+  (data.message.drafts as Draft[]).map((draft) => {
+    queryClient.setQueryData(keyDraft(draft.id), draft);
+  });
   const metas = (data.message.entries as Entry[]).map((entry) => {
     queryClient.setQueryData(keyEntry(entry.id), entry);
     const time = new Date(entry.createdAt);
@@ -93,12 +98,12 @@ export function useEntry(id: number) {
   });
 }
 
-export async function createEntry(): Promise<number> {
+export async function createEntry(): Promise<[number, number]> {
   const draft = await createTiptap();
-  await postRequest("/api/entry?Action=CreateEntry", {
+  const response = await postRequest("/api/entry?Action=CreateEntry", {
     draft,
   });
-  return draft;
+  return response.json().then((data) => [data.message.id, draft]);
 }
 
 export function useUpdateEntry() {
@@ -118,7 +123,6 @@ export function useUpdateEntry() {
   });
 }
 
-// TODO useDeleteEntry fix bug
 export function useDeleteEntry() {
   const queryClient = useQueryClient();
 
@@ -127,8 +131,47 @@ export function useDeleteEntry() {
       await postRequest("/api/entry?Action=DeleteEntry", { id });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["homepage"] });
       queryClient.invalidateQueries({ queryKey: keyMeta(), exact: false });
+    },
+  });
+}
+
+export function refreshMeta() {
+  queryClient.invalidateQueries({ queryKey: keyMeta(), exact: false });
+}
+
+export function useGetEntriesCount(year: number) {
+  return useQuery<number>({
+    queryKey: keyMetaItem("entryCount/" + year),
+    enabled: !!year,
+    queryFn: async () => {
+      const response = await getRequest(
+        `/api/entry?Action=GetEntriesCount&year=${year}`,
+      );
+      const data = await response.json();
+      return data.message.count;
+    },
+  });
+}
+
+export function useGetWordsCount() {
+  return useQuery<number>({
+    queryKey: keyMetaItem("words"),
+    queryFn: async () => {
+      const response = await getRequest("/api/entry?Action=GetWordsCount");
+      const data = await response.json();
+      return data.message.count;
+    },
+  });
+}
+
+export function useGetEntryDate() {
+  return useQuery<string[]>({
+    queryKey: keyMetaItem("dates"),
+    queryFn: async () => {
+      const response = await getRequest("/api/entry?Action=GetEntryDate");
+      const data = await response.json();
+      return data.message.entryDates;
     },
   });
 }
