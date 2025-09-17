@@ -23,17 +23,16 @@ export default function WatchCheckpoints({
       <div className="flex-1 overflow-scroll pt-8">
         <div className="flex flex-col">
           {[...checkpoints].reverse().map((checkpoint, idx) => (
-            <div key={idx} className="flex gap-13">
+            <div key={idx} className="relative flex gap-13">
+              {/* timeline decoration */}
+              <div className="bg-border absolute top-0 bottom-0 left-28 w-0.5" />
+              <div className="bg-muted-foreground absolute top-4 left-27 size-[10px] rounded-full" />
+
               <span className="text-muted-foreground w-22 pt-3 text-right text-sm sm:w-24">
                 {checkpoint[0]}
               </span>
-              <span className="relative pt-2 pb-6">
-                <div className="bg-border absolute top-0 bottom-0 left-[-28px] w-0.5" />
-                <div className="bg-muted-foreground absolute top-4 left-[-32px] size-[10px] rounded-full" />
-
-                <span>
-                  {checkpointText(type, measure, checkpoint[1], language)}
-                </span>
+              <span className="pt-2 pb-6">
+                {checkpointText(type, measure, checkpoint[1], language)}
               </span>
             </div>
           ))}
@@ -70,17 +69,23 @@ const checkpointText = (
 ) => {
   if (value === 0) {
     if (language === UserLangEnum.ZHCN) {
-      return "标记在" + ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
-        ? "读"
-        : type === WatchEnum.GAME
-          ? "玩"
-          : "看");
+      return (
+        "标记在" +
+        ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+          ? "读"
+          : type === WatchEnum.GAME
+            ? "玩"
+            : "看")
+      );
     } else if (language === UserLangEnum.ENUS) {
-      return "start to " + ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
-        ? "read"
-        : type === WatchEnum.GAME
-          ? "play"
-          : "watch");
+      return (
+        "start to " +
+        ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+          ? "read"
+          : type === WatchEnum.GAME
+            ? "play"
+            : "watch")
+      );
     }
     return "";
   }

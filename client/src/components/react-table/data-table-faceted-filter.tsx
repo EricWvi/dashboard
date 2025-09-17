@@ -53,7 +53,7 @@ export function DataTableFacetedFilter<TData, TValue>({
         <Button
           variant={`${isMobile && selectedValues?.size > 0 ? "default" : "outline"}`}
           size="sm"
-          className={`h-8 border-dashed ${isMobile && selectedValues?.size > 0 ? "border border-transparent" : ""}`}
+          className={`h-8 border-dashed text-xs ${isMobile && selectedValues?.size > 0 ? "border border-transparent" : ""}`}
         >
           <PlusCircle />
           {title}

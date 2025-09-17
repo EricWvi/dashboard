@@ -868,7 +868,7 @@ export const TodoEntry = ({
       />
       <ContextMenu>
         <ContextMenuTrigger>
-          <CardContent className="group flex items-center justify-between pr-2 pl-4 lg:pl-6">
+          <CardContent className="group flex min-h-6 items-center justify-between pr-2 pl-4 lg:pl-6">
             <TodoTitle todo={todo}>
               {/* Difficulty dots indicator */}
               <div className="mt-1 hidden items-center gap-1 xl:flex">

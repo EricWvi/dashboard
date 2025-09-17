@@ -7,6 +7,7 @@ import { formatMediaUrl } from "@/lib/utils";
 const compressOptions = {
   maxWidthOrHeight: 1920,
   useWebWorker: true,
+  preserveExif: true,
   initialQuality: 0.8,
 };
 
@@ -280,7 +281,15 @@ export const handleImageUpload = async (
       return;
     }
 
-    const compressed = await imageCompression(file, compressOptions);
+    const compressed = await (async () => {
+      try {
+        const compressed = await imageCompression(file, compressOptions);
+        // Preserve original file name
+        return new File([compressed], file.name, { type: compressed.type });
+      } catch {
+        return file; // If compression fails, use the original file
+      }
+    })();
 
     const xhr = new XMLHttpRequest();
     const formData = new FormData();

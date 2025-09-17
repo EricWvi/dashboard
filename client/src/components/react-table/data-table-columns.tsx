@@ -622,7 +622,7 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
                 }}
               >
                 <DialogHeader>
-                  <DialogTitle>Cheat Sheet</DialogTitle>
+                  <DialogTitle>{row.original.title}</DialogTitle>
                   <DialogDescription></DialogDescription>
                 </DialogHeader>
                 <ContentHtml id={row.original.payload.draft ?? 0} />

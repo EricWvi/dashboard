@@ -37,7 +37,7 @@ export const UserQueryOptions = {
       localStorage.getItem("onlyTokenString") || crypto.randomUUID(),
     );
     const data = await response.json();
-    if (data.code !== 200) {
+    if (response.status !== 200) {
       window.open("https://auth.onlyquant.top/", "_blank");
     }
     localStorage.setItem("onlyTokenString", data.message.session);

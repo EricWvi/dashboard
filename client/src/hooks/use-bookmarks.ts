@@ -81,7 +81,7 @@ export const TagsQueryOptions = {
     const data = await response.json();
     const whatTags: Tag[] = [];
     const howTags: Tag[] = [];
-    data.message.tags.forEach((tag: string) => {
+    data.message.tags.sort().forEach((tag: string) => {
       if (tag.startsWith("what:")) {
         const t = tag.replace("what:", "");
         whatTags.push({ value: t, label: t });
