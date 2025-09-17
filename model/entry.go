@@ -18,6 +18,7 @@ type EntryField struct {
 	Visibility string         `gorm:"size:10;default:'PUBLIC';not null" json:"visibility"`
 	Payload    datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	WordCount  int            `gorm:"column:word_count;not null" json:"wordCount"`
+	RawText    string         `gorm:"column:raw_text;type:text;default:'';not null" json:"rawText"`
 }
 
 const entryPageSize = 8

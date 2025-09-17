@@ -94,10 +94,12 @@ export default function EntryCard({
     setEditorId(draft);
     setEditorDialogOpen(true);
     setOnClose(() => (e: Editor) => {
+      const str = e.getText();
       updateEntryMutation
         .mutateAsync({
           id,
-          wordCount: countWords(e.getText()),
+          wordCount: countWords(str),
+          rawText: str.trim().replace(/\s+/g, " "),
         })
         .then(() => {
           refreshMeta();

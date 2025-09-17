@@ -125,10 +125,12 @@ export default function Journal() {
   const handleCreateEntry = async () => {
     createEntry().then(([id, draft]) => {
       setOnClose(() => (e: Editor) => {
+        const str = e.getText();
         updateEntryMutation
           .mutateAsync({
             id,
-            wordCount: countWords(e.getText()),
+            wordCount: countWords(str),
+            rawText: str.trim().replace(/\s+/g, " "),
           })
           .then(() => {
             refreshMeta();

@@ -8,6 +8,7 @@ export type Entry = {
   visibility: string;
   createdAt: string;
   wordCount: number;
+  rawText: string;
 };
 
 export class EntryMeta {
