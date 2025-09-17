@@ -68,7 +68,6 @@ const buildWrapper = (
 };
 
 export default function Journal() {
-  const [searchOpen, setSearchOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +75,7 @@ export default function Journal() {
   const { setOnClose } = useCloseActionContext();
 
   const [entries, setEntries] = useState<entryWrapper[]>([]);
-  const [condition, _setCondition] = useState<QueryCondition[]>([]);
+  const conditionRef = useRef<QueryCondition[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const loading = useRef(false);
@@ -97,7 +96,7 @@ export default function Journal() {
   const loadInitialData = async () => {
     loading.current = true;
     try {
-      const [metas, more] = await listEntries(1, condition);
+      const [metas, more] = await listEntries(1, conditionRef.current);
       setEntries(buildWrapper([], metas));
       setHasMore(more);
       setPage(2);
@@ -112,7 +111,7 @@ export default function Journal() {
     if (loading.current) return;
     loading.current = true;
     try {
-      const [metas, hasMore] = await listEntries(page, condition);
+      const [metas, hasMore] = await listEntries(page, conditionRef.current);
       setEntries((prev) => buildWrapper(prev, metas));
       setHasMore(hasMore);
       setPage((prev) => prev + 1);
@@ -143,6 +142,26 @@ export default function Journal() {
     });
   };
 
+  const scrollToTop = () => {
+    if (scrollableDivRef.current) {
+      scrollableDivRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const onSearchToggle = () => {
+    const queryWord = prompt("Enter search keyword:");
+    if (queryWord !== null) {
+      const trimmed = queryWord.trim();
+      if (trimmed.length > 0) {
+        conditionRef.current = [{ operator: "contains", value: trimmed }];
+      } else {
+        conditionRef.current = [];
+      }
+      scrollToTop();
+      refresh();
+    }
+  };
+
   return (
     <div className="fixed inset-0">
       <div
@@ -151,7 +170,7 @@ export default function Journal() {
         className="journal-bg scrollbar-hide h-full overflow-y-auto"
       >
         <Header
-          onSearchToggle={() => setSearchOpen(!searchOpen)}
+          onSearchToggle={onSearchToggle}
           onCalendarToggle={() => setCalendarOpen(!calendarOpen)}
         />
         <main className="w-full max-w-4xl">
@@ -163,8 +182,10 @@ export default function Journal() {
             next={() => fetchMoreData(page)}
             hasMore={hasMore}
             loader={
-              <div className="mt-4 space-y-4">
-                {[...Array(3)].map((_, i) => (
+              <div
+                className={`${entries.length === 0 ? "mt-12" : "mt-4"} space-y-4`}
+              >
+                {[...Array(4)].map((_, i) => (
                   <div
                     key={i}
                     className="entry-card-shadow bg-entry-card animate-pulse rounded-lg p-5"

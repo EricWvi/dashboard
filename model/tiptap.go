@@ -42,6 +42,15 @@ func (t *Tiptap) Get(db *gorm.DB, where map[string]any) error {
 	return nil
 }
 
+func ListTiptaps(db *gorm.DB, where map[string]any) ([]Tiptap, error) {
+	var objs []Tiptap
+	rst := db.Where(where).Omit(Tiptap_History).Find(&objs)
+	if rst.Error != nil {
+		return nil, rst.Error
+	}
+	return objs, nil
+}
+
 func GetTiptapHistory(db *gorm.DB, ts int64, where map[string]any) (datatypes.JSON, error) {
 	// Use PostgreSQL's JSONB capabilities to extract history content directly
 	var content datatypes.JSON

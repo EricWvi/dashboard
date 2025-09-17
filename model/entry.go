@@ -25,6 +25,7 @@ const entryPageSize = 8
 const (
 	Entry_Table      = "d_entry"
 	Entry_Visibility = "visibility"
+	Entry_RawText    = "raw_text"
 )
 
 const (
@@ -96,15 +97,19 @@ func CountEntries(db *gorm.DB, where map[string]any) (int64, error) {
 	return count, nil
 }
 
-func FindEntries(db *gorm.DB, where map[string]any, page uint) ([]*Entry, bool, error) {
+func FindEntries(db *gorm.DB, where WhereExpr, page uint) ([]*Entry, bool, error) {
 	if page < 1 {
 		return nil, false, errors.New("page number must be greater than 0")
 	}
 	entries := make([]*Entry, 0, entryPageSize+1)
 	offset := (page - 1) * entryPageSize
 
+	for i := range where {
+		db = db.Where(where[i])
+	}
 	// Retrieve one extra to check if there are more entries
-	if err := db.Where(where).
+	if err := db.
+		Omit(Entry_RawText).
 		Order("created_at DESC").
 		Offset(int(offset)).
 		Limit(entryPageSize + 1).

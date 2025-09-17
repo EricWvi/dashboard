@@ -7,10 +7,10 @@ interface HeaderProps {
   onCalendarToggle: () => void;
 }
 
-export default function Header(_props: HeaderProps) {
+export default function Header(props: HeaderProps) {
   return (
     <header>
-      <Toolbar />
+      <Toolbar {...props} />
       <div className="mx-auto max-w-7xl space-y-2 px-4 sm:px-6 lg:px-8">
         <div className="mt-10 flex h-12 items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -19,7 +19,7 @@ export default function Header(_props: HeaderProps) {
 
           <div className="flex items-center space-x-4">
             <div className="bg-search-icon flex h-8 w-8 items-center justify-center rounded-full">
-              <Icon className="h-5 w-5">
+              <Icon className="h-5 w-5" onClick={props.onSearchToggle}>
                 <Search />
               </Icon>
             </div>
@@ -37,7 +37,7 @@ export default function Header(_props: HeaderProps) {
   );
 }
 
-function Toolbar() {
+function Toolbar({ onSearchToggle }: HeaderProps) {
   const [opacity, setOpacity] = useState(0);
   useEffect(() => {
     const container = document.querySelector("#scrollableDiv");
@@ -72,7 +72,7 @@ function Toolbar() {
 
           <div className="flex items-center space-x-4">
             <div className="bg-toolbar-icon flex h-7 w-7 items-center justify-center rounded-full">
-              <Icon className="h-4 w-4">
+              <Icon className="h-4 w-4" onClick={onSearchToggle}>
                 <Search />
               </Icon>
             </div>

@@ -269,13 +269,17 @@ export const MoreArrow = () => (
 
 interface IconProps {
   className?: string;
+  onClick?: () => void;
 }
 
 export const Icon = ({
   className = "",
   children,
+  onClick,
 }: IconProps & { children?: React.ReactNode }) => (
-  <div className={className}>{children}</div>
+  <div className={className} onClick={onClick}>
+    {children}
+  </div>
 );
 
 export const VerticalBar = ({ className }: IconProps) => (

@@ -145,7 +145,36 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddEntryTable,
 			Down:    RemoveEntryTable,
 		},
+		{
+			Version: "v2.1.0",
+			Name:    "Add raw text column and trigram index to entry table",
+			Up:      AddRawTextToEntryTable,
+			Down:    RemoveRawTextFromEntryTable,
+		},
 	}
+}
+
+// ------------------- v2.1.0 -------------------
+func AddRawTextToEntryTable(db *gorm.DB) error {
+	return db.Exec(`
+	    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+		ALTER TABLE public.d_entry
+		ADD COLUMN raw_text TEXT DEFAULT '' NOT NULL;
+
+		CREATE INDEX idx_entry_raw_text_trgm
+		ON public.d_entry
+		USING gin (raw_text gin_trgm_ops);
+	`).Error
+}
+
+func RemoveRawTextFromEntryTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP INDEX IF EXISTS idx_entry_raw_text_trgm;
+
+		ALTER TABLE public.d_entry
+		DROP COLUMN IF EXISTS raw_text;
+	`).Error
 }
 
 // ------------------- v2.0.0 -------------------

@@ -52,9 +52,8 @@ export class EntryMeta {
 }
 
 export interface QueryCondition {
-  field: string; // e.g., "date", "tag", "place"
-  operator: string; // e.g., "eq", "in", "between", "like"
-  value: any; // string, number, array, etc.
+  operator: string;
+  value: any;
 }
 
 const keyEntry = (id: number) => ["/api/entry", id];
@@ -66,7 +65,7 @@ export async function listEntries(
   condition: QueryCondition[] = [],
 ): Promise<[EntryMeta[], boolean]> {
   const response = await getRequest(
-    `/api/entry?Action=GetEntries&page=${page}&condition=${condition}`,
+    `/api/entry?Action=GetEntries&page=${page}&condition=${JSON.stringify(condition)}`,
   );
   const data = await response.json();
   (data.message.drafts as Draft[]).map((draft) => {
