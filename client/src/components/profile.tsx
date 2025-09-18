@@ -304,7 +304,9 @@ export const Profile = () => {
           <div className="space-y-8">
             <div className="flex items-end justify-between gap-6">
               <div className="mb-[2px] flex flex-1 flex-col gap-2">
-                <Label htmlFor="edit-profile-username">Username</Label>
+                <Label htmlFor="edit-profile-username">
+                  {i18nText[language].username}
+                </Label>
                 <Input
                   id="edit-profile-username"
                   value={username}
@@ -553,6 +555,7 @@ const i18nText = {
     address: "地址",
     token: "Token",
     qqMailToken: "QQ 邮箱 Token",
+    username: "用户名",
     update: "更新",
     cancel: "取消",
   },
@@ -564,6 +567,7 @@ const i18nText = {
     qqMailToken: "Set QQMail Token",
     address: "Address",
     token: "Token",
+    username: "Username",
     update: "Update",
     cancel: "Cancel",
   },

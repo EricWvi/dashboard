@@ -32,16 +32,18 @@ const keyMailCount = () => ["/api/mail/count"];
 export const UserQueryOptions = {
   queryKey: keyUser(),
   queryFn: async () => {
-    const response = await getRequest(
-      "/api/user?Action=GetUser",
-      localStorage.getItem("onlyTokenString") || crypto.randomUUID(),
-    );
-    const data = await response.json();
-    if (response.status !== 200) {
+    try {
+      const response = await getRequest(
+        "/api/user?Action=GetUser",
+        localStorage.getItem("onlyTokenString") || crypto.randomUUID(),
+      );
+      const data = await response.json();
+      localStorage.setItem("onlyTokenString", data.message.session);
+      return data.message as User;
+    } catch {
       window.open("https://auth.onlyquant.top/", "_blank");
+      throw new Error("Failed to fetch user info");
     }
-    localStorage.setItem("onlyTokenString", data.message.session);
-    return data.message as User;
   },
 };
 

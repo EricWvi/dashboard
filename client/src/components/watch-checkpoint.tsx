@@ -36,11 +36,9 @@ export default function WatchCheckpoints({
               </span>
             </div>
           ))}
-          <div className="flex gap-13">
-            <span className="w-22 pt-3 sm:w-24"></span>
-            <span className="relative pt-2 pb-2">
-              <div className="bg-border absolute top-0 bottom-0 left-[-28px] w-0.5" />
-            </span>
+          <div className="relative flex gap-13">
+            <div className="bg-border absolute top-0 bottom-0 left-28 w-0.5" />
+            <span className="w-22 py-2 sm:w-24"></span>
           </div>
         </div>
       </div>
