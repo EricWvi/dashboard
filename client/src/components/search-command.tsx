@@ -110,6 +110,16 @@ const SearchEngines = [
     onSelect: (s: string) =>
       window.open("https://www.zhihu.com/search?type=content&q=" + s, "_blank"),
   },
+  {
+    name: {
+      [UserLangEnum.ENUS]: "Douban",
+      [UserLangEnum.ZHCN]: "豆瓣",
+    },
+    logo: <Icon.DoubanLogo />,
+    shortcut: "db",
+    onSelect: (s: string) =>
+      window.open("https://www.douban.com/search?q=" + s, "_blank"),
+  },
 ];
 
 export default function SearchCommand() {
@@ -154,7 +164,7 @@ export default function SearchCommand() {
         value={searchValue}
         onValueChange={setSearchValue}
       />
-      <CommandList className="max-h-[400px]">
+      <CommandList className="max-h-[500px]">
         <CommandEmpty>{i18nText[language].noResults}</CommandEmpty>
         <CommandGroup
           heading={`${!selectedEngine || SearchEngines.some((s) => s.shortcut === selectedEngine) ? i18nText[language].searchEngines : ""}`}

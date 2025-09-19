@@ -29,7 +29,7 @@ export const emojiAttributeGetter = (
     title: emoji.name,
     width: "20",
     height: "20",
-    style: "display: inline-block; vertical-align: top;",
+    style: "display: inline-block; vertical-align: top; margin-top: 1px;",
     contenteditable: "false",
     draggable: "false",
     "data-emoji-id": emojiId,

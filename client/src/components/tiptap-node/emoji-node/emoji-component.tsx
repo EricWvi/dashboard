@@ -25,6 +25,7 @@ export const EmojiComponent: React.FC<NodeViewProps> = ({ node }) => {
         style={{
           display: "inline-block",
           verticalAlign: "top",
+          marginTop: "1px",
         }}
         contentEditable={false}
         draggable={false}
