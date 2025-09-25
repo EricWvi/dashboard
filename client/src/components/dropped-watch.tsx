@@ -18,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
-import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import WatchReview from "@/components/watch-review";
 
 export default function DroppedList() {
   const { language } = useUserContext();
@@ -36,9 +37,7 @@ export default function DroppedList() {
   }, [isPending]);
 
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [currentReviewId, setCurrentReviewId] = useState(0);
-  const handleOpenReview = (review: number) => {
-    setCurrentReviewId(review);
+  const handleOpenReview = () => {
     setReviewDialogOpen(true);
   };
 
@@ -59,7 +58,7 @@ export default function DroppedList() {
                 {!!watch.payload.review ? (
                   <span
                     className="dashed-text cursor-pointer"
-                    onClick={() => handleOpenReview(watch.payload.review!)}
+                    onClick={() => handleOpenReview()}
                   >
                     {watch.title}
                   </span>
@@ -88,17 +87,20 @@ export default function DroppedList() {
                 onOpenChange={setReviewDialogOpen}
               >
                 <DialogContent
-                  className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
+                  showCloseButton={false}
+                  className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
                   onOpenAutoFocus={(e) => {
                     e.preventDefault(); // stops Radix from focusing anything
                     (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
                   }}
                 >
-                  <DialogHeader>
-                    <DialogTitle>{watch.title}</DialogTitle>
-                    <DialogDescription></DialogDescription>
-                  </DialogHeader>
-                  <ContentHtml id={currentReviewId} />
+                  <VisuallyHidden>
+                    <DialogHeader>
+                      <DialogTitle></DialogTitle>
+                      <DialogDescription></DialogDescription>
+                    </DialogHeader>
+                  </VisuallyHidden>
+                  <WatchReview watch={watch} dropped={true} />
                 </DialogContent>
               </Dialog>
             </div>

@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { createTiptap } from "@/hooks/use-draft";
 import { PenLine } from "lucide-react";
-import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
+import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
 
@@ -169,7 +169,7 @@ const Years = ({
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
-          <ContentHtml id={id} />
+          <ContentRender id={id} />
         </DialogContent>
       </Dialog>
     </div>

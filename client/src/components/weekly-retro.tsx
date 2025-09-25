@@ -20,7 +20,7 @@ import {
 } from "@/hooks/use-echoes";
 import { Button } from "@/components/ui/button";
 import { useTTContext } from "@/components/editor";
-import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
+import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
 import { useEffect, useState } from "react";
 import { createTiptap } from "@/hooks/use-draft";
 import { PenLine } from "lucide-react";
@@ -267,7 +267,7 @@ const Weeks = ({ year }: { year: number }) => {
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
-          <ContentHtml id={id} />
+          <ContentRender id={id} />
         </DialogContent>
       </Dialog>
     </div>

@@ -105,7 +105,7 @@ export const HistoryPopover = ({ id }: { id: number }) => {
                 ))}
               </div>
             ) : history && history.length > 0 ? (
-              <div className="max-h-[calc(100vh-200px)] space-y-2 overflow-y-auto px-4">
+              <div className="max-h-[calc(100vh-100px)] space-y-2 overflow-y-auto px-4">
                 {history.map((timestamp, index) => (
                   <div
                     key={timestamp}

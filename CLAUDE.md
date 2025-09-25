@@ -2,7 +2,7 @@ The backend is designed around models and actions on the models. Database tables
 
 The overall HTTP interface is through a `base` handler and using `Action` query and reflection to choose method on `base`. For each group of handlers, say `todo`, we will register it in `router.go`, using `GET` and `POST`. The corresponding handlers for actions of a specific model, say `todo`, are defined in `handler/<model>`, say `handler/todo`.
 
-## Database Schema (from model/\*.go)
+## Database Schema (from migration/migrations.go)
 
 - **d_user**: id, email, avatar, username, language, rss_token, email_token, email_feed, timestamps
 - **d_media**: id, creator_id, link (UUID), key, presigned_url, last_presigned_time, timestamps

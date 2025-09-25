@@ -49,11 +49,13 @@ import {
   Tv,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
-import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
+import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
 import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
+import WatchReview from "@/components/watch-review";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export const ratings = [
   {
@@ -159,7 +161,7 @@ const i18nText = {
     author: "作者",
     rate: "评分",
     mark: "标记日期",
-    review: "评论",
+    share: "分享",
     quotes: "书摘",
     domain: "领域",
     title: "标题",
@@ -175,7 +177,7 @@ const i18nText = {
     author: "Author",
     rate: "Rate",
     mark: "Mark",
-    review: "Review",
+    share: "Share",
     quotes: "Quotes",
     domain: "Domain",
     title: "Title",
@@ -316,8 +318,33 @@ export const watchedColumns: ColumnDef<Watch>[] = [
           {rating && <rating.icon className="text-muted-foreground size-4" />}
           <span>{(Number(row.original.rate) / 2).toFixed(1)}</span>
 
+          {/* display review content */}
+          <Dialog>
+            <DialogTrigger>
+              <div className="cursor-pointer font-medium underline decoration-1">
+                {i18nText[language].share.toLowerCase()}
+              </div>
+            </DialogTrigger>
+            <DialogContent
+              showCloseButton={false}
+              className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
+              onOpenAutoFocus={(e) => {
+                e.preventDefault(); // stops Radix from focusing anything
+                (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+              }}
+            >
+              <VisuallyHidden>
+                <DialogHeader>
+                  <DialogTitle></DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+              </VisuallyHidden>
+              <WatchReview watch={row.original} />
+            </DialogContent>
+          </Dialog>
+
           {/* display quotes content */}
-          {row.original.payload.quotes && (
+          {!!row.original.payload.quotes && (
             <Dialog>
               <DialogTrigger>
                 <div className="cursor-pointer font-medium underline decoration-1">
@@ -332,34 +359,12 @@ export const watchedColumns: ColumnDef<Watch>[] = [
                 }}
               >
                 <DialogHeader>
-                  <DialogTitle>{i18nText[language].quotes}</DialogTitle>
+                  <DialogTitle>
+                    {row.original.title} · {i18nText[language].quotes}
+                  </DialogTitle>
                   <DialogDescription></DialogDescription>
                 </DialogHeader>
-                <ContentHtml id={row.original.payload.quotes ?? 0} />
-              </DialogContent>
-            </Dialog>
-          )}
-
-          {/* display review content */}
-          {row.original.payload.review && (
-            <Dialog>
-              <DialogTrigger>
-                <div className="cursor-pointer font-medium underline decoration-1">
-                  {i18nText[language].review.toLowerCase()}
-                </div>
-              </DialogTrigger>
-              <DialogContent
-                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
-                onOpenAutoFocus={(e) => {
-                  e.preventDefault(); // stops Radix from focusing anything
-                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
-                }}
-              >
-                <DialogHeader>
-                  <DialogTitle>{i18nText[language].review}</DialogTitle>
-                  <DialogDescription></DialogDescription>
-                </DialogHeader>
-                <ContentHtml id={row.original.payload.review ?? 0} />
+                <ContentRender id={row.original.payload.quotes} />
               </DialogContent>
             </Dialog>
           )}
@@ -625,7 +630,7 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
                   <DialogTitle>{row.original.title}</DialogTitle>
                   <DialogDescription></DialogDescription>
                 </DialogHeader>
-                <ContentHtml id={row.original.payload.draft ?? 0} />
+                <ContentRender id={row.original.payload.draft ?? 0} />
               </DialogContent>
             </Dialog>
           ) : (

@@ -12,10 +12,12 @@ export default function WatchCheckpoints({
   checkpoints,
   type,
   measure,
+  finished = false,
 }: {
   checkpoints: [string, number][];
   type: WatchType;
   measure: WatchMeasure;
+  finished?: boolean;
 }) {
   const { language } = useUserContext();
   return (
@@ -28,11 +30,17 @@ export default function WatchCheckpoints({
               <div className="bg-border absolute top-0 bottom-0 left-28 w-0.5" />
               <div className="bg-muted-foreground absolute top-4 left-27 size-[10px] rounded-full" />
 
-              <span className="text-muted-foreground w-22 pt-3 text-right text-sm sm:w-24">
+              <span className="text-muted-foreground w-22 shrink-0 pt-3 text-right text-sm sm:w-24">
                 {checkpoint[0]}
               </span>
               <span className="pt-2 pb-6">
-                {checkpointText(type, measure, checkpoint[1], language)}
+                {checkpointText(
+                  type,
+                  measure,
+                  checkpoint[1],
+                  language,
+                  finished && idx === 0,
+                )}
               </span>
             </div>
           ))}
@@ -64,7 +72,23 @@ const checkpointText = (
   measure: WatchMeasure,
   value: number,
   language: UserLang,
+  finished: boolean = false,
 ) => {
+  if (finished) {
+    if (language === UserLangEnum.ZHCN) {
+      return (
+        "标记" +
+        ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+          ? "读完"
+          : type === WatchEnum.GAME
+            ? "通关"
+            : "看完")
+      );
+    } else if (language === UserLangEnum.ENUS) {
+      return "mark as completed";
+    }
+    return "";
+  }
   if (value === 0) {
     if (language === UserLangEnum.ZHCN) {
       return (

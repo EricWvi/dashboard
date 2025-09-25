@@ -474,7 +474,13 @@ export const extensionSetup = [
   Selection,
 ];
 
-export function ReadOnlyTiptap({ draft }: { draft: any }) {
+export function ReadOnlyTiptap({
+  draft,
+  style = "",
+}: {
+  draft: any;
+  style?: string;
+}) {
   const editor = useEditor({
     editable: false,
     immediatelyRender: false,
@@ -485,7 +491,8 @@ export function ReadOnlyTiptap({ draft }: { draft: any }) {
         autocorrect: "off",
         autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
-        class: "simple-editor read-only-tiptap",
+        class: `simple-editor ${style === "" ? "read-only-tiptap" : ""}`,
+        style: style,
       },
     },
     extensions: extensionSetup,
@@ -508,7 +515,7 @@ export function ReadOnlyTiptap({ draft }: { draft: any }) {
   );
 }
 
-export function ContentHtml({ id }: { id: number }) {
+export function ContentRender({ id }: { id: number }) {
   const isMobile = useIsMobile();
   const { data: draft, isFetching } = useDraft(id);
   const [showLoading, setShowLoading] = React.useState(true);
@@ -543,6 +550,24 @@ export function ContentHtml({ id }: { id: number }) {
       ) : (
         <ReadOnlyTiptap draft={draft?.content} />
       )}
+    </div>
+  );
+}
+
+export function ContentHTML({ id }: { id: number }) {
+  const { data: draft, isFetching } = useDraft(id);
+
+  // do not keep draft in cache
+  useEffect(() => {
+    return () => {
+      removeDraftQuery(id);
+    };
+  }, []);
+
+  if (isFetching) return null;
+  return (
+    <div className="w-full">
+      <ReadOnlyTiptap draft={draft?.content} style="padding: 0 0 24px" />
     </div>
   );
 }
