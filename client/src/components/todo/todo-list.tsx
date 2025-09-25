@@ -53,6 +53,8 @@ import { fullDateString, isSetToday, isSetDate } from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
+import { useTodayPomodoro } from "@/hooks/use-pomodoro";
+import TodoStripe from "@/components/pomodoro/todo-stripe";
 
 const TodoList = ({
   collectionId,
@@ -421,16 +423,18 @@ export const TodayTodoList = () => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: today, isPending } = useToday();
+  const { data: pomodoroMap, isPending: pomodoroIsPending } =
+    useTodayPomodoro();
   const [showLoading, setShowLoading] = useState(true);
   useEffect(() => {
-    if (!isPending) {
+    if (!isPending && !pomodoroIsPending) {
       setTimeout(() => {
         setShowLoading(false);
       }, 200);
     } else {
       setShowLoading(true);
     }
-  }, [isPending]);
+  }, [isPending, pomodoroIsPending]);
   const [todayDate, setTodayDate] = useState(new Date().toDateString());
   usePageVisibility(() => {
     if (new Date().toDateString() !== todayDate) {
@@ -521,6 +525,7 @@ export const TodayTodoList = () => {
             </>
           ) : (
             !!today &&
+            !!pomodoroMap &&
             (today.length === 0 ? (
               <div className="text-muted-foreground flex min-h-0 w-full flex-1 flex-col">
                 <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -551,9 +556,23 @@ export const TodayTodoList = () => {
                       {collectionMap[key]}
                     </div>
                     <div className="mb-3 space-y-2">
-                      {items.map((todo) => (
-                        <TodayTodoView key={todo.id} id={todo.id} />
-                      ))}
+                      {items.map((todo) => {
+                        return (
+                          <div key={todo.id}>
+                            <TodayTodoView
+                              id={todo.id}
+                              showStart={pomodoroMap[0] === undefined}
+                              ongoing={
+                                pomodoroMap[0] !== undefined &&
+                                pomodoroMap[0][0].todoId === todo.id
+                              }
+                            />
+                            <TodoStripe
+                              pomodoros={pomodoroMap[todo.id] ?? []}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

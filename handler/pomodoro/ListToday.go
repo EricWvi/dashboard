@@ -1,4 +1,4 @@
-package collection
+package pomodoro
 
 import (
 	"github.com/EricWvi/dashboard/config"
@@ -12,14 +12,14 @@ func (b Base) ListToday(c *gin.Context, req *ListTodayRequest) *ListTodayRespons
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
 
-	todos, err := model.ListTodayTodos(config.ContextDB(c), m)
+	pomodoros, err := model.ListTodayPomodoros(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
 
 	return &ListTodayResponse{
-		Todos: todos,
+		Pomodoros: pomodoros,
 	}
 }
 
@@ -27,5 +27,5 @@ type ListTodayRequest struct {
 }
 
 type ListTodayResponse struct {
-	Todos []model.Todo `json:"todos"`
+	Pomodoros []model.Pomodoro `json:"pomodoros"`
 }

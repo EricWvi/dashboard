@@ -84,6 +84,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
+import { useCreatePomodoro } from "@/hooks/use-pomodoro";
 
 const TodoTitle = ({
   todo,
@@ -202,10 +203,24 @@ const todayTodoViewI18N = {
   },
 };
 
-export const TodayTodoView = ({ id }: { id: number }) => {
+export const TodayTodoView = ({
+  id,
+  showStart,
+  ongoing,
+}: {
+  id: number;
+  showStart: boolean;
+  ongoing: boolean;
+}) => {
   const { language } = useUserContext();
   const [isComposing, setIsComposing] = useState(false);
   const { data: todo } = useTodo(id);
+
+  // pomodoro state
+  const createPomodoroMutation = useCreatePomodoro(id);
+  const createPomodoro = async (task: string) => {
+    await createPomodoroMutation.mutateAsync({ task });
+  };
 
   // to-do state
   const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
@@ -254,38 +269,31 @@ export const TodayTodoView = ({ id }: { id: number }) => {
 
   const TodayTodoMenuContent = () => (
     <ContextMenuContent>
-      {!todo.done && (
-        <ContextMenuItem
-          onClick={() => {
-            navigator.clipboard.writeText(todo.title);
-            window.open(
-              "https://timetagger.onlyquant.top/timetagger/app/",
-              "_blank",
-            );
-          }}
-        >
+      {!todo.done && showStart && (
+        <ContextMenuItem onClick={() => createPomodoro(todo.title)}>
           <Timer />
           {todayTodoViewI18N[language].start}
         </ContextMenuItem>
       )}
-      {todo.done ? (
-        <ContextMenuItem onClick={undoneTodo}>
-          <Undo2 />
-          {todayTodoViewI18N[language].undone}
-        </ContextMenuItem>
-      ) : (
-        <ContextMenuItem onClick={doneTodo}>
-          <CircleCheckBig />
-          {todayTodoViewI18N[language].done}
-        </ContextMenuItem>
-      )}
-      {!todo.done && (
+      {!ongoing &&
+        (todo.done ? (
+          <ContextMenuItem onClick={undoneTodo}>
+            <Undo2 />
+            {todayTodoViewI18N[language].undone}
+          </ContextMenuItem>
+        ) : (
+          <ContextMenuItem onClick={doneTodo}>
+            <CircleCheckBig />
+            {todayTodoViewI18N[language].done}
+          </ContextMenuItem>
+        ))}
+      {!ongoing && !todo.done && (
         <ContextMenuItem onClick={unsetScheduleDate}>
           <X />
           {todayTodoViewI18N[language].unsetDate}
         </ContextMenuItem>
       )}
-      <ContextMenuSeparator />
+      {!ongoing && <ContextMenuSeparator />}
       <ContextMenuItem
         onClick={() => {
           setEditTodoName(todo.title);

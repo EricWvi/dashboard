@@ -28,7 +28,7 @@ const keyCompletedOfCollection = (collectionId: number) => [
 const keyTodo = (id: number) => ["/api/todo", id];
 const keyAllCollection = () => ["/api/collections"];
 const keyCollection = (id: number) => ["/api/collection", id];
-const keyTodayTodo = () => ["/api/today"];
+const keyTodayTodo = () => ["/api/today/todo"];
 
 export function useTodos(collectionId: number) {
   const queryClient = useQueryClient();

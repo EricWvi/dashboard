@@ -157,7 +157,39 @@ func GetAllMigrations() []MigrationStep {
 			Up:      CreatePerformanceIndexes,
 			Down:    DropPerformanceIndexes,
 		},
+		{
+			Version: "v2.3.0",
+			Name:    "Add pomodoro table",
+			Up:      AddPomodoroTable,
+			Down:    RemovePomodoroTable,
+		},
 	}
+}
+
+// ------------------- v2.3.0 -------------------
+func AddPomodoroTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_pomodoro (
+			id SERIAL PRIMARY KEY,
+			creator_id INTEGER NOT NULL,
+			todo_id INTEGER NOT NULL,
+			task VARCHAR(1024) NOT NULL,
+			detail VARCHAR(1024) DEFAULT '' NOT NULL,
+			payload JSONB DEFAULT '{}'::jsonb NOT NULL,
+			created_at TIMESTAMPTZ DEFAULT now(),
+			updated_at TIMESTAMPTZ DEFAULT now(),
+			deleted_at TIMESTAMPTZ DEFAULT NULL
+		);
+
+		CREATE INDEX idx_pomodoro_creator_created_at
+		ON public.d_pomodoro (creator_id, created_at DESC);
+	`).Error
+}
+
+func RemovePomodoroTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_pomodoro CASCADE;
+	`).Error
 }
 
 // ------------------- v2.2.0 -------------------
