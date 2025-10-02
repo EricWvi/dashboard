@@ -18,6 +18,8 @@ export type User = {
   hasEmailToken: boolean;
   language: UserLang;
   session: string;
+  version: string;
+  buildTime: string;
 };
 
 export type I18nText = {

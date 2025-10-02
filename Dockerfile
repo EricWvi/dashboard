@@ -24,9 +24,15 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Accept build args
+ARG VERSION
+ARG BUILDTIME
+
 # Copy source code and build
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-X 'github.com/EricWvi/dashboard/config.Version=${VERSION}' \
+		-X 'github.com/EricWvi/dashboard/config.BuildTime=${BUILDTIME}' \
+		-w -s -buildid="
 
 # --- Stage 3: Runtime image ---
 FROM alpine:latest

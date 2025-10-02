@@ -146,7 +146,7 @@ export const Profile = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <div className="text-muted-foreground">{__APP_VERSION__}</div>
+                  <div className="text-muted-foreground">{user.version}</div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
