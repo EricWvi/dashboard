@@ -49,12 +49,7 @@ import {
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import {
-  fullDateString,
-  isDisabledPlan,
-  isSetToday,
-  isSetDate,
-} from "@/lib/utils";
+import { fullDateString, isSetToday, isSetDate } from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
@@ -592,7 +587,6 @@ export const TodayTodoList = () => {
           <div className="h-140 space-y-6 overflow-scroll sm:h-180">
             {Object.entries(
               allTodos
-                .filter((todo) => !isDisabledPlan(todo.schedule))
                 .sort((a, b) => b.count - a.count)
                 .reduce(
                   (acc, item) => {

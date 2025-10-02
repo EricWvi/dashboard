@@ -79,7 +79,9 @@ func ListTodos(db *gorm.DB, where map[string]any) ([]Todo, error) {
 
 func ListToday(db *gorm.DB, where map[string]any) ([]Todo, error) {
 	todos := make([]Todo, 0)
-	if err := db.Where(where).Where(Todo_Completed, false).Where("schedule::date = CURRENT_DATE").
+	if err := db.Where(where).Where(Todo_Completed, false).
+		Where("schedule >= CURRENT_DATE").
+		Where("schedule < CURRENT_DATE + INTERVAL '1 day'").
 		Find(&todos).Error; err != nil {
 		return nil, err
 	}

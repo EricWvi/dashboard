@@ -151,7 +151,55 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddRawTextToEntryTable,
 			Down:    RemoveRawTextFromEntryTable,
 		},
+		{
+			Version: "v2.2.0",
+			Name:    "Add multiple indexes for performance optimization",
+			Up:      CreatePerformanceIndexes,
+			Down:    DropPerformanceIndexes,
+		},
 	}
+}
+
+// ------------------- v2.2.0 -------------------
+func CreatePerformanceIndexes(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE INDEX idx_blog_creator_created_at
+    		ON public.d_blog (creator_id, created_at DESC);
+
+		CREATE INDEX idx_bookmark_creator_created_at
+    		ON public.d_bookmark (creator_id, created_at DESC);
+		
+		CREATE INDEX idx_todo_creator_schedule
+    		ON public.d_todo (creator_id, schedule DESC);
+		
+		CREATE INDEX idx_todo_creator_collection
+    		ON public.d_todo (creator_id, collection_id);
+
+		CREATE INDEX idx_echo_creator_year
+    		ON public.d_echo (creator_id, year);
+		
+		CREATE INDEX idx_echo_creator_sub
+    		ON public.d_echo (creator_id, sub);
+		
+		CREATE INDEX idx_media_creator_link
+    		ON public.d_media (creator_id, link);
+		
+		CREATE INDEX idx_quick_note_creator
+    		ON public.d_quick_note (creator_id) WHERE deleted_at IS NULL;
+	`).Error
+}
+
+func DropPerformanceIndexes(db *gorm.DB) error {
+	return db.Exec(`
+		DROP INDEX IF EXISTS idx_blog_creator_created_at;
+		DROP INDEX IF EXISTS idx_bookmark_creator_created_at;
+		DROP INDEX IF EXISTS idx_todo_creator_schedule;
+		DROP INDEX IF EXISTS idx_todo_creator_collection;
+		DROP INDEX IF EXISTS idx_echo_creator_year;
+		DROP INDEX IF EXISTS idx_echo_creator_sub;
+		DROP INDEX IF EXISTS idx_media_creator_link;
+		DROP INDEX IF EXISTS idx_quick_note_creator;
+	`).Error
 }
 
 // ------------------- v2.1.0 -------------------

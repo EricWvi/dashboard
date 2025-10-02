@@ -11,8 +11,9 @@ import (
 func (b Base) ListAll(c *gin.Context, req *ListAllRequest) *ListAllResponse {
 	m := model.WhereExpr{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
-	m.Eq(model.Todo_Completed, false) // Only list incomplete todos
-	m.Ne(model.Todo_CollectionId, 0)  // Exclude todos in Inbox
+	m.Eq(model.Todo_Completed, false)       // Only list incomplete todos
+	m.Ne(model.Todo_CollectionId, 0)        // Exclude todos in Inbox
+	m.LT(model.Todo_Schedule, "2096-10-02") // Exclude no plan todos
 
 	todos, err := model.ListPlanTodos(config.ContextDB(c), m)
 	if err != nil {
