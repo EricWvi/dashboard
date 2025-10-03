@@ -7,6 +7,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -29,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import * as Kanban from "@/components/ui/kanban";
 import { Button } from "@/components/ui/button";
 import {
+  ArrowUpWideNarrow,
   Edit,
   ListPlus,
   MoreHorizontal,
@@ -521,6 +525,23 @@ const KanbanItem = ({
     });
   };
 
+  const onChangePriority = (priority: "low" | "medium" | "high") => {
+    setColumns((prev: Record<string, Task[]>) => {
+      return Object.fromEntries(
+        Object.entries(prev).map(([k, v]) =>
+          k === columnName
+            ? [
+                k,
+                v.map((item) =>
+                  item.id === task.id ? { ...item, priority } : item,
+                ),
+              ]
+            : [k, v],
+        ),
+      );
+    });
+  };
+
   const onUpdateDetail = () => {
     setColumns((prev: Record<string, Task[]>) => {
       return Object.fromEntries(
@@ -646,6 +667,65 @@ const KanbanItem = ({
                       <TextCursorInput className="text-muted-foreground" />
                       {i18nText[language].renameItem}
                     </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ArrowUpWideNarrow className="text-muted-foreground size-4" />
+                          {i18nText[language].changePriority}
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onTouchStart={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onChangePriority("low");
+                          }}
+                        >
+                          Low
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onTouchStart={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onChangePriority("medium");
+                          }}
+                        >
+                          Medium
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onTouchStart={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onChangePriority("high");
+                          }}
+                        >
+                          High
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                     <DropdownMenuItem
                       onMouseDown={(e) => {
                         e.stopPropagation();
@@ -812,6 +892,7 @@ const i18nText = {
     renameBoard: "重命名看板",
     deleteBoard: "删除看板",
     renameItem: "重命名事项",
+    changePriority: "优先级",
     editDetail: "编辑详情",
     deleteItem: "删除事项",
     addBoard: "添加看板",
@@ -841,6 +922,7 @@ const i18nText = {
     renameBoard: "Rename Board",
     deleteBoard: "Delete Board",
     renameItem: "Rename Item",
+    changePriority: "Priority",
     editDetail: "Edit Details",
     deleteItem: "Delete Item",
     addBoard: "Add Board",
