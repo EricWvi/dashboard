@@ -21,6 +21,7 @@ import {
   CalendarOff,
   CalendarPlus,
   Timer,
+  CornerLeftDown,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,6 +48,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import {
+  useBottomTodo,
   useCollections,
   useCompleteTodo,
   useDeleteTodo,
@@ -591,10 +593,12 @@ export const TodoEntry = ({
   id,
   collectionId,
   top,
+  bottom,
 }: {
   id: number;
   collectionId: number;
   top: boolean;
+  bottom: boolean;
 }) => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
@@ -614,6 +618,7 @@ export const TodoEntry = ({
   const completeTodoMutation = useCompleteTodo();
   const moveTodoMutation = useMoveTodo();
   const topTodoMutation = useTopTodo();
+  const bottomTodoMutation = useBottomTodo();
   const deleteTodo = () => {
     setConfirmAction("delete");
     setAction(() => () => deleteTodoMutation.mutateAsync(id));
@@ -642,6 +647,9 @@ export const TodoEntry = ({
   };
   const topTodo = async () => {
     await topTodoMutation.mutateAsync({ id, collectionId });
+  };
+  const bottomTodo = async () => {
+    await bottomTodoMutation.mutateAsync({ id, collectionId });
   };
   // difficulty state
   const [difficultyLabel, setDifficultyLabel] = useState(0);
@@ -823,10 +831,16 @@ export const TodoEntry = ({
         {todoEntryI18NText[language].kanban}
       </ContextMenuItem>
       <ContextMenuSeparator />
-      {!top && (
+      {!top && collectionId !== 0 && (
         <ContextMenuItem onClick={topTodo}>
           <CornerLeftUp />
           {todoEntryI18NText[language].top}
+        </ContextMenuItem>
+      )}
+      {!bottom && collectionId !== 0 && (
+        <ContextMenuItem onClick={bottomTodo}>
+          <CornerLeftDown />
+          {todoEntryI18NText[language].bottom}
         </ContextMenuItem>
       )}
       <ContextMenuSub>
@@ -1209,6 +1223,7 @@ const todoEntryI18NText = {
     done: "完成",
     undone: "未完成",
     top: "置顶",
+    bottom: "置底",
     complete: "归档",
     setDate: "设置日期",
     resetDate: "更改日期",
@@ -1251,6 +1266,7 @@ const todoEntryI18NText = {
     done: "Done",
     undone: "Undone",
     top: "Top",
+    bottom: "Bottom",
     complete: "Complete",
     setDate: "Set Date",
     resetDate: "Reset Date",

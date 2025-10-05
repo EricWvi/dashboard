@@ -158,6 +158,14 @@ func MaxOrder(db *gorm.DB, where map[string]any) (int, error) {
 	return int(maxOrder.Int32), nil
 }
 
+func MinOrder(db *gorm.DB, where map[string]any) (int, error) {
+	var minOrder sql.NullInt32
+	if err := db.Model(&Todo{}).Where(where).Where(Todo_Completed, false).Select("MIN(d_order)").Scan(&minOrder).Error; err != nil {
+		return 0, err
+	}
+	return int(minOrder.Int32), nil
+}
+
 func CountTodos(db *gorm.DB, where map[string]any) (int64, error) {
 	var count int64
 	if err := db.Model(&Todo{}).Where(where).Count(&count).Error; err != nil {

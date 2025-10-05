@@ -202,6 +202,7 @@ const TodoList = ({
                               key={todo}
                               id={todo}
                               top={idx === 0}
+                              bottom={idx === todos.length - 1}
                               collectionId={collectionId}
                             />
                           ))}

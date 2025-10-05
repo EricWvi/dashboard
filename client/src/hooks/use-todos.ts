@@ -148,6 +148,21 @@ export function useTopTodo() {
   });
 }
 
+export function useBottomTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { id: number; collectionId: number }) => {
+      await postRequest("/api/todo?Action=BottomTodo", { ...data });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: keyTodosOfCollection(variables.collectionId),
+      });
+    },
+  });
+}
+
 export function useUpdateSchedule() {
   const queryClient = useQueryClient();
 
