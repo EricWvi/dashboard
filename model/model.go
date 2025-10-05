@@ -98,6 +98,10 @@ func (m *WhereExpr) ILIKE(key string, value any) {
 	*m = append(*m, gorm.Expr(key+" ILIKE ?", value))
 }
 
+func (m *WhereExpr) Raw(expr string, args ...any) {
+	*m = append(*m, gorm.Expr(expr, args...))
+}
+
 // func (m WhereMap) NotIn(key string, values []any) {
 // 	if len(values) == 0 {
 // 		return
