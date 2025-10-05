@@ -4,6 +4,13 @@ import {
   WatchStatus,
   WatchTypeText,
 } from "@/hooks/use-watches";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dateString } from "@/lib/utils";
@@ -11,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
+import { ContentHtml } from "@/components/tiptap-templates/simple/simple-editor";
 
 export default function DroppedList() {
   const { language } = useUserContext();
@@ -27,6 +35,13 @@ export default function DroppedList() {
     }
   }, [isPending]);
 
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [currentReviewId, setCurrentReviewId] = useState(0);
+  const handleOpenReview = (review: number) => {
+    setCurrentReviewId(review);
+    setReviewDialogOpen(true);
+  };
+
   return (
     <div className="aspect-[2/3] min-w-0 overflow-scroll sm:aspect-square">
       {showLoading ? (
@@ -39,7 +54,19 @@ export default function DroppedList() {
               className="bg-card flex items-center justify-between gap-1 rounded-sm border py-2 pr-2 pl-4 text-sm"
             >
               <div className="min-w-0">
-                {WatchTypeText[watch.type][language]} · {watch.title}
+                {WatchTypeText[watch.type][language]}
+                {" · "}
+                {!!watch.payload.review ? (
+                  <span
+                    className="dashed-text cursor-pointer"
+                    onClick={() => handleOpenReview(watch.payload.review!)}
+                  >
+                    {watch.title}
+                  </span>
+                ) : (
+                  <span>{watch.title}</span>
+                )}
+
                 <span className="text-muted-foreground ml-1 text-xs">
                   {`(${i18nText[language].dropOn} ${dateString(
                     watch.payload.checkpoints![
@@ -55,6 +82,25 @@ export default function DroppedList() {
               >
                 <RotateCcw className="size-4" />
               </Button>
+
+              <Dialog
+                open={reviewDialogOpen}
+                onOpenChange={setReviewDialogOpen}
+              >
+                <DialogContent
+                  className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
+                  onOpenAutoFocus={(e) => {
+                    e.preventDefault(); // stops Radix from focusing anything
+                    (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+                  }}
+                >
+                  <DialogHeader>
+                    <DialogTitle>{watch.title}</DialogTitle>
+                    <DialogDescription></DialogDescription>
+                  </DialogHeader>
+                  <ContentHtml id={currentReviewId} />
+                </DialogContent>
+              </Dialog>
             </div>
           ))}
         </div>
