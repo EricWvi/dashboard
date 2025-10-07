@@ -31,6 +31,8 @@ export default function WatchReview({
   const reviewCardRef = useRef<HTMLDivElement | null>(null);
   const [color, setColor] = useState<[number, number, number] | null>(null);
   const brightColor = useRef<[number, number, number] | null>(null);
+  const authorColor = useRef<string | null>(null);
+  const dateColor = useRef<string | null>(null);
 
   useEffect(() => {
     const img = imgRef.current;
@@ -40,11 +42,57 @@ export default function WatchReview({
 
     const extractColor = () => {
       try {
-        const rgb = colorThief.getColor(img) as [number, number, number];
-        setColor(rgb);
-        brightColor.current = chroma(rgb).brighten().rgb();
+        let rgb = colorThief.getColor(img) as [number, number, number];
+        const hsl = chroma(rgb).hsl();
+        if (hsl[2] > 0.5) {
+          // too light, darken it
+          rgb = chroma(rgb).darken().rgb();
+        }
+
+        const baseColor = chroma(rgb);
+        const bright = baseColor.brighten();
+        const brightHSL = bright.hsl();
+
+        if (brightHSL[2] > 0.5) brightHSL[2] = 0.5;
+
+        setColor(baseColor.hsl());
+        brightColor.current = brightHSL;
+
+        // compute adaptive secondary text color
+        const imgLuminance = baseColor.luminance();
+        // main text is white — so pick a soft, readable secondary tone
+        let secondaryColor;
+        if (imgLuminance < 0.3) {
+          // Dark background → dim, cooler gray
+          secondaryColor = chroma
+            .mix("white", baseColor, 0.4)
+            .desaturate(2)
+            .hex();
+        } else {
+          // Light background → softer gray
+          secondaryColor = chroma
+            .mix("black", baseColor, 0.7)
+            .desaturate(2)
+            .hex();
+        }
+        authorColor.current = secondaryColor;
+
+        const textBg = chroma.hsl(...brightHSL);
+        const bgLuminance = textBg.luminance();
+
+        if (bgLuminance < 0.3) {
+          // Dark background → dim, cooler gray
+          secondaryColor = chroma.mix("white", textBg, 0.4).desaturate(2).hex();
+        } else {
+          // Light background → softer gray
+          secondaryColor = chroma.mix("black", textBg, 0.7).desaturate(2).hex();
+        }
+
+        dateColor.current = secondaryColor;
       } catch (err) {
         console.error("Color extraction failed:", err);
+        setColor([0, 0, 0.3]);
+        brightColor.current = [0, 0, 0.4];
       }
     };
 
@@ -82,6 +130,7 @@ export default function WatchReview({
               ref={imgRef}
               src={watch.payload.img ?? "/placeholder.svg"}
               alt={watch.title}
+              className="w-full object-cover select-none"
               crossOrigin="anonymous"
             />
             <div className="absolute inset-0" style={getGradientStyle(color)}>
@@ -91,7 +140,10 @@ export default function WatchReview({
                     {watch.title}
                   </div>
 
-                  <div className="truncate text-xs text-[#A7AAAF]">
+                  <div
+                    className="truncate text-xs"
+                    style={{ color: authorColor.current ?? "#DDD" }}
+                  >
                     {watch.author}
                   </div>
                 </div>
@@ -101,20 +153,28 @@ export default function WatchReview({
                     <div className="text-xs text-white">
                       {i18nText[language].rate}
                     </div>
-                    <div className="text-2xl text-white">
+                    <div className="text-2xl text-nowrap text-white">
                       {(Number(watch.rate) / 2).toFixed(1)}
                     </div>
                     <div className="mt-1 flex">
                       {[...Array(5)].map((_, idx) => (
                         <div
                           className={
-                            (idx + 1) * 2 <= Number(watch.rate) / 2
+                            idx * 2 + 1 <= Number(watch.rate) / 2
                               ? "text-[#FE9902]"
                               : "opacity-50"
                           }
                           key={idx}
                         >
-                          <StarIcon className="size-3" />
+                          <StarIcon
+                            className="size-3"
+                            fill={
+                              Number(watch.rate) / 2 < (idx + 1) * 2 &&
+                              Number(watch.rate) / 2 >= idx * 2 + 1
+                                ? 0.5
+                                : 1
+                            }
+                          />
                         </div>
                       ))}
                     </div>
@@ -125,12 +185,12 @@ export default function WatchReview({
           </div>
 
           {/* review content part */}
-          <div style={color ? { background: `rgb(${color.join(", ")})` } : {}}>
+          <div style={color ? { background: getHslString(color) } : {}}>
             <div
               className="rounded-lg px-4 py-3 text-white sm:px-5 sm:py-4 lg:px-6 lg:py-5"
               style={
                 brightColor.current
-                  ? { background: `rgb(${brightColor.current.join(", ")})` }
+                  ? { background: getHslString(brightColor.current) }
                   : {}
               }
             >
@@ -142,14 +202,17 @@ export default function WatchReview({
 
                 <div className="flex flex-col">
                   <div className="text-lg font-medium">{user.username}</div>
-                  <div className="text-sm text-[#A7AAAF]">
+                  <div
+                    className="text-sm"
+                    style={{ color: dateColor.current ?? "#A7AAAF" }}
+                  >
                     {dateString(watch.type, watch.createdAt, language, dropped)}
                   </div>
                 </div>
               </div>
 
               {!!watch.payload.review && (
-                <div className="mt-2">
+                <div className="dark mt-2">
                   <ContentHTML id={watch.payload.review} />
                 </div>
               )}
@@ -206,21 +269,28 @@ function dateString(
   }
 }
 
+function getHslString(color: [number, number, number] | null) {
+  if (!color) return "";
+
+  const [h, s, l] = color;
+  return `hsl(${h}, ${s * 100}%, ${l * 100}%)`;
+}
+
 function getGradientStyle(
   color: [number, number, number] | null,
 ): React.CSSProperties {
   if (!color) return {};
 
-  const [r, g, b] = color;
+  const [h, s, l] = color;
 
   return {
     background: `linear-gradient(
       to top,
-      rgba(${r}, ${g}, ${b}, 1),
-      rgba(${r}, ${g}, ${b}, 0.9) 26%,
-      rgba(${r}, ${g}, ${b}, 0.8) 33%,
-      rgba(${r}, ${g}, ${b}, 0.6) 43%,
-      rgba(${r}, ${g}, ${b}, 0) 65%
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 1),
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.9) 26%,
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.8) 33%,
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.6) 43%,
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0) 65%
     )`,
   };
 }

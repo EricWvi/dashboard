@@ -1,18 +1,30 @@
 import React from "react";
 
-export const StarIcon = React.memo(({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M11.0489 3.92705C11.3483 3.00574 12.6517 3.00574 12.9511 3.92705L14.7451 9.41547C14.8771 9.82231 15.2553 10.1 15.6872 10.1H21.4548C22.4263 10.1 22.8244 11.3326 22.0437 11.9155L17.4085 15.2605C17.0628 15.5066 16.9109 15.9515 17.0429 16.3583L18.8369 21.8467C19.1363 22.768 18.1008 23.5388 17.32 22.9559L12.6849 19.6109C12.3391 19.3648 11.6609 19.3648 11.3151 19.6109L6.68 22.9559C5.89916 23.5388 4.86374 22.768 5.16306 21.8467L6.95706 16.3583C7.08907 15.9515 6.93717 15.5066 6.59146 15.2605L1.95633 11.9155C1.17559 11.3326 1.57367 10.1 2.54518 10.1H8.31279C8.74465 10.1 9.12287 9.82231 9.25488 9.41547L11.0489 3.92705Z"
-      fill="currentColor"
-    />
-  </svg>
-));
+export const StarIcon = React.memo(
+  ({ className = "", fill = 1 }: { className?: string; fill?: number }) => {
+    const fillPercentage = Math.max(0, Math.min(1, fill)) * 100;
+    const gradientId = `star-gradient-${Math.random().toString(36).slice(2, 9)}`;
+    return (
+      <svg
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset={`${fillPercentage}%`} stopColor="currentColor" />
+            <stop offset={`${fillPercentage}%`} stopColor="black" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M11.0489 3.92705C11.3483 3.00574 12.6517 3.00574 12.9511 3.92705L14.7451 9.41547C14.8771 9.82231 15.2553 10.1 15.6872 10.1H21.4548C22.4263 10.1 22.8244 11.3326 22.0437 11.9155L17.4085 15.2605C17.0628 15.5066 16.9109 15.9515 17.0429 16.3583L18.8369 21.8467C19.1363 22.768 18.1008 23.5388 17.32 22.9559L12.6849 19.6109C12.3391 19.3648 11.6609 19.3648 11.3151 19.6109L6.68 22.9559C5.89916 23.5388 4.86374 22.768 5.16306 21.8467L6.95706 16.3583C7.08907 15.9515 6.93717 15.5066 6.59146 15.2605L1.95633 11.9155C1.17559 11.3326 1.57367 10.1 2.54518 10.1H8.31279C8.74465 10.1 9.12287 9.82231 9.25488 9.41547L11.0489 3.92705Z"
+          fill={`url(#${gradientId})`}
+        />
+      </svg>
+    );
+  },
+);
 
 export const BingLogo = React.memo(() => (
   <svg
