@@ -124,18 +124,20 @@ export default function Journal() {
 
   const handleCreateEntry = async () => {
     createEntry().then(([id, draft]) => {
-      setOnClose(() => (e: Editor) => {
-        const str = e.getText();
-        updateEntryMutation
-          .mutateAsync({
-            id,
-            wordCount: countWords(str),
-            rawText: str.trim().replace(/\s+/g, " "),
-          })
-          .then(() => {
-            refreshMeta();
-            refresh();
-          });
+      setOnClose(() => (e: Editor, changed: boolean) => {
+        if (changed) {
+          const str = e.getText();
+          updateEntryMutation
+            .mutateAsync({
+              id,
+              wordCount: countWords(str),
+              rawText: str.trim().replace(/\s+/g, " "),
+            })
+            .then(() => {
+              refreshMeta();
+              refresh();
+            });
+        }
 
         setOnClose(() => () => {});
       });

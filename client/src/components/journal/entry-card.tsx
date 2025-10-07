@@ -93,17 +93,19 @@ export default function EntryCard({
   const handleEditEntry = (id: number, draft: number) => {
     setEditorId(draft);
     setEditorDialogOpen(true);
-    setOnClose(() => (e: Editor) => {
-      const str = e.getText();
-      updateEntryMutation
-        .mutateAsync({
-          id,
-          wordCount: countWords(str),
-          rawText: str.trim().replace(/\s+/g, " "),
-        })
-        .then(() => {
-          refreshMeta();
-        });
+    setOnClose(() => (e: Editor, changed: boolean) => {
+      if (changed) {
+        const str = e.getText();
+        updateEntryMutation
+          .mutateAsync({
+            id,
+            wordCount: countWords(str),
+            rawText: str.trim().replace(/\s+/g, " "),
+          })
+          .then(() => {
+            refreshMeta();
+          });
+      }
 
       setOnClose(() => () => {});
     });

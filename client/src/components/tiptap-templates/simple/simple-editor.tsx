@@ -247,7 +247,7 @@ export function SimpleEditor({
   ts: number;
   showToast: boolean;
   removeCache: boolean;
-  onClose: (e: Editor) => void;
+  onClose: (e: Editor, changed: boolean) => void;
 }) {
   const { language } = useUserContext();
   const { id, setId, setOpen } = useTTContext();
@@ -375,7 +375,7 @@ export function SimpleEditor({
           } else {
             invalidateDraftQuery(id);
           }
-          onClose(editor);
+          onClose(editor, true);
         });
       } else {
         setId(0);
@@ -383,7 +383,7 @@ export function SimpleEditor({
         if (removeCache) {
           removeDraftQuery(id);
         }
-        onClose(editor);
+        onClose(editor, false);
       }
     }
   };
@@ -405,7 +405,7 @@ export function SimpleEditor({
         } else {
           invalidateDraftQuery(id);
         }
-        onClose(editor);
+        onClose(editor, false);
       });
     }
   };

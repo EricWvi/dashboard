@@ -530,34 +530,36 @@ export const TodayTodoList = () => {
                 <div className="min-h-0 flex-1"></div>
               </div>
             ) : (
-              <div className="min-h-0 w-full flex-1">
-                {Object.entries(
-                  today
-                    .sort((a, b) => b.order - a.order)
-                    .reduce(
-                      (acc, item) => {
-                        (acc[item.collectionId] =
-                          acc[item.collectionId] || []).push(item);
-                        return acc;
-                      },
-                      {} as Record<number, Todo[]>,
-                    ),
-                ).map(([key, items]) => (
-                  <div key={key}>
-                    {/* 3. Apply `rounded-sm` + `overflow-hidden`, the browser creates a clipping context 
+              <div className="flex-1 pb-2">
+                <div className="min-h-0 w-full">
+                  {Object.entries(
+                    today
+                      .sort((a, b) => b.order - a.order)
+                      .reduce(
+                        (acc, item) => {
+                          (acc[item.collectionId] =
+                            acc[item.collectionId] || []).push(item);
+                          return acc;
+                        },
+                        {} as Record<number, Todo[]>,
+                      ),
+                  ).map(([key, items]) => (
+                    <div key={key}>
+                      {/* 3. Apply `rounded-sm` + `overflow-hidden`, the browser creates a clipping context 
                           to ensure content stays within the rounded corners. This clipping can 
                           trigger several rendering behaviors that affect how emojis are displayed.
                           use `transform-gpu` (`transform: translateZ(0)`) to create a new layer */}
-                    <div className="text-muted-foreground mb-1 transform-gpu text-sm font-medium">
-                      {collectionMap[key]}
+                      <div className="text-muted-foreground mb-1 transform-gpu text-sm font-medium">
+                        {collectionMap[key]}
+                      </div>
+                      <div className="mb-3 space-y-2">
+                        {items.map((todo) => (
+                          <TodayTodoView key={todo.id} id={todo.id} />
+                        ))}
+                      </div>
                     </div>
-                    <div className="mb-3 space-y-2">
-                      {items.map((todo) => (
-                        <TodayTodoView key={todo.id} id={todo.id} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ))
           )}
