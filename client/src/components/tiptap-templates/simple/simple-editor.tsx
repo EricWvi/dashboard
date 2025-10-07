@@ -25,6 +25,7 @@ import {
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import { EmojiExtension } from "@/components/tiptap-node/emoji-node";
+import { VideoExtension } from "@/components/tiptap-node/video-node";
 import {
   TOCExtension,
   TableOfContents,
@@ -36,10 +37,12 @@ import "@/components/tiptap-node/list-node/list-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/heading-node/heading-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
+import "@/components/tiptap-node/video-node/video-node.scss";
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
+import { VideoUploadButton } from "@/components/tiptap-ui/video-upload-button";
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
@@ -131,6 +134,7 @@ const MainToolbarContent = ({
       {isMobile && (
         <ToolbarGroup>
           <ImageUploadButton />
+          <VideoUploadButton />
           <EmojiPopover />
         </ToolbarGroup>
       )}
@@ -184,6 +188,7 @@ const MainToolbarContent = ({
         <>
           <ToolbarGroup>
             <ImageUploadButton />
+            <VideoUploadButton />
           </ToolbarGroup>
 
           <Spacer />
@@ -471,6 +476,7 @@ export const extensionSetup = [
   Superscript,
   Subscript,
   EmojiExtension,
+  VideoExtension,
   Selection,
 ];
 

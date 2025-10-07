@@ -326,6 +326,68 @@ export const handleImageUpload = async (
   });
 };
 
+/**
+ * Handles video upload with progress tracking and abort capability
+ * @param file The file to upload
+ * @param onProgress Optional callback for tracking upload progress
+ * @param abortSignal Optional AbortSignal for cancelling the upload
+ * @returns Promise resolving to the URL of the uploaded video
+ */
+export const handleVideoUpload = async (
+  file: File,
+  onProgress?: (event: { progress: number }) => void,
+  abortSignal?: AbortSignal,
+): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    if (!file) {
+      reject(new Error("No file provided"));
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      reject(
+        new Error(
+          `File size exceeds maximum allowed (${MAX_FILE_SIZE / (1024 * 1024)}MB)`,
+        ),
+      );
+      return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append("photos", file, file.name);
+
+    xhr.open("POST", "/api/upload");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        const progress = Math.round((event.loaded / event.total) * 100);
+        onProgress({ progress });
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(formatMediaUrl(JSON.parse(xhr.responseText).photos[0]));
+      } else {
+        reject(new Error("Upload failed"));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Network error"));
+
+    // Handle abort via AbortSignal
+    if (abortSignal) {
+      abortSignal.addEventListener("abort", () => {
+        xhr.abort();
+        reject(new Error("Upload cancelled"));
+      });
+    }
+
+    xhr.send(formData);
+  });
+};
+
 type ProtocolOptions = {
   /**
    * The protocol scheme to be registered.

@@ -19,7 +19,9 @@ import { useCloseActionContext } from "@/close-action-provider";
 const filterText = (doc: JSONContent) => {
   return {
     ...doc,
-    content: doc.content?.filter((node) => node.type !== "image"),
+    content: doc.content?.filter(
+      (node) => node.type !== "image" && node.type !== "video",
+    ),
   };
 };
 

@@ -36,7 +36,7 @@ export const SimpleEditorWrapper = ({
 }: {
   showToast?: boolean;
   removeCache?: boolean;
-  onClose?: (e: Editor) => void;
+  onClose?: (e: Editor, changed: boolean) => void;
 }) => {
   const { open, id } = useTTContext();
   const { data: draft } = useDraft(id);
