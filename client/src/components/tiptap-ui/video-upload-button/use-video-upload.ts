@@ -75,8 +75,6 @@ export function insertVideo(
     if (!file) return;
 
     try {
-      toast.info("Uploading video...");
-
       const url = await handleVideoUpload(file, (_event) => {
         // You can add progress tracking here if needed
         // console.log(`Upload progress: ${event.progress}%`);
@@ -92,7 +90,6 @@ export function insertVideo(
           })
           .run();
 
-        toast.success("Video uploaded successfully!");
         onSuccess?.();
       }
     } catch (error) {

@@ -573,7 +573,7 @@ export function ContentHTML({ id }: { id: number }) {
   if (isFetching) return null;
   return (
     <div className="w-full">
-      <ReadOnlyTiptap draft={draft?.content} style="padding: 0 0 24px" />
+      <ReadOnlyTiptap draft={draft?.content} style="padding: 0 0 12px" />
     </div>
   );
 }

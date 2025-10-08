@@ -110,7 +110,7 @@ export default function WatchReview({
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       {/* share button */}
       <div className="absolute top-4 right-4 z-10">
         <button
@@ -162,7 +162,7 @@ export default function WatchReview({
                           className={
                             idx * 2 + 1 <= Number(watch.rate) / 2
                               ? "text-[#FE9902]"
-                              : "opacity-50"
+                              : "text-white/50"
                           }
                           key={idx}
                         >

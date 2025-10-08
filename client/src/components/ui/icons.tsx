@@ -14,7 +14,11 @@ export const StarIcon = React.memo(
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset={`${fillPercentage}%`} stopColor="currentColor" />
-            <stop offset={`${fillPercentage}%`} stopColor="black" />
+            <stop
+              offset={`${fillPercentage}%`}
+              stopColor="white"
+              stopOpacity="0.5"
+            />
           </linearGradient>
         </defs>
         <path

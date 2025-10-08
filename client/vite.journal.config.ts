@@ -21,6 +21,9 @@ export default defineConfig({
         target: "http://localhost:8765",
         changeOrigin: true,
         secure: false,
+        headers: {
+          "Remote-Email": "test@onlyquant.top",
+        },
       },
     },
   },
