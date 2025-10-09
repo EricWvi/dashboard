@@ -5,7 +5,7 @@ import {
   useUpdateEntry,
 } from "@/hooks/use-entries";
 import { ImageList } from "@/components/journal/image-list";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, More, MoreArrow } from "@/components/journal/icon";
 import { useDraft } from "@/hooks/use-draft";
 import { Editor, generateHTML, type JSONContent } from "@tiptap/react";
@@ -15,8 +15,7 @@ import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import { useTTContext } from "@/components/editor";
 import { useCloseActionContext } from "@/close-action-provider";
-import { MediaSwiper } from "./media-swiper";
-import { motion, AnimatePresence } from "framer-motion";
+import { MediaViewer } from "./media-viewer";
 
 const filterText = (doc: JSONContent) => {
   return {
@@ -96,6 +95,7 @@ export default function EntryCard({
   const { language } = useUserContext();
   const { data: entry } = useEntry(meta.id);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -103,6 +103,17 @@ export default function EntryCard({
   const { data: draft } = useDraft(meta.draft);
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const { setOnClose } = useCloseActionContext();
+
+  // Memoize expensive operations
+  const mediaItems = useMemo(
+    () => (draft ? extractMediaItems(draft.content as JSONContent) : []),
+    [draft],
+  );
+
+  const textContent = useMemo(
+    () => (draft ? filterText(draft.content) : null),
+    [draft],
+  );
 
   const updateEntryMutation = useUpdateEntry();
 
@@ -173,65 +184,22 @@ export default function EntryCard({
         {/* TODO picture loading css animation */}
         <div className="my-1 px-1">
           {/* Thumbnail trigger */}
-          <div onClick={() => setViewerOpen(true)} className="cursor-pointer">
-            <ImageList
-              items={extractMediaItems(draft.content as JSONContent)}
-            />
-          </div>
+          <ImageList
+            items={mediaItems}
+            onItemClick={(index) => {
+              setCurrentSlideIndex(index);
+              setViewerOpen(true);
+            }}
+          />
 
-          {/* Close button */}
-          {viewerOpen && (
-            <button
-              onClick={() => setViewerOpen(false)}
-              className="fixed top-4 right-4 z-100 rounded-full bg-black/50 p-2 text-white/90 transition-colors hover:text-gray-300"
-              aria-label="Close"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          )}
-          {/* Fullscreen viewer */}
-          <AnimatePresence>
-            {viewerOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 flex items-center justify-center"
-                onClick={() => setViewerOpen(false)}
-              >
-                {/* Semi-transparent overlay */}
-                <div className="absolute inset-0 bg-black/80" />
-
-                {/* Swiper container */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative z-10 h-[80vh] w-[90vw] max-w-6xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MediaSwiper
-                    items={extractMediaItems(draft.content as JSONContent)}
-                  />
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Media Viewer */}
+          <MediaViewer
+            items={mediaItems}
+            isOpen={viewerOpen}
+            currentSlideIndex={currentSlideIndex}
+            setCurrentSlideIndex={setCurrentSlideIndex}
+            onClose={() => setViewerOpen(false)}
+          />
         </div>
 
         {/* text content */}
@@ -252,7 +220,9 @@ export default function EntryCard({
           <div
             className="text-foreground leading-6 font-normal"
             dangerouslySetInnerHTML={{
-              __html: generateHTML(filterText(draft.content), extensionSetup),
+              __html: textContent
+                ? generateHTML(textContent, extensionSetup)
+                : "",
             }}
           ></div>
         </div>

@@ -652,7 +652,6 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
 
             {/* checkpoints display */}
             <WatchCheckpoints
-              type={watch.type}
               measure={watch.payload.measure as WatchMeasure}
               checkpoints={watch.payload.checkpoints ?? []}
             />

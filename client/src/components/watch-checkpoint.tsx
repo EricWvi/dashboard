@@ -1,7 +1,5 @@
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import {
-  WatchEnum,
-  type WatchType,
   type WatchMeasure,
   WatchMeasureText,
   WatchMeasureEnum,
@@ -10,12 +8,10 @@ import { useUserContext } from "@/user-provider";
 
 export default function WatchCheckpoints({
   checkpoints,
-  type,
   measure,
   finished = false,
 }: {
   checkpoints: [string, number][];
-  type: WatchType;
   measure: WatchMeasure;
   finished?: boolean;
 }) {
@@ -35,7 +31,6 @@ export default function WatchCheckpoints({
               </span>
               <span className="pt-2 pb-6">
                 {checkpointText(
-                  type,
                   measure,
                   checkpoint[1],
                   language,
@@ -68,7 +63,6 @@ const i18nText = {
 };
 
 const checkpointText = (
-  type: WatchType,
   measure: WatchMeasure,
   value: number,
   language: UserLang,
@@ -78,9 +72,9 @@ const checkpointText = (
     if (language === UserLangEnum.ZHCN) {
       return (
         "标记" +
-        ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+        ([WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(measure)
           ? "读完"
-          : type === WatchEnum.GAME
+          : measure === WatchMeasureEnum.TROPHY
             ? "通关"
             : "看完")
       );
@@ -93,18 +87,18 @@ const checkpointText = (
     if (language === UserLangEnum.ZHCN) {
       return (
         "标记在" +
-        ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+        ([WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(measure)
           ? "读"
-          : type === WatchEnum.GAME
+          : measure === WatchMeasureEnum.TROPHY
             ? "玩"
             : "看")
       );
     } else if (language === UserLangEnum.ENUS) {
       return (
         "start to " +
-        ([WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+        ([WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(measure)
           ? "read"
-          : type === WatchEnum.GAME
+          : measure === WatchMeasureEnum.TROPHY
             ? "play"
             : "watch")
       );
@@ -113,15 +107,17 @@ const checkpointText = (
   }
   if (value === -1) {
     if (language === UserLangEnum.ZHCN) {
-      return "标记弃看";
+      return "标记弃坑";
     } else if (language === UserLangEnum.ENUS) {
       return "dropped";
     }
     return "";
   }
-  const action = [WatchEnum.BOOK, WatchEnum.MANGA].includes(type)
+  const action = [WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(
+    measure,
+  )
     ? i18nText[language].read
-    : type === WatchEnum.GAME
+    : measure === WatchMeasureEnum.TROPHY
       ? i18nText[language].play
       : i18nText[language].watch;
   let measureText = WatchMeasureText[measure][language];

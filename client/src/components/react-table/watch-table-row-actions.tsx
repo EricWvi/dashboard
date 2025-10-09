@@ -320,7 +320,6 @@ export function WatchedTableRowActions<TData>({
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <WatchCheckpoints
-            type={watch.type}
             measure={
               (watch.payload.measure ??
                 WatchMeasureEnum.PERCENTAGE) as WatchMeasure

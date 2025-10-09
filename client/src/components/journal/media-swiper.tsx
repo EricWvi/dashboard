@@ -1,9 +1,6 @@
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { useIsMobile } from "@/hooks/use-mobile";
+import type { Swiper as SwiperType } from "swiper";
 
 export type MediaItem = {
   type: "image" | "video";
@@ -12,33 +9,56 @@ export type MediaItem = {
 
 interface MediaSwiperProps {
   items: MediaItem[];
+  initialSlide?: number;
+  onClose?: () => void;
+  onSlideChange?: (activeIndex: number) => void;
+  onSwiperInit?: (swiper: SwiperType) => void;
+  onNavigationChange?: (isBeginning: boolean, isEnd: boolean) => void;
 }
 
-export function MediaSwiper({ items }: MediaSwiperProps) {
-  const isMobile = useIsMobile();
+export function MediaSwiper({
+  items,
+  initialSlide = 0,
+  onClose,
+  onSlideChange,
+  onSwiperInit,
+  onNavigationChange,
+}: MediaSwiperProps) {
   return (
     <Swiper
-      modules={[Navigation, Pagination]}
       spaceBetween={30}
-      pagination={{ clickable: true }}
-      navigation={!isMobile}
+      initialSlide={initialSlide}
+      onSlideChange={(swiper) => {
+        onSlideChange?.(swiper.activeIndex);
+        onNavigationChange?.(swiper.isBeginning, swiper.isEnd);
+      }}
+      onSwiper={(swiper) => {
+        onSwiperInit?.(swiper);
+        onNavigationChange?.(swiper.isBeginning, swiper.isEnd);
+      }}
       className="h-full w-full overflow-hidden rounded-lg"
     >
       {items.map((item, idx) => (
-        <SwiperSlide key={idx} className="flex items-center justify-center">
-          {item.type === "image" ? (
-            <img
-              src={item.src}
-              alt=""
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <video
-              src={item.src}
-              controls
-              className="h-full w-full object-contain"
-            />
-          )}
+        <SwiperSlide key={idx} className="h-full">
+          <div
+            className="flex h-full items-center justify-center"
+            onClick={onClose}
+          >
+            {item.type === "image" ? (
+              <img
+                src={item.src}
+                alt=""
+                className="max-h-full w-full object-contain"
+              />
+            ) : (
+              <video
+                src={item.src}
+                controls
+                className="w-full object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+          </div>
         </SwiperSlide>
       ))}
     </Swiper>
