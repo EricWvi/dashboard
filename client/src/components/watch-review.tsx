@@ -46,7 +46,12 @@ export default function WatchReview({
         const hsl = chroma(rgb).hsl();
         if (hsl[2] > 0.5) {
           // too light, darken it
-          rgb = chroma(rgb).darken().rgb();
+          if (hsl[2] > 0.75) {
+            hsl[2] = 0.6;
+            rgb = chroma.hsl(...hsl).rgb();
+          } else {
+            rgb = chroma(rgb).darken().rgb();
+          }
         }
 
         const baseColor = chroma(rgb);
@@ -59,40 +64,24 @@ export default function WatchReview({
         brightColor.current = brightHSL;
 
         // compute adaptive secondary text color
-        const imgLuminance = baseColor.luminance();
         // main text is white — so pick a soft, readable secondary tone
-        let secondaryColor;
-        if (imgLuminance < 0.3) {
-          // Dark background → dim, cooler gray
-          secondaryColor = chroma
-            .mix("white", baseColor, 0.4)
-            .desaturate(2)
-            .hex();
-        } else {
-          // Light background → softer gray
-          secondaryColor = chroma
-            .mix("black", baseColor, 0.7)
-            .desaturate(2)
-            .hex();
-        }
-        authorColor.current = secondaryColor;
+        authorColor.current = chroma
+          .mix("white", baseColor, 0.4)
+          .desaturate(2)
+          .hex();
 
         const textBg = chroma.hsl(...brightHSL);
-        const bgLuminance = textBg.luminance();
-
-        if (bgLuminance < 0.3) {
-          // Dark background → dim, cooler gray
-          secondaryColor = chroma.mix("white", textBg, 0.4).desaturate(2).hex();
-        } else {
-          // Light background → softer gray
-          secondaryColor = chroma.mix("black", textBg, 0.7).desaturate(2).hex();
-        }
-
-        dateColor.current = secondaryColor;
+        dateColor.current = chroma
+          .mix("white", textBg, 0.4)
+          .desaturate(2)
+          .hex();
       } catch (err) {
         console.error("Color extraction failed:", err);
         setColor([0, 0, 0.3]);
         brightColor.current = [0, 0, 0.4];
+        authorColor.current = "#D5D5D5";
+        dateColor.current = "#A7AAAF";
+        return;
       }
     };
 
@@ -287,9 +276,9 @@ function getGradientStyle(
     background: `linear-gradient(
       to top,
       hsla(${h}, ${s * 100}%, ${l * 100}%, 1),
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.9) 26%,
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.8) 33%,
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.6) 43%,
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.9) 20%,
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.7) 30%,
+      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.5) 40%,
       hsla(${h}, ${s * 100}%, ${l * 100}%, 0) 65%
     )`,
   };
