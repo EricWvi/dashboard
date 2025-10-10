@@ -6,12 +6,14 @@ interface CustomNavigationProps {
   swiper: Swiper | null;
   isBeginning: boolean;
   isEnd: boolean;
+  show: boolean;
 }
 
 export function CustomNavigation({
   swiper,
   isBeginning,
   isEnd,
+  show,
 }: CustomNavigationProps) {
   const isMobile = useIsMobile();
   const handlePrev = () => {
@@ -26,7 +28,7 @@ export function CustomNavigation({
     }
   };
 
-  if (isMobile) return null;
+  if (isMobile || !show) return null;
 
   return (
     <>

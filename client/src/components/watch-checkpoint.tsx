@@ -72,7 +72,12 @@ const checkpointText = (
     if (language === UserLangEnum.ZHCN) {
       return (
         "标记" +
-        ([WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(measure)
+        ([
+          WatchMeasureEnum.CHAPTER,
+          WatchMeasureEnum.PAGE,
+          WatchMeasureEnum.VOLUME,
+          WatchMeasureEnum.PERCENTAGE,
+        ].includes(measure)
           ? "读完"
           : measure === WatchMeasureEnum.TROPHY
             ? "通关"
@@ -87,7 +92,12 @@ const checkpointText = (
     if (language === UserLangEnum.ZHCN) {
       return (
         "标记在" +
-        ([WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(measure)
+        ([
+          WatchMeasureEnum.CHAPTER,
+          WatchMeasureEnum.PAGE,
+          WatchMeasureEnum.VOLUME,
+          WatchMeasureEnum.PERCENTAGE,
+        ].includes(measure)
           ? "读"
           : measure === WatchMeasureEnum.TROPHY
             ? "玩"
@@ -96,7 +106,12 @@ const checkpointText = (
     } else if (language === UserLangEnum.ENUS) {
       return (
         "start to " +
-        ([WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(measure)
+        ([
+          WatchMeasureEnum.CHAPTER,
+          WatchMeasureEnum.PAGE,
+          WatchMeasureEnum.VOLUME,
+          WatchMeasureEnum.PERCENTAGE,
+        ].includes(measure)
           ? "read"
           : measure === WatchMeasureEnum.TROPHY
             ? "play"
@@ -113,9 +128,12 @@ const checkpointText = (
     }
     return "";
   }
-  const action = [WatchMeasureEnum.CHAPTER, WatchMeasureEnum.PAGE].includes(
-    measure,
-  )
+  const action = [
+    WatchMeasureEnum.CHAPTER,
+    WatchMeasureEnum.PAGE,
+    WatchMeasureEnum.VOLUME,
+    WatchMeasureEnum.PERCENTAGE,
+  ].includes(measure)
     ? i18nText[language].read
     : measure === WatchMeasureEnum.TROPHY
       ? i18nText[language].play

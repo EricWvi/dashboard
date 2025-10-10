@@ -104,6 +104,7 @@ export function MediaViewer({
         isBeginning={isBeginning}
         isEnd={isEnd}
         swiper={swiper}
+        show={items.length > 1}
       />
     </>
   );
