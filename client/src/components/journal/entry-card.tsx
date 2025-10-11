@@ -1,21 +1,16 @@
-import {
-  EntryMeta,
-  refreshMeta,
-  useEntry,
-  useUpdateEntry,
-} from "@/hooks/use-entries";
+import { EntryMeta, useEntry } from "@/hooks/use-entries";
 import { ImageList } from "@/components/journal/image-list";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, More, MoreArrow } from "@/components/journal/icon";
 import { useDraft } from "@/hooks/use-draft";
-import { Editor, generateHTML, type JSONContent } from "@tiptap/react";
-import { countWords } from "alfaaz";
+import { generateHTML, type JSONContent } from "@tiptap/react";
+
 import { extensionSetup } from "@/components/tiptap-templates/simple/simple-editor";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
-import { useTTContext } from "@/components/editor";
-import { useCloseActionContext } from "@/close-action-provider";
+
 import { MediaViewer } from "./media-viewer";
+import { EntryCardMenuHeight, DropdownMenu } from "./dropdown-menu";
 
 const filterText = (doc: JSONContent) => {
   return {
@@ -38,18 +33,18 @@ const extractMediaItems = (content: JSONContent) => {
 };
 
 const monthToText = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  { [UserLangEnum.ENUS]: "January", [UserLangEnum.ZHCN]: "一月" },
+  { [UserLangEnum.ENUS]: "February", [UserLangEnum.ZHCN]: "二月" },
+  { [UserLangEnum.ENUS]: "March", [UserLangEnum.ZHCN]: "三月" },
+  { [UserLangEnum.ENUS]: "April", [UserLangEnum.ZHCN]: "四月" },
+  { [UserLangEnum.ENUS]: "May", [UserLangEnum.ZHCN]: "五月" },
+  { [UserLangEnum.ENUS]: "June", [UserLangEnum.ZHCN]: "六月" },
+  { [UserLangEnum.ENUS]: "July", [UserLangEnum.ZHCN]: "七月" },
+  { [UserLangEnum.ENUS]: "August", [UserLangEnum.ZHCN]: "八月" },
+  { [UserLangEnum.ENUS]: "September", [UserLangEnum.ZHCN]: "九月" },
+  { [UserLangEnum.ENUS]: "October", [UserLangEnum.ZHCN]: "十月" },
+  { [UserLangEnum.ENUS]: "November", [UserLangEnum.ZHCN]: "十一月" },
+  { [UserLangEnum.ENUS]: "December", [UserLangEnum.ZHCN]: "十二月" },
 ];
 
 const formatTime = (date: Date | string) => {
@@ -98,11 +93,15 @@ export default function EntryCard({
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({
+    top: 0,
+    left: 0,
+  });
+  const textCardRef = useRef<HTMLDivElement>(null);
+  const entryCardRef = useRef<HTMLDivElement>(null);
 
   const { data: draft } = useDraft(meta.draft);
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
-  const { setOnClose } = useCloseActionContext();
 
   // Memoize expensive operations
   const mediaItems = useMemo(
@@ -115,34 +114,38 @@ export default function EntryCard({
     [draft],
   );
 
-  const updateEntryMutation = useUpdateEntry();
+  const handleOpenContextMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
 
-  const handleEditEntry = (id: number, draft: number) => {
-    setEditorId(draft);
-    setEditorDialogOpen(true);
-    setOnClose(() => (e: Editor, changed: boolean) => {
-      if (changed) {
-        const str = e.getText();
-        updateEntryMutation
-          .mutateAsync({
-            id,
-            wordCount: countWords(str),
-            rawText: str.trim().replace(/\s+/g, " "),
-          })
-          .then(() => {
-            refreshMeta();
-          });
-      }
+    if (!entryCardRef.current) return;
 
-      setOnClose(() => () => {});
-    });
+    const cardRect = entryCardRef.current.getBoundingClientRect();
+    const menuWidth = 240; // matches CSS width
+    const padding = 30;
+
+    // Calculate initial position (right-aligned to button)
+    let top = cardRect.bottom - padding - EntryCardMenuHeight;
+    let left = cardRect.right - menuWidth;
+
+    // Check if menu would go off the bottom of screen
+    // if (bottom + menuHeight > window.innerHeight) {
+    //   bottom = cardRect.top - menuHeight - padding;
+    // }
+
+    // Check if menu would go off the left of screen (when right-aligned)
+    // if (window.innerWidth - right - menuWidth < padding) {
+    //   right = padding;
+    // }
+
+    setContextMenuPosition({ top, left });
+    setContextMenuOpen(true);
   };
 
   const collapseHeight = 144; // Default height when collapsed
 
   useEffect(() => {
-    if (entry && cardRef.current) {
-      if (cardRef.current.scrollHeight > collapseHeight) {
+    if (entry && textCardRef.current) {
+      if (textCardRef.current.scrollHeight > collapseHeight) {
         setHasMore(true);
       } else {
         setHasMore(false);
@@ -150,10 +153,31 @@ export default function EntryCard({
     }
   }, [entry]);
 
+  // Close context menu when clicking outside
+  // useEffect(() => {
+  //   const handleClickOutside = (e: MouseEvent) => {
+  //     if (
+  //       contextMenuOpen &&
+  //       entryCardRef.current &&
+  //       !entryCardRef.current.contains(e.target as Node)
+  //     ) {
+  //       setContextMenuOpen(false);
+  //     }
+  //   };
+
+  //   if (contextMenuOpen) {
+  //     document.addEventListener("mousedown", handleClickOutside);
+  //   }
+
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, [contextMenuOpen]);
+
   useEffect(() => {
-    if (cardRef.current) {
-      cardRef.current.style.maxHeight = expanded
-        ? cardRef.current.scrollHeight + "px"
+    if (textCardRef.current) {
+      textCardRef.current.style.maxHeight = expanded
+        ? textCardRef.current.scrollHeight + "px"
         : collapseHeight + "px";
     }
   }, [expanded]);
@@ -164,23 +188,26 @@ export default function EntryCard({
     <>
       {showMonth && (
         <h3 className="text-foreground mt-6 mb-2 ml-1 text-xl leading-none font-semibold">
-          {monthToText[meta.month - 1]}
+          {monthToText[meta.month - 1][language]}
           {showYear && ", " + meta.year}
         </h3>
       )}
       {showToday && (
         <h3 className="text-foreground mt-6 mb-2 ml-1 text-xl leading-none font-semibold">
-          Today
+          {i18nText[language].today}
         </h3>
       )}
       {showYesterday && (
         <h3 className="text-foreground mt-6 mb-2 ml-1 text-xl leading-none font-semibold">
-          Yesterday
+          {i18nText[language].yesterday}
         </h3>
       )}
 
       {/* entry card */}
-      <div className="entry-card-shadow bg-entry-card mb-4 flex flex-col overflow-hidden rounded-lg transition-shadow hover:shadow-md">
+      <div
+        ref={entryCardRef}
+        className="entry-card-shadow bg-entry-card mb-4 flex flex-col overflow-hidden rounded-xl transition-shadow hover:shadow-md"
+      >
         {/* TODO picture loading css animation */}
         <div className="my-1 px-1">
           {/* Thumbnail trigger */}
@@ -204,7 +231,7 @@ export default function EntryCard({
 
         {/* text content */}
         <div
-          ref={cardRef}
+          ref={textCardRef}
           className={`relative mx-4 my-3 overflow-hidden transition-all duration-500 ease-in-out`}
           onClick={() => setExpanded(!expanded)}
         >
@@ -235,13 +262,38 @@ export default function EntryCard({
               <span>· {formatTime(entry.createdAt)}</span>
             </div>
           </div>
-          <div onClick={() => handleEditEntry(meta.id, meta.draft)}>
+          <div onClick={handleOpenContextMenu} className="cursor-pointer">
             <Icon className="h-5 w-5">
               <More className="fill-more-arrow" />
             </Icon>
           </div>
         </div>
       </div>
+
+      {/* Context Menu */}
+      {contextMenuOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: `${contextMenuPosition.top}px`,
+            left: `${contextMenuPosition.left}px`,
+            zIndex: 1000,
+          }}
+        >
+          <DropdownMenu meta={meta} />
+        </div>
+      )}
     </>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    today: "今天",
+    yesterday: "昨天",
+  },
+  [UserLangEnum.ENUS]: {
+    today: "Today",
+    yesterday: "Yesterday",
+  },
+};

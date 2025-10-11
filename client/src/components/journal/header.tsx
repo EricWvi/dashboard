@@ -1,6 +1,8 @@
+import { UserLangEnum } from "@/hooks/use-user";
 import { Icon, Search, More } from "./icon";
 import Stats from "./stats";
 import { useEffect, useState } from "react";
+import { useUserContext } from "@/user-provider";
 
 interface HeaderProps {
   onSearchToggle: () => void;
@@ -8,13 +10,16 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
+  const { language } = useUserContext();
   return (
     <header>
       <Toolbar {...props} />
       <div className="mx-auto max-w-7xl space-y-2 px-4 sm:px-6 lg:px-8">
         <div className="mt-10 flex h-12 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-foreground text-3xl font-bold">Journal</h1>
+            <h1 className="text-foreground text-3xl font-bold">
+              {i18nText[language].journal}
+            </h1>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -38,6 +43,7 @@ export default function Header(props: HeaderProps) {
 }
 
 function Toolbar({ onSearchToggle }: HeaderProps) {
+  const { language } = useUserContext();
   const [opacity, setOpacity] = useState(0);
   useEffect(() => {
     const container = document.querySelector("#scrollableDiv");
@@ -67,7 +73,9 @@ function Toolbar({ onSearchToggle }: HeaderProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-10 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-foreground text-xl font-semibold">Journal</h1>
+            <h1 className="text-foreground text-lg font-semibold">
+              {i18nText[language].journal}
+            </h1>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -87,3 +95,12 @@ function Toolbar({ onSearchToggle }: HeaderProps) {
     </div>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    journal: "手记",
+  },
+  [UserLangEnum.ENUS]: {
+    journal: "Journal",
+  },
+};
