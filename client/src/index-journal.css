@@ -43,7 +43,6 @@
   --color-search-icon: var(--search-icon-bg);
   --color-toolbar-icon: var(--toolbar-icon-bg);
   --color-entry-card: var(--entry-card);
-  --color-entry-modal: var(--entry-modal);
   --color-more-arrow: var(--more-arrow);
   --color-tool-bar: var(--tool-bar);
 }
@@ -90,7 +89,6 @@
   --search-icon-bg: oklch(0.9132 0.0045 0.01);
   --toolbar-icon-bg: oklch(0.9132 0.0045 0.01 / 60%);
   --entry-card: oklch(1 0 0);
-  --entry-modal: oklch(1 0 0);
   --tool-bar: oklch(1 0 0 / 72%);
   --more-arrow: oklch(0.6133 0 0);
 
@@ -141,8 +139,7 @@
     --stats-font: oklch(0.661 0.0161 290.13);
     --search-icon-bg: oklch(0.3019 0.0161 290.5);
     --toolbar-icon-bg: oklch(0.3019 0.0161 290.5 / 80%);
-    --entry-card: oklch(0.5 0.0189 311.51 / 10%);
-    --entry-modal: oklch(0.2273 0.0038 286.09);
+    --entry-card: oklch(57.073% 0.01542 314.532 / 0.1);
     --tool-bar: oklch(0.1 0 0 / 60%);
     --more-arrow: oklch(0.7089 0.0189 311.51);
 
@@ -194,13 +191,17 @@
   }
 
   .entry-card-shadow {
-    box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   }
 
   .apple-backdrop {
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
-    background-color: var(--color-tool-bar);
+  }
+
+  .image-overlay {
+    -webkit-backdrop-filter: saturate(180%) blur(5px);
+    backdrop-filter: saturate(180%) blur(5px);
   }
 
   .more-arrow-blur::before {

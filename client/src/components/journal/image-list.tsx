@@ -16,7 +16,7 @@ export const MediaBlock = ({
   if (media.type === "image") {
     return (
       <img
-        className="h-full w-full cursor-pointer rounded-sm object-cover"
+        className="h-full w-full cursor-pointer rounded-md object-cover"
         src={formatMediaUrl(media.src)}
         alt="img"
         onClick={onClick}
@@ -28,7 +28,7 @@ export const MediaBlock = ({
   return (
     <div className="relative h-full w-full cursor-pointer" onClick={onClick}>
       <video
-        className="h-full w-full rounded-sm object-cover"
+        className="h-full w-full rounded-md object-cover"
         src={formatMediaUrl(media.src)}
         autoPlay={false}
       />
@@ -153,7 +153,15 @@ export const ImageList = ({ items, onItemClick }: Props) => {
               {mediaBlock(items[3], 3, onItemClick)}
             </div>
             <div className="relative h-full flex-1">
-              <div className="absolute inset-0 rounded-sm bg-gray-300"></div>
+              <div
+                className="image-overlay absolute inset-0 z-20 flex items-center justify-center rounded-md bg-black/20"
+                onClick={() => onItemClick?.(4)}
+              >
+                <span className="mr-[1px] text-2xl text-[rgb(156,157,165)]">
+                  +
+                </span>
+                <span className="text-xl text-white">{items.length - 4}</span>
+              </div>
               {mediaBlock(items[4], 4, onItemClick)}
             </div>
           </div>
@@ -162,7 +170,7 @@ export const ImageList = ({ items, onItemClick }: Props) => {
     );
   }
   return (
-    <div className="h-42 overflow-hidden rounded-md">
+    <div className="h-42 overflow-hidden rounded-lg">
       <div className="flex h-full w-full gap-[3px]">{imgList}</div>
     </div>
   );

@@ -42,45 +42,42 @@ export default function WatchReview({
 
     const extractColor = () => {
       try {
-        let rgb = colorThief.getColor(img) as [number, number, number];
-        const hsl = chroma(rgb).hsl();
-        if (hsl[2] > 0.5) {
+        const rgb = colorThief.getColor(img) as [number, number, number];
+        const oklch = chroma(rgb).oklch();
+        if (oklch[0] > 0.5) {
           // too light, darken it
-          if (hsl[2] > 0.75) {
-            hsl[2] = 0.6;
-            rgb = chroma.hsl(...hsl).rgb();
+          if (oklch[0] > 0.7) {
+            oklch[0] = 0.5;
           } else {
-            rgb = chroma(rgb).darken().rgb();
+            oklch[0] -= 0.2;
           }
         }
 
-        const baseColor = chroma(rgb);
+        const baseColor = chroma.oklch(...oklch);
         const bright = baseColor.brighten();
-        const brightHSL = bright.hsl();
+        const brightOklch = bright.oklch();
 
-        if (brightHSL[2] > 0.5) brightHSL[2] = 0.5;
+        if (brightOklch[0] > 0.6) brightOklch[0] = 0.6;
 
-        setColor(baseColor.hsl());
-        brightColor.current = brightHSL;
+        setColor(baseColor.oklch());
+        brightColor.current = brightOklch;
 
         // compute adaptive secondary text color
         // main text is white — so pick a soft, readable secondary tone
-        authorColor.current = chroma
-          .mix("white", baseColor, 0.4)
-          .desaturate(2)
-          .hex();
+        authorColor.current = getOklchString(
+          chroma.mix("white", baseColor, 0.4).desaturate(2).oklch(),
+        );
 
-        const textBg = chroma.hsl(...brightHSL);
-        dateColor.current = chroma
-          .mix("white", textBg, 0.4)
-          .desaturate(2)
-          .hex();
+        const textBg = chroma.oklch(...brightOklch);
+        dateColor.current = getOklchString(
+          chroma.mix("white", textBg, 0.4).desaturate(2).oklch(),
+        );
       } catch (err) {
         console.error("Color extraction failed:", err);
-        setColor([0, 0, 0.3]);
-        brightColor.current = [0, 0, 0.4];
-        authorColor.current = "#D5D5D5";
-        dateColor.current = "#A7AAAF";
+        setColor([0.36, 0.03, 255]);
+        brightColor.current = [0.5, 0.03, 255];
+        authorColor.current = "oklch(0.873 0 0)";
+        dateColor.current = "oklch(0.7371 0.0079 260.73)";
         return;
       }
     };
@@ -174,12 +171,12 @@ export default function WatchReview({
           </div>
 
           {/* review content part */}
-          <div style={color ? { background: getHslString(color) } : {}}>
+          <div style={color ? { background: getOklchString(color) } : {}}>
             <div
               className="rounded-lg px-4 py-3 text-white sm:px-5 sm:py-4 lg:px-6 lg:py-5"
               style={
                 brightColor.current
-                  ? { background: getHslString(brightColor.current) }
+                  ? { background: getOklchString(brightColor.current) }
                   : {}
               }
             >
@@ -200,10 +197,12 @@ export default function WatchReview({
                 </div>
               </div>
 
-              {!!watch.payload.review && (
+              {!!watch.payload.review ? (
                 <div className="dark mt-2">
                   <ContentHTML id={watch.payload.review} />
                 </div>
+              ) : (
+                <div className="h-2 w-full"></div>
               )}
             </div>
           </div>
@@ -258,11 +257,11 @@ function dateString(
   }
 }
 
-function getHslString(color: [number, number, number] | null) {
+function getOklchString(color: [number, number, number] | null) {
   if (!color) return "";
 
-  const [h, s, l] = color;
-  return `hsl(${h}, ${s * 100}%, ${l * 100}%)`;
+  const [l, c, h] = color;
+  return `oklch(${l} ${c} ${h || 0})`;
 }
 
 function getGradientStyle(
@@ -270,16 +269,16 @@ function getGradientStyle(
 ): React.CSSProperties {
   if (!color) return {};
 
-  const [h, s, l] = color;
+  const [l, c, h] = color;
 
   return {
     background: `linear-gradient(
       to top,
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 1),
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.9) 20%,
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.7) 30%,
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0.5) 40%,
-      hsla(${h}, ${s * 100}%, ${l * 100}%, 0) 65%
+      oklch(${l} ${c} ${h || 0}),
+      oklch(${l} ${c} ${h || 0} / 0.9) 20%,
+      oklch(${l} ${c} ${h || 0} / 0.7) 30%,
+      oklch(${l} ${c} ${h || 0} / 0.5) 40%,
+      oklch(${l} ${c} ${h || 0} / 0) 65%
     )`,
   };
 }

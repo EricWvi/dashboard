@@ -1,3 +1,4 @@
+import { useUserContext } from "@/user-provider";
 import {
   Calendar,
   Description,
@@ -12,8 +13,23 @@ import {
   useGetEntriesCount,
   useGetWordsCount,
 } from "@/hooks/use-entries";
+import { UserLangEnum } from "@/hooks/use-user";
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    entries: "今年手记篇数",
+    words: "字数",
+    days: "写手记天数",
+  },
+  [UserLangEnum.ENUS]: {
+    entries: "Entries This Year",
+    words: "Words Written",
+    days: "Days Journaled",
+  },
+};
 
 const Stats = () => {
+  const { language } = useUserContext();
   const { data: entryCount } = useGetEntriesCount(new Date().getFullYear());
   const { data: wordCount } = useGetWordsCount();
   const { data: entryDates } = useGetEntryDate();
@@ -26,7 +42,7 @@ const Stats = () => {
           </Icon>
           <Number>{entryCount ?? 0}</Number>
         </div>
-        <Description>Entries This Year</Description>
+        <Description>{i18nText[language].entries}</Description>
       </div>
 
       <VerticalBar className="h-6 shrink-0" />
@@ -38,7 +54,7 @@ const Stats = () => {
           </Icon>
           <Number>{wordCount ?? 0}</Number>
         </div>
-        <Description>Words Written</Description>
+        <Description>{i18nText[language].words}</Description>
       </div>
 
       <VerticalBar className="h-6 shrink-0" />
@@ -50,7 +66,7 @@ const Stats = () => {
           </Icon>
           <Number>{entryDates?.length ?? 0}</Number>
         </div>
-        <Description>Days Journaled</Description>
+        <Description>{i18nText[language].days}</Description>
       </div>
     </div>
   );
