@@ -45,6 +45,7 @@
   --color-entry-card: var(--entry-card);
   --color-more-arrow: var(--more-arrow);
   --color-tool-bar: var(--tool-bar);
+  --color-search-button-text: var(--search-button-text);
 }
 
 :root {
@@ -91,6 +92,7 @@
   --entry-card: oklch(1 0 0);
   --tool-bar: oklch(1 0 0 / 72%);
   --more-arrow: oklch(0.6133 0 0);
+  --search-button-text: rgb(77, 75, 189);
 
   --more-arrow-blur-start: oklch(1 0 0);
   --more-arrow-blur-end: oklch(1 0 0 / 60%);
@@ -142,6 +144,7 @@
     --entry-card: oklch(57.073% 0.01542 314.532 / 0.1);
     --tool-bar: oklch(0.1 0 0 / 60%);
     --more-arrow: oklch(0.7089 0.0189 311.51);
+    --search-button-text: rgb(94, 83, 211);
 
     --more-arrow-blur-start: oklch(0.2123 0.018 300.11);
     --more-arrow-blur-end: oklch(0.2123 0.018 300.11 / 60%);

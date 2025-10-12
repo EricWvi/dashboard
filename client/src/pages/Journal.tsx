@@ -16,6 +16,7 @@ import { useTTContext } from "@/components/editor";
 import { useCloseActionContext } from "@/close-action-provider";
 import type { Editor } from "@tiptap/react";
 import { countWords } from "alfaaz";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -68,7 +69,7 @@ const buildWrapper = (
 };
 
 export default function Journal() {
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const isMobile = useIsMobile();
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
@@ -152,14 +153,26 @@ export default function Journal() {
     }
   };
 
-  const onSearchToggle = () => {
-    const queryWord = prompt("Enter search keyword:");
+  const onSearch = (queryWord: string) => {
     if (queryWord !== null) {
       const trimmed = queryWord.trim();
       if (trimmed.length > 0) {
-        conditionRef.current = [{ operator: "contains", value: trimmed }];
+        const existingContainsIndex = conditionRef.current.findIndex(
+          (condition) => condition.operator === "contains",
+        );
+
+        if (existingContainsIndex !== -1) {
+          conditionRef.current[existingContainsIndex] = {
+            operator: "contains",
+            value: trimmed,
+          };
+        } else {
+          conditionRef.current.push({ operator: "contains", value: trimmed });
+        }
       } else {
-        conditionRef.current = [];
+        conditionRef.current = conditionRef.current.filter(
+          (condition) => condition.operator !== "contains",
+        );
       }
       scrollToTop();
       refresh();
@@ -167,83 +180,79 @@ export default function Journal() {
   };
 
   return (
-    <div className="fixed inset-0">
-      <div
-        id="scrollableDiv"
-        ref={scrollableDivRef}
-        className="journal-bg scrollbar-hide h-full overflow-y-auto"
-      >
-        <Header
-          onSearchToggle={onSearchToggle}
-          onCalendarToggle={() => setCalendarOpen(!calendarOpen)}
-        />
-        <main className="w-full max-w-4xl">
-          {/* Entries List */}
-          <InfiniteScroll
-            scrollableTarget="scrollableDiv"
-            className="px-5 sm:px-7 lg:px-9"
-            dataLength={entries.length}
-            next={() => fetchMoreData(page)}
-            hasMore={hasMore}
-            loader={
-              <div
-                className={`${entries.length === 0 ? "mt-12" : "mt-4"} space-y-4`}
-              >
-                {[...Array(4)].map((_, i) => (
+    <>
+      <div className="journal-bg fixed inset-0 z-1"></div>
+      <div className="fixed inset-0 z-2">
+        <div className="mx-auto h-full max-w-3xl">
+          <div
+            id="scrollableDiv"
+            ref={scrollableDivRef}
+            className="scrollbar-hide h-full overflow-y-auto"
+          >
+            {isMobile && <Header onSearch={onSearch} />}
+            <main className="w-full max-w-4xl">
+              {/* Entries List */}
+              <InfiniteScroll
+                scrollableTarget="scrollableDiv"
+                className="px-5 sm:px-7 lg:px-9"
+                dataLength={entries.length}
+                next={() => fetchMoreData(page)}
+                hasMore={hasMore}
+                loader={
                   <div
-                    key={i}
-                    className="entry-card-shadow bg-entry-card animate-pulse rounded-lg p-5"
+                    className={`${entries.length === 0 ? "mt-12" : "mt-4"} space-y-4`}
                   >
-                    <div className="mb-4 h-6 rounded bg-gray-200 dark:bg-gray-800"></div>
-                    <div className="mb-2 h-4 rounded bg-gray-200 dark:bg-gray-800"></div>
-                    <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-800"></div>
+                    {[...Array(4)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="entry-card-shadow bg-entry-card animate-pulse rounded-lg p-5"
+                      >
+                        <div className="mb-4 h-6 rounded bg-gray-200 dark:bg-gray-800"></div>
+                        <div className="mb-2 h-4 rounded bg-gray-200 dark:bg-gray-800"></div>
+                        <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-800"></div>
+                      </div>
+                    ))}
                   </div>
+                }
+                endMessage={
+                  <div className="py-12 text-center text-lg text-[hsl(215,4%,56%)]">
+                    {entries.length === 0 ? (
+                      <p className="mt-30">{"No entries yet."}</p>
+                    ) : (
+                      <p>{"- end -"}</p>
+                    )}
+                  </div>
+                }
+              >
+                {/* Entry Cards */}
+                {entries.map((e) => (
+                  <EntryCard
+                    key={e.entry.id}
+                    meta={e.entry}
+                    showYear={e.showYear}
+                    showMonth={e.showMonth}
+                    showToday={e.showToday}
+                    showYesterday={e.showYesterday}
+                  />
                 ))}
-              </div>
-            }
-            endMessage={
-              <div className="py-12 text-center text-lg text-[hsl(215,4%,56%)]">
-                {entries.length === 0 ? (
-                  <p className="mt-30">{"No entries yet."}</p>
-                ) : (
-                  <p>{"- end -"}</p>
-                )}
-              </div>
-            }
-          >
-            {/* Entry Cards */}
-            {entries.map((e) => (
-              <EntryCard
-                key={e.entry.id}
-                meta={e.entry}
-                showYear={e.showYear}
-                showMonth={e.showMonth}
-                showToday={e.showToday}
-                showYesterday={e.showYesterday}
-              />
-            ))}
-          </InfiniteScroll>
-        </main>
+              </InfiniteScroll>
+            </main>
 
-        {/* Floating Action Button */}
-        <div className="fixed right-6 bottom-6 z-40">
-          <Button
-            size="lg"
-            className="h-14 w-14 rounded-full bg-[hsl(207,90%,54%)] shadow-lg transition-all duration-200 hover:bg-[hsl(207,90%,48%)] hover:shadow-xl"
-            onClick={handleCreateEntry}
-          >
-            <Plus className="text-xl" />
-          </Button>
+            {/* Floating Action Button */}
+            {isMobile && (
+              <div className="fixed right-6 bottom-6 z-40">
+                <Button
+                  size="lg"
+                  className="h-14 w-14 rounded-full bg-[hsl(207,90%,54%)] shadow-lg transition-all duration-200 hover:bg-[hsl(207,90%,48%)] hover:shadow-xl"
+                  onClick={handleCreateEntry}
+                >
+                  <Plus className="text-xl" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Overlays and Modals */}
-        {/* <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} /> */}
-        {/* <CalendarOverlay
-          open={calendarOpen}
-          onClose={() => setCalendarOpen(false)}
-          entries={entries}
-        /> */}
       </div>
-    </div>
+    </>
   );
 }

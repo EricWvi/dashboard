@@ -186,7 +186,7 @@ export default function EntryCard({
       {/* entry card */}
       <div
         ref={entryCardRef}
-        className="entry-card-shadow bg-entry-card mb-5 flex flex-col overflow-hidden rounded-xl transition-shadow hover:shadow-md"
+        className="entry-card-shadow bg-entry-card mb-5 flex flex-col overflow-hidden rounded-xl"
       >
         {/* TODO picture loading css animation */}
         <div className="my-1 px-1">
