@@ -171,7 +171,9 @@ export const ImageList = ({ items, onItemClick }: Props) => {
   }
   return (
     <div className="aspect-[2/1] w-full overflow-hidden rounded-lg">
-      <div className="flex h-full w-full gap-[3px]">{imgList}</div>
+      <div className="flex h-full w-full transform-gpu gap-[3px]">
+        {imgList}
+      </div>
     </div>
   );
 };
