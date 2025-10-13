@@ -26,7 +26,8 @@ export default function WatchReview({
   watch: Watch;
   dropped?: boolean;
 }) {
-  const { user, language } = useUserContext();
+  const { user } = useUserContext();
+  const language = UserLangEnum.ZHCN;
   const imgRef = useRef<HTMLImageElement | null>(null);
   const reviewCardRef = useRef<HTMLDivElement | null>(null);
   const [color, setColor] = useState<[number, number, number] | null>(null);

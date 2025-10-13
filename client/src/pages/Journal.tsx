@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/journal/header";
 import EntryCard from "@/components/journal/entry-card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { X } from "lucide-react";
 import {
   createEntry,
   EntryMeta,
@@ -16,8 +15,9 @@ import { useTTContext } from "@/components/editor";
 import { useCloseActionContext } from "@/close-action-provider";
 import type { Editor } from "@tiptap/react";
 import { countWords } from "alfaaz";
-import { useIsMobile } from "@/hooks/use-mobile";
-import EntryCalendar from "@/components/journal/entry-calendar";
+import { UserLangEnum } from "@/hooks/use-user";
+import { useUserContext } from "@/user-provider";
+import { Plus, TextQuote } from "@/components/journal/icon";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -69,8 +69,49 @@ const buildWrapper = (
   return [...currWrappers, ...newWrappers];
 };
 
+// Conditions Component
+interface ConditionsProps {
+  conditions: QueryCondition[];
+  onRemove: (index: number) => void;
+}
+
+function Conditions({ conditions, onRemove }: ConditionsProps) {
+  const { language } = useUserContext();
+  if (conditions.length === 0) return null;
+
+  return (
+    <div className="mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-wrap items-center gap-2 sm:mb-4">
+        <span className="text-stats-font text-sm font-medium md:mr-1 md:pt-1">
+          {i18nText[language].filters}
+        </span>
+        {conditions.map((condition, index) => (
+          <div
+            key={index}
+            className="group entry-filter-shadow bg-entry-card flex items-center gap-1 rounded-full py-1.5 pr-3 pl-4"
+          >
+            <span className="text-foreground flex items-center gap-1 text-sm font-medium">
+              <div className="size-3">
+                <TextQuote />
+              </div>
+
+              {condition.value}
+            </span>
+            <button
+              onClick={() => onRemove(index)}
+              className="text-muted-foreground hover:text-foreground flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+              aria-label="Remove filter"
+            >
+              <X className="h-3.5 w-3.5 cursor-pointer" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Journal() {
-  const isMobile = useIsMobile();
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
@@ -184,82 +225,97 @@ export default function Journal() {
     <>
       <div className="journal-bg fixed inset-0 z-1"></div>
       <div className="fixed inset-0 z-2">
-        <div className="mx-auto h-full max-w-3xl">
+        <div className="h-full">
           <div
             id="scrollableDiv"
             ref={scrollableDivRef}
-            className="scrollbar-hide h-full overflow-y-auto"
+            className="h-full overflow-y-auto"
           >
-            {isMobile && <Header onSearch={onSearch} />}
-            <main className="w-full max-w-4xl">
-              {!isMobile && (
-                <div className="mt-8 px-5 py-2 sm:px-7 lg:px-9">
-                  <EntryCalendar />
-                </div>
-              )}
+            <div className="mx-auto max-w-3xl">
+              <Header onSearch={onSearch} />
 
-              {/* Entries List */}
-              <InfiniteScroll
-                scrollableTarget="scrollableDiv"
-                className="px-5 sm:px-7 lg:px-9"
-                dataLength={entries.length}
-                next={() => fetchMoreData(page)}
-                hasMore={hasMore}
-                loader={
-                  <div
-                    className={`${entries.length === 0 ? "mt-12" : "mt-4"} space-y-4`}
-                  >
-                    {[...Array(4)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="entry-card-shadow bg-entry-card animate-pulse rounded-lg p-5"
-                      >
-                        <div className="mb-4 h-6 rounded bg-gray-200 dark:bg-gray-800"></div>
-                        <div className="mb-2 h-4 rounded bg-gray-200 dark:bg-gray-800"></div>
-                        <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-800"></div>
-                      </div>
-                    ))}
-                  </div>
-                }
-                endMessage={
-                  <div className="py-12 text-center text-lg text-[hsl(215,4%,56%)]">
-                    {entries.length === 0 ? (
-                      <p className="mt-30">{"No entries yet."}</p>
-                    ) : (
-                      <p>{"- end -"}</p>
-                    )}
-                  </div>
-                }
-              >
-                {/* Entry Cards */}
-                {entries.map((e) => (
-                  <EntryCard
-                    key={e.entry.id}
-                    meta={e.entry}
-                    showYear={e.showYear}
-                    showMonth={e.showMonth}
-                    showToday={e.showToday}
-                    showYesterday={e.showYesterday}
-                  />
-                ))}
-              </InfiniteScroll>
-            </main>
+              {/* Conditions */}
+              <Conditions
+                conditions={conditionRef.current}
+                onRemove={(index) => {
+                  conditionRef.current.splice(index, 1);
+                  refresh();
+                }}
+              />
 
-            {/* Floating Action Button */}
-            {isMobile && (
-              <div className="fixed right-6 bottom-6 z-40">
-                <Button
-                  size="lg"
-                  className="h-14 w-14 rounded-full bg-[hsl(207,90%,54%)] shadow-lg transition-all duration-200 hover:bg-[hsl(207,90%,48%)] hover:shadow-xl"
+              <main className="w-full">
+                {/* Entries List */}
+                <InfiniteScroll
+                  scrollableTarget="scrollableDiv"
+                  className="px-4 sm:px-6 lg:px-8"
+                  dataLength={entries.length}
+                  next={() => fetchMoreData(page)}
+                  hasMore={hasMore}
+                  loader={
+                    <div
+                      className={`${entries.length === 0 ? "mt-12" : "mt-4"} space-y-4`}
+                    >
+                      {[...Array(4)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="entry-card-shadow bg-entry-card animate-pulse rounded-lg p-5"
+                        >
+                          <div className="mb-4 h-6 rounded bg-gray-200 dark:bg-gray-800"></div>
+                          <div className="mb-2 h-4 rounded bg-gray-200 dark:bg-gray-800"></div>
+                          <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-800"></div>
+                        </div>
+                      ))}
+                    </div>
+                  }
+                  endMessage={
+                    <div className="py-12 text-center text-lg text-[hsl(215,4%,56%)]">
+                      {entries.length === 0 ? (
+                        <p className="mt-30">{"No entries yet."}</p>
+                      ) : (
+                        <p>{"- end -"}</p>
+                      )}
+                    </div>
+                  }
+                >
+                  {/* Entry Cards */}
+                  {entries.map((e) => (
+                    <EntryCard
+                      key={e.entry.id}
+                      meta={e.entry}
+                      showYear={e.showYear}
+                      showMonth={e.showMonth}
+                      showToday={e.showToday}
+                      showYesterday={e.showYesterday}
+                    />
+                  ))}
+                </InfiniteScroll>
+              </main>
+
+              {/* Add Entry Button */}
+              <div className="floating-backdrop pointer-events-none fixed right-0 bottom-0 left-0 z-20 h-36 lg:hidden"></div>
+              <div className="fixed right-1/2 bottom-6 z-40 translate-x-1/2 lg:right-6 lg:translate-x-0">
+                <button
+                  className="bg-add-entry-button add-entry-button-shadow flex size-18 items-center justify-center rounded-full"
                   onClick={handleCreateEntry}
                 >
-                  <Plus className="text-xl" />
-                </Button>
+                  <div className="text-add-entry-plus size-[22px]">
+                    <Plus />
+                  </div>
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
     </>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    filters: "过滤项：",
+  },
+  [UserLangEnum.ENUS]: {
+    filters: "Filters:",
+  },
+};

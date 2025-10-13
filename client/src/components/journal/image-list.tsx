@@ -157,10 +157,12 @@ export const ImageList = ({ items, onItemClick }: Props) => {
                 className="image-overlay absolute inset-0 z-20 flex items-center justify-center rounded-md bg-black/20"
                 onClick={() => onItemClick?.(4)}
               >
-                <span className="mr-[1px] text-2xl text-[rgb(156,157,165)]">
+                <span className="mr-[1px] text-2xl text-[rgb(156,157,165)] sm:text-3xl md:mr-[2px] md:text-4xl">
                   +
                 </span>
-                <span className="text-xl text-white">{items.length - 4}</span>
+                <span className="text-xl text-white sm:text-2xl md:text-3xl">
+                  {items.length - 4}
+                </span>
               </div>
               {mediaBlock(items[4], 4, onItemClick)}
             </div>

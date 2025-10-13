@@ -210,22 +210,31 @@ export default function EntryCard({
         </div>
 
         {/* text content */}
-        <div
-          ref={textCardRef}
-          className={`relative mx-4 my-3 overflow-hidden transition-all duration-500 ease-in-out`}
-          onClick={() => setExpanded(!expanded)}
-        >
+        <div className="relative mx-4 my-3">
           <div
             className={`${hasMore && !expanded ? "opacity-100 delay-500" : "opacity-0"} absolute right-0 bottom-[1px] flex h-5 w-5 items-center justify-center transition-opacity duration-100`}
           >
-            <div className="more-arrow-blur relative">
-              <Icon className="relative z-10 h-[14px] w-[14px]">
-                <MoreArrow />
-              </Icon>
-            </div>
+            <Icon className="relative z-10 h-[14px] w-[14px]">
+              <MoreArrow />
+            </Icon>
           </div>
           <div
-            className="text-foreground leading-6 font-normal"
+            ref={textCardRef}
+            onClick={() => {
+              if (expanded) {
+                setTimeout(() => {
+                  textCardRef.current!.className += " entry-card-text-mask";
+                }, 500);
+              } else {
+                textCardRef.current!.className =
+                  textCardRef.current!.className.replace(
+                    "entry-card-text-mask",
+                    "",
+                  );
+              }
+              setExpanded(!expanded);
+            }}
+            className={`${hasMore ? "entry-card-text-mask" : ""} text-foreground overflow-hidden leading-6 font-normal transition-[max-height] duration-500 ease-in-out`}
             dangerouslySetInnerHTML={{
               __html: textContent
                 ? generateHTML(textContent, extensionSetup)

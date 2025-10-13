@@ -164,6 +164,121 @@ export function DropdownMenu({
   );
 }
 
+const toolbarMenuItems = [
+  {
+    type: "item",
+    label: "edit",
+    icon: (
+      <div className="h-4 w-5">
+        <EditPen />
+      </div>
+    ),
+    height: 44,
+  },
+  {
+    type: "divider",
+    height: 1,
+  },
+  {
+    type: "item",
+    label: "bookmark",
+    icon: (
+      <div className="h-4 w-5">
+        <Bookmark />
+      </div>
+    ),
+    height: 44,
+  },
+  {
+    type: "divider",
+    height: 1,
+  },
+  {
+    type: "item",
+    label: "share",
+    icon: (
+      <div className="size-5">
+        <Share />
+      </div>
+    ),
+    height: 44,
+  },
+  {
+    type: "full-divider",
+    height: 8,
+  },
+  {
+    type: "item",
+    label: "delete",
+    icon: (
+      <div className="size-5">
+        <Delete />
+      </div>
+    ),
+    height: 44,
+  },
+];
+
+export const ToolbarMenuHeight = toolbarMenuItems.reduce(
+  (acc, item) => acc + item.height,
+  0,
+);
+
+export function ToolbarMenu({
+  position,
+  onClose,
+}: {
+  position: { top: number; left: number };
+  onClose: () => void;
+}) {
+  const { language } = useUserContext();
+
+  return (
+    <>
+      <div className="dropdown-menu-overlay" onClick={onClose} />
+      <div
+        className="dropdown-menu"
+        style={{
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+        }}
+      >
+        {toolbarMenuItems.map((item, index) => {
+          if (item.type === "divider") {
+            return <div key={index} className="dropdown-menu-divider"></div>;
+          } else if (item.type === "full-divider") {
+            return (
+              <div key={index} className="dropdown-menu-full-divider"></div>
+            );
+          } else if (item.type === "item") {
+            return (
+              <div key={index} className="dropdown-menu-item text-foreground">
+                <span>
+                  {
+                    i18nText[language][
+                      item.label as keyof (typeof i18nText)[typeof language]
+                    ]
+                  }
+                </span>
+                <span className="icon">
+                  {item.label === "bookmark" ? (
+                    <div className="h-4 w-5">
+                      <Unbookmark />
+                    </div>
+                  ) : (
+                    item.icon
+                  )}
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })}
+      </div>
+    </>
+  );
+}
+
 const i18nText = {
   [UserLangEnum.ZHCN]: {
     edit: "编辑",

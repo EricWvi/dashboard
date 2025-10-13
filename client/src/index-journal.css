@@ -46,6 +46,8 @@
   --color-more-arrow: var(--more-arrow);
   --color-tool-bar: var(--tool-bar);
   --color-search-button-text: var(--search-button-text);
+  --color-add-entry-button: var(--add-entry-button);
+  --color-add-entry-plus: var(--add-entry-plus);
 }
 
 :root {
@@ -94,9 +96,9 @@
   --more-arrow: oklch(0.6133 0 0);
   --search-button-text: rgb(77, 75, 189);
 
-  --more-arrow-blur-start: oklch(1 0 0);
-  --more-arrow-blur-end: oklch(1 0 0 / 60%);
   --toolbar-border: rgba(0, 0, 0, 0.16);
+  --add-entry-button: oklch(1 0 0);
+  --add-entry-plus: oklch(0.5557 0.2034 277.81);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -146,9 +148,9 @@
     --more-arrow: oklch(0.7089 0.0189 311.51);
     --search-button-text: rgb(94, 83, 211);
 
-    --more-arrow-blur-start: oklch(0.2123 0.018 300.11);
-    --more-arrow-blur-end: oklch(0.2123 0.018 300.11 / 60%);
     --toolbar-border: rgba(255, 255, 255, 0.1);
+    --add-entry-button: oklch(0.5557 0.2034 277.81);
+    --add-entry-plus: oklch(1 0 0);
   }
 }
 
@@ -193,8 +195,111 @@
     );
   }
 
+  .floating-backdrop {
+    /* Apply the blur to the entire element */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
+    /* Semi-transparent background */
+    background: oklch(0.9525 0.0102 325.66 / 0.6);
+
+    /* KEY: Mask that fades from opaque to transparent */
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.1) 10%,
+      rgba(0, 0, 0, 0.7) 50%,
+      rgba(0, 0, 0, 0.9) 70%,
+      rgba(0, 0, 0, 0.95) 80%,
+      rgba(0, 0, 0, 1) 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.1) 10%,
+      rgba(0, 0, 0, 0.7) 50%,
+      rgba(0, 0, 0, 0.9) 70%,
+      rgba(0, 0, 0, 0.95) 80%,
+      rgba(0, 0, 0, 1) 100%
+    );
+
+    @media (prefers-color-scheme: dark) {
+      background: oklch(29.255% 0.05316 318.178 / 0.6);
+    }
+  }
+
+  .add-entry-button-shadow {
+    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.2);
+  }
+
   .entry-card-shadow {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .entry-filter-shadow {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .entry-filter-shadow:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .add-entry-button-shadow {
+      box-shadow: 0 8px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .entry-card-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .entry-filter-shadow {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .entry-filter-shadow:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  .entry-card-text-mask {
+    /* Show everything except the last line fully */
+    -webkit-mask:
+      linear-gradient(
+        to bottom,
+        black calc(100% - 1.5em),
+        transparent calc(100% - 1.5em)
+      ),
+      linear-gradient(to right, black 80%, transparent 95%);
+    mask:
+      linear-gradient(
+        to bottom,
+        black calc(100% - 1.5em),
+        transparent calc(100% - 1.5em)
+      ),
+      linear-gradient(to right, black 80%, transparent 95%);
+
+    /* -webkit-mask-composite: source-over; */
+    /* mask-composite: add; */
+
+    -webkit-mask-size:
+      100% 100%,
+      100% 1.5em;
+    mask-size:
+      100% 100%,
+      100% 1.5em;
+
+    -webkit-mask-position:
+      0 0,
+      0 100%;
+    mask-position:
+      0 0,
+      0 100%;
+
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
   }
 
   .apple-backdrop {
@@ -205,22 +310,6 @@
   .image-overlay {
     -webkit-backdrop-filter: saturate(180%) blur(5px);
     backdrop-filter: saturate(180%) blur(5px);
-  }
-
-  .more-arrow-blur::before {
-    content: "";
-    position: absolute;
-    width: 36px;
-    height: 24px;
-    right: 0;
-    bottom: -4px;
-    background: linear-gradient(
-      270deg,
-      var(--more-arrow-blur-start) 50%,
-      var(--more-arrow-blur-end) 100%
-    );
-    filter: blur(2px);
-    z-index: 5;
   }
 
   .toolbar-after::after {
