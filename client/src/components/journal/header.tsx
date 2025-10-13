@@ -2,8 +2,8 @@ import { UserLangEnum } from "@/hooks/use-user";
 import { Icon, Search, More } from "./icon";
 import Stats from "./stats";
 import { useEffect, useState } from "react";
-import { ActivityCalendar } from "react-activity-calendar";
 import { useUserContext } from "@/user-provider";
+import EntryCalendar from "./entry-calendar";
 
 interface HeaderProps {
   onSearch: (query: string) => void;
@@ -12,6 +12,7 @@ interface HeaderProps {
 export default function Header(props: HeaderProps) {
   const { language } = useUserContext();
   const [showSearchInput, setShowSearchInput] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const onSearchToggle = () => {
     setShowSearchInput(true);
@@ -51,9 +52,15 @@ export default function Header(props: HeaderProps) {
           </div>
         </div>
 
-        <Stats />
+        <div onClick={() => setShowCalendar(!showCalendar)}>
+          <Stats />
+        </div>
 
-        {/* <ActivityCalendar data={data} hideColorLegend hideTotalCount /> */}
+        {showCalendar && (
+          <div className="mt-6">
+            <EntryCalendar />
+          </div>
+        )}
       </div>
 
       {showSearchInput && (

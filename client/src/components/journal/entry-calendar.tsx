@@ -114,7 +114,7 @@ export default function EntryCalendar() {
           dark: ["hsl(0, 0%, 12%)", "rebeccapurple"],
         }}
         eventHandlers={{
-          onClick: (event) => (activity) => {
+          onClick: () => (activity) => {
             alert(JSON.stringify(activity));
           },
         }}

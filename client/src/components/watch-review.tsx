@@ -189,10 +189,16 @@ export default function WatchReview({
                 <div className="flex flex-col">
                   <div className="text-lg font-medium">{user.username}</div>
                   <div
-                    className="text-sm"
+                    className="text-sm text-nowrap"
                     style={{ color: dateColor.current ?? "#A7AAAF" }}
                   >
-                    {dateString(watch.type, watch.createdAt, language, dropped)}
+                    {dateString(
+                      watch.type,
+                      watch.createdAt,
+                      watch.payload.epoch ?? 1,
+                      language,
+                      dropped,
+                    )}
                   </div>
                 </div>
               </div>
@@ -215,9 +221,19 @@ export default function WatchReview({
 function dateString(
   type: WatchType,
   date: Date,
+  epoch: number,
   language: UserLang,
   dropped: boolean = false,
 ) {
+  let epochStr = "";
+  if (epoch > 1) {
+    if (language === UserLangEnum.ZHCN) {
+      epochStr = `（${numberToChinese(epoch)}刷）`;
+    } else if (language === UserLangEnum.ENUS) {
+      epochStr = epoch === 2 ? "2nd " : epoch === 3 ? "3rd " : epoch + "th ";
+    }
+  }
+
   let action = "";
   if (language === UserLangEnum.ZHCN) {
     if (dropped) {
@@ -243,10 +259,13 @@ function dateString(
         year: "numeric",
         month: "short",
         day: "numeric",
-      }) + action
+      }) +
+      action +
+      epochStr
     );
   } else if (language === UserLangEnum.ENUS) {
     return (
+      epochStr +
       action +
       new Date(date).toLocaleDateString("en-US", {
         year: "numeric",
@@ -281,4 +300,24 @@ function getGradientStyle(
       oklch(${l} ${c} ${h || 0} / 0) 65%
     )`,
   };
+}
+
+function numberToChinese(num: number): string {
+  const digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+
+  if (num < 1 || num > 99) return "超出范围"; // out of range
+  if (num < 10) return digits[num]; // single digit
+
+  const tens = Math.floor(num / 10);
+  const ones = num % 10;
+
+  if (num === 10) return "十"; // special case for 10
+
+  if (tens === 1) {
+    // 11–19
+    return "十" + (ones ? digits[ones] : "");
+  } else {
+    // 20–99
+    return digits[tens] + "十" + (ones ? digits[ones] : "");
+  }
 }
