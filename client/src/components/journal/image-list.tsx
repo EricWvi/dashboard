@@ -171,6 +171,9 @@ export const ImageList = ({ items, onItemClick }: Props) => {
   }
   return (
     <div className="aspect-[2/1] w-full overflow-hidden rounded-lg">
+      {/* transform-gpu: In Chrome (especially on Android), that clipping context cause visual side effects 
+           such as: slight darkening (dimming) in Android’s multitask app preview 
+                    emoji blurring */}
       <div className="flex h-full w-full transform-gpu gap-[3px]">
         {imgList}
       </div>

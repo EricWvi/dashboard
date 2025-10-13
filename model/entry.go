@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -96,6 +97,50 @@ func CountEntries(db *gorm.DB, where map[string]any) (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+type CurrentYearCount struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+	Level int    `json:"level"`
+}
+
+func CountCurrentYear(db *gorm.DB, where map[string]any) ([]CurrentYearCount, error) {
+	var results []struct {
+		Date  string
+		Count int
+	}
+
+	currentYear := time.Now().Year()
+	startDate := fmt.Sprintf("%d-01-01", currentYear)
+
+	query := db.Model(&Entry{}).
+		Select("TO_CHAR(DATE(created_at), 'YYYY-MM-DD') AS date, COUNT(*) AS count").
+		Where("created_at >= ?", startDate)
+
+	if where[CreatorId] != nil {
+		query = query.Where(CreatorId+" = ?", where[CreatorId])
+	}
+
+	if err := query.Group("DATE(created_at)").Order("date").Scan(&results).Error; err != nil {
+		return nil, err
+	}
+
+	// Convert to CurrentYearCount with level calculation
+	var counts []CurrentYearCount
+	for _, result := range results {
+		level := result.Count
+		if level > 4 {
+			level = 4
+		}
+		counts = append(counts, CurrentYearCount{
+			Date:  result.Date,
+			Count: result.Count,
+			Level: level,
+		})
+	}
+
+	return counts, nil
 }
 
 func FindEntries(db *gorm.DB, where WhereExpr, page uint) ([]*Entry, bool, error) {

@@ -9,10 +9,11 @@ import (
 )
 
 func (b Base) GetEntriesCount(c *gin.Context, req *GetEntriesCountRequest) *GetEntriesCountResponse {
-	count, err := model.CountEntries(config.ContextDB(c), gin.H{
-		model.CreatorId: middleware.GetUserId(c),
-		"year":          req.Year,
-	})
+	m := model.WhereMap{}
+	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq("year", req.Year)
+
+	count, err := model.CountEntries(config.ContextDB(c), m)
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil

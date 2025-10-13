@@ -9,8 +9,8 @@ import {
   VerticalBar,
 } from "./icon";
 import {
+  useGetCurrentYear,
   useGetEntryDate,
-  useGetEntriesCount,
   useGetWordsCount,
 } from "@/hooks/use-entries";
 import { UserLangEnum } from "@/hooks/use-user";
@@ -30,7 +30,7 @@ const i18nText = {
 
 const Stats = () => {
   const { language } = useUserContext();
-  const { data: entryCount } = useGetEntriesCount(new Date().getFullYear());
+  const { data: currentYearData } = useGetCurrentYear();
   const { data: wordCount } = useGetWordsCount();
   const { data: entryDates } = useGetEntryDate();
   return (
@@ -40,7 +40,7 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Entries />
           </Icon>
-          <Number>{entryCount ?? 0}</Number>
+          <Number>{currentYearData?.count ?? 0}</Number>
         </div>
         <Description>{i18nText[language].entries}</Description>
       </div>

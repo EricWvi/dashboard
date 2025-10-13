@@ -11,6 +11,12 @@ export type Entry = {
   rawText: string;
 };
 
+export type CurrentYearCount = {
+  date: string;
+  count: number;
+  level: number;
+};
+
 export class EntryMeta {
   id: number;
   draft: number;
@@ -172,6 +178,17 @@ export function useGetEntryDate() {
       const response = await getRequest("/api/entry?Action=GetEntryDate");
       const data = await response.json();
       return data.message.entryDates;
+    },
+  });
+}
+
+export function useGetCurrentYear() {
+  return useQuery<{ activity: CurrentYearCount[]; count: number }>({
+    queryKey: keyMetaItem("currentYear"),
+    queryFn: async () => {
+      const response = await getRequest("/api/entry?Action=GetCurrentYear");
+      const data = await response.json();
+      return data.message;
     },
   });
 }

@@ -1,7 +1,7 @@
 .video-node-view {
   display: block;
   margin: 1rem auto;
-  max-width: 500px;
+  max-width: min(500px, 100%);
 
   &.selected {
     outline: 2px solid #3b82f6;

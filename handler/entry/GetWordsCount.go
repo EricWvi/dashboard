@@ -8,9 +8,10 @@ import (
 )
 
 func (b Base) GetWordsCount(c *gin.Context, req *GetWordsCountRequest) *GetWordsCountResponse {
-	count := model.CountAllWords(config.ContextDB(c), gin.H{
-		model.CreatorId: middleware.GetUserId(c),
-	})
+	m := model.WhereMap{}
+	m.Eq(model.CreatorId, middleware.GetUserId(c))
+
+	count := model.CountAllWords(config.ContextDB(c), m)
 
 	return &GetWordsCountResponse{
 		Count: count,

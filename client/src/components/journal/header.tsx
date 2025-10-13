@@ -2,6 +2,7 @@ import { UserLangEnum } from "@/hooks/use-user";
 import { Icon, Search, More } from "./icon";
 import Stats from "./stats";
 import { useEffect, useState } from "react";
+import { ActivityCalendar } from "react-activity-calendar";
 import { useUserContext } from "@/user-provider";
 
 interface HeaderProps {
@@ -51,6 +52,8 @@ export default function Header(props: HeaderProps) {
         </div>
 
         <Stats />
+
+        {/* <ActivityCalendar data={data} hideColorLegend hideTotalCount /> */}
       </div>
 
       {showSearchInput && (

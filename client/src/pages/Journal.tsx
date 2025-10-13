@@ -17,6 +17,7 @@ import { useCloseActionContext } from "@/close-action-provider";
 import type { Editor } from "@tiptap/react";
 import { countWords } from "alfaaz";
 import { useIsMobile } from "@/hooks/use-mobile";
+import EntryCalendar from "@/components/journal/entry-calendar";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -191,6 +192,12 @@ export default function Journal() {
           >
             {isMobile && <Header onSearch={onSearch} />}
             <main className="w-full max-w-4xl">
+              {!isMobile && (
+                <div className="mt-8 px-5 py-2 sm:px-7 lg:px-9">
+                  <EntryCalendar />
+                </div>
+              )}
+
               {/* Entries List */}
               <InfiniteScroll
                 scrollableTarget="scrollableDiv"

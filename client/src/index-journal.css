@@ -232,4 +232,8 @@
     height: 1px;
     background-color: var(--toolbar-border);
   }
+
+  .react-activity-calendar text {
+    font-size: 12px;
+  }
 }

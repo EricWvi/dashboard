@@ -1078,7 +1078,7 @@ export function ToWatchTableRowActions<TData>({
                 variant="outline"
                 onClick={() => handleEditEntryDialogOpen(false)}
               >
-                Cancel
+                {watchI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
@@ -1086,7 +1086,7 @@ export function ToWatchTableRowActions<TData>({
                 }}
                 disabled={!entryName.trim() || updateWatchMutation.isPending}
               >
-                Update
+                {watchI18nText[language].update}
               </Button>
             </div>
           </div>
