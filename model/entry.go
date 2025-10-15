@@ -20,6 +20,7 @@ type EntryField struct {
 	Payload    datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	WordCount  int            `gorm:"column:word_count;not null" json:"wordCount"`
 	RawText    string         `gorm:"column:raw_text;type:text;default:'';not null" json:"rawText"`
+	Bookmark   bool           `gorm:"default:false;not null" json:"bookmark"`
 }
 
 const entryPageSize = 8
@@ -28,6 +29,7 @@ const (
 	Entry_Table      = "d_entry"
 	Entry_Visibility = "visibility"
 	Entry_RawText    = "raw_text"
+	Entry_Bookmark   = "bookmark"
 )
 
 const (
@@ -170,4 +172,16 @@ func FindEntries(db *gorm.DB, where WhereExpr, page uint) ([]*Entry, bool, error
 	}
 
 	return entries, hasMore, nil
+}
+
+func BookmarkEntry(db *gorm.DB, where map[string]any) error {
+	return db.Model(&Entry{}).
+		Where(where).
+		Update(Entry_Bookmark, true).Error
+}
+
+func UnbookmarkEntry(db *gorm.DB, where map[string]any) error {
+	return db.Model(&Entry{}).
+		Where(where).
+		Update(Entry_Bookmark, false).Error
 }

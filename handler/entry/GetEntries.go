@@ -22,6 +22,8 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 		switch cond.Operator {
 		case "contains":
 			m.ILIKE(model.Entry_RawText, "%"+cond.Value.(string)+"%")
+		case "bookmarked":
+			m.Eq(model.Entry_Bookmark, true)
 		}
 	}
 

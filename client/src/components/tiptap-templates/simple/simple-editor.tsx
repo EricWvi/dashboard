@@ -560,13 +560,19 @@ export function ContentRender({ id }: { id: number }) {
   );
 }
 
-export function ContentHTML({ id }: { id: number }) {
+export function ContentHTML({
+  id,
+  removeCache = true,
+}: {
+  id: number;
+  removeCache?: boolean;
+}) {
   const { data: draft, isFetching } = useDraft(id);
 
   // do not keep draft in cache
   useEffect(() => {
     return () => {
-      removeDraftQuery(id);
+      if (removeCache) removeDraftQuery(id);
     };
   }, []);
 

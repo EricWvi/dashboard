@@ -10,6 +10,15 @@ import {
   useUpdateEntry,
   refreshMeta,
 } from "@/hooks/use-entries";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import ShareCard from "@/components/journal/share-card";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
 import { useCloseActionContext } from "@/close-action-provider";
@@ -17,7 +26,7 @@ import type { Editor } from "@tiptap/react";
 import { countWords } from "alfaaz";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
-import { Plus, TextQuote } from "@/components/journal/icon";
+import { Plus, TextQuote, BookmarkSquare } from "@/components/journal/icon";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -75,6 +84,25 @@ interface ConditionsProps {
   onRemove: (index: number) => void;
 }
 
+const getConditionIcon = (operator: string) => {
+  switch (operator) {
+    case "contains":
+      return (
+        <div className="size-3">
+          <TextQuote />
+        </div>
+      );
+    case "bookmarked":
+      return (
+        <div className="size-3">
+          <BookmarkSquare />
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
 function Conditions({ conditions, onRemove }: ConditionsProps) {
   const { language } = useUserContext();
   if (conditions.length === 0) return null;
@@ -91,9 +119,7 @@ function Conditions({ conditions, onRemove }: ConditionsProps) {
             className="group entry-filter-shadow bg-entry-card flex items-center gap-1 rounded-full py-1.5 pr-3 pl-4"
           >
             <span className="text-foreground flex items-center gap-1 text-sm font-medium">
-              <div className="size-3">
-                <TextQuote />
-              </div>
+              {getConditionIcon(condition.operator)}
 
               {condition.value}
             </span>
@@ -116,12 +142,15 @@ export default function Journal() {
 
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const { setOnClose } = useCloseActionContext();
+  const { language } = useUserContext();
 
   const [entries, setEntries] = useState<entryWrapper[]>([]);
   const conditionRef = useRef<QueryCondition[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const loading = useRef(false);
+  const [shareMeta, setShareMeta] = useState<EntryMeta>({} as EntryMeta);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const updateEntryMutation = useUpdateEntry();
 
@@ -221,6 +250,19 @@ export default function Journal() {
     }
   };
 
+  const onBookmarkFilter = () => {
+    const existingBookmarkIndex = conditionRef.current.findIndex(
+      (condition) => condition.operator === "bookmarked",
+    );
+
+    if (existingBookmarkIndex === -1) {
+      const label = language === UserLangEnum.ZHCN ? "书签" : "Bookmark";
+      conditionRef.current.push({ operator: "bookmarked", value: label });
+      scrollToTop();
+      refresh();
+    }
+  };
+
   return (
     <>
       <div className="journal-bg fixed inset-0 z-1"></div>
@@ -232,7 +274,7 @@ export default function Journal() {
             className="h-full overflow-y-auto"
           >
             <div className="mx-auto max-w-3xl">
-              <Header onSearch={onSearch} />
+              <Header onSearch={onSearch} onBookmarkFilter={onBookmarkFilter} />
 
               {/* Conditions */}
               <Conditions
@@ -286,6 +328,10 @@ export default function Journal() {
                       showMonth={e.showMonth}
                       showToday={e.showToday}
                       showYesterday={e.showYesterday}
+                      onShare={() => {
+                        setShareMeta(e.entry);
+                        setShareDialogOpen(true);
+                      }}
                     />
                   ))}
                 </InfiniteScroll>
@@ -303,6 +349,22 @@ export default function Journal() {
                   </div>
                 </button>
               </div>
+
+              {/* Share Dialog */}
+              <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+                <DialogContent
+                  showCloseButton={false}
+                  className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
+                >
+                  <VisuallyHidden>
+                    <DialogHeader>
+                      <DialogTitle></DialogTitle>
+                      <DialogDescription></DialogDescription>
+                    </DialogHeader>
+                  </VisuallyHidden>
+                  <ShareCard meta={shareMeta} />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

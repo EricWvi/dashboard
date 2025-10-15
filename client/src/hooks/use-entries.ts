@@ -9,6 +9,7 @@ export type Entry = {
   createdAt: string;
   wordCount: number;
   rawText: string;
+  bookmark: boolean;
 };
 
 export type CurrentYearCount = {
@@ -189,6 +190,38 @@ export function useGetCurrentYear() {
       const response = await getRequest("/api/entry?Action=GetCurrentYear");
       const data = await response.json();
       return data.message;
+    },
+  });
+}
+
+export function useBookmarkEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await postRequest("/api/entry?Action=BookmarkEntry", {
+        id,
+      });
+      return response.json();
+    },
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: keyEntry(id) });
+    },
+  });
+}
+
+export function useUnbookmarkEntry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await postRequest("/api/entry?Action=UnbookmarkEntry", {
+        id,
+      });
+      return response.json();
+    },
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: keyEntry(id) });
     },
   });
 }

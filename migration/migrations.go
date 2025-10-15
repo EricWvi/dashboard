@@ -157,7 +157,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      CreatePerformanceIndexes,
 			Down:    DropPerformanceIndexes,
 		},
+		{
+			Version: "v2.3.0",
+			Name:    "Add bookmark column to entry table",
+			Up:      AddBookmarkColumnToEntry,
+			Down:    RemoveBookmarkColumnFromEntry,
+		},
 	}
+}
+
+// ------------------- v2.3.0 -------------------
+func AddBookmarkColumnToEntry(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_entry
+		ADD COLUMN bookmark BOOLEAN DEFAULT FALSE NOT NULL;
+	`).Error
+}
+
+func RemoveBookmarkColumnFromEntry(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_entry
+		DROP COLUMN IF EXISTS bookmark;
+	`).Error
 }
 
 // ------------------- v2.2.0 -------------------

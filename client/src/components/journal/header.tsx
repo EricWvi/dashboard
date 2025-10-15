@@ -10,6 +10,7 @@ import { ToolbarMenu } from "./dropdown-menu";
 
 interface HeaderProps {
   onSearch: (query: string) => void;
+  onBookmarkFilter: () => void;
 }
 
 export default function Header(props: HeaderProps) {
@@ -136,6 +137,7 @@ export default function Header(props: HeaderProps) {
             <ToolbarMenu
               position={toolbarMenuPosition}
               onClose={() => setToolbarMenuOpen(false)}
+              onBookmarkFilter={props.onBookmarkFilter}
             />
           </motion.div>
         )}

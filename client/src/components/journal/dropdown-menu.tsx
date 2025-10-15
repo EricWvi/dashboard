@@ -8,6 +8,9 @@ import { useCloseActionContext } from "@/close-action-provider";
 import {
   refreshMeta,
   useUpdateEntry,
+  useEntry,
+  useBookmarkEntry,
+  useUnbookmarkEntry,
   type EntryMeta,
 } from "@/hooks/use-entries";
 import { EditPen, Bookmark, Unbookmark, Share, Delete } from "./icon";
@@ -72,25 +75,48 @@ export const EntryCardMenuHeight = entryCardMenuItems.reduce(
   0,
 );
 
+interface DropdownMenuProps {
+  meta: EntryMeta;
+  position: { top: number; left: number };
+  onShare: () => void;
+  onClose: () => void;
+}
+
 export function DropdownMenu({
   meta,
   position,
+  onShare,
   onClose,
-}: {
-  meta: EntryMeta;
-  position: { top: number; left: number };
-  onClose: () => void;
-}) {
+}: DropdownMenuProps) {
   const { language } = useUserContext();
   const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
   const { setOnClose } = useCloseActionContext();
   const updateEntryMutation = useUpdateEntry();
+  const bookmarkEntryMutation = useBookmarkEntry();
+  const unbookmarkEntryMutation = useUnbookmarkEntry();
+  const { data: entry } = useEntry(meta.id);
+
+  const isBookmarked = entry?.bookmark ?? false;
 
   const handleClick = (action: string) => {
     if (action === "edit") {
       handleEditEntry(meta.id, meta.draft);
     }
+    if (action === "bookmark") {
+      handleBookmark();
+    }
+    if (action === "share") {
+      onShare();
+    }
     onClose();
+  };
+
+  const handleBookmark = () => {
+    if (isBookmarked) {
+      unbookmarkEntryMutation.mutate(meta.id);
+    } else {
+      bookmarkEntryMutation.mutate(meta.id);
+    }
   };
 
   const handleEditEntry = (id: number, draft: number) => {
@@ -132,6 +158,19 @@ export function DropdownMenu({
               <div key={index} className="dropdown-menu-full-divider"></div>
             );
           } else if (item.type === "item") {
+            const displayLabel =
+              item.label === "bookmark" && isBookmarked
+                ? "unbookmark"
+                : item.label;
+            const displayIcon =
+              item.label === "bookmark" && isBookmarked ? (
+                <div className="h-4 w-5">
+                  <Unbookmark />
+                </div>
+              ) : (
+                item.icon
+              );
+
             return (
               <div
                 key={index}
@@ -141,19 +180,11 @@ export function DropdownMenu({
                 <span>
                   {
                     i18nText[language][
-                      item.label as keyof (typeof i18nText)[typeof language]
+                      displayLabel as keyof (typeof i18nText)[typeof language]
                     ]
                   }
                 </span>
-                <span className="icon">
-                  {item.label === "bookmark" ? (
-                    <div className="h-4 w-5">
-                      <Unbookmark />
-                    </div>
-                  ) : (
-                    item.icon
-                  )}
-                </span>
+                <span className="icon">{displayIcon}</span>
               </div>
             );
           }
@@ -167,21 +198,7 @@ export function DropdownMenu({
 const toolbarMenuItems = [
   {
     type: "item",
-    label: "edit",
-    icon: (
-      <div className="h-4 w-5">
-        <EditPen />
-      </div>
-    ),
-    height: 44,
-  },
-  {
-    type: "divider",
-    height: 1,
-  },
-  {
-    type: "item",
-    label: "bookmark",
+    label: "bookmarkFilter",
     icon: (
       <div className="h-4 w-5">
         <Bookmark />
@@ -219,19 +236,23 @@ const toolbarMenuItems = [
   },
 ];
 
-export const ToolbarMenuHeight = toolbarMenuItems.reduce(
-  (acc, item) => acc + item.height,
-  0,
-);
-
 export function ToolbarMenu({
   position,
   onClose,
+  onBookmarkFilter,
 }: {
   position: { top: number; left: number };
   onClose: () => void;
+  onBookmarkFilter: () => void;
 }) {
   const { language } = useUserContext();
+
+  const handleClick = (label: string) => {
+    if (label === "bookmarkFilter") {
+      onBookmarkFilter();
+    }
+    onClose();
+  };
 
   return (
     <>
@@ -252,7 +273,11 @@ export function ToolbarMenu({
             );
           } else if (item.type === "item") {
             return (
-              <div key={index} className="dropdown-menu-item text-foreground">
+              <div
+                key={index}
+                className="dropdown-menu-item text-foreground"
+                onClick={() => handleClick(item.label!)}
+              >
                 <span>
                   {
                     i18nText[language][
@@ -260,15 +285,7 @@ export function ToolbarMenu({
                     ]
                   }
                 </span>
-                <span className="icon">
-                  {item.label === "bookmark" ? (
-                    <div className="h-4 w-5">
-                      <Unbookmark />
-                    </div>
-                  ) : (
-                    item.icon
-                  )}
-                </span>
+                <span className="icon">{item.icon}</span>
               </div>
             );
           }
@@ -284,6 +301,7 @@ const i18nText = {
     edit: "编辑",
     bookmark: "书签",
     unbookmark: "移除书签",
+    bookmarkFilter: "查看书签",
     share: "分享",
     delete: "删除",
   },
@@ -291,6 +309,7 @@ const i18nText = {
     edit: "Edit",
     bookmark: "Bookmark",
     unbookmark: "Unbookmark",
+    bookmarkFilter: "Show Bookmarks",
     share: "Share",
     delete: "Delete",
   },

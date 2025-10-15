@@ -1,7 +1,12 @@
 import { EntryMeta, useEntry } from "@/hooks/use-entries";
 import { ImageList } from "@/components/journal/image-list";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Icon, More, MoreArrow } from "@/components/journal/icon";
+import {
+  BookmarkDecoration,
+  Icon,
+  More,
+  MoreArrow,
+} from "@/components/journal/icon";
 import { useDraft } from "@/hooks/use-draft";
 import { generateHTML, type JSONContent } from "@tiptap/react";
 import { extensionSetup } from "@/components/tiptap-templates/simple/simple-editor";
@@ -77,6 +82,7 @@ interface EntryCardProps {
   showMonth: boolean;
   showToday: boolean;
   showYesterday: boolean;
+  onShare: (meta: EntryMeta) => void;
 }
 
 export default function EntryCard({
@@ -85,6 +91,7 @@ export default function EntryCard({
   showMonth,
   showToday,
   showYesterday,
+  onShare,
 }: EntryCardProps) {
   const { language } = useUserContext();
   const { data: entry } = useEntry(meta.id);
@@ -251,6 +258,11 @@ export default function EntryCard({
               <span>· {formatTime(entry.createdAt)}</span>
             </div>
           </div>
+          {entry.bookmark && (
+            <div className="mr-4 h-4 w-2">
+              <BookmarkDecoration />
+            </div>
+          )}
           <div onClick={handleOpenContextMenu} className="cursor-pointer">
             <Icon className="h-5 w-5">
               <More className="fill-more-arrow" />
@@ -288,6 +300,7 @@ export default function EntryCard({
             <DropdownMenu
               meta={meta}
               position={contextMenuPosition}
+              onShare={() => onShare(meta)}
               onClose={() => setContextMenuOpen(false)}
             />
           </motion.div>
