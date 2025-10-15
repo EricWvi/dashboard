@@ -124,7 +124,7 @@ function Conditions({ conditions, onRemove, onClearAll }: ConditionsProps) {
   return (
     <div className="mx-auto mt-6 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center gap-2 sm:mb-4">
-        <span className="entry-filter-shadow bg-entry-card text-foreground mr-1 rounded-full p-1.5 md:mr-2">
+        <span className="entry-card-shadow bg-entry-card text-foreground mr-1 rounded-full p-1.5 md:mr-2">
           <div className="size-5">
             <DecreaseCircle />
           </div>
@@ -148,12 +148,14 @@ function Conditions({ conditions, onRemove, onClearAll }: ConditionsProps) {
             </button>
           </div>
         ))}
-        <button
-          onClick={onClearAll}
-          className="text-muted-foreground hover:text-foreground ml-3 cursor-pointer text-sm font-medium transition-colors hover:underline"
-        >
-          {i18nText[language].clearAll}
-        </button>
+        {conditions.length > 1 && (
+          <button
+            onClick={onClearAll}
+            className="text-muted-foreground hover:text-foreground ml-3 cursor-pointer text-sm font-medium transition-colors hover:underline"
+          >
+            {i18nText[language].clearAll}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -416,7 +418,10 @@ export default function Journal() {
                       <DialogDescription></DialogDescription>
                     </DialogHeader>
                   </VisuallyHidden>
-                  <ShareCard meta={shareMeta} />
+                  <ShareCard
+                    meta={shareMeta}
+                    onClose={() => setShareDialogOpen(false)}
+                  />
                 </DialogContent>
               </Dialog>
             </div>

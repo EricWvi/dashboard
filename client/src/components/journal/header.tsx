@@ -113,7 +113,7 @@ export default function Header(props: HeaderProps) {
       <AnimatePresence>
         {toolbarMenuOpen && (
           <motion.div
-            initial={{ scale: 0 }}
+            initial={{ scale: 0.2 }}
             animate={{
               scale: 1,
               transition: {

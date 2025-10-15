@@ -8,7 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StarIcon } from "@/components/ui/icons";
 import { WatchEnum, type Watch, type WatchType } from "@/hooks/use-watches";
 import { Share } from "lucide-react";
-import { snapdom } from "@zumer/snapdom";
+import { toPng } from "html-to-image";
+
+function download(dataUrl: string, filename: string) {
+  const link = document.createElement("a");
+  link.download = `${filename}.png`;
+  link.href = dataUrl;
+  link.click();
+}
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
@@ -92,8 +99,15 @@ export default function WatchReview({
   }, []);
 
   const saveCardPng = async () => {
-    const result = await snapdom(reviewCardRef.current!, { scale: 3 });
-    await result.download({ format: "png", filename: watch.title });
+    toPng(reviewCardRef.current as HTMLElement, {
+      cacheBust: true,
+      quality: 1,
+      pixelRatio: 3,
+    })
+      .then((dataUrl) => download(dataUrl, watch.title))
+      .catch((err) => {
+        console.error("saveCardPng went wrong!", err);
+      });
   };
 
   return (
