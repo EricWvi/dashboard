@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/EricWvi/dashboard/log"
 	"github.com/gin-gonic/gin"
@@ -61,4 +62,9 @@ func ReplyString(c *gin.Context, code int, msg string) {
 func Errorf(c *gin.Context, format string, a ...any) {
 	ReplyString(c, http.StatusBadRequest, fmt.Sprintf(format, a...))
 	c.Abort()
+}
+
+// ParseDate parses a date string in the format "2006-01-02"
+func ParseDate(dateStr string) (time.Time, error) {
+	return time.Parse("2006-01-02", dateStr)
 }

@@ -69,7 +69,11 @@ const getTooltipText = (language: UserLang, count: number, date: string) => {
   return labels[language].tooltip(count, date);
 };
 
-export default function EntryCalendar() {
+interface EntryCalendarProps {
+  onDateClick: (date: string) => void;
+}
+
+export default function EntryCalendar({ onDateClick }: EntryCalendarProps) {
   const { language } = useUserContext();
   const { data: currentYearData } = useGetCurrentYear();
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -115,7 +119,7 @@ export default function EntryCalendar() {
         }}
         eventHandlers={{
           onClick: () => (activity) => {
-            alert(JSON.stringify(activity));
+            onDateClick(activity.date);
           },
         }}
         renderBlock={(block, activity) => (

@@ -32,6 +32,7 @@ import {
   TextQuote,
   BookmarkSquare,
   NumberSquare,
+  DecreaseCircle,
 } from "@/components/journal/icon";
 
 type entryWrapper = {
@@ -88,6 +89,7 @@ const buildWrapper = (
 interface ConditionsProps {
   conditions: QueryCondition[];
   onRemove: (index: number) => void;
+  onClearAll: () => void;
 }
 
 const getConditionIcon = (operator: string) => {
@@ -115,15 +117,17 @@ const getConditionIcon = (operator: string) => {
   }
 };
 
-function Conditions({ conditions, onRemove }: ConditionsProps) {
+function Conditions({ conditions, onRemove, onClearAll }: ConditionsProps) {
   const { language } = useUserContext();
   if (conditions.length === 0) return null;
 
   return (
     <div className="mx-auto mt-6 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center gap-2 sm:mb-4">
-        <span className="text-stats-font text-sm font-medium md:mr-1 md:pt-1">
-          {i18nText[language].filters}
+        <span className="entry-filter-shadow bg-entry-card text-foreground mr-1 rounded-full p-1.5 md:mr-2">
+          <div className="size-5">
+            <DecreaseCircle />
+          </div>
         </span>
         {conditions.map((condition, index) => (
           <div
@@ -144,6 +148,12 @@ function Conditions({ conditions, onRemove }: ConditionsProps) {
             </button>
           </div>
         ))}
+        <button
+          onClick={onClearAll}
+          className="text-muted-foreground hover:text-foreground ml-3 cursor-pointer text-sm font-medium transition-colors hover:underline"
+        >
+          {i18nText[language].clearAll}
+        </button>
       </div>
     </div>
   );
@@ -285,6 +295,18 @@ export default function Journal() {
     }
   };
 
+  const onDateFilter = (date: string) => {
+    // Remove any existing "on" filter first
+    conditionRef.current = conditionRef.current.filter(
+      (condition) => condition.operator !== "on",
+    );
+
+    // Add the new date filter
+    conditionRef.current.push({ operator: "on", value: date });
+    scrollToTop();
+    refresh();
+  };
+
   return (
     <>
       <div className="journal-bg fixed inset-0 z-1"></div>
@@ -296,13 +318,22 @@ export default function Journal() {
             className="h-full overflow-y-auto"
           >
             <div className="mx-auto max-w-3xl">
-              <Header onSearch={onSearch} onBookmarkFilter={onBookmarkFilter} />
+              <Header
+                onSearch={onSearch}
+                onBookmarkFilter={onBookmarkFilter}
+                onDateFilter={onDateFilter}
+              />
 
               {/* Conditions */}
               <Conditions
                 conditions={conditionRef.current}
                 onRemove={(index) => {
                   conditionRef.current.splice(index, 1);
+                  refresh();
+                }}
+                onClearAll={() => {
+                  conditionRef.current = [];
+                  scrollToTop();
                   refresh();
                 }}
               />
@@ -334,7 +365,7 @@ export default function Journal() {
                   endMessage={
                     <div className="py-12 text-center text-lg text-[hsl(215,4%,56%)]">
                       {entries.length === 0 ? (
-                        <p className="mt-30">{"No entries yet."}</p>
+                        <p className="mt-30">{i18nText[language].noEntries}</p>
                       ) : (
                         <p>{"- end -"}</p>
                       )}
@@ -398,9 +429,11 @@ export default function Journal() {
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
-    filters: "过滤项：",
+    noEntries: "暂无手记",
+    clearAll: "清除过滤项",
   },
   [UserLangEnum.ENUS]: {
-    filters: "Filters:",
+    noEntries: "No entries yet.",
+    clearAll: "Clear filters",
   },
 };

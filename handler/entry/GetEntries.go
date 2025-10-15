@@ -24,6 +24,14 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 			m.ILIKE(model.Entry_RawText, "%"+cond.Value.(string)+"%")
 		case "bookmarked":
 			m.Eq(model.Entry_Bookmark, true)
+		case "on":
+			dateStr := cond.Value.(string)
+			m.GTE(model.CreatedAt, dateStr)
+			t, err := handler.ParseDate(dateStr)
+			if err == nil {
+				nextDay := t.AddDate(0, 0, 1).Format("2006-01-02")
+				m.LT(model.CreatedAt, nextDay)
+			}
 		}
 	}
 

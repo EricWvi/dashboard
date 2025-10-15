@@ -11,6 +11,7 @@ import { ToolbarMenu } from "./dropdown-menu";
 interface HeaderProps {
   onSearch: (query: string) => void;
   onBookmarkFilter: () => void;
+  onDateFilter: (date: string) => void;
 }
 
 export default function Header(props: HeaderProps) {
@@ -99,7 +100,7 @@ export default function Header(props: HeaderProps) {
 
         {(!isMobile || showCalendar) && (
           <div className="mt-6 sm:mt-8 sm:mb-6">
-            <EntryCalendar />
+            <EntryCalendar onDateClick={props.onDateFilter} />
           </div>
         )}
       </div>
