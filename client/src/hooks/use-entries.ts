@@ -130,17 +130,8 @@ export function useUpdateEntry() {
   });
 }
 
-export function useDeleteEntry() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: number) => {
-      await postRequest("/api/entry?Action=DeleteEntry", { id });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: keyMeta(), exact: false });
-    },
-  });
+export async function deleteEntry(id: number) {
+  return postRequest("/api/entry?Action=DeleteEntry", { id });
 }
 
 export function refreshMeta() {

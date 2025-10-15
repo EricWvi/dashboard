@@ -79,6 +79,7 @@ interface DropdownMenuProps {
   meta: EntryMeta;
   position: { top: number; left: number };
   onShare: () => void;
+  onDelete: () => void;
   onClose: () => void;
 }
 
@@ -86,6 +87,7 @@ export function DropdownMenu({
   meta,
   position,
   onShare,
+  onDelete,
   onClose,
 }: DropdownMenuProps) {
   const { language } = useUserContext();
@@ -107,6 +109,9 @@ export function DropdownMenu({
     }
     if (action === "share") {
       onShare();
+    }
+    if (action === "delete") {
+      onDelete();
     }
     onClose();
   };

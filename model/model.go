@@ -94,6 +94,18 @@ func (m *WhereExpr) LT(key string, value any) {
 	*m = append(*m, gorm.Expr(key+" < ?", value))
 }
 
+func (m *WhereExpr) LTE(key string, value any) {
+	*m = append(*m, gorm.Expr(key+" <= ?", value))
+}
+
+func (m *WhereExpr) GT(key string, value any) {
+	*m = append(*m, gorm.Expr(key+" > ?", value))
+}
+
+func (m *WhereExpr) GTE(key string, value any) {
+	*m = append(*m, gorm.Expr(key+" >= ?", value))
+}
+
 func (m *WhereExpr) ILIKE(key string, value any) {
 	*m = append(*m, gorm.Expr(key+" ILIKE ?", value))
 }

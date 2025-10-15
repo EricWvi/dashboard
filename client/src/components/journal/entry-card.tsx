@@ -83,6 +83,7 @@ interface EntryCardProps {
   showToday: boolean;
   showYesterday: boolean;
   onShare: (meta: EntryMeta) => void;
+  onDelete: (id: number) => void;
 }
 
 export default function EntryCard({
@@ -92,6 +93,7 @@ export default function EntryCard({
   showToday,
   showYesterday,
   onShare,
+  onDelete,
 }: EntryCardProps) {
   const { language } = useUserContext();
   const { data: entry } = useEntry(meta.id);
@@ -301,6 +303,7 @@ export default function EntryCard({
               meta={meta}
               position={contextMenuPosition}
               onShare={() => onShare(meta)}
+              onDelete={() => onDelete(meta.id)}
               onClose={() => setContextMenuOpen(false)}
             />
           </motion.div>

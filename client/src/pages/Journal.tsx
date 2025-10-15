@@ -9,6 +9,7 @@ import {
   listEntries,
   useUpdateEntry,
   refreshMeta,
+  deleteEntry,
 } from "@/hooks/use-entries";
 import {
   Dialog,
@@ -26,7 +27,12 @@ import type { Editor } from "@tiptap/react";
 import { countWords } from "alfaaz";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
-import { Plus, TextQuote, BookmarkSquare } from "@/components/journal/icon";
+import {
+  Plus,
+  TextQuote,
+  BookmarkSquare,
+  NumberSquare,
+} from "@/components/journal/icon";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -96,6 +102,12 @@ const getConditionIcon = (operator: string) => {
       return (
         <div className="size-3">
           <BookmarkSquare />
+        </div>
+      );
+    case "on":
+      return (
+        <div className="size-3">
+          <NumberSquare />
         </div>
       );
     default:
@@ -209,12 +221,22 @@ export default function Journal() {
               refreshMeta();
               refresh();
             });
+        } else {
+          refreshMeta();
+          refresh();
         }
 
         setOnClose(() => () => {});
       });
       setEditorId(draft);
       setEditorDialogOpen(true);
+    });
+  };
+
+  const handleDeleteEntry = async (id: number) => {
+    deleteEntry(id).then(() => {
+      refreshMeta();
+      refresh();
     });
   };
 
@@ -332,6 +354,7 @@ export default function Journal() {
                         setShareMeta(e.entry);
                         setShareDialogOpen(true);
                       }}
+                      onDelete={handleDeleteEntry}
                     />
                   ))}
                 </InfiniteScroll>
@@ -341,7 +364,7 @@ export default function Journal() {
               <div className="floating-backdrop pointer-events-none fixed right-0 bottom-0 left-0 z-20 h-36 lg:hidden"></div>
               <div className="fixed right-1/2 bottom-6 z-40 translate-x-1/2 lg:right-6 lg:translate-x-0">
                 <button
-                  className="bg-add-entry-button add-entry-button-shadow flex size-18 items-center justify-center rounded-full"
+                  className="bg-add-entry-button add-entry-button-shadow flex size-18 cursor-pointer items-center justify-center rounded-full"
                   onClick={handleCreateEntry}
                 >
                   <div className="text-add-entry-plus size-[22px]">
