@@ -64,7 +64,7 @@ export default function ShareCard({
     <div className="fixed top-0 left-[-9999px]">
       <div
         ref={entryCardRef}
-        className="relative w-[480px] overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50 px-8 pt-8 pb-16"
+        className="relative w-[400px] overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50 px-6 pt-8 pb-16"
       >
         {/* Decorative elements */}
         <div className="pointer-events-none absolute inset-0">
@@ -73,7 +73,7 @@ export default function ShareCard({
         </div>
 
         {/* Main content card */}
-        <div className="relative rounded-2xl bg-white/90 p-6 shadow-xl backdrop-blur-sm">
+        <div className="relative rounded-2xl bg-white/90 p-4 shadow-xl backdrop-blur-sm">
           <div className="flex items-center gap-5">
             <Avatar className="size-16 border-2 border-white shadow-lg">
               <AvatarImage
@@ -103,7 +103,7 @@ export default function ShareCard({
             </div>
           </div>
 
-          <div className="mt-8 text-lg leading-relaxed text-gray-900">
+          <div className="mt-8 text-base text-gray-900">
             <ContentHTML id={meta.draft} removeCache={false} />
           </div>
         </div>

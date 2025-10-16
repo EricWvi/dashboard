@@ -32,6 +32,12 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 				nextDay := t.AddDate(0, 0, 1).Format("2006-01-02")
 				m.LT(model.CreatedAt, nextDay)
 			}
+		case "before":
+			t, err := handler.ParseDate(cond.Value.(string))
+			if err == nil {
+				nextDay := t.AddDate(0, 0, 1).Format("2006-01-02")
+				m.LT(model.CreatedAt, nextDay)
+			}
 		}
 	}
 

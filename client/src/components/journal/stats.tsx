@@ -32,7 +32,7 @@ const Stats = () => {
   const { language } = useUserContext();
   const { data: currentYearData } = useGetCurrentYear();
   const { data: wordCount } = useGetWordsCount();
-  const { data: entryDates } = useGetEntryDate();
+  const { data: datesWithCount } = useGetEntryDate();
   return (
     <div className="flex items-center space-x-2">
       <div className="mr-4 flex flex-col">
@@ -64,7 +64,7 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Calendar />
           </Icon>
-          <Number>{entryDates?.length ?? 0}</Number>
+          <Number>{datesWithCount?.count ?? 0}</Number>
         </div>
         <Description>{i18nText[language].days}</Description>
       </div>

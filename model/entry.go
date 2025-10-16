@@ -75,15 +75,27 @@ func CountAllWords(db *gorm.DB, where map[string]any) int {
 	return int(count)
 }
 
-func FindDates(db *gorm.DB, where map[string]any) ([]string, error) {
-	var dates []string
+type DateParts struct {
+	Year  int
+	Month int
+	Day   int
+}
+
+func FindDates(db *gorm.DB, where map[string]any) ([]DateParts, error) {
+	var rows []DateParts
 	if err := db.Model(&Entry{}).
-		Select("DISTINCT TO_CHAR(DATE(created_at), 'YYYY-MM-DD') AS day").
+		Select(`
+        EXTRACT(YEAR FROM created_at)::int  AS year,
+        EXTRACT(MONTH FROM created_at)::int AS month,
+        EXTRACT(DAY FROM created_at)::int   AS day
+    `).
 		Where(where).
-		Pluck("day", &dates).Error; err != nil {
+		Group("year, month, day").
+		Order("year DESC, month DESC, day DESC").
+		Scan(&rows).Error; err != nil {
 		return nil, err
 	}
-	return dates, nil
+	return rows, nil
 }
 
 func CountEntries(db *gorm.DB, where map[string]any) (int64, error) {

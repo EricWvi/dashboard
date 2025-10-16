@@ -1,4 +1,6 @@
-export const Entries = () => (
+import React from "react";
+
+export const Entries = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -20,9 +22,9 @@ export const Entries = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Quote = () => (
+export const Quote = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -38,9 +40,9 @@ export const Quote = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Calendar = () => (
+export const Calendar = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -56,9 +58,9 @@ export const Calendar = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Search = () => (
+export const Search = React.memo(() => (
   <svg
     viewBox="0 0 60 60"
     xmlns="http://www.w3.org/2000/svg"
@@ -85,25 +87,27 @@ export const Search = () => (
       />
     </g>
   </svg>
+));
+
+export const More = React.memo(
+  ({ className = "fill-foreground" }: IconProps) => (
+    <svg
+      viewBox="0 0 60 60"
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      height="100%"
+      fill="none"
+    >
+      <g id="more">
+        <circle id="more14" cx="10" cy="30" r="6" className={className} />
+        <circle id="more15" cx="30" cy="30" r="6" className={className} />
+        <circle id="more16" cx="50" cy="30" r="6" className={className} />
+      </g>
+    </svg>
+  ),
 );
 
-export const More = ({ className = "fill-foreground" }: IconProps) => (
-  <svg
-    viewBox="0 0 60 60"
-    xmlns="http://www.w3.org/2000/svg"
-    width="100%"
-    height="100%"
-    fill="none"
-  >
-    <g id="more">
-      <circle id="more14" cx="10" cy="30" r="6" className={className} />
-      <circle id="more15" cx="30" cy="30" r="6" className={className} />
-      <circle id="more16" cx="50" cy="30" r="6" className={className} />
-    </g>
-  </svg>
-);
-
-export const MoreArrow = () => (
+export const MoreArrow = React.memo(() => (
   <svg
     viewBox="0 0 40 40"
     xmlns="http://www.w3.org/2000/svg"
@@ -129,9 +133,9 @@ export const MoreArrow = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const EditPen = () => (
+export const EditPen = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -147,9 +151,9 @@ export const EditPen = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Bookmark = () => (
+export const Bookmark = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -165,9 +169,9 @@ export const Bookmark = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Unbookmark = () => (
+export const Unbookmark = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -187,9 +191,9 @@ export const Unbookmark = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const BookmarkDecoration = () => (
+export const BookmarkDecoration = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -205,9 +209,9 @@ export const BookmarkDecoration = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const BookmarkSquare = () => (
+export const BookmarkSquare = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -227,9 +231,9 @@ export const BookmarkSquare = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const NumberSquare = () => (
+export const NumberSquare = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -249,9 +253,9 @@ export const NumberSquare = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const DecreaseCircle = () => (
+export const DecreaseCircle = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -271,9 +275,9 @@ export const DecreaseCircle = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Share = () => (
+export const Share = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -297,9 +301,9 @@ export const Share = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Delete = () => (
+export const Delete = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -315,9 +319,9 @@ export const Delete = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const TextQuote = () => (
+export const TextQuote = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -349,9 +353,9 @@ export const TextQuote = () => (
       />
     </g>
   </svg>
-);
+));
 
-export const Plus = () => (
+export const Plus = React.memo(() => (
   <svg
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"
@@ -367,7 +371,25 @@ export const Plus = () => (
       />
     </g>
   </svg>
-);
+));
+
+export const ChevronRight = React.memo(() => (
+  <svg
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 133.398 178.906"
+    width="100%"
+    height="100%"
+  >
+    <g>
+      <rect height="178.906" opacity="0" width="133.398" x="0" y="0" />
+      <path
+        d="M133.398 89.4043C133.301 84.5215 131.592 80.5664 127.588 76.6602L53.8086 4.39453C50.7812 1.41602 47.2656 0 42.9199 0C34.3262 0 27.2461 6.93359 27.2461 15.5273C27.2461 19.7754 29.0039 23.7305 32.2754 26.9531L96.6309 89.3555L32.2754 151.855C29.0527 155.029 27.2461 158.984 27.2461 163.33C27.2461 171.875 34.3262 178.857 42.9199 178.857C47.168 178.857 50.7812 177.441 53.8086 174.414L127.588 102.148C131.641 98.1934 133.398 94.2383 133.398 89.4043Z"
+        fill="currentColor"
+      />
+    </g>
+  </svg>
+));
 
 interface IconProps {
   className?: string;

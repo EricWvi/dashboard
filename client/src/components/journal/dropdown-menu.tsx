@@ -13,7 +13,18 @@ import {
   useUnbookmarkEntry,
   type EntryMeta,
 } from "@/hooks/use-entries";
-import { EditPen, Bookmark, Unbookmark, Share, Delete } from "./icon";
+import {
+  EditPen,
+  Bookmark,
+  Unbookmark,
+  Share,
+  Delete,
+  NumberSquare,
+  ChevronRight,
+} from "./icon";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useGetEntryDate } from "@/hooks/use-entries";
+import { Check } from "lucide-react";
 
 const entryCardMenuItems = [
   {
@@ -77,7 +88,6 @@ export const EntryCardMenuHeight = entryCardMenuItems.reduce(
 
 interface DropdownMenuProps {
   meta: EntryMeta;
-  position: { top: number; left: number };
   onShare: () => void;
   onDelete: () => void;
   onClose: () => void;
@@ -85,7 +95,6 @@ interface DropdownMenuProps {
 
 export function DropdownMenu({
   meta,
-  position,
   onShare,
   onDelete,
   onClose,
@@ -147,14 +156,7 @@ export function DropdownMenu({
 
   return (
     <>
-      <div className="dropdown-menu-overlay" onClick={onClose} />
-      <div
-        className="dropdown-menu"
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-        }}
-      >
+      <div className="dropdown-menu">
         {entryCardMenuItems.map((item, index) => {
           if (item.type === "divider") {
             return <div key={index} className="dropdown-menu-divider"></div>;
@@ -200,27 +202,210 @@ export function DropdownMenu({
   );
 }
 
+const DateRangeHeader = ({
+  placeholder,
+  onDateRangeFilter,
+  expanded = false,
+}: {
+  placeholder: string;
+  onDateRangeFilter?: (date: string) => void;
+  expanded?: boolean;
+}) => {
+  const { language } = useUserContext();
+  const [rotated, setRotated] = useState(false);
+  useEffect(() => {
+    if (expanded) {
+      setTimeout(() => {
+        setRotated(true);
+      }, 50);
+    }
+  }, []);
+
+  return (
+    <div
+      className={`dropdown-menu-submenu text-foreground ${expanded ? "submenu-header" : ""}`}
+    >
+      <div className="relative">
+        <div
+          className={`absolute top-1/2 left-[-6px] size-3 translate-y-[-50%] transition-transform ${rotated ? "rotate-90" : ""}`}
+        >
+          <ChevronRight />
+        </div>
+        <div className="flex flex-col justify-center pl-3">
+          <span
+            className={`pt-[2px] leading-none ${expanded ? "font-medium" : "font-normal"}`}
+          >
+            {i18nText[language].dateRange}
+          </span>
+          <span className="text-muted-foreground text-sm">{placeholder}</span>
+        </div>
+      </div>
+
+      <span className="icon">
+        {expanded ? (
+          <div
+            className="cursor-pointer font-medium"
+            onClick={() => {
+              onDateRangeFilter!(placeholder);
+            }}
+          >
+            <Check size={20} strokeWidth={3} />
+          </div>
+        ) : (
+          <div className={"h-4 w-5"}>
+            <NumberSquare />
+          </div>
+        )}
+      </span>
+    </div>
+  );
+};
+
+const DateRange = ({
+  placeholder,
+  onDateRangeFilter,
+}: {
+  placeholder: number[];
+  onDateRangeFilter: (date: string) => void;
+}) => {
+  const { data: dates } = useGetEntryDate();
+
+  const currentDate = new Date();
+  const [selectedYear, setSelectedYear] = useState<number>(
+    placeholder[0] || dates?.dates[0]?.year || currentDate.getFullYear(),
+  );
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    placeholder[1] ||
+      dates?.dates[0]?.months[0].month ||
+      currentDate.getMonth() + 1,
+  );
+  const [selectedDay, setSelectedDay] = useState<number>(
+    placeholder[2] ||
+      dates?.dates[0]?.months[0].days[0] ||
+      currentDate.getDate(),
+  );
+  const [rangeText, setRangeText] = useState(() => {
+    const month = selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth;
+    const day = selectedDay < 10 ? `0${selectedDay}` : selectedDay;
+    return `${selectedYear}-${month}-${day}`;
+  });
+
+  const handleYearClick = (year: number) => {
+    const m = dates!.dates.find((d) => d.year === year)!.months[0].month;
+    const d = dates!.dates.find((d) => d.year === year)!.months[0].days[0];
+    const month = m < 10 ? `0${m}` : m;
+    const day = d < 10 ? `0${d}` : d;
+    setSelectedYear(year);
+    setSelectedMonth(m);
+    setSelectedDay(d);
+    setRangeText(`${year}-${month}-${day}`);
+  };
+
+  const handleMonthClick = (m: number) => {
+    const d = dates!.dates
+      .find((d) => d.year === selectedYear)!
+      .months.find((month) => month.month === m)!.days[0];
+    const month = m < 10 ? `0${m}` : m;
+    const day = d < 10 ? `0${d}` : d;
+    setSelectedMonth(m);
+    setSelectedDay(d);
+    setRangeText(`${selectedYear}-${month}-${day}`);
+  };
+
+  const handleDayClick = (d: number) => {
+    const month = selectedMonth < 10 ? `0${selectedMonth}` : selectedMonth;
+    const day = d < 10 ? `0${d}` : d;
+    setSelectedDay(d);
+    setRangeText(`${selectedYear}-${month}-${day}`);
+  };
+
+  if (!dates) return null;
+
+  return (
+    <div className="dropdown-menu">
+      <DateRangeHeader
+        placeholder={rangeText}
+        onDateRangeFilter={onDateRangeFilter}
+        expanded
+      />
+      <div className="dropdown-menu-divider"></div>
+
+      {dates.count === 0 ? (
+        <div className="text-muted-foreground flex h-60 items-center justify-center text-sm">
+          No entries found
+        </div>
+      ) : (
+        <div className="flex h-60">
+          {/* Year Column */}
+          <div className="date-selector-column year-column">
+            {dates.dates.map((date) => (
+              <button
+                key={date.year}
+                className={`date-selector-item ${selectedYear === date.year ? "selected" : ""}`}
+                onClick={() => handleYearClick(date.year)}
+              >
+                {date.year}
+              </button>
+            ))}
+          </div>
+
+          {/* Month Column */}
+          <div className="date-selector-column month-column">
+            {dates.dates
+              .find((date) => date.year === Number(selectedYear))
+              ?.months.map((date) => (
+                <button
+                  key={date.month}
+                  className={`date-selector-item ${selectedMonth === date.month ? "selected" : ""}`}
+                  onClick={() => handleMonthClick(date.month)}
+                >
+                  {date.month}
+                </button>
+              ))}
+          </div>
+
+          {/* Day Column */}
+          <div className="date-selector-column day-column">
+            {dates.dates
+              .find((date) => date.year === Number(selectedYear))
+              ?.months.find((month) => month.month === Number(selectedMonth))
+              ?.days.map((day) => (
+                <button
+                  key={day}
+                  className={`date-selector-item ${selectedDay === day ? "selected" : ""}`}
+                  onClick={() => handleDayClick(day)}
+                >
+                  {day}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const toolbarMenuItems = [
+  {
+    type: "submenu",
+    label: "dateRange",
+    icon: (
+      <div className="h-4 w-5">
+        <NumberSquare />
+      </div>
+    ),
+    height: 56,
+  },
+  {
+    type: "full-divider",
+    height: 8,
+  },
   {
     type: "item",
     label: "bookmarkFilter",
     icon: (
       <div className="h-4 w-5">
         <Bookmark />
-      </div>
-    ),
-    height: 44,
-  },
-  {
-    type: "divider",
-    height: 1,
-  },
-  {
-    type: "item",
-    label: "share",
-    icon: (
-      <div className="size-5">
-        <Share />
       </div>
     ),
     height: 44,
@@ -241,16 +426,43 @@ const toolbarMenuItems = [
   },
 ];
 
-export function ToolbarMenu({
-  position,
-  onClose,
-  onBookmarkFilter,
-}: {
-  position: { top: number; left: number };
+interface ToolbarMenuProps {
+  dateRangeText: () => string[];
+  isAnimating: boolean;
   onClose: () => void;
   onBookmarkFilter: () => void;
-}) {
+  onDateRangeFilter: (date: string) => void;
+}
+
+export function ToolbarMenu({
+  dateRangeText,
+  isAnimating,
+  onClose,
+  onBookmarkFilter,
+  onDateRangeFilter,
+}: ToolbarMenuProps) {
   const { language } = useUserContext();
+  const datePair = dateRangeText();
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const submenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [submenuPosition, setSubmenuPosition] = useState({
+    top: 0,
+    right: 0,
+  });
+
+  const dateRangePlaceholder = useCallback(() => {
+    if (datePair.length !== 0) {
+      const [operator, date] = datePair;
+      if (operator === "before") {
+        return language === UserLangEnum.ZHCN
+          ? date + " 之前"
+          : "before " + date;
+      } else if (operator === "on") {
+        return date;
+      }
+    }
+    return language === UserLangEnum.ZHCN ? "今日" : "Today";
+  }, [language]);
 
   const handleClick = (label: string) => {
     if (label === "bookmarkFilter") {
@@ -259,16 +471,33 @@ export function ToolbarMenu({
     onClose();
   };
 
+  const handleSubmenuToggle = (submenuName: string) => {
+    setActiveSubmenu(activeSubmenu === submenuName ? null : submenuName);
+    const rect = submenuRefs.current[submenuName]!.getBoundingClientRect();
+    setSubmenuPosition({
+      top: rect.top + 8,
+      right: window.innerWidth - rect.right,
+    });
+  };
+
   return (
     <>
-      <div className="dropdown-menu-overlay" onClick={onClose} />
+      {/* Overlay between menu and submenu - closes submenu but keeps menu open */}
+      {activeSubmenu && (
+        <div
+          className="fixed inset-0 z-1050"
+          onClick={() => setActiveSubmenu(null)}
+        />
+      )}
+
       <div
-        className="dropdown-menu"
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-        }}
+        className={`dropdown-menu duration-300 ${activeSubmenu ? "dropdown-menu-inactive delay-100" : ""}`}
       >
+        {/* gray overlay for submenu */}
+        {activeSubmenu && (
+          <div className="absolute inset-0 z-50 bg-white/40 transition-all dark:bg-black/40"></div>
+        )}
+
         {toolbarMenuItems.map((item, index) => {
           if (item.type === "divider") {
             return <div key={index} className="dropdown-menu-divider"></div>;
@@ -283,7 +512,7 @@ export function ToolbarMenu({
                 className="dropdown-menu-item text-foreground"
                 onClick={() => handleClick(item.label!)}
               >
-                <span>
+                <span className="pl-3">
                   {
                     i18nText[language][
                       item.label as keyof (typeof i18nText)[typeof language]
@@ -293,10 +522,49 @@ export function ToolbarMenu({
                 <span className="icon">{item.icon}</span>
               </div>
             );
+          } else if (item.type === "submenu") {
+            if (item.label === "dateRange") {
+              return (
+                <div
+                  key={index}
+                  ref={(el) => {
+                    submenuRefs.current["dateRange"] = el;
+                  }}
+                  onClick={() => {
+                    if (!isAnimating) handleSubmenuToggle("dateRange");
+                  }}
+                >
+                  <DateRangeHeader placeholder={dateRangePlaceholder()} />
+                </div>
+              );
+            }
           }
           return null;
         })}
       </div>
+
+      {/* Render submenu outside the overflow-hidden container */}
+      {activeSubmenu === "dateRange" && (
+        <div
+          style={{
+            top: `${submenuPosition.top}px`,
+            right: `${submenuPosition.right}px`,
+            transformOrigin: "top center",
+          }}
+          className="fixed z-1100"
+        >
+          <DateRange
+            placeholder={
+              datePair[1] ? datePair[1].split("-").map((v) => Number(v)) : []
+            }
+            onDateRangeFilter={(date: string) => {
+              onDateRangeFilter(date);
+              setActiveSubmenu(null);
+              onClose();
+            }}
+          />
+        </div>
+      )}
     </>
   );
 }
@@ -307,6 +575,7 @@ const i18nText = {
     bookmark: "书签",
     unbookmark: "移除书签",
     bookmarkFilter: "查看书签",
+    dateRange: "日期范围",
     share: "分享",
     delete: "删除",
   },
@@ -315,6 +584,7 @@ const i18nText = {
     bookmark: "Bookmark",
     unbookmark: "Unbookmark",
     bookmarkFilter: "Show Bookmarks",
+    dateRange: "Date Range",
     share: "Share",
     delete: "Delete",
   },

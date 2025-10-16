@@ -163,13 +163,29 @@ export function useGetWordsCount() {
   });
 }
 
+export type DatesTree = {
+  year: number;
+  months: {
+    month: number;
+    days: number[];
+  }[];
+}[];
+
+export interface DatesWithCount {
+  dates: DatesTree;
+  count: number;
+}
+
 export function useGetEntryDate() {
-  return useQuery<string[]>({
+  return useQuery<DatesWithCount>({
     queryKey: keyMetaItem("dates"),
     queryFn: async () => {
       const response = await getRequest("/api/entry?Action=GetEntryDate");
       const data = await response.json();
-      return data.message.entryDates;
+      return {
+        dates: data.message.entryDates,
+        count: data.message.total,
+      };
     },
   });
 }

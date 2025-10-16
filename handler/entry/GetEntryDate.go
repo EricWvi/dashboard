@@ -18,8 +18,36 @@ func (b Base) GetEntryDate(c *gin.Context, req *GetEntryDateRequest) *GetEntryDa
 		return nil
 	}
 
+	var result []Year
+	var currentYear *Year
+	var currentMonth *Month
+	for _, r := range dates {
+		// New year
+		if currentYear == nil || currentYear.Year != r.Year {
+			result = append(result, Year{
+				Year:   r.Year,
+				Months: []Month{},
+			})
+			currentYear = &result[len(result)-1]
+			currentMonth = nil
+		}
+
+		// New month
+		if currentMonth == nil || currentMonth.Month != r.Month {
+			currentYear.Months = append(currentYear.Months, Month{
+				Month: r.Month,
+				Days:  []int{},
+			})
+			currentMonth = &currentYear.Months[len(currentYear.Months)-1]
+		}
+
+		// Append day
+		currentMonth.Days = append(currentMonth.Days, r.Day)
+	}
+
 	return &GetEntryDateResponse{
-		EntryDates: dates,
+		Total:      len(dates),
+		EntryDates: result,
 	}
 }
 
@@ -27,5 +55,18 @@ type GetEntryDateRequest struct {
 }
 
 type GetEntryDateResponse struct {
-	EntryDates []string `json:"entryDates"`
+	Total      int    `json:"total"`
+	EntryDates []Year `json:"entryDates"`
+}
+
+type Day int
+
+type Month struct {
+	Month int   `json:"month"`
+	Days  []int `json:"days"`
+}
+
+type Year struct {
+	Year   int     `json:"year"`
+	Months []Month `json:"months"`
 }

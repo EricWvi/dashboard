@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatMediaUrl } from "@/lib/utils";
 import type { MediaItem } from "./media-swiper";
 
@@ -13,6 +14,8 @@ export const MediaBlock = ({
   media: MediaItem;
   onClick?: () => void;
 }) => {
+  const [duration, setDuration] = useState<number | null>(null);
+
   if (media.type === "image") {
     return (
       <img
@@ -24,21 +27,41 @@ export const MediaBlock = ({
     );
   }
 
-  // For video, show as image with play button overlay
+  // For video, show as image with duration overlay
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+      setDuration(video.duration);
+    }
+  };
+
   return (
     <div className="relative h-full w-full cursor-pointer" onClick={onClick}>
       <video
         className="h-full w-full rounded-md object-cover"
         src={formatMediaUrl(media.src)}
         autoPlay={false}
+        onLoadedMetadata={handleLoadedMetadata}
       />
-      {/* Decorative play button overlay */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-opacity-50 flex h-10 w-10 items-center justify-center rounded-full bg-black/80">
-          {/* Play icon using CSS triangle */}
-          <div className="ml-1 h-0 w-0 border-t-[8px] border-b-[8px] border-l-[12px] border-t-transparent border-b-transparent border-l-white"></div>
+      {/* Video duration overlay at bottom right */}
+      {duration !== null && (
+        <div className="image-overlay absolute right-1 bottom-1 rounded-lg px-2">
+          <span className="text-sm font-semibold text-white">
+            {formatDuration(duration)}
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -160,7 +183,7 @@ export const ImageList = ({ items, onItemClick }: Props) => {
                 <span className="mr-[1px] text-2xl text-[rgb(156,157,165)] sm:text-3xl md:mr-[2px] md:text-4xl">
                   +
                 </span>
-                <span className="text-xl text-white sm:text-2xl md:text-3xl">
+                <span className="text-xl font-medium text-white sm:text-2xl md:text-3xl">
                   {items.length - 4}
                 </span>
               </div>

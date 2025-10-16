@@ -30,7 +30,7 @@ export function MediaSwiper({
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const DOUBLE_TAP_ZOOM = 2; // Zoom level for double tap
-  const MAX_PINCH_ZOOM = 5; // Maximum zoom level for pinch
+  const MAX_PINCH_ZOOM = 10; // Maximum zoom level for pinch
 
   const handleTap = () => {
     if (tapTimeoutRef.current) {

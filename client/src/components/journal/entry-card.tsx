@@ -104,9 +104,9 @@ export default function EntryCard({
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
     top: 0,
-    left: 0,
+    right: 0,
   });
-  const [contextMenuOrigin, setContextMenuOrigin] = useState({ x: 0, y: 0 });
+  const [contextMenuOrigin, setContextMenuOrigin] = useState("top right");
   const textCardRef = useRef<HTMLDivElement>(null);
   const entryCardRef = useRef<HTMLDivElement>(null);
 
@@ -123,32 +123,31 @@ export default function EntryCard({
     [draft],
   );
 
-  const handleOpenContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenuOpen = (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!entryCardRef.current) return;
 
     const cardRect = entryCardRef.current.getBoundingClientRect();
-    const menuWidth = 240; // matches CSS width
     const padding = 30;
 
     // Calculate initial position (right-aligned to button)
     let top = cardRect.bottom - padding - EntryCardMenuHeight;
-    const left = cardRect.right - menuWidth;
 
     // Check if menu is too top
     if (top < 160) {
       top = cardRect.bottom + 4;
-      setContextMenuOrigin({ x: cardRect.right, y: top });
+      setContextMenuOrigin("top right");
     } else {
-      setContextMenuOrigin({
-        x: cardRect.right,
-        y: top + EntryCardMenuHeight,
-      });
+      setContextMenuOrigin("bottom right");
     }
 
-    setContextMenuPosition({ top, left });
+    setContextMenuPosition({ top, right: window.innerWidth - cardRect.right });
     setContextMenuOpen(true);
+  };
+
+  const handleContextMenuClose = () => {
+    setContextMenuOpen(false);
   };
 
   const collapseHeight = 144; // Default height when collapsed
@@ -265,7 +264,7 @@ export default function EntryCard({
               <BookmarkDecoration />
             </div>
           )}
-          <div onClick={handleOpenContextMenu} className="cursor-pointer">
+          <div onClick={handleContextMenuOpen} className="cursor-pointer">
             <Icon className="h-5 w-5">
               <More className="fill-more-arrow" />
             </Icon>
@@ -273,6 +272,10 @@ export default function EntryCard({
         </div>
       </div>
 
+      {/* Context Menu overlay */}
+      {contextMenuOpen && (
+        <div className="fixed inset-0 z-999" onClick={handleContextMenuClose} />
+      )}
       {/* Context Menu */}
       <AnimatePresence>
         {contextMenuOpen && (
@@ -295,16 +298,17 @@ export default function EntryCard({
               },
             }}
             style={{
-              transformOrigin: `${contextMenuOrigin.x}px ${contextMenuOrigin.y}px`,
+              top: `${contextMenuPosition.top}px`,
+              right: `${contextMenuPosition.right}px`,
+              transformOrigin: contextMenuOrigin,
             }}
-            className="fixed inset-0 z-50 flex items-center justify-center"
+            className="fixed z-1000 flex items-center justify-center"
           >
             <DropdownMenu
               meta={meta}
-              position={contextMenuPosition}
               onShare={() => onShare(meta)}
               onDelete={() => onDelete(meta.id)}
-              onClose={() => setContextMenuOpen(false)}
+              onClose={handleContextMenuClose}
             />
           </motion.div>
         )}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/journal/header";
 import EntryCard from "@/components/journal/entry-card";
 import { X } from "lucide-react";
@@ -104,6 +104,8 @@ const getConditionIcon = (operator: string) => {
           <NumberSquare />
         </div>
       );
+    case "before":
+      return null;
     default:
       return null;
   }
@@ -129,6 +131,7 @@ function Conditions({ conditions, onRemove, onClearAll }: ConditionsProps) {
             <span className="text-foreground flex items-center gap-1 text-sm font-medium">
               {getConditionIcon(condition.operator)}
 
+              {condition.operator === "before" && "<= "}
               {condition.value}
             </span>
             <button
@@ -244,13 +247,13 @@ export default function Journal() {
     });
   };
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     if (scrollableDivRef.current) {
       scrollableDivRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
+  }, []);
 
-  const onSearch = (queryWord: string) => {
+  const onSearch = useCallback((queryWord: string) => {
     if (queryWord !== null) {
       const trimmed = queryWord.trim();
       if (trimmed.length > 0) {
@@ -274,9 +277,9 @@ export default function Journal() {
       scrollToTop();
       refresh();
     }
-  };
+  }, []);
 
-  const onBookmarkFilter = () => {
+  const onBookmarkFilter = useCallback(() => {
     const existingBookmarkIndex = conditionRef.current.findIndex(
       (condition) => condition.operator === "bookmarked",
     );
@@ -287,19 +290,51 @@ export default function Journal() {
       scrollToTop();
       refresh();
     }
-  };
+  }, []);
 
-  const onDateFilter = (date: string) => {
-    // Remove any existing "on" filter first
+  const onDateFilter = useCallback((date: string) => {
+    // Remove any existing date filter first
     conditionRef.current = conditionRef.current.filter(
-      (condition) => condition.operator !== "on",
+      (condition) =>
+        condition.operator !== "on" && condition.operator !== "before",
     );
 
     // Add the new date filter
     conditionRef.current.push({ operator: "on", value: date });
     scrollToTop();
     refresh();
-  };
+  }, []);
+
+  const onDateRangeFilter = useCallback((date: string) => {
+    // Remove any existing date filter first
+    conditionRef.current = conditionRef.current.filter(
+      (condition) =>
+        condition.operator !== "on" && condition.operator !== "before",
+    );
+
+    // Add the new date filter
+    conditionRef.current.push({ operator: "before", value: date });
+    scrollToTop();
+    refresh();
+  }, []);
+
+  const dateRangeText = useCallback(() => {
+    let index = conditionRef.current.findIndex(
+      (condition) => condition.operator === "before",
+    );
+    if (index !== -1) {
+      return ["before", conditionRef.current[index].value];
+    }
+
+    index = conditionRef.current.findIndex(
+      (condition) => condition.operator === "on",
+    );
+    if (index !== -1) {
+      return ["on", conditionRef.current[index].value];
+    }
+
+    return [];
+  }, []);
 
   return (
     <>
@@ -313,9 +348,12 @@ export default function Journal() {
           >
             <div className="mx-auto max-w-3xl">
               <Header
+                dateRangeText={dateRangeText}
+                scrollToTop={scrollToTop}
                 onSearch={onSearch}
                 onBookmarkFilter={onBookmarkFilter}
                 onDateFilter={onDateFilter}
+                onDateRangeFilter={onDateRangeFilter}
               />
 
               {/* Conditions */}
@@ -386,7 +424,7 @@ export default function Journal() {
               </main>
 
               {/* Add Entry Button */}
-              <div className="floating-backdrop pointer-events-none fixed right-0 bottom-0 left-0 z-20 h-36 lg:hidden"></div>
+              <div className="floating-backdrop pointer-events-none fixed right-0 bottom-0 left-0 z-20 h-40 lg:hidden"></div>
               <div className="fixed right-1/2 bottom-6 z-40 translate-x-1/2 lg:right-6 lg:translate-x-0">
                 <button
                   className="bg-add-entry-button add-entry-button-shadow flex size-18 cursor-pointer items-center justify-center rounded-full"

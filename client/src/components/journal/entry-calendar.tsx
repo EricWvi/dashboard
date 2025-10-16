@@ -1,5 +1,5 @@
 import { ActivityCalendar } from "react-activity-calendar";
-import { useGetCurrentYear } from "@/hooks/use-entries";
+import { type CurrentYearCount } from "@/hooks/use-entries";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import {
@@ -8,6 +8,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useEffect, useRef } from "react";
+import React from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const labels = {
   [UserLangEnum.ENUS]: {
@@ -70,12 +72,14 @@ const getTooltipText = (language: UserLang, count: number, date: string) => {
 };
 
 interface EntryCalendarProps {
+  activity?: CurrentYearCount[];
   onDateClick: (date: string) => void;
 }
 
-export default function EntryCalendar({ onDateClick }: EntryCalendarProps) {
+function EntryCalendar({ activity, onDateClick }: EntryCalendarProps) {
+  // console.log("EntryCalendar render");
   const { language } = useUserContext();
-  const { data: currentYearData } = useGetCurrentYear();
+  const isMobile = useIsMobile();
   const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,14 +116,14 @@ export default function EntryCalendar({ onDateClick }: EntryCalendarProps) {
         hideColorLegend
         hideTotalCount
         labels={labels[language]}
-        data={currentYearData?.activity || defaultData}
+        data={activity || defaultData}
         theme={{
           light: ["hsl(0, 0%, 92%)", "rebeccapurple"],
           dark: ["hsl(0, 0%, 12%)", "rebeccapurple"],
         }}
         eventHandlers={{
           onClick: () => (activity) => {
-            onDateClick(activity.date);
+            if (!isMobile) onDateClick(activity.date);
           },
         }}
         renderBlock={(block, activity) => (
@@ -134,3 +138,5 @@ export default function EntryCalendar({ onDateClick }: EntryCalendarProps) {
     </div>
   );
 }
+
+export default React.memo(EntryCalendar);
