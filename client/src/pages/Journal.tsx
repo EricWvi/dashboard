@@ -11,14 +11,6 @@ import {
   refreshMeta,
   deleteEntry,
 } from "@/hooks/use-entries";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import ShareCard from "@/components/journal/share-card";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
@@ -407,23 +399,12 @@ export default function Journal() {
               </div>
 
               {/* Share Dialog */}
-              <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-                <DialogContent
-                  showCloseButton={false}
-                  className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
-                >
-                  <VisuallyHidden>
-                    <DialogHeader>
-                      <DialogTitle></DialogTitle>
-                      <DialogDescription></DialogDescription>
-                    </DialogHeader>
-                  </VisuallyHidden>
-                  <ShareCard
-                    meta={shareMeta}
-                    onClose={() => setShareDialogOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+              {shareDialogOpen && (
+                <ShareCard
+                  meta={shareMeta}
+                  onClose={() => setShareDialogOpen(false)}
+                />
+              )}
             </div>
           </div>
         </div>

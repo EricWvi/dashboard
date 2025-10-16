@@ -18,7 +18,7 @@ export default function ShareCard({
   onClose,
 }: {
   meta: EntryMeta;
-  onClose?: () => void;
+  onClose: () => void;
 }) {
   const { user } = useUserContext();
   const entryCardRef = useRef<HTMLDivElement | null>(null);
@@ -36,13 +36,21 @@ export default function ShareCard({
           cacheBust: true,
           quality: 1,
           pixelRatio: 3,
+          filter: (node) => {
+            // Filter out ProseMirror separator and trailing break elements
+            if (
+              node instanceof HTMLImageElement &&
+              node.classList.contains("ProseMirror-separator")
+            ) {
+              return false;
+            }
+            return true;
+          },
         })
           .then((dataUrl) => {
             download(dataUrl, "journal-" + meta.id);
             // Close dialog after download
-            if (onClose) {
-              setTimeout(() => onClose(), 300);
-            }
+            setTimeout(() => onClose(), 300);
           })
           .catch((err) => {
             console.error("saveCardPng went wrong!", err);
@@ -50,18 +58,18 @@ export default function ShareCard({
           });
       }, 200);
     }
-  }, [meta.id, isGenerating, onClose, avatarLoaded]);
+  }, [meta.id, isGenerating, avatarLoaded]);
 
   return (
     <div className="fixed top-0 left-[-9999px]">
       <div
         ref={entryCardRef}
-        className="relative w-[480px] overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50/30 to-rose-50 px-8 pt-8 pb-16"
+        className="relative w-[480px] overflow-hidden bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50 px-8 pt-8 pb-16"
       >
         {/* Decorative elements */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-gradient-to-br from-orange-100/40 to-amber-100/40 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-gradient-to-tr from-rose-100/40 to-pink-100/40 blur-3xl" />
+          <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-gradient-to-tr from-rose-100 to-pink-100 blur-3xl" />
         </div>
 
         {/* Main content card */}

@@ -9,7 +9,8 @@
     "build:dashboard": "tsc -b && vite build --config vite.dashboard.config.ts",
     "build:journal": "tsc -b && vite build --config vite.journal.config.ts",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -73,7 +74,7 @@
     "react-hotkeys-hook": "^5.1.0",
     "react-infinite-scroll-component": "^6.1.0",
     "sonner": "^2.0.7",
-    "swiper": "^12.0.2",
+    "swiper": "12.0.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11"
   },
@@ -90,6 +91,8 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "sass-embedded": "^1.89.2",
