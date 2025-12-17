@@ -4,13 +4,14 @@ FROM node:20.19-alpine AS frontend-builder
 # Set working directory
 WORKDIR /app
 
-# Copy package files for better caching
+# Copy package files and patches for better caching
 COPY client/package*.json ./client/
+COPY client/patches ./client/patches
 WORKDIR /app/client
 RUN npm install
 
 # Copy frontend source and build
-COPY client/ ./
+COPY client/ .
 RUN npm run build:dashboard
 RUN npm run build:journal
 
