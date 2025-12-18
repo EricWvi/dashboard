@@ -290,6 +290,16 @@ const DateRange = ({
     return `${selectedYear}-${month}-${day}`;
   });
 
+  const yearRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+  const monthRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+  const dayRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    yearRefs.current[selectedYear]?.scrollIntoView({ block: "center" });
+    monthRefs.current[selectedMonth]?.scrollIntoView({ block: "center" });
+    dayRefs.current[selectedDay]?.scrollIntoView({ block: "center" });
+  }, []);
+
   const handleYearClick = (year: number) => {
     const m = dates!.dates.find((d) => d.year === year)!.months[0].month;
     const d = dates!.dates.find((d) => d.year === year)!.months[0].days[0];
@@ -341,6 +351,9 @@ const DateRange = ({
             {dates.dates.map((date) => (
               <button
                 key={date.year}
+                ref={(el) => {
+                  yearRefs.current[date.year] = el;
+                }}
                 className={`date-selector-item ${selectedYear === date.year ? "selected" : ""}`}
                 onClick={() => handleYearClick(date.year)}
               >
@@ -356,6 +369,9 @@ const DateRange = ({
               ?.months.map((date) => (
                 <button
                   key={date.month}
+                  ref={(el) => {
+                    monthRefs.current[date.month] = el;
+                  }}
                   className={`date-selector-item ${selectedMonth === date.month ? "selected" : ""}`}
                   onClick={() => handleMonthClick(date.month)}
                 >
@@ -372,6 +388,9 @@ const DateRange = ({
               ?.days.map((day) => (
                 <button
                   key={day}
+                  ref={(el) => {
+                    dayRefs.current[day] = el;
+                  }}
                   className={`date-selector-item ${selectedDay === day ? "selected" : ""}`}
                   onClick={() => handleDayClick(day)}
                 >
