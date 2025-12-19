@@ -1,6 +1,12 @@
 import { EntryMeta, useEntry } from "@/hooks/use-entries";
 import { ImageList } from "@/components/journal/image-list";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   BookmarkDecoration,
   Icon,
@@ -13,7 +19,7 @@ import { extensionSetup } from "@/components/tiptap-templates/simple/simple-edit
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import { motion, AnimatePresence } from "framer-motion";
-import { MediaViewer } from "./media-viewer";
+import MediaViewer from "./media-viewer";
 import { EntryCardMenuHeight, DropdownMenu } from "./dropdown-menu";
 
 const filterText = (doc: JSONContent) => {
@@ -86,7 +92,7 @@ interface EntryCardProps {
   onDelete: (id: number) => void;
 }
 
-export default function EntryCard({
+function EntryCard({
   meta,
   showYear,
   showMonth,
@@ -122,6 +128,15 @@ export default function EntryCard({
     () => (draft ? filterText(draft.content) : null),
     [draft],
   );
+
+  const handleImageClick = useCallback((index: number) => {
+    setCurrentSlideIndex(index);
+    setViewerOpen(true);
+  }, []);
+
+  const handleViewerClose = useCallback(() => {
+    setViewerOpen(false);
+  }, []);
 
   const handleContextMenuOpen = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -199,13 +214,7 @@ export default function EntryCard({
         {/* TODO picture loading css animation */}
         <div className="my-1 px-1">
           {/* Thumbnail trigger */}
-          <ImageList
-            items={mediaItems}
-            onItemClick={(index) => {
-              setCurrentSlideIndex(index);
-              setViewerOpen(true);
-            }}
-          />
+          <ImageList items={mediaItems} onItemClick={handleImageClick} />
 
           {/* Media Viewer */}
           <MediaViewer
@@ -213,7 +222,7 @@ export default function EntryCard({
             isOpen={viewerOpen}
             currentSlideIndex={currentSlideIndex}
             setCurrentSlideIndex={setCurrentSlideIndex}
-            onClose={() => setViewerOpen(false)}
+            onClose={handleViewerClose}
           />
         </div>
 
@@ -316,6 +325,8 @@ export default function EntryCard({
     </>
   );
 }
+
+export default React.memo(EntryCard);
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {

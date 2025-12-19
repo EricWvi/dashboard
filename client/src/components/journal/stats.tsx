@@ -14,6 +14,7 @@ import {
   useGetWordsCount,
 } from "@/hooks/use-entries";
 import { UserLangEnum } from "@/hooks/use-user";
+import React from "react";
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
@@ -72,4 +73,4 @@ const Stats = () => {
   );
 };
 
-export default Stats;
+export default React.memo(Stats);

@@ -77,7 +77,6 @@ interface EntryCalendarProps {
 }
 
 function EntryCalendar({ activity, onDateClick }: EntryCalendarProps) {
-  // console.log("EntryCalendar render");
   const { language } = useUserContext();
   const isMobile = useIsMobile();
   const calendarRef = useRef<HTMLDivElement>(null);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { formatMediaUrl } from "@/lib/utils";
 import type { MediaItem } from "./media-swiper";
 
@@ -72,7 +72,7 @@ const mediaBlock = (
   onItemClick?: (index: number) => void,
 ) => <MediaBlock media={media} onClick={() => onItemClick?.(index)} />;
 
-export const ImageList = ({ items, onItemClick }: Props) => {
+export const ImageList = React.memo(({ items, onItemClick }: Props) => {
   // `flex-1` alone sometimes doesn't work as expected
   // for equal heights unless you set `h-0` on the children.
   // This allows the flex algorithm to allocate the available height equally.
@@ -204,4 +204,4 @@ export const ImageList = ({ items, onItemClick }: Props) => {
       </div>
     </div>
   );
-};
+});

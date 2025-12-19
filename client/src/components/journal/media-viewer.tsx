@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { MediaSwiper } from "./media-swiper";
 import { CustomPagination } from "./custom-pagination";
 import { CustomNavigation } from "./custom-navigation";
@@ -18,7 +18,7 @@ interface MediaViewerProps {
   onClose: () => void;
 }
 
-export function MediaViewer({
+function MediaViewer({
   items,
   isOpen,
   currentSlideIndex,
@@ -109,3 +109,5 @@ export function MediaViewer({
     </>
   );
 }
+
+export default React.memo(MediaViewer);

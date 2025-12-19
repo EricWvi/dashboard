@@ -396,37 +396,43 @@ interface IconProps {
   onClick?: () => void;
 }
 
-export const Icon = ({
-  className = "",
-  children,
-  onClick,
-}: IconProps & { children?: React.ReactNode }) => (
-  <div className={className} onClick={onClick}>
-    {children}
-  </div>
+export const Icon = React.memo(
+  ({
+    className = "",
+    children,
+    onClick,
+  }: IconProps & { children?: React.ReactNode }) => (
+    <div className={className} onClick={onClick}>
+      {children}
+    </div>
+  ),
 );
 
-export const VerticalBar = ({ className }: IconProps) => (
+export const VerticalBar = React.memo(({ className }: IconProps) => (
   <div className={"bg-vertical-bar w-[1px] " + className}></div>
+));
+
+export const Number = React.memo(
+  ({
+    className = "",
+    children,
+  }: IconProps & { children?: React.ReactNode }) => (
+    <div className={"text-foreground font-bold " + className}>{children}</div>
+  ),
 );
 
-export const Number = ({
-  className = "",
-  children,
-}: IconProps & { children?: React.ReactNode }) => (
-  <div className={"text-foreground font-bold " + className}>{children}</div>
-);
-
-export const Description = ({
-  className = "",
-  children,
-}: IconProps & { children?: React.ReactNode }) => (
-  <div
-    className={
-      "text-stats-font mt-1 text-xs leading-none font-medium whitespace-nowrap" +
-      className
-    }
-  >
-    {children}
-  </div>
+export const Description = React.memo(
+  ({
+    className = "",
+    children,
+  }: IconProps & { children?: React.ReactNode }) => (
+    <div
+      className={
+        "text-stats-font mt-1 text-xs leading-none font-medium whitespace-nowrap" +
+        className
+      }
+    >
+      {children}
+    </div>
+  ),
 );

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/journal/header";
 import EntryCard from "@/components/journal/entry-card";
 import { X } from "lucide-react";
@@ -111,50 +111,52 @@ const getConditionIcon = (operator: string) => {
   }
 };
 
-function Conditions({ conditions, onRemove, onClearAll }: ConditionsProps) {
-  const { language } = useUserContext();
-  if (conditions.length === 0) return null;
+const Conditions = React.memo(
+  ({ conditions, onRemove, onClearAll }: ConditionsProps) => {
+    const { language } = useUserContext();
+    if (conditions.length === 0) return null;
 
-  return (
-    <div className="mx-auto mt-6 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-center gap-2 sm:mb-4">
-        <span className="entry-card-shadow bg-entry-card text-foreground mr-1 rounded-full p-1.5 md:mr-2">
-          <div className="size-5">
-            <DecreaseCircle />
-          </div>
-        </span>
-        {conditions.map((condition, index) => (
-          <div
-            key={index}
-            className="group entry-filter-shadow bg-entry-card flex items-center gap-1 rounded-full py-1.5 pr-3 pl-4"
-          >
-            <span className="text-foreground flex items-center gap-1 text-sm font-medium">
-              {getConditionIcon(condition.operator)}
-
-              {condition.operator === "before" && "<= "}
-              {condition.value}
-            </span>
-            <button
-              onClick={() => onRemove(index)}
-              className="text-muted-foreground hover:text-foreground flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
-              aria-label="Remove filter"
+    return (
+      <div className="mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center gap-2 sm:mb-4">
+          <span className="entry-card-shadow bg-entry-card text-foreground mr-1 rounded-full p-1.5 md:mr-2">
+            <div className="size-5">
+              <DecreaseCircle />
+            </div>
+          </span>
+          {conditions.map((condition, index) => (
+            <div
+              key={index}
+              className="group entry-filter-shadow bg-entry-card flex items-center gap-1 rounded-full py-1.5 pr-3 pl-4"
             >
-              <X className="h-3.5 w-3.5 cursor-pointer" />
+              <span className="text-foreground flex items-center gap-1 text-sm font-medium">
+                {getConditionIcon(condition.operator)}
+
+                {condition.operator === "before" && "<= "}
+                {condition.value}
+              </span>
+              <button
+                onClick={() => onRemove(index)}
+                className="text-muted-foreground hover:text-foreground flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+                aria-label="Remove filter"
+              >
+                <X className="h-3.5 w-3.5 cursor-pointer" />
+              </button>
+            </div>
+          ))}
+          {conditions.length > 1 && (
+            <button
+              onClick={onClearAll}
+              className="text-muted-foreground hover:text-foreground ml-3 cursor-pointer text-sm font-medium transition-colors hover:underline"
+            >
+              {i18nText[language].clearAll}
             </button>
-          </div>
-        ))}
-        {conditions.length > 1 && (
-          <button
-            onClick={onClearAll}
-            className="text-muted-foreground hover:text-foreground ml-3 cursor-pointer text-sm font-medium transition-colors hover:underline"
-          >
-            {i18nText[language].clearAll}
-          </button>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);
 
 export default function Journal() {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -177,14 +179,14 @@ export default function Journal() {
     loadInitialData();
   }, []);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     setEntries([]);
     setPage(0);
     setHasMore(true);
     loadInitialData();
-  };
+  }, []);
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     loading.current = true;
     try {
       const [metas, more] = await listEntries(1, conditionRef.current);
@@ -196,9 +198,9 @@ export default function Journal() {
     } finally {
       loading.current = false;
     }
-  };
+  }, []);
 
-  const fetchMoreData = async (page: number) => {
+  const fetchMoreData = useCallback(async (page: number) => {
     if (loading.current) return;
     loading.current = true;
     try {
@@ -211,9 +213,9 @@ export default function Journal() {
     } finally {
       loading.current = false;
     }
-  };
+  }, []);
 
-  const handleCreateEntry = async () => {
+  const handleCreateEntry = useCallback(async () => {
     createEntry().then(([id, draft]) => {
       setOnClose(() => (e: Editor, changed: boolean) => {
         if (changed) {
@@ -238,14 +240,14 @@ export default function Journal() {
       setEditorId(draft);
       setEditorDialogOpen(true);
     });
-  };
+  }, []);
 
-  const handleDeleteEntry = async (id: number) => {
+  const handleDeleteEntry = useCallback(async (id: number) => {
     deleteEntry(id).then(() => {
       refreshMeta();
       refresh();
     });
-  };
+  }, []);
 
   const scrollToTop = useCallback(() => {
     if (scrollableDivRef.current) {
@@ -262,12 +264,16 @@ export default function Journal() {
         );
 
         if (existingContainsIndex !== -1) {
-          conditionRef.current[existingContainsIndex] = {
+          const newConditions = [...conditionRef.current];
+          newConditions[existingContainsIndex] = {
             operator: "contains",
             value: trimmed,
           };
+          conditionRef.current = newConditions;
         } else {
-          conditionRef.current.push({ operator: "contains", value: trimmed });
+          const newConditions = [...conditionRef.current];
+          newConditions.push({ operator: "contains", value: trimmed });
+          conditionRef.current = newConditions;
         }
       } else {
         conditionRef.current = conditionRef.current.filter(
@@ -286,7 +292,9 @@ export default function Journal() {
 
     if (existingBookmarkIndex === -1) {
       const label = language === UserLangEnum.ZHCN ? "书签" : "Bookmark";
-      conditionRef.current.push({ operator: "bookmarked", value: label });
+      const newConditions = [...conditionRef.current];
+      newConditions.push({ operator: "bookmarked", value: label });
+      conditionRef.current = newConditions;
       scrollToTop();
       refresh();
     }
@@ -336,6 +344,27 @@ export default function Journal() {
     return [];
   }, []);
 
+  const handleRemoveCondition = useCallback(
+    (index: number) => {
+      const newConditions = [...conditionRef.current];
+      newConditions.splice(index, 1);
+      conditionRef.current = newConditions;
+      refresh();
+    },
+    [refresh],
+  );
+
+  const handleClearAllConditions = useCallback(() => {
+    conditionRef.current = [];
+    scrollToTop();
+    refresh();
+  }, [scrollToTop, refresh]);
+
+  const handleEntryCardShare = useCallback((meta: EntryMeta) => {
+    setShareMeta(meta);
+    setShareDialogOpen(true);
+  }, []);
+
   return (
     <>
       <div className="journal-bg fixed inset-0 z-1"></div>
@@ -359,15 +388,8 @@ export default function Journal() {
               {/* Conditions */}
               <Conditions
                 conditions={conditionRef.current}
-                onRemove={(index) => {
-                  conditionRef.current.splice(index, 1);
-                  refresh();
-                }}
-                onClearAll={() => {
-                  conditionRef.current = [];
-                  scrollToTop();
-                  refresh();
-                }}
+                onRemove={handleRemoveCondition}
+                onClearAll={handleClearAllConditions}
               />
 
               <main className="w-full">
@@ -413,10 +435,7 @@ export default function Journal() {
                       showMonth={e.showMonth}
                       showToday={e.showToday}
                       showYesterday={e.showYesterday}
-                      onShare={() => {
-                        setShareMeta(e.entry);
-                        setShareDialogOpen(true);
-                      }}
+                      onShare={handleEntryCardShare}
                       onDelete={handleDeleteEntry}
                     />
                   ))}
