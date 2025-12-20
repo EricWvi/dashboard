@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Plus,
   Package2,
@@ -123,7 +123,7 @@ const progressText = (watch: Watch, language: UserLang) => {
   return "";
 };
 
-const WatchingItem = ({ watch }: { watch: Watch }) => {
+const WatchingItem = React.memo(({ watch }: { watch: Watch }) => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
   const type = types.find((type) => type.value === watch.type);
@@ -752,7 +752,7 @@ const WatchingItem = ({ watch }: { watch: Watch }) => {
       </Dialog>
     </div>
   );
-};
+});
 
 export const WatchingList = ({ watches }: { watches: Watch[] }) => {
   const isMobile = useIsMobile();

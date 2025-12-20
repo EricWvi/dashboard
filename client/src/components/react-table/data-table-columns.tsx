@@ -56,6 +56,7 @@ import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import WatchReview from "@/components/watch-review";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useState } from "react";
 
 export const ratings = [
   {
@@ -162,6 +163,7 @@ const i18nText = {
     rate: "评分",
     mark: "标记日期",
     share: "分享",
+    review: "评论",
     quotes: "书摘",
     domain: "领域",
     title: "标题",
@@ -178,6 +180,7 @@ const i18nText = {
     rate: "Rate",
     mark: "Mark",
     share: "Share",
+    review: "Review",
     quotes: "Quotes",
     domain: "Domain",
     title: "Title",
@@ -240,15 +243,17 @@ export const watchedColumns: ColumnDef<Watch>[] = [
       return (
         <div className="flex gap-2">
           <span
-            className="max-w-[600px] truncate font-medium"
+            className="flex items-center gap-1 font-medium"
             title={row.getValue("title") + " (" + row.original.year + ")"}
           >
-            {row.getValue("title")}{" "}
+            <span className="max-w-[540px] min-w-0 truncate">
+              {row.getValue("title")}
+            </span>
             <span className="text-muted-foreground">
               {"(" + row.original.year + ")"}
             </span>
             {(row.original.payload.epoch ?? 1) > 1 && (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-1">
                 {row.original.payload.epoch === 2
                   ? "2nd"
                   : row.original.payload.epoch === 3
@@ -458,20 +463,36 @@ export const towatchColumns: ColumnDef<Watch>[] = [
       );
     },
     cell: ({ row }) => {
+      const { language } = useUserContext();
+      const [dialogOpen, setDialogOpen] = useState(false);
+
       return (
         <div className="flex gap-2">
           <span
-            className="max-w-[600px] truncate font-medium"
+            className="flex items-center gap-1 font-medium"
             title={row.getValue("title") + " (" + row.original.year + ")"}
           >
-            {row.getValue("title")}{" "}
+            <span
+              className={`${
+                !!row.original.payload.review
+                  ? "dashed-text cursor-pointer"
+                  : ""
+              } max-w-[540px] min-w-0 truncate`}
+              onClick={() => {
+                if (!!row.original.payload.review) {
+                  setDialogOpen(true);
+                }
+              }}
+            >
+              {row.getValue("title")}
+            </span>
             {row.original.year !== 2099 && (
               <span className="text-muted-foreground">
                 {"(" + row.original.year + ")"}
               </span>
             )}
             {(row.original.payload.epoch ?? 1) > 1 && (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-1">
                 {row.original.payload.epoch === 2
                   ? "2nd"
                   : row.original.payload.epoch === 3
@@ -480,6 +501,27 @@ export const towatchColumns: ColumnDef<Watch>[] = [
               </Badge>
             )}
           </span>
+
+          {/* display review content */}
+          {!!row.original.payload.review && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogContent
+                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault(); // stops Radix from focusing anything
+                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+                }}
+              >
+                <DialogHeader>
+                  <DialogTitle>
+                    {row.original.title} · {i18nText[language].review}
+                  </DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+                <ContentRender id={row.original.payload.review} />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       );
     },
