@@ -70,13 +70,15 @@ export function MediaSwiper({
         onSwiperInit?.(swiper);
         onNavigationChange?.(swiper.isBeginning, swiper.isEnd);
       }}
-      onTap={handleTap}
       onDoubleClick={handleDoubleTap}
       className="h-full w-full overflow-hidden rounded-lg"
     >
       {items.map((item, idx) => (
         <SwiperSlide key={idx} className="h-full">
-          <div className="flex h-full items-center justify-center">
+          <div
+            className="flex h-full items-center justify-center"
+            onClick={handleTap}
+          >
             {item.type === "image" ? (
               <div className="swiper-zoom-container">
                 <img
@@ -89,7 +91,7 @@ export function MediaSwiper({
               <video
                 src={item.src}
                 controls
-                className="w-full object-contain"
+                className="max-h-full object-contain"
                 onClick={(e) => e.stopPropagation()}
               />
             )}
