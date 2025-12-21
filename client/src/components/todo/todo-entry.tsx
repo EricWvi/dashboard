@@ -258,7 +258,8 @@ export const TodayTodoView = ({ id }: { id: number }) => {
     <ContextMenuContent>
       {!todo.done && (
         <ContextMenuItem
-          onClick={() => {
+          onClick={(e) => {
+            if (!e.isTrusted || e.detail === 0) return;
             navigator.clipboard.writeText(todo.title);
             window.open(
               "https://timetagger.onlyquant.top/timetagger/app/",
@@ -271,25 +272,41 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         </ContextMenuItem>
       )}
       {todo.done ? (
-        <ContextMenuItem onClick={undoneTodo}>
+        <ContextMenuItem
+          onClick={(e) => {
+            if (!e.isTrusted || e.detail === 0) return;
+            undoneTodo();
+          }}
+        >
           <Undo2 />
           {todayTodoViewI18N[language].undone}
         </ContextMenuItem>
       ) : (
-        <ContextMenuItem onClick={doneTodo}>
+        <ContextMenuItem
+          onClick={(e) => {
+            if (!e.isTrusted || e.detail === 0) return;
+            doneTodo();
+          }}
+        >
           <CircleCheckBig />
           {todayTodoViewI18N[language].done}
         </ContextMenuItem>
       )}
       {!todo.done && (
-        <ContextMenuItem onClick={unsetScheduleDate}>
+        <ContextMenuItem
+          onClick={(e) => {
+            if (!e.isTrusted || e.detail === 0) return;
+            unsetScheduleDate();
+          }}
+        >
           <X />
           {todayTodoViewI18N[language].unsetDate}
         </ContextMenuItem>
       )}
       <ContextMenuSeparator />
       <ContextMenuItem
-        onClick={() => {
+        onClick={(e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           setEditTodoName(todo.title);
           setEditTodoDialogOpen(true);
         }}
@@ -298,7 +315,8 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         {todayTodoViewI18N[language].rename}
       </ContextMenuItem>
       <ContextMenuItem
-        onClick={() => {
+        onClick={(e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           setEditLinkName(todo.link);
           setEditLinkDialogOpen(true);
         }}
@@ -307,7 +325,8 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         {todayTodoViewI18N[language].link}
       </ContextMenuItem>
       <ContextMenuItem
-        onClick={async () => {
+        onClick={async (e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           if (todo.draft !== 0) {
             setEditorId(todo.draft);
             setEditorDialogOpen(true);
@@ -323,7 +342,8 @@ export const TodayTodoView = ({ id }: { id: number }) => {
         {todayTodoViewI18N[language].draft}
       </ContextMenuItem>
       <ContextMenuItem
-        onClick={async () => {
+        onClick={async (e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           if (todo.kanban !== 0) {
             setKanbanId(todo.kanban);
             setKanbanDialogOpen(true);
@@ -572,12 +592,20 @@ export const CompletedTodoView = ({
           </CardContent>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={restoreTodo}>
+          <ContextMenuItem
+            onClick={(e) => {
+              if (!e.isTrusted || e.detail === 0) return;
+              restoreTodo();
+            }}
+          >
             <ArchiveRestore />
             {completedTodoViewI18N[language].restore}
           </ContextMenuItem>
           <ContextMenuItem
-            onClick={deleteTodo}
+            onClick={(e) => {
+              if (!e.isTrusted || e.detail === 0) return;
+              deleteTodo();
+            }}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="text-destructive" />
@@ -707,23 +735,43 @@ export const TodoEntry = ({
         (isSetToday(todo.schedule) ? (
           todo.done ? (
             <>
-              <ContextMenuItem onClick={undoneTodo}>
+              <ContextMenuItem
+                onClick={(e) => {
+                  if (!e.isTrusted || e.detail === 0) return;
+                  undoneTodo();
+                }}
+              >
                 <Undo2 />
                 {todoEntryI18NText[language].undone}
               </ContextMenuItem>
-              <ContextMenuItem onClick={completeTodo}>
+              <ContextMenuItem
+                onClick={(e) => {
+                  if (!e.isTrusted || e.detail === 0) return;
+                  completeTodo();
+                }}
+              >
                 <Archive />
                 {todoEntryI18NText[language].complete}
               </ContextMenuItem>
             </>
           ) : (
-            <ContextMenuItem onClick={doneTodo}>
+            <ContextMenuItem
+              onClick={(e) => {
+                if (!e.isTrusted || e.detail === 0) return;
+                doneTodo();
+              }}
+            >
               <CircleCheckBig />
               {todoEntryI18NText[language].done}
             </ContextMenuItem>
           )
         ) : (
-          <ContextMenuItem onClick={completeTodo}>
+          <ContextMenuItem
+            onClick={(e) => {
+              if (!e.isTrusted || e.detail === 0) return;
+              completeTodo();
+            }}
+          >
             <Archive />
             {todoEntryI18NText[language].complete}
           </ContextMenuItem>
@@ -736,7 +784,8 @@ export const TodoEntry = ({
         (todo.schedule && isSetDate(todo.schedule) ? (
           <>
             <ContextMenuItem
-              onClick={() => {
+              onClick={(e) => {
+                if (!e.isTrusted || e.detail === 0) return;
                 setScheduleDate(todo.schedule);
                 setEditDateDialogOpen(true);
               }}
@@ -745,7 +794,12 @@ export const TodoEntry = ({
               {todoEntryI18NText[language].resetDate}
             </ContextMenuItem>
             {!todo.done && (
-              <ContextMenuItem onClick={unsetScheduleDate}>
+              <ContextMenuItem
+                onClick={(e) => {
+                  if (!e.isTrusted || e.detail === 0) return;
+                  unsetScheduleDate();
+                }}
+              >
                 <X />
                 {todoEntryI18NText[language].unsetDate}
               </ContextMenuItem>
@@ -754,7 +808,8 @@ export const TodoEntry = ({
         ) : (
           <>
             <ContextMenuItem
-              onClick={() => {
+              onClick={(e) => {
+                if (!e.isTrusted || e.detail === 0) return;
                 setScheduleDate(todo.schedule);
                 setEditDateDialogOpen(true);
               }}
@@ -764,7 +819,8 @@ export const TodoEntry = ({
             </ContextMenuItem>
             {!isDisabledPlan(todo.schedule) ? (
               <ContextMenuItem
-                onClick={() => {
+                onClick={(e) => {
+                  if (!e.isTrusted || e.detail === 0) return;
                   updateScheduleDate(noPlanStart());
                 }}
               >
@@ -772,7 +828,12 @@ export const TodoEntry = ({
                 {todoEntryI18NText[language].noPlan}
               </ContextMenuItem>
             ) : (
-              <ContextMenuItem onClick={unsetScheduleDate}>
+              <ContextMenuItem
+                onClick={(e) => {
+                  if (!e.isTrusted || e.detail === 0) return;
+                  unsetScheduleDate();
+                }}
+              >
                 <CalendarPlus />
                 {todoEntryI18NText[language].usePlan}
               </ContextMenuItem>
@@ -781,7 +842,8 @@ export const TodoEntry = ({
         ))}
       {collectionId !== 0 && <ContextMenuSeparator />}
       <ContextMenuItem
-        onClick={() => {
+        onClick={(e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           setEditTodoName(todo.title);
           setEditTodoDialogOpen(true);
         }}
@@ -790,7 +852,8 @@ export const TodoEntry = ({
         {todoEntryI18NText[language].rename}
       </ContextMenuItem>
       <ContextMenuItem
-        onClick={() => {
+        onClick={(e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           setEditLinkName(todo.link);
           setEditLinkDialogOpen(true);
         }}
@@ -799,7 +862,8 @@ export const TodoEntry = ({
         {todoEntryI18NText[language].link}
       </ContextMenuItem>
       <ContextMenuItem
-        onClick={async () => {
+        onClick={async (e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           if (todo.draft !== 0) {
             setEditorId(todo.draft);
             setEditorDialogOpen(true);
@@ -815,7 +879,8 @@ export const TodoEntry = ({
         {todoEntryI18NText[language].draft}
       </ContextMenuItem>
       <ContextMenuItem
-        onClick={async () => {
+        onClick={async (e) => {
+          if (!e.isTrusted || e.detail === 0) return;
           if (todo.kanban !== 0) {
             setKanbanId(todo.kanban);
             setKanbanDialogOpen(true);
@@ -832,13 +897,23 @@ export const TodoEntry = ({
       </ContextMenuItem>
       <ContextMenuSeparator />
       {!top && collectionId !== 0 && (
-        <ContextMenuItem onClick={topTodo}>
+        <ContextMenuItem
+          onClick={(e) => {
+            if (!e.isTrusted || e.detail === 0) return;
+            topTodo();
+          }}
+        >
           <CornerLeftUp />
           {todoEntryI18NText[language].top}
         </ContextMenuItem>
       )}
       {!bottom && collectionId !== 0 && (
-        <ContextMenuItem onClick={bottomTodo}>
+        <ContextMenuItem
+          onClick={(e) => {
+            if (!e.isTrusted || e.detail === 0) return;
+            bottomTodo();
+          }}
+        >
           <CornerLeftDown />
           {todoEntryI18NText[language].bottom}
         </ContextMenuItem>
@@ -856,7 +931,10 @@ export const TodoEntry = ({
             .map((collection) => (
               <ContextMenuItem
                 key={collection.id}
-                onClick={() => moveTodo(collection.id)}
+                onClick={(e) => {
+                  if (!e.isTrusted || e.detail === 0) return;
+                  moveTodo(collection.id);
+                }}
               >
                 {collection.name}
               </ContextMenuItem>
@@ -865,7 +943,10 @@ export const TodoEntry = ({
       </ContextMenuSub>
       <ContextMenuSeparator />
       <ContextMenuItem
-        onClick={deleteTodo}
+        onClick={(e) => {
+          if (!e.isTrusted || e.detail === 0) return;
+          deleteTodo();
+        }}
         className="text-destructive focus:text-destructive"
       >
         <Trash2 className="text-destructive" />
