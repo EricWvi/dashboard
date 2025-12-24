@@ -40,8 +40,16 @@ import {
 import { RestoreIcon } from "@/components/tiptap-icons/restore-icon";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
+import { diffJSONContent } from "@/lib/tiptap-diff";
+import { Editor, type JSONContent } from "@tiptap/react";
 
-export const HistoryPopover = ({ id }: { id: number }) => {
+export const HistoryPopover = ({
+  id,
+  editor,
+}: {
+  id: number;
+  editor: Editor;
+}) => {
   const { language } = useUserContext();
   const [history, setHistory] = useState<number[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -160,7 +168,7 @@ export const HistoryPopover = ({ id }: { id: number }) => {
             <DialogDescription></DialogDescription>
           </DialogHeader>
 
-          <HistoryContent id={id} ts={selectedTimestamp} />
+          <HistoryContent id={id} ts={selectedTimestamp} editor={editor} />
         </DialogContent>
       </Dialog>
 
@@ -196,9 +204,18 @@ export const HistoryPopover = ({ id }: { id: number }) => {
   );
 };
 
-export function HistoryContent({ id, ts }: { id: number; ts: number }) {
+export function HistoryContent({
+  id,
+  ts,
+  editor,
+}: {
+  id: number;
+  ts: number;
+  editor: Editor;
+}) {
   const isMobile = useIsMobile();
-  const [content, setContent] = useState<any>(null);
+  const [currentContent, _] = useState<any>(editor.getJSON());
+  const [historyContent, setHistoryContent] = useState<any>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [showLoading, setShowLoading] = useState(true);
 
@@ -207,7 +224,7 @@ export function HistoryContent({ id, ts }: { id: number; ts: number }) {
     getHistory(id, ts)
       .then(async (res) => {
         const data = await res.json();
-        setContent(data.message.content);
+        setHistoryContent(data.message.content);
       })
       .finally(() => setIsFetching(false));
   };
@@ -226,6 +243,15 @@ export function HistoryContent({ id, ts }: { id: number; ts: number }) {
     }
   }, [isFetching]);
 
+  // Compute diff between history content (old) and current content (new)
+  const diffContent =
+    !showLoading && historyContent
+      ? diffJSONContent(
+          historyContent as JSONContent,
+          currentContent as JSONContent,
+        )
+      : null;
+
   return (
     <div
       className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-4"}`}
@@ -238,7 +264,7 @@ export function HistoryContent({ id, ts }: { id: number; ts: number }) {
           <Skeleton className="h-[30vh] rounded-sm" />
         </div>
       ) : (
-        <ReadOnlyTiptap draft={content} />
+        <ReadOnlyTiptap draft={diffContent} diffView />
       )}
     </div>
   );

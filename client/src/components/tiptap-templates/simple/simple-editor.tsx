@@ -26,6 +26,7 @@ import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/imag
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import { EmojiExtension } from "@/components/tiptap-node/emoji-node";
 import { VideoExtension } from "@/components/tiptap-node/video-node";
+import { DiffExtension } from "@/components/tiptap-node/diff-node";
 import {
   TOCExtension,
   TableOfContents,
@@ -38,6 +39,7 @@ import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/heading-node/heading-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 import "@/components/tiptap-node/video-node/video-node.scss";
+import "@/components/tiptap-node/diff-node/diff.scss";
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
@@ -95,6 +97,7 @@ import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 
 const MainToolbarContent = ({
+  editor,
   onHighlighterClick,
   onLinkClick,
   isMobile,
@@ -102,6 +105,7 @@ const MainToolbarContent = ({
   dropChange,
   id,
 }: {
+  editor: Editor;
   onHighlighterClick: () => void;
   onLinkClick: () => void;
   isMobile: boolean;
@@ -205,7 +209,7 @@ const MainToolbarContent = ({
         >
           <Eraser className="size-4" />
         </Button>
-        <HistoryPopover id={id} />
+        <HistoryPopover id={id} editor={editor} />
         <ThemeToggle />
       </ToolbarGroup>
     </>
@@ -426,6 +430,7 @@ export function SimpleEditor({
             <Toolbar ref={toolbarRef}>
               {mobileView === "main" ? (
                 <MainToolbarContent
+                  editor={editor}
                   onHighlighterClick={() => setMobileView("highlighter")}
                   onLinkClick={() => setMobileView("link")}
                   isMobile={isMobile}
@@ -483,9 +488,11 @@ export const extensionSetup = [
 export function ReadOnlyTiptap({
   draft,
   style = "",
+  diffView = false,
 }: {
   draft: any;
   style?: string;
+  diffView?: boolean;
 }) {
   const editor = useEditor({
     editable: false,
@@ -501,7 +508,7 @@ export function ReadOnlyTiptap({
         style: style,
       },
     },
-    extensions: extensionSetup,
+    extensions: diffView ? [...extensionSetup, DiffExtension] : extensionSetup,
     content: draft,
   });
   return (
