@@ -23,6 +23,7 @@ func (b Base) UpdateTiptap(c *gin.Context, req *UpdateTiptapRequest) *UpdateTipt
 		m.Eq(model.Tiptap_Ts, req.Prev)
 	}
 
+	tiptap.BackupHistory(config.ContextDB(c), m)
 	if err := tiptap.Update(config.ContextDB(c), m); err != nil {
 		c.JSON(http.StatusConflict, handler.Response{
 			RequestId: c.GetString(log.RequestIDCtxKey),

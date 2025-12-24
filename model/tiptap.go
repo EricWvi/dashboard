@@ -136,6 +136,18 @@ func (t *Tiptap) SaveHistory(db *gorm.DB, where map[string]any) error {
 	return nil
 }
 
+func (t *Tiptap) BackupHistory(db *gorm.DB, where map[string]any) error {
+	rst := db.Table(Tiptap_Table).Where("jsonb_array_length(history) = 0").Where(where).UpdateColumn(
+		Tiptap_History,
+		gorm.Expr("jsonb_build_object('time', ts, 'content', content) || history"),
+	)
+	if rst.Error != nil {
+		return rst.Error
+	}
+
+	return nil
+}
+
 func (t *Tiptap) Delete(db *gorm.DB, where map[string]any) error {
 	return db.Where(where).Delete(t).Error
 }
