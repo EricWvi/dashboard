@@ -316,6 +316,9 @@ export function useDeleteTodo(collectionId: number, completed = false) {
         });
       } else {
         queryClient.invalidateQueries({
+          queryKey: keyTodayTodo(),
+        });
+        queryClient.invalidateQueries({
           queryKey: keyTodosOfCollection(collectionId),
         });
       }

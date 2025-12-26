@@ -211,7 +211,6 @@ function EntryCard({
         ref={entryCardRef}
         className="entry-card-shadow bg-entry-card mb-5 flex flex-col overflow-hidden rounded-xl"
       >
-        {/* TODO picture loading css animation */}
         <div className="my-1 px-1">
           {/* Thumbnail trigger */}
           <ImageList items={mediaItems} onItemClick={handleImageClick} />
@@ -251,7 +250,7 @@ function EntryCard({
               }
               setExpanded(!expanded);
             }}
-            className={`${hasMore ? "entry-card-text-mask" : ""} text-foreground overflow-hidden leading-6 font-normal transition-[max-height] duration-500 ease-in-out`}
+            className={`${hasMore ? "entry-card-text-mask" : ""} entry-card-content text-foreground overflow-hidden leading-6 font-normal whitespace-pre-wrap transition-[max-height] duration-500 ease-in-out`}
             dangerouslySetInnerHTML={{
               __html: textContent
                 ? generateHTML(textContent, extensionSetup)
