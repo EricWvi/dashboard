@@ -1406,7 +1406,8 @@ const blogI18nText = {
   [UserLangEnum.ZHCN]: {
     what: "一级标签",
     how: "二级标签",
-    rename: "重命名",
+    edit: "编辑",
+    meta: "元信息",
     archive: "归档",
     unarchive: "取消归档",
     publish: "公开发布",
@@ -1421,14 +1422,15 @@ const blogI18nText = {
     confirm: "确认",
     cancel: "取消",
     update: "更新",
-    editBlog: "编辑博客",
+    editMeta: "编辑元信息",
     title: "标题",
     titlePlaceholder: "输入博客标题...",
   },
   [UserLangEnum.ENUS]: {
     what: "What",
     how: "How",
-    rename: "Rename",
+    edit: "Edit",
+    meta: "Meta Info",
     archive: "Archive",
     unarchive: "Unarchive",
     publish: "Publish",
@@ -1443,7 +1445,7 @@ const blogI18nText = {
     confirm: "Confirm",
     cancel: "Cancel",
     update: "Update",
-    editBlog: "Edit Blog",
+    editMeta: "Edit Meta Info",
     title: "Title",
     titlePlaceholder: "Enter blog title...",
   },
@@ -1504,16 +1506,17 @@ export function BlogTableRowActions<TData>({
     });
   };
 
-  // edit blog dialog
-  const [editBlogDialogOpen, setEditBlogDialogOpen] = useState(false);
-  const handleEditBlogDialogOpen = (open: boolean) => {
+  // edit meta info dialog
+  const [editMetaDialogOpen, setEditMetaDialogOpen] = useState(false);
+  const handleEditMetaDialogOpen = (open: boolean) => {
     if (open) {
       setBlogName(blog.title);
       setSelectedWhats(blog.payload.whats ?? []);
       setSelectedHows(blog.payload.hows ?? []);
     }
-    setEditBlogDialogOpen(open);
+    setEditMetaDialogOpen(open);
   };
+  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
 
   return (
     <DropdownMenu>
@@ -1527,8 +1530,16 @@ export function BlogTableRowActions<TData>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={() => handleEditBlogDialogOpen(true)}>
-          {blogI18nText[language].rename}
+        <DropdownMenuItem
+          onClick={() => {
+            setEditorId(blog.draft);
+            setEditorDialogOpen(true);
+          }}
+        >
+          {blogI18nText[language].edit}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleEditMetaDialogOpen(true)}>
+          {blogI18nText[language].meta}
         </DropdownMenuItem>
         {blog.visibility === BlogEnum.PRIVATE && (
           <DropdownMenuItem
@@ -1609,8 +1620,8 @@ export function BlogTableRowActions<TData>({
         </DialogContent>
       </Dialog>
 
-      {/* edit blog dialog */}
-      <Dialog open={editBlogDialogOpen} onOpenChange={handleEditBlogDialogOpen}>
+      {/* edit meta info dialog */}
+      <Dialog open={editMetaDialogOpen} onOpenChange={handleEditMetaDialogOpen}>
         <DialogContent
           className="sm:max-w-md"
           onOpenAutoFocus={(e) => {
@@ -1619,7 +1630,7 @@ export function BlogTableRowActions<TData>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>{blogI18nText[language].editBlog}</DialogTitle>
+            <DialogTitle>{blogI18nText[language].editMeta}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1672,13 +1683,13 @@ export function BlogTableRowActions<TData>({
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                onClick={() => handleEditBlogDialogOpen(false)}
+                onClick={() => handleEditMetaDialogOpen(false)}
               >
                 {blogI18nText[language].cancel}
               </Button>
               <Button
                 onClick={() => {
-                  updateBlog().then(() => handleEditBlogDialogOpen(false));
+                  updateBlog().then(() => handleEditMetaDialogOpen(false));
                 }}
                 disabled={!blogName.trim() || updateBlogMutation.isPending}
               >

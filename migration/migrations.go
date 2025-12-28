@@ -169,7 +169,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddReviewCountColumnToEntry,
 			Down:    RemoveReviewCountColumnFromEntry,
 		},
+		{
+			Version: "v2.5.0",
+			Name:    "Add group column to tag table",
+			Up:      AddGroupColumnToTag,
+			Down:    RemoveGroupColumnFromTag,
+		},
 	}
+}
+
+// ------------------- v2.5.0 -------------------
+func AddGroupColumnToTag(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_tag
+		ADD COLUMN t_group VARCHAR(63) DEFAULT 'dashboard' NOT NULL;
+	`).Error
+}
+
+func RemoveGroupColumnFromTag(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_tag
+		DROP COLUMN IF EXISTS t_group;
+	`).Error
 }
 
 // ------------------- v2.4.0 -------------------

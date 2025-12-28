@@ -10,13 +10,15 @@ type Tag struct {
 }
 
 type TagField struct {
-	Name string `gorm:"type:varchar(255);not null" json:"name"`
+	Name  string `gorm:"type:varchar(255);not null" json:"name"`
+	Group string `gorm:"column:t_group;type:varchar(63);default:'dashboard';not null" json:"group"`
 	// CreatorId is inherited from MetaField
 }
 
 const (
 	Tag_Table = "d_tag"
 	Tag_Name  = "name"
+	Tag_Group = "t_group"
 )
 
 func (t *Tag) TableName() string {

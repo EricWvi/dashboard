@@ -11,6 +11,7 @@ import (
 func (b Base) ListTags(c *gin.Context, req *ListTagsRequest) *ListTagsResponse {
 	m := model.WhereMap{}
 	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq(model.Tag_Group, req.Group)
 
 	tags, err := model.ListTags(config.ContextDB(c), m)
 	if err != nil {
@@ -24,6 +25,7 @@ func (b Base) ListTags(c *gin.Context, req *ListTagsRequest) *ListTagsResponse {
 }
 
 type ListTagsRequest struct {
+	Group string `form:"group"`
 }
 
 type ListTagsResponse struct {

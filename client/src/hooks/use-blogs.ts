@@ -112,6 +112,7 @@ export function useCreateBlog() {
       if (newTags.length > 0) {
         await postRequest("/api/bookmark?Action=CreateTags", {
           tags: newTags,
+          group: "dashboard",
         });
         queryClient.invalidateQueries({
           queryKey: keyTags(),
@@ -153,6 +154,7 @@ export function useUpdateBlog() {
         if (newTags.length > 0) {
           await postRequest("/api/bookmark?Action=CreateTags", {
             tags: newTags,
+            group: "dashboard",
           });
           queryClient.invalidateQueries({
             queryKey: keyTags(),

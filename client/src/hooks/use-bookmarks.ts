@@ -77,7 +77,9 @@ export type Tag = {
 export const TagsQueryOptions = {
   queryKey: keyTags(),
   queryFn: async () => {
-    const response = await getRequest("/api/bookmark?Action=ListTags");
+    const response = await getRequest(
+      "/api/bookmark?Action=ListTags&group=dashboard",
+    );
     const data = await response.json();
     const whatTags: Tag[] = [];
     const howTags: Tag[] = [];
@@ -125,7 +127,10 @@ export function useCreateBookmark() {
       // create new tags
       const newTags = [...filteredWhats, ...filteredHows];
       if (newTags.length > 0) {
-        await postRequest("/api/bookmark?Action=CreateTags", { tags: newTags });
+        await postRequest("/api/bookmark?Action=CreateTags", {
+          tags: newTags,
+          group: "dashboard",
+        });
         queryClient.invalidateQueries({
           queryKey: keyTags(),
         });
@@ -186,6 +191,7 @@ export function useUpdateBookmark() {
         if (newTags.length > 0) {
           await postRequest("/api/bookmark?Action=CreateTags", {
             tags: newTags,
+            group: "dashboard",
           });
           queryClient.invalidateQueries({
             queryKey: keyTags(),

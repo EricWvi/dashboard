@@ -13,6 +13,7 @@ func (b Base) CreateTags(c *gin.Context, req *CreateTagsRequest) *CreateTagsResp
 		tag := &model.Tag{}
 		tag.CreatorId = middleware.GetUserId(c)
 		tag.Name = req.Tags[i]
+		tag.Group = req.Group
 
 		if err := tag.Create(config.ContextDB(c)); err != nil {
 			handler.Errorf(c, "%s", err.Error())
@@ -24,7 +25,8 @@ func (b Base) CreateTags(c *gin.Context, req *CreateTagsRequest) *CreateTagsResp
 }
 
 type CreateTagsRequest struct {
-	Tags []string `json:"tags"`
+	Tags  []string `json:"tags"`
+	Group string   `json:"group"`
 }
 
 type CreateTagsResponse struct {
