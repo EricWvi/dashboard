@@ -26,6 +26,7 @@ import {
   NumberSquare,
   DecreaseCircle,
   Sparkles,
+  Calendar31,
 } from "@/components/journal/icon";
 
 type entryWrapper = {
@@ -91,6 +92,12 @@ const getConditionIcon = (operator: string) => {
       return (
         <div className="size-4">
           <Sparkles />
+        </div>
+      );
+    case "todays":
+      return (
+        <div className="size-4">
+          <Calendar31 />
         </div>
       );
     case "contains":
@@ -322,6 +329,22 @@ export default function Journal() {
     );
   }, []);
 
+  const onTodays = useCallback(() => {
+    removeShuffle();
+    const existingTodaysIndex = conditionRef.current.findIndex(
+      (condition) => condition.operator === "todays",
+    );
+
+    if (existingTodaysIndex === -1) {
+      const label = language === UserLangEnum.ZHCN ? "历史今天" : "Todays";
+      const newConditions = [...conditionRef.current];
+      newConditions.push({ operator: "todays", value: label });
+      conditionRef.current = newConditions;
+      scrollToTop();
+      refresh();
+    }
+  }, []);
+
   const onDateFilter = useCallback((date: string) => {
     removeShuffle();
     // Remove any existing date filter first
@@ -406,6 +429,7 @@ export default function Journal() {
                 onSearch={onSearch}
                 onBookmarkFilter={onBookmarkFilter}
                 onShuffle={onShuffle}
+                onTodays={onTodays}
                 onDateFilter={onDateFilter}
                 onDateRangeFilter={onDateRangeFilter}
               />

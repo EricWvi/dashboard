@@ -22,6 +22,7 @@ import {
   NumberSquare,
   ChevronRight,
   Sparkles,
+  Calendar31,
 } from "./icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetEntryDate } from "@/hooks/use-entries";
@@ -431,6 +432,20 @@ const toolbarMenuItems = [
     height: 44,
   },
   {
+    type: "divider",
+    height: 1,
+  },
+  {
+    type: "item",
+    label: "todays",
+    icon: (
+      <div className="h-4 w-5">
+        <Calendar31 />
+      </div>
+    ),
+    height: 44,
+  },
+  {
     type: "full-divider",
     height: 8,
   },
@@ -452,6 +467,7 @@ interface ToolbarMenuProps {
   onClose: () => void;
   onBookmarkFilter: () => void;
   onShuffle: () => void;
+  onTodays: () => void;
   onDateRangeFilter: (date: string) => void;
 }
 
@@ -461,6 +477,7 @@ export function ToolbarMenu({
   onClose,
   onBookmarkFilter,
   onShuffle,
+  onTodays,
   onDateRangeFilter,
 }: ToolbarMenuProps) {
   const { language } = useUserContext();
@@ -491,6 +508,8 @@ export function ToolbarMenu({
       onBookmarkFilter();
     } else if (label === "shuffle") {
       onShuffle();
+    } else if (label === "todays") {
+      onTodays();
     }
     onClose();
   };
@@ -603,6 +622,7 @@ const i18nText = {
     share: "分享",
     delete: "删除",
     shuffle: "随机回顾",
+    todays: "历史今天",
   },
   [UserLangEnum.ENUS]: {
     edit: "Edit",
@@ -613,5 +633,6 @@ const i18nText = {
     share: "Share",
     delete: "Delete",
     shuffle: "Shuffle Entries",
+    todays: "Today in History",
   },
 };

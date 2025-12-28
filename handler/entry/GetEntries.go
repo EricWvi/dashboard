@@ -2,6 +2,7 @@ package entry
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/EricWvi/dashboard/config"
 	"github.com/EricWvi/dashboard/handler"
@@ -25,6 +26,9 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 		switch cond.Operator {
 		case "random":
 			useRandomOperator = true
+		case "todays":
+			today := time.Now()
+			m.Raw("EXTRACT(MONTH FROM created_at) = ? AND EXTRACT(DAY FROM created_at) = ?", today.Month(), today.Day())
 		case "contains":
 			m.ILIKE(model.Entry_RawText, "%"+cond.Value.(string)+"%")
 		case "bookmarked":
@@ -67,13 +71,16 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 			ids = append(ids, entry.Draft)
 		}
 	}
-	where := model.WhereMap{}
-	where.Eq(model.CreatorId, middleware.GetUserId(c))
-	where.In(model.Id, ids)
-	drafts, err := model.ListTiptaps(config.ContextDB(c), where)
-	if err != nil {
-		handler.Errorf(c, "%s", err.Error())
-		return nil
+	drafts := []model.Tiptap{}
+	if len(ids) != 0 {
+		where := model.WhereMap{}
+		where.Eq(model.CreatorId, middleware.GetUserId(c))
+		where.In(model.Id, ids)
+		drafts, err = model.ListTiptaps(config.ContextDB(c), where)
+		if err != nil {
+			handler.Errorf(c, "%s", err.Error())
+			return nil
+		}
 	}
 
 	return &GetEntriesResponse{
