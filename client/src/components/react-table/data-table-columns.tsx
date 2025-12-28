@@ -24,7 +24,7 @@ import {
   BookmarkTableRowActions,
   ToWatchTableRowActions,
   WatchedTableRowActions,
-} from "./watch-table-row-actions";
+} from "./data-table-row-actions";
 
 import {
   Brush,

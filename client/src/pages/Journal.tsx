@@ -10,6 +10,9 @@ import {
   useUpdateEntry,
   refreshMeta,
   deleteEntry,
+  useTags,
+  EntryQueryOptions,
+  type Entry,
 } from "@/hooks/use-entries";
 import ShareCard from "@/components/journal/share-card";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -20,6 +23,13 @@ import { countWords } from "alfaaz";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Plus,
   TextQuote,
   BookmarkSquare,
@@ -28,6 +38,10 @@ import {
   Sparkles,
   Calendar31,
 } from "@/components/journal/icon";
+import { MultiSelect } from "@/components/multi-select";
+import { Label } from "@/components/ui/label";
+import { queryClient } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -180,14 +194,15 @@ export default function Journal() {
   const { language } = useUserContext();
 
   const [entries, setEntries] = useState<entryWrapper[]>([]);
+  const updateEntryMutation = useUpdateEntry();
   const conditionRef = useRef<QueryCondition[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const loading = useRef(false);
   const [shareMeta, setShareMeta] = useState<EntryMeta>({} as EntryMeta);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-
-  const updateEntryMutation = useUpdateEntry();
+  const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
+  const [editEntryId, setEditEntryId] = useState<number>(0);
 
   useEffect(() => {
     loadInitialData();
@@ -412,6 +427,11 @@ export default function Journal() {
     setShareDialogOpen(true);
   }, []);
 
+  const handleEditTagsDialogOpen = useCallback((id: number) => {
+    setEditEntryId(id);
+    setEditTagsDialogOpen(true);
+  }, []);
+
   return (
     <>
       <div className="journal-bg fixed inset-0 z-1"></div>
@@ -484,6 +504,7 @@ export default function Journal() {
                       showMonth={e.showMonth}
                       showToday={e.showToday}
                       showYesterday={e.showYesterday}
+                      onEditTags={handleEditTagsDialogOpen}
                       onShare={handleEntryCardShare}
                       onDelete={handleDeleteEntry}
                     />
@@ -514,8 +535,218 @@ export default function Journal() {
             </div>
           </div>
         </div>
+
+        {/* Edit Location/Tags Dialog */}
+        <EditMetaDialog
+          open={editTagsDialogOpen}
+          setOpen={setEditTagsDialogOpen}
+          entryId={editEntryId}
+        />
       </div>
     </>
+  );
+}
+
+interface EditMetaDialogProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  entryId: number;
+}
+
+function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
+  const { language } = useUserContext();
+  const updateEntryMutation = useUpdateEntry();
+  const { data: tags } = useTags();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedLoc1, setSelectedLoc1] = useState<string[]>([]);
+  const [selectedLoc2, setSelectedLoc2] = useState<string[]>([]);
+  const [selectedLoc3, setSelectedLoc3] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (open && entryId > 0) {
+      queryClient
+        .fetchQuery<Entry>(EntryQueryOptions(entryId))
+        .then((entry) => {
+          setSelectedTags(entry.payload.tags || []);
+          const location = entry.payload.location || [];
+          setSelectedLoc1(location[0] ? [location[0]] : []);
+          setSelectedLoc2(location[1] ? [location[1]] : []);
+          setSelectedLoc3(location[2] ? [location[2]] : []);
+        });
+    }
+  }, [open, entryId]);
+
+  // Get filtered options for each level
+  const loc1Options = React.useMemo(() => {
+    return (
+      tags?.locTree.map((node) => ({
+        label: node.label,
+        value: node.label,
+      })) ?? []
+    );
+  }, [tags?.locTree]);
+
+  const loc2Options = React.useMemo(() => {
+    if (!selectedLoc1[0] || !tags?.locTree) return [];
+    const parent = tags.locTree.find((node) => node.label === selectedLoc1[0]);
+    return (
+      parent?.children.map((node) => ({
+        label: node.label,
+        value: node.label,
+      })) ?? []
+    );
+  }, [selectedLoc1, tags?.locTree]);
+
+  const loc3Options = React.useMemo(() => {
+    if (!selectedLoc1[0] || !selectedLoc2[0] || !tags?.locTree) return [];
+    const parent1 = tags.locTree.find((node) => node.label === selectedLoc1[0]);
+    if (!parent1) return [];
+    const parent2 = parent1.children.find(
+      (node) => node.label === selectedLoc2[0],
+    );
+    return (
+      parent2?.children.map((node) => ({
+        label: node.label,
+        value: node.label,
+      })) ?? []
+    );
+  }, [selectedLoc1, selectedLoc2, tags?.locTree]);
+
+  // Handle level 1 change - clear dependent selections
+  const handleLoc1Change = (value: string[]) => {
+    setSelectedLoc1(value);
+    setSelectedLoc2([]);
+    setSelectedLoc3([]);
+  };
+
+  // Handle level 2 change - clear dependent selections
+  const handleLoc2Change = (value: string[]) => {
+    setSelectedLoc2(value);
+    setSelectedLoc3([]);
+  };
+
+  const updateEntryMeta = async () => {
+    const payload = {
+      location: [
+        selectedLoc1[0] || "",
+        selectedLoc2[0] || "",
+        selectedLoc3[0] || "",
+      ].filter((loc) => loc !== ""),
+      tags: selectedTags,
+    };
+    updateEntryMutation.mutateAsync({
+      id: entryId,
+      payload,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault(); // stops Radix from focusing anything
+          (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>{i18nText[language].editTags}</DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="entry-edit-tags">{i18nText[language].tags}</Label>
+            <MultiSelect
+              id="entry-edit-tags"
+              placeholder=""
+              options={tags?.tags ?? []}
+              onValueChange={setSelectedTags}
+              defaultValue={selectedTags}
+              allowCreateNew
+              modalPopover
+              hideSelectAll
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="entry-edit-levelOne">
+              {i18nText[language].levelOne}
+            </Label>
+            <MultiSelect
+              id="entry-edit-levelOne"
+              placeholder=""
+              options={loc1Options}
+              onValueChange={handleLoc1Change}
+              defaultValue={selectedLoc1}
+              allowCreateNew
+              modalPopover
+              hideSelectAll
+              allowMultiSelect={false}
+              closeOnSelect
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="entry-edit-levelTwo">
+              {i18nText[language].levelTwo}
+            </Label>
+            <MultiSelect
+              id="entry-edit-levelTwo"
+              placeholder=""
+              options={loc2Options}
+              onValueChange={handleLoc2Change}
+              defaultValue={selectedLoc2}
+              allowCreateNew
+              modalPopover
+              hideSelectAll
+              allowMultiSelect={false}
+              closeOnSelect
+              disabled={!selectedLoc1[0]}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="entry-edit-levelThree">
+              {i18nText[language].levelThree}
+            </Label>
+            <MultiSelect
+              id="entry-edit-levelThree"
+              placeholder=""
+              options={loc3Options}
+              onValueChange={setSelectedLoc3}
+              defaultValue={selectedLoc3}
+              allowCreateNew
+              modalPopover
+              hideSelectAll
+              allowMultiSelect={false}
+              closeOnSelect
+              disabled={!selectedLoc2[0]}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            {i18nText[language].cancel}
+          </Button>
+          <Button
+            onClick={() => {
+              updateEntryMeta().then(() => setOpen(false));
+            }}
+            disabled={updateEntryMutation.isPending}
+          >
+            {i18nText[language].update}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -523,9 +754,23 @@ const i18nText = {
   [UserLangEnum.ZHCN]: {
     noEntries: "暂无手记",
     clearAll: "清除过滤项",
+    editTags: "编辑元信息",
+    levelOne: "一级地点",
+    levelTwo: "二级地点",
+    levelThree: "三级地点",
+    tags: "标签",
+    cancel: "取消",
+    update: "更新",
   },
   [UserLangEnum.ENUS]: {
     noEntries: "No entries yet.",
     clearAll: "Clear filters",
+    editTags: "Edit Metadata",
+    levelOne: "Level 1",
+    levelTwo: "Level 2",
+    levelThree: "Level 3",
+    tags: "Tags",
+    cancel: "Cancel",
+    update: "Update",
   },
 };

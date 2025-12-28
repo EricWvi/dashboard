@@ -88,6 +88,7 @@ interface EntryCardProps {
   showMonth: boolean;
   showToday: boolean;
   showYesterday: boolean;
+  onEditTags: (id: number) => void;
   onShare: (meta: EntryMeta) => void;
   onDelete: (id: number) => void;
 }
@@ -98,6 +99,7 @@ function EntryCard({
   showMonth,
   showToday,
   showYesterday,
+  onEditTags,
   onShare,
   onDelete,
 }: EntryCardProps) {
@@ -314,6 +316,7 @@ function EntryCard({
           >
             <DropdownMenu
               meta={meta}
+              onEditTags={() => onEditTags(meta.id)}
               onShare={() => onShare(meta)}
               onDelete={() => onDelete(meta.id)}
               onClose={handleContextMenuClose}

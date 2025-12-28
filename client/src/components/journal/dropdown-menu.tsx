@@ -23,6 +23,8 @@ import {
   ChevronRight,
   Sparkles,
   Calendar31,
+  MapPin,
+  Tag,
 } from "./icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetEntryDate } from "@/hooks/use-entries";
@@ -49,6 +51,34 @@ const entryCardMenuItems = [
     icon: (
       <div className="h-4 w-5">
         <Bookmark />
+      </div>
+    ),
+    height: 44,
+  },
+  {
+    type: "divider",
+    height: 1,
+  },
+  {
+    type: "item",
+    label: "tags",
+    icon: (
+      <div className="h-[18px] w-[22px]">
+        <Tag />
+      </div>
+    ),
+    height: 44,
+  },
+  {
+    type: "divider",
+    height: 1,
+  },
+  {
+    type: "item",
+    label: "location",
+    icon: (
+      <div className="size-5">
+        <MapPin />
       </div>
     ),
     height: 44,
@@ -90,6 +120,7 @@ export const EntryCardMenuHeight = entryCardMenuItems.reduce(
 
 interface DropdownMenuProps {
   meta: EntryMeta;
+  onEditTags: () => void;
   onShare: () => void;
   onDelete: () => void;
   onClose: () => void;
@@ -97,6 +128,7 @@ interface DropdownMenuProps {
 
 export function DropdownMenu({
   meta,
+  onEditTags,
   onShare,
   onDelete,
   onClose,
@@ -114,15 +146,14 @@ export function DropdownMenu({
   const handleClick = (action: string) => {
     if (action === "edit") {
       handleEditEntry(meta.id, meta.draft);
-    }
-    if (action === "bookmark") {
+    } else if (action === "bookmark") {
       handleBookmark();
-    }
-    if (action === "share") {
+    } else if (action === "share") {
       onShare();
-    }
-    if (action === "delete") {
+    } else if (action === "delete") {
       onDelete();
+    } else if (action === "location" || action === "tags") {
+      onEditTags();
     }
     onClose();
   };
@@ -186,13 +217,30 @@ export function DropdownMenu({
                 className={`dropdown-menu-item ${item.label === "delete" ? "text-destructive" : "text-foreground"}`}
                 onClick={() => handleClick(item.label!)}
               >
-                <span>
-                  {
-                    i18nText[language][
-                      displayLabel as keyof (typeof i18nText)[typeof language]
-                    ]
-                  }
-                </span>
+                <div className="flex min-w-0 items-baseline">
+                  <div className="whitespace-nowrap">
+                    {
+                      i18nText[language][
+                        displayLabel as keyof (typeof i18nText)[typeof language]
+                      ]
+                    }
+                  </div>
+                  {entry?.payload?.location && item.label === "location" && (
+                    <div className="text-muted-foreground mx-2 truncate text-sm">
+                      {
+                        entry.payload.location[
+                          entry.payload.location.length - 1
+                        ]
+                      }
+                    </div>
+                  )}
+                  {entry?.payload?.tags && item.label === "tags" && (
+                    <div className="text-muted-foreground mx-2 truncate text-sm">
+                      {entry.payload.tags.join(", ")}
+                    </div>
+                  )}
+                </div>
+
                 <span className="icon">{displayIcon}</span>
               </div>
             );
@@ -623,6 +671,8 @@ const i18nText = {
     delete: "删除",
     shuffle: "随机回顾",
     todays: "历史今天",
+    location: "位置",
+    tags: "标签",
   },
   [UserLangEnum.ENUS]: {
     edit: "Edit",
@@ -634,5 +684,7 @@ const i18nText = {
     delete: "Delete",
     shuffle: "Shuffle Entries",
     todays: "Today in History",
+    location: "Location",
+    tags: "Tags",
   },
 };

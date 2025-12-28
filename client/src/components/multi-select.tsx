@@ -286,6 +286,13 @@ interface MultiSelectProps
    * Optional, defaults to false.
    */
   allowCreateNew?: boolean;
+
+  /**
+   * If true, allows selecting multiple options.
+   * If false, only one option can be selected at a time (single-selection mode).
+   * Optional, defaults to true.
+   */
+  allowMultiSelect?: boolean;
 }
 
 /**
@@ -342,6 +349,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       resetOnDefaultValueChange = true,
       closeOnSelect = false,
       allowCreateNew = false,
+      allowMultiSelect = true,
       ...props
     },
     ref,
@@ -625,11 +633,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       event: React.KeyboardEvent<HTMLInputElement>,
     ) => {
       if (event.key === "Enter" && !isComposing) {
-        if (allowCreateNew && searchValue.trim() && !hasExactMatch()) {
-          createNewTag(searchValue.trim());
-        } else {
-          setIsPopoverOpen(true);
-        }
+        // Let Command component handle Enter key selection
+        // The "Create new tag" CommandItem will handle creation via onSelect
+        setIsPopoverOpen(true);
       } else if (event.key === "Backspace" && !event.currentTarget.value) {
         const newSelectedValues = [...selectedValues];
         newSelectedValues.pop();
@@ -681,7 +687,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       }
 
       // Add to selected values immediately
-      const newSelectedValues = [...selectedValues, tagName];
+      const newSelectedValues = allowMultiSelect
+        ? [...selectedValues, tagName]
+        : [tagName];
       setSelectedValues(newSelectedValues);
       onValueChange(newSelectedValues);
 
@@ -698,7 +706,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       if (option?.disabled) return;
       const newSelectedValues = selectedValues.includes(optionValue)
         ? selectedValues.filter((value) => value !== optionValue)
-        : [...selectedValues, optionValue];
+        : allowMultiSelect
+          ? [...selectedValues, optionValue]
+          : [optionValue];
       setSelectedValues(newSelectedValues);
       onValueChange(newSelectedValues);
       if (closeOnSelect) {
@@ -1143,7 +1153,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   {emptyIndicator || "No results found."}
                 </CommandEmpty>
 
-                {!hideSelectAll && !searchValue && (
+                {!hideSelectAll && !searchValue && allowMultiSelect && (
                   <CommandGroup>
                     <CommandItem
                       key="all"

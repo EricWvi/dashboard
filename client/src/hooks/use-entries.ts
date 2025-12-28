@@ -10,7 +10,13 @@ export type Entry = {
   wordCount: number;
   rawText: string;
   bookmark: boolean;
+  payload: Payload;
 };
+
+export interface Payload {
+  tags?: string[];
+  location?: string[];
+}
 
 export type CurrentYearCount = {
   date: string;
@@ -93,16 +99,18 @@ export async function listEntries(
   return [metas, data.message.hasMore];
 }
 
+export const EntryQueryOptions = (id: number) => ({
+  queryKey: keyEntry(id),
+  enabled: !!id,
+  queryFn: async () => {
+    const response = await getRequest(`/api/entry?Action=GetEntry&id=${id}`);
+    const data = await response.json();
+    return data["message"];
+  },
+});
+
 export function useEntry(id: number) {
-  return useQuery<Entry>({
-    queryKey: keyEntry(id),
-    enabled: !!id,
-    queryFn: async () => {
-      const response = await getRequest(`/api/entry?Action=GetEntry&id=${id}`);
-      const data = await response.json();
-      return data["message"];
-    },
-  });
+  return useQuery<Entry>(EntryQueryOptions(id));
 }
 
 export async function createEntry(): Promise<[number, number]> {
@@ -124,7 +132,54 @@ export function useUpdateEntry() {
       });
       return response.json();
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: async (_data, variables) => {
+      if (variables.payload) {
+        const { tags, locTree } =
+          await queryClient.fetchQuery(TagsQueryOptions);
+        // filter out newly created tags
+        const tagValues = tags.map((tag) => tag.value);
+
+        // flatten locTree to get all existing location paths
+        const flattenLocTree = (nodes: LocTreeNode[]): string[] => {
+          const result: string[] = [];
+          nodes.forEach((node) => {
+            result.push(node.value);
+            if (node.children.length > 0) {
+              result.push(...flattenLocTree(node.children));
+            }
+          });
+          return result;
+        };
+        const existingLocPaths = flattenLocTree(locTree);
+
+        const filteredTags = (variables.payload.tags || [])
+          .filter((tag: string) => !tagValues.includes(tag))
+          .map((tag: string) => "tag:" + tag);
+
+        // build location paths and filter new ones
+        const location = variables.payload.location || [];
+        const locPaths: string[] = [];
+        location.forEach((loc, index) => {
+          if (loc) {
+            const path = location.slice(0, index + 1).join("/");
+            if (!existingLocPaths.includes(path)) {
+              locPaths.push("loc:" + path);
+            }
+          }
+        });
+
+        // create new tags
+        const newTags = [...filteredTags, ...locPaths];
+        if (newTags.length > 0) {
+          await postRequest("/api/bookmark?Action=CreateTags", {
+            tags: newTags,
+            group: "journal",
+          });
+          queryClient.invalidateQueries({
+            queryKey: keyTags(),
+          });
+        }
+      }
       queryClient.invalidateQueries({ queryKey: keyEntry(variables.id) });
     },
   });
@@ -231,4 +286,74 @@ export function useUnbookmarkEntry() {
       queryClient.invalidateQueries({ queryKey: keyEntry(id) });
     },
   });
+}
+
+type Tag = {
+  value: string;
+  label: string;
+};
+
+type LocTreeNode = {
+  value: string;
+  label: string;
+  children: LocTreeNode[];
+};
+
+const keyTags = () => ["/api/tags"];
+
+function buildLocTree(locPaths: string[]): LocTreeNode[] {
+  const root: LocTreeNode[] = [];
+  const pathMap = new Map<string, LocTreeNode>();
+
+  locPaths.sort().forEach((path) => {
+    const parts = path.split("/");
+    let currentLevel = root;
+    let currentPath = "";
+
+    parts.forEach((part, index) => {
+      currentPath = index === 0 ? part : `${currentPath}/${part}`;
+
+      if (!pathMap.has(currentPath)) {
+        const node: LocTreeNode = {
+          value: currentPath,
+          label: part,
+          children: [],
+        };
+        pathMap.set(currentPath, node);
+        currentLevel.push(node);
+      }
+
+      currentLevel = pathMap.get(currentPath)!.children;
+    });
+  });
+
+  return root;
+}
+
+const TagsQueryOptions = {
+  queryKey: keyTags(),
+  queryFn: async () => {
+    const response = await getRequest(
+      "/api/bookmark?Action=ListTags&group=journal",
+    );
+    const data = await response.json();
+    const tags: Tag[] = [];
+    const locPaths: string[] = [];
+    data.message.tags.sort().forEach((tag: string) => {
+      if (tag.startsWith("tag:")) {
+        const t = tag.replace("tag:", "");
+        tags.push({ value: t, label: t });
+      } else if (tag.startsWith("loc:")) {
+        const t = tag.replace("loc:", "");
+        locPaths.push(t);
+      }
+    });
+
+    const locTree = buildLocTree(locPaths);
+    return { tags, locTree };
+  },
+};
+
+export function useTags() {
+  return useQuery(TagsQueryOptions);
 }
