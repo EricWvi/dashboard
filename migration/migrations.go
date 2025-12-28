@@ -163,7 +163,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddBookmarkColumnToEntry,
 			Down:    RemoveBookmarkColumnFromEntry,
 		},
+		{
+			Version: "v2.4.0",
+			Name:    "Add review count column to entry table",
+			Up:      AddReviewCountColumnToEntry,
+			Down:    RemoveReviewCountColumnFromEntry,
+		},
 	}
+}
+
+// ------------------- v2.4.0 -------------------
+func AddReviewCountColumnToEntry(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_entry
+		ADD COLUMN review_count INTEGER DEFAULT 0 NOT NULL;
+	`).Error
+}
+
+func RemoveReviewCountColumnFromEntry(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_entry
+		DROP COLUMN IF EXISTS review_count;
+	`).Error
 }
 
 // ------------------- v2.3.0 -------------------

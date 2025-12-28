@@ -3,6 +3,8 @@ package model
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
@@ -15,21 +17,23 @@ type Entry struct {
 }
 
 type EntryField struct {
-	Draft      int            `gorm:"default:0;not null" json:"draft"`
-	Visibility string         `gorm:"size:10;default:'PUBLIC';not null" json:"visibility"`
-	Payload    datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
-	WordCount  int            `gorm:"column:word_count;not null" json:"wordCount"`
-	RawText    string         `gorm:"column:raw_text;type:text;default:'';not null" json:"rawText"`
-	Bookmark   bool           `gorm:"default:false;not null" json:"bookmark"`
+	Draft       int            `gorm:"default:0;not null" json:"draft"`
+	Visibility  string         `gorm:"size:10;default:'PUBLIC';not null" json:"visibility"`
+	Payload     datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
+	WordCount   int            `gorm:"column:word_count;not null" json:"wordCount"`
+	RawText     string         `gorm:"column:raw_text;type:text;default:'';not null" json:"rawText"`
+	Bookmark    bool           `gorm:"default:false;not null" json:"bookmark"`
+	ReviewCount int            `gorm:"column:review_count;default:0;not null" json:"reviewCount"`
 }
 
 const entryPageSize = 8
 
 const (
-	Entry_Table      = "d_entry"
-	Entry_Visibility = "visibility"
-	Entry_RawText    = "raw_text"
-	Entry_Bookmark   = "bookmark"
+	Entry_Table       = "d_entry"
+	Entry_Visibility  = "visibility"
+	Entry_RawText     = "raw_text"
+	Entry_Bookmark    = "bookmark"
+	Entry_ReviewCount = "review_count"
 )
 
 const (
@@ -143,10 +147,7 @@ func CountCurrentYear(db *gorm.DB, where map[string]any) ([]CurrentYearCount, er
 	// Convert to CurrentYearCount with level calculation
 	var counts []CurrentYearCount
 	for _, result := range results {
-		level := result.Count
-		if level > 4 {
-			level = 4
-		}
+		level := min(result.Count, 4)
 		counts = append(counts, CurrentYearCount{
 			Date:  result.Date,
 			Count: result.Count,
@@ -182,6 +183,88 @@ func FindEntries(db *gorm.DB, where WhereExpr, page uint) ([]*Entry, bool, error
 		hasMore = true
 		entries = entries[:entryPageSize]
 	}
+
+	return entries, hasMore, nil
+}
+
+func GetRandomEntries(db *gorm.DB, userId uint, randomSize int) ([]*Entry, bool, error) {
+	// Get all dates
+	where := WhereMap{}
+	where.Eq(CreatorId, userId)
+
+	// Find minimum review_count
+	var minReviewCount int
+	if err := db.Model(&Entry{}).
+		Select("MIN(" + Entry_ReviewCount + ")").
+		Where(map[string]any(where)).
+		Scan(&minReviewCount).Error; err != nil {
+		return nil, false, err
+	}
+
+	// Get dates where entries have minimum review_count
+	where.Eq(Entry_ReviewCount, minReviewCount)
+	dates, err := FindDates(db, where)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(dates) == 0 {
+		return []*Entry{}, false, nil
+	}
+
+	numDates := min(len(dates), randomSize)
+
+	// Shuffle and pick first numDates
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r.Shuffle(len(dates), func(i, j int) {
+		dates[i], dates[j] = dates[j], dates[i]
+	})
+
+	selectedDates := dates[:numDates]
+
+	// Build SQL WHERE clause with OR conditions
+	var conditions []string
+	for _, date := range selectedDates {
+		startDate := fmt.Sprintf("%04d-%02d-%02d", date.Year, date.Month, date.Day)
+		endDate := time.Date(date.Year, time.Month(date.Month), date.Day, 0, 0, 0, 0, time.UTC).
+			AddDate(0, 0, 1).Format("2006-01-02")
+
+		condition := fmt.Sprintf("(created_at >= TIMESTAMP '%s' AND created_at < TIMESTAMP '%s')",
+			startDate, endDate)
+		conditions = append(conditions, condition)
+	}
+
+	whereClause := strings.Join(conditions, " OR ")
+
+	// Get entries matching the random dates
+	var entries []*Entry
+	query := fmt.Sprintf(CreatorId+" = ? AND (%s)", whereClause)
+
+	if err := db.
+		Omit(Entry_RawText).
+		Where(query, userId).
+		Where(Entry_ReviewCount, minReviewCount).
+		Order("created_at DESC").
+		Find(&entries).Error; err != nil {
+		return nil, false, err
+	}
+
+	// Increment review count in goroutine
+	go func() {
+		entryIds := make([]uint, len(entries))
+		for i, entry := range entries {
+			entryIds[i] = entry.ID
+		}
+
+		if len(entryIds) > 0 {
+			db.Model(&Entry{}).
+				Where("id IN ?", entryIds).
+				UpdateColumn(Entry_ReviewCount, gorm.Expr(Entry_ReviewCount+" + 1"))
+		}
+	}()
+
+	// No pagination for random entries
+	hasMore := false
 
 	return entries, hasMore, nil
 }

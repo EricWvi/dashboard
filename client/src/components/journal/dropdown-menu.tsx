@@ -21,6 +21,7 @@ import {
   Delete,
   NumberSquare,
   ChevronRight,
+  Sparkles,
 } from "./icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGetEntryDate } from "@/hooks/use-entries";
@@ -435,10 +436,10 @@ const toolbarMenuItems = [
   },
   {
     type: "item",
-    label: "delete",
+    label: "shuffle",
     icon: (
       <div className="size-5">
-        <Delete />
+        <Sparkles />
       </div>
     ),
     height: 44,
@@ -450,6 +451,7 @@ interface ToolbarMenuProps {
   isAnimating: boolean;
   onClose: () => void;
   onBookmarkFilter: () => void;
+  onShuffle: () => void;
   onDateRangeFilter: (date: string) => void;
 }
 
@@ -458,6 +460,7 @@ export function ToolbarMenu({
   isAnimating,
   onClose,
   onBookmarkFilter,
+  onShuffle,
   onDateRangeFilter,
 }: ToolbarMenuProps) {
   const { language } = useUserContext();
@@ -486,6 +489,8 @@ export function ToolbarMenu({
   const handleClick = (label: string) => {
     if (label === "bookmarkFilter") {
       onBookmarkFilter();
+    } else if (label === "shuffle") {
+      onShuffle();
     }
     onClose();
   };
@@ -597,6 +602,7 @@ const i18nText = {
     dateRange: "日期范围",
     share: "分享",
     delete: "删除",
+    shuffle: "随机回顾",
   },
   [UserLangEnum.ENUS]: {
     edit: "Edit",
@@ -606,5 +612,6 @@ const i18nText = {
     dateRange: "Date Range",
     share: "Share",
     delete: "Delete",
+    shuffle: "Shuffle Entries",
   },
 };

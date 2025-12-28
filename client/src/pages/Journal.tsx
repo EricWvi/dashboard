@@ -25,6 +25,7 @@ import {
   BookmarkSquare,
   NumberSquare,
   DecreaseCircle,
+  Sparkles,
 } from "@/components/journal/icon";
 
 type entryWrapper = {
@@ -86,6 +87,12 @@ interface ConditionsProps {
 
 const getConditionIcon = (operator: string) => {
   switch (operator) {
+    case "random":
+      return (
+        <div className="size-4">
+          <Sparkles />
+        </div>
+      );
     case "contains":
       return (
         <div className="size-3">
@@ -256,6 +263,7 @@ export default function Journal() {
   }, []);
 
   const onSearch = useCallback((queryWord: string) => {
+    removeShuffle();
     if (queryWord !== null) {
       const trimmed = queryWord.trim();
       if (trimmed.length > 0) {
@@ -286,6 +294,7 @@ export default function Journal() {
   }, []);
 
   const onBookmarkFilter = useCallback(() => {
+    removeShuffle();
     const existingBookmarkIndex = conditionRef.current.findIndex(
       (condition) => condition.operator === "bookmarked",
     );
@@ -300,7 +309,21 @@ export default function Journal() {
     }
   }, []);
 
+  const onShuffle = useCallback(() => {
+    const label = language === UserLangEnum.ZHCN ? "随机" : "Shuffle";
+    conditionRef.current = [{ operator: "random", value: label }];
+    scrollToTop();
+    refresh();
+  }, []);
+
+  const removeShuffle = useCallback(() => {
+    conditionRef.current = conditionRef.current.filter(
+      (condition) => condition.operator !== "random",
+    );
+  }, []);
+
   const onDateFilter = useCallback((date: string) => {
+    removeShuffle();
     // Remove any existing date filter first
     conditionRef.current = conditionRef.current.filter(
       (condition) =>
@@ -314,6 +337,7 @@ export default function Journal() {
   }, []);
 
   const onDateRangeFilter = useCallback((date: string) => {
+    removeShuffle();
     // Remove any existing date filter first
     conditionRef.current = conditionRef.current.filter(
       (condition) =>
@@ -381,6 +405,7 @@ export default function Journal() {
                 scrollToTop={scrollToTop}
                 onSearch={onSearch}
                 onBookmarkFilter={onBookmarkFilter}
+                onShuffle={onShuffle}
                 onDateFilter={onDateFilter}
                 onDateRangeFilter={onDateRangeFilter}
               />

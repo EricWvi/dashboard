@@ -14,6 +14,7 @@ interface HeaderProps {
   scrollToTop: () => void;
   onSearch: (query: string) => void;
   onBookmarkFilter: () => void;
+  onShuffle: () => void;
   onDateFilter: (date: string) => void;
   onDateRangeFilter: (date: string) => void;
 }
@@ -163,6 +164,7 @@ function Header(props: HeaderProps) {
               isAnimating={isAnimating}
               onClose={handleToolbarMenuClose}
               onBookmarkFilter={props.onBookmarkFilter}
+              onShuffle={props.onShuffle}
               onDateRangeFilter={props.onDateRangeFilter}
             />
           </motion.div>

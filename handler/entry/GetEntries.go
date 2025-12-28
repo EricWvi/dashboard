@@ -11,15 +11,20 @@ import (
 )
 
 func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResponse {
+	userId := middleware.GetUserId(c)
 	m := model.WhereExpr{}
-	m.Eq(model.CreatorId, middleware.GetUserId(c))
+	m.Eq(model.CreatorId, userId)
 	var cond []QueryCondition
 	if err := json.Unmarshal([]byte(req.Condition), &cond); err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
 	}
+
+	useRandomOperator := false
 	for _, cond := range cond {
 		switch cond.Operator {
+		case "random":
+			useRandomOperator = true
 		case "contains":
 			m.ILIKE(model.Entry_RawText, "%"+cond.Value.(string)+"%")
 		case "bookmarked":
@@ -41,7 +46,16 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 		}
 	}
 
-	entries, hasMore, err := model.FindEntries(config.ContextDB(c), m, req.Page)
+	var entries []*model.Entry
+	var hasMore bool
+	var err error
+
+	if useRandomOperator {
+		entries, hasMore, err = model.GetRandomEntries(config.ContextDB(c), userId, 8)
+	} else {
+		entries, hasMore, err = model.FindEntries(config.ContextDB(c), m, req.Page)
+	}
+
 	if err != nil {
 		handler.Errorf(c, "%s", err.Error())
 		return nil
