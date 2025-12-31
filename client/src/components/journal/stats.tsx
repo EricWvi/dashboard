@@ -14,7 +14,40 @@ import {
   useGetWordsCount,
 } from "@/hooks/use-entries";
 import { UserLangEnum } from "@/hooks/use-user";
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import "odometer/themes/odometer-theme-default.css";
+
+declare global {
+  interface Window {
+    Odometer: any;
+  }
+}
+
+const OdometerComponent = ({ value }: { value: number }) => {
+  const odometerRef = useRef<HTMLDivElement>(null);
+  const odometerInstance = useRef<any>(null);
+
+  useEffect(() => {
+    if (odometerRef.current && !odometerInstance.current) {
+      import("odometer").then((OdometerModule) => {
+        const Odometer = OdometerModule.default;
+        odometerInstance.current = new Odometer({
+          el: odometerRef.current,
+          value: 0,
+          format: "(.ddd),dd",
+        });
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (odometerInstance.current) {
+      odometerInstance.current.update(value);
+    }
+  }, [value]);
+
+  return <div ref={odometerRef} />;
+};
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
@@ -41,7 +74,9 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Entries />
           </Icon>
-          <Number>{currentYearData?.count ?? 0}</Number>
+          <Number>
+            <OdometerComponent value={currentYearData?.count ?? 0} />
+          </Number>
         </div>
         <Description>{i18nText[language].entries}</Description>
       </div>
@@ -53,7 +88,9 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Quote />
           </Icon>
-          <Number>{wordCount ?? 0}</Number>
+          <Number>
+            <OdometerComponent value={wordCount ?? 0} />
+          </Number>
         </div>
         <Description>{i18nText[language].words}</Description>
       </div>
@@ -65,7 +102,9 @@ const Stats = () => {
           <Icon className="mr-[6px] ml-[2px] h-4 w-4">
             <Calendar />
           </Icon>
-          <Number>{datesWithCount?.count ?? 0}</Number>
+          <Number>
+            <OdometerComponent value={datesWithCount?.count ?? 0} />
+          </Number>
         </div>
         <Description>{i18nText[language].days}</Description>
       </div>

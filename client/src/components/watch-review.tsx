@@ -103,6 +103,16 @@ export default function WatchReview({
       cacheBust: true,
       quality: 1,
       pixelRatio: 3,
+      filter: (node) => {
+        // Filter out ProseMirror separator and trailing break elements
+        if (
+          node instanceof HTMLImageElement &&
+          node.classList.contains("ProseMirror-separator")
+        ) {
+          return false;
+        }
+        return true;
+      },
     })
       .then((dataUrl) => download(dataUrl, watch.title))
       .catch((err) => {
