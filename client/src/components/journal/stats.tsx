@@ -23,30 +23,42 @@ declare global {
   }
 }
 
-const OdometerComponent = ({ value }: { value: number }) => {
+const OdometerComponent = ({
+  value,
+  isPending,
+}: {
+  value: number;
+  isPending: boolean;
+}) => {
   const odometerRef = useRef<HTMLDivElement>(null);
   const odometerInstance = useRef<any>(null);
 
   useEffect(() => {
-    if (odometerRef.current && !odometerInstance.current) {
-      import("odometer").then((OdometerModule) => {
-        const Odometer = OdometerModule.default;
-        odometerInstance.current = new Odometer({
-          el: odometerRef.current,
-          value: 0,
-          format: "(.ddd),dd",
+    if (!isPending) {
+      if (odometerRef.current && !odometerInstance.current) {
+        import("odometer").then((OdometerModule) => {
+          const Odometer = OdometerModule.default;
+          odometerInstance.current = new Odometer({
+            el: odometerRef.current,
+            value: value,
+            format: "(,ddd).dd",
+          });
         });
-      });
+      } else if (odometerInstance.current) {
+        odometerInstance.current.update(value);
+      }
     }
-  }, []);
+  }, [value, isPending]);
 
-  useEffect(() => {
-    if (odometerInstance.current) {
-      odometerInstance.current.update(value);
-    }
-  }, [value]);
-
-  return <div ref={odometerRef} />;
+  return (
+    <div
+      ref={odometerRef}
+      style={{
+        fontFamily: '"OPPO Sans 4.0", sans-serif',
+        fontVariantNumeric: "tabular-nums",
+      }}
+    />
+  );
 };
 
 const i18nText = {
@@ -64,9 +76,11 @@ const i18nText = {
 
 const Stats = () => {
   const { language } = useUserContext();
-  const { data: currentYearData } = useGetCurrentYear();
-  const { data: wordCount } = useGetWordsCount();
-  const { data: datesWithCount } = useGetEntryDate();
+  const { data: currentYearData, isPending: yearIsPending } =
+    useGetCurrentYear();
+  const { data: wordCount, isPending: wordCountIsPending } = useGetWordsCount();
+  const { data: datesWithCount, isPending: datesIsPending } = useGetEntryDate();
+
   return (
     <div className="flex items-center space-x-2">
       <div className="mr-4 flex flex-col">
@@ -75,7 +89,10 @@ const Stats = () => {
             <Entries />
           </Icon>
           <Number>
-            <OdometerComponent value={currentYearData?.count ?? 0} />
+            <OdometerComponent
+              value={currentYearData?.count ?? 0}
+              isPending={yearIsPending}
+            />
           </Number>
         </div>
         <Description>{i18nText[language].entries}</Description>
@@ -89,7 +106,10 @@ const Stats = () => {
             <Quote />
           </Icon>
           <Number>
-            <OdometerComponent value={wordCount ?? 0} />
+            <OdometerComponent
+              value={wordCount ?? 0}
+              isPending={wordCountIsPending}
+            />
           </Number>
         </div>
         <Description>{i18nText[language].words}</Description>
@@ -103,7 +123,10 @@ const Stats = () => {
             <Calendar />
           </Icon>
           <Number>
-            <OdometerComponent value={datesWithCount?.count ?? 0} />
+            <OdometerComponent
+              value={datesWithCount?.count ?? 0}
+              isPending={datesIsPending}
+            />
           </Number>
         </div>
         <Description>{i18nText[language].days}</Description>

@@ -162,7 +162,6 @@ const i18nText = {
     author: "作者",
     rate: "评分",
     mark: "标记日期",
-    share: "分享",
     review: "评论",
     quotes: "书摘",
     domain: "领域",
@@ -179,7 +178,6 @@ const i18nText = {
     author: "Author",
     rate: "Rate",
     mark: "Mark",
-    share: "Share",
     review: "Review",
     quotes: "Quotes",
     domain: "Domain",
@@ -246,9 +244,27 @@ export const watchedColumns: ColumnDef<Watch>[] = [
             className="flex items-center gap-1 font-medium"
             title={row.getValue("title") + " (" + row.original.year + ")"}
           >
-            <span className="max-w-[540px] min-w-0 truncate">
-              {row.getValue("title")}
-            </span>
+            <Dialog>
+              <DialogTrigger className="max-w-[540px] min-w-0 cursor-pointer truncate">
+                <span>{row.getValue("title")}</span>
+              </DialogTrigger>
+              <DialogContent
+                showCloseButton={false}
+                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault(); // stops Radix from focusing anything
+                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+                }}
+              >
+                <VisuallyHidden>
+                  <DialogHeader>
+                    <DialogTitle></DialogTitle>
+                    <DialogDescription></DialogDescription>
+                  </DialogHeader>
+                </VisuallyHidden>
+                <WatchReview watch={row.original} />
+              </DialogContent>
+            </Dialog>
             <span className="text-muted-foreground">
               {"(" + row.original.year + ")"}
             </span>
@@ -324,29 +340,31 @@ export const watchedColumns: ColumnDef<Watch>[] = [
           <span>{(Number(row.original.rate) / 2).toFixed(1)}</span>
 
           {/* display review content */}
-          <Dialog>
-            <DialogTrigger>
-              <div className="cursor-pointer font-medium underline decoration-1">
-                {i18nText[language].share.toLowerCase()}
-              </div>
-            </DialogTrigger>
-            <DialogContent
-              showCloseButton={false}
-              className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
-              onOpenAutoFocus={(e) => {
-                e.preventDefault(); // stops Radix from focusing anything
-                (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
-              }}
-            >
-              <VisuallyHidden>
-                <DialogHeader>
-                  <DialogTitle></DialogTitle>
-                  <DialogDescription></DialogDescription>
-                </DialogHeader>
-              </VisuallyHidden>
-              <WatchReview watch={row.original} />
-            </DialogContent>
-          </Dialog>
+          {!!row.original.payload.review && (
+            <Dialog>
+              <DialogTrigger>
+                <div className="cursor-pointer font-medium underline decoration-1">
+                  {i18nText[language].review}
+                </div>
+              </DialogTrigger>
+              <DialogContent
+                showCloseButton={false}
+                className="w-[calc(100%-2rem)] !max-w-[800px] gap-0 overflow-hidden border-0 p-0"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault(); // stops Radix from focusing anything
+                  (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+                }}
+              >
+                <VisuallyHidden>
+                  <DialogHeader>
+                    <DialogTitle></DialogTitle>
+                    <DialogDescription></DialogDescription>
+                  </DialogHeader>
+                </VisuallyHidden>
+                <WatchReview watch={row.original} />
+              </DialogContent>
+            </Dialog>
+          )}
 
           {/* display quotes content */}
           {!!row.original.payload.quotes && (
