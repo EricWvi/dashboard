@@ -37,6 +37,8 @@ import {
   DecreaseCircle,
   Sparkles,
   Calendar31,
+  MapPin,
+  Tag,
 } from "@/components/journal/icon";
 import { MultiSelect } from "@/components/multi-select";
 import { Label } from "@/components/ui/label";
@@ -102,6 +104,18 @@ interface ConditionsProps {
 
 const getConditionIcon = (operator: string) => {
   switch (operator) {
+    case "tag":
+      return (
+        <div className="size-[14px]">
+          <Tag />
+        </div>
+      );
+    case "location":
+      return (
+        <div className="size-4">
+          <MapPin />
+        </div>
+      );
     case "random":
       return (
         <div className="size-4">
@@ -161,7 +175,9 @@ const Conditions = React.memo(
                 {getConditionIcon(condition.operator)}
 
                 {condition.operator === "before" && "<= "}
-                {condition.value}
+                {condition.operator !== "location"
+                  ? condition.value
+                  : condition.value[condition.value.length - 1]}
               </span>
               <button
                 onClick={() => onRemove(index)}
@@ -388,6 +404,54 @@ export default function Journal() {
     refresh();
   }, []);
 
+  const onTagFilter = useCallback((tag: string) => {
+    removeShuffle();
+    // Remove any existing tag filter first
+    conditionRef.current = conditionRef.current.filter(
+      (condition) => condition.operator !== "tag",
+    );
+
+    // Add the new tag filter
+    conditionRef.current.push({ operator: "tag", value: tag });
+    scrollToTop();
+    refresh();
+  }, []);
+
+  const onLocationFilter = useCallback((location: string[]) => {
+    removeShuffle();
+    // Remove any existing location filter first
+    conditionRef.current = conditionRef.current.filter(
+      (condition) => condition.operator !== "location",
+    );
+
+    // Add the new location filter
+    conditionRef.current.push({ operator: "location", value: location });
+    scrollToTop();
+    refresh();
+  }, []);
+
+  const tagText = useCallback(() => {
+    let index = conditionRef.current.findIndex(
+      (condition) => condition.operator === "tag",
+    );
+    if (index !== -1) {
+      return conditionRef.current[index].value;
+    }
+
+    return "";
+  }, []);
+
+  const locationText = useCallback(() => {
+    let index = conditionRef.current.findIndex(
+      (condition) => condition.operator === "location",
+    );
+    if (index !== -1) {
+      return conditionRef.current[index].value;
+    }
+
+    return [];
+  }, []);
+
   const dateRangeText = useCallback(() => {
     let index = conditionRef.current.findIndex(
       (condition) => condition.operator === "before",
@@ -445,6 +509,8 @@ export default function Journal() {
             <div className="mx-auto max-w-3xl">
               <Header
                 dateRangeText={dateRangeText}
+                tagText={tagText}
+                locationText={locationText}
                 scrollToTop={scrollToTop}
                 onSearch={onSearch}
                 onBookmarkFilter={onBookmarkFilter}
@@ -452,6 +518,8 @@ export default function Journal() {
                 onTodays={onTodays}
                 onDateFilter={onDateFilter}
                 onDateRangeFilter={onDateRangeFilter}
+                onTagFilter={onTagFilter}
+                onLocationFilter={onLocationFilter}
               />
 
               {/* Conditions */}

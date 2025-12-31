@@ -12,6 +12,7 @@ import {
   useBookmarkEntry,
   useUnbookmarkEntry,
   type EntryMeta,
+  useTags,
 } from "@/hooks/use-entries";
 import {
   EditPen,
@@ -318,6 +319,7 @@ const DateRange = ({
   placeholder: number[];
   onDateRangeFilter: (date: string) => void;
 }) => {
+  const { language } = useUserContext();
   const { data: dates } = useGetEntryDate();
 
   const currentDate = new Date();
@@ -392,7 +394,7 @@ const DateRange = ({
 
       {dates.count === 0 ? (
         <div className="text-muted-foreground flex h-60 items-center justify-center text-sm">
-          No entries found
+          {i18nText[language].noDates}
         </div>
       ) : (
         <div className="flex h-60">
@@ -454,6 +456,250 @@ const DateRange = ({
   );
 };
 
+const TagFilter = ({
+  onTagFilter,
+  tagText,
+}: {
+  onTagFilter: (tag: string) => void;
+  tagText: string;
+}) => {
+  const { data: tags } = useTags();
+  const { language } = useUserContext();
+  const [rotated, setRotated] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setRotated(true);
+    }, 50);
+  }, []);
+  return (
+    <div className="dropdown-menu">
+      <div className="dropdown-menu-submenu text-foreground submenu-header">
+        <div className="relative">
+          <div
+            className={`absolute top-1/2 left-[-6px] size-3 translate-y-[-50%] transition-transform ${rotated ? "rotate-90" : ""}`}
+          >
+            <ChevronRight />
+          </div>
+          <div className="flex flex-col justify-center pl-4">
+            <span className="leading-none font-medium">
+              {i18nText[language].tagsFilter}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="dropdown-menu-divider"></div>
+
+      {tags?.tags.length === 0 ? (
+        <div className="text-muted-foreground flex h-60 items-center justify-center text-sm">
+          {i18nText[language].noTags}
+        </div>
+      ) : (
+        <>
+          {tags!.tags.map((tag, index) => (
+            <div className="relative" key={index}>
+              {tagText === tag.value && (
+                <div className="absolute top-1/2 left-3 translate-y-[-50%]">
+                  <Check size={16} />
+                </div>
+              )}
+              <div
+                className="dropdown-menu-item text-foreground !pl-6"
+                onClick={() => onTagFilter(tag.value)}
+              >
+                <span className="pl-3">{tag.value}</span>
+              </div>
+              {index < tags!.tags.length - 1 && (
+                <div className="dropdown-menu-divider"></div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+};
+
+const LocationFilter = ({
+  onLocationFilter,
+  locationText,
+}: {
+  onLocationFilter: (location: string[]) => void;
+  locationText: string[];
+}) => {
+  const { language } = useUserContext();
+  const { data: tags } = useTags();
+  const [rotated, setRotated] = useState(false);
+
+  const [selectedLoc1, setSelectedLoc1] = useState<string>(
+    locationText[0] || "",
+  );
+  const [selectedLoc2, setSelectedLoc2] = useState<string>(
+    locationText[1] || "",
+  );
+  const [selectedLoc3, setSelectedLoc3] = useState<string>(
+    locationText[2] || "",
+  );
+
+  const loc1Refs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const loc2Refs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const loc3Refs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    setTimeout(() => {
+      setRotated(true);
+    }, 50);
+  }, []);
+
+  useEffect(() => {
+    if (selectedLoc1) {
+      loc1Refs.current[selectedLoc1]?.scrollIntoView({ block: "center" });
+    }
+    if (selectedLoc2) {
+      loc2Refs.current[selectedLoc2]?.scrollIntoView({ block: "center" });
+    }
+    if (selectedLoc3) {
+      loc3Refs.current[selectedLoc3]?.scrollIntoView({ block: "center" });
+    }
+  }, []);
+
+  const handleLoc1Click = (loc: string) => {
+    setSelectedLoc1(loc);
+    setSelectedLoc2("");
+    setSelectedLoc3("");
+  };
+
+  const handleLoc2Click = (loc: string) => {
+    setSelectedLoc2(loc);
+    setSelectedLoc3("");
+  };
+
+  const handleLoc3Click = (loc: string) => {
+    setSelectedLoc3(loc);
+  };
+
+  if (!tags || tags.locTree.length === 0) {
+    return (
+      <div className="dropdown-menu">
+        <div className="dropdown-menu-submenu text-foreground submenu-header">
+          <div className="relative">
+            <div
+              className={`absolute top-1/2 left-[-6px] size-3 translate-y-[-50%] transition-transform ${rotated ? "rotate-90" : ""}`}
+            >
+              <ChevronRight />
+            </div>
+            <div className="flex flex-col justify-center pl-4">
+              <span className="leading-none font-medium">
+                {i18nText[language].locationFilter}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="dropdown-menu-divider"></div>
+        <div className="text-muted-foreground flex h-60 items-center justify-center text-sm">
+          {i18nText[language].noLocations}
+        </div>
+      </div>
+    );
+  }
+
+  // Get current level 2 options
+  const loc2Options = selectedLoc1
+    ? tags.locTree.find((node) => node.label === selectedLoc1)?.children || []
+    : [];
+
+  // Get current level 3 options
+  const loc3Options =
+    selectedLoc1 && selectedLoc2
+      ? tags.locTree
+          .find((node) => node.label === selectedLoc1)
+          ?.children.find((node) => node.label === selectedLoc2)?.children || []
+      : [];
+
+  return (
+    <div className="dropdown-menu">
+      <div className="dropdown-menu-submenu text-foreground submenu-header">
+        <div className="relative">
+          <div
+            className={`absolute top-1/2 left-[-6px] size-3 translate-y-[-50%] transition-transform ${rotated ? "rotate-90" : ""}`}
+          >
+            <ChevronRight />
+          </div>
+          <div className="flex flex-col justify-center pl-4">
+            <span className="leading-none font-medium">
+              {i18nText[language].locationFilter}
+            </span>
+          </div>
+        </div>
+
+        <span className="icon">
+          <div
+            className="cursor-pointer font-medium"
+            onClick={() => {
+              const parts = [selectedLoc1, selectedLoc2, selectedLoc3].filter(
+                (l) => l !== "",
+              );
+              onLocationFilter(parts);
+            }}
+          >
+            <Check size={20} strokeWidth={3} />
+          </div>
+        </span>
+      </div>
+      <div className="dropdown-menu-divider"></div>
+
+      <div className="flex h-60">
+        {/* Level 1 Column */}
+        <div className="date-selector-column month-column">
+          {tags.locTree.map((node) => (
+            <button
+              key={node.label}
+              ref={(el) => {
+                loc1Refs.current[node.label] = el;
+              }}
+              className={`date-selector-item ${selectedLoc1 === node.label ? "selected" : ""}`}
+              onClick={() => handleLoc1Click(node.label)}
+            >
+              <div className="truncate px-1">{node.label}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Level 2 Column */}
+        <div className="date-selector-column month-column">
+          {loc2Options.map((node) => (
+            <button
+              key={node.label}
+              ref={(el) => {
+                loc2Refs.current[node.label] = el;
+              }}
+              className={`date-selector-item ${selectedLoc2 === node.label ? "selected" : ""}`}
+              onClick={() => handleLoc2Click(node.label)}
+            >
+              <div className="truncate px-1">{node.label}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Level 3 Column */}
+        <div className="date-selector-column month-column">
+          {loc3Options.map((node) => (
+            <button
+              key={node.label}
+              ref={(el) => {
+                loc3Refs.current[node.label] = el;
+              }}
+              className={`date-selector-item ${selectedLoc3 === node.label ? "selected" : ""}`}
+              onClick={() => handleLoc3Click(node.label)}
+            >
+              <div className="truncate px-1">{node.label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const toolbarMenuItems = [
   {
     type: "submenu",
@@ -464,6 +710,34 @@ const toolbarMenuItems = [
       </div>
     ),
     height: 56,
+  },
+  {
+    type: "full-divider",
+    height: 8,
+  },
+  {
+    type: "submenu",
+    label: "tagsFilter",
+    icon: (
+      <div className="h-[18px] w-[22px]">
+        <Tag />
+      </div>
+    ),
+    height: 44,
+  },
+  {
+    type: "divider",
+    height: 1,
+  },
+  {
+    type: "submenu",
+    label: "locationFilter",
+    icon: (
+      <div className="size-5">
+        <MapPin />
+      </div>
+    ),
+    height: 44,
   },
   {
     type: "full-divider",
@@ -511,22 +785,30 @@ const toolbarMenuItems = [
 
 interface ToolbarMenuProps {
   dateRangeText: () => string[];
+  tagText: () => string;
+  locationText: () => string[];
   isAnimating: boolean;
   onClose: () => void;
   onBookmarkFilter: () => void;
   onShuffle: () => void;
   onTodays: () => void;
   onDateRangeFilter: (date: string) => void;
+  onTagFilter: (tag: string) => void;
+  onLocationFilter: (location: string[]) => void;
 }
 
 export function ToolbarMenu({
   dateRangeText,
+  tagText,
+  locationText,
   isAnimating,
   onClose,
   onBookmarkFilter,
   onShuffle,
   onTodays,
   onDateRangeFilter,
+  onTagFilter,
+  onLocationFilter,
 }: ToolbarMenuProps) {
   const { language } = useUserContext();
   const datePair = dateRangeText();
@@ -628,6 +910,31 @@ export function ToolbarMenu({
                   <DateRangeHeader placeholder={dateRangePlaceholder()} />
                 </div>
               );
+            } else if (
+              item.label === "tagsFilter" ||
+              item.label === "locationFilter"
+            ) {
+              return (
+                <div
+                  key={index}
+                  className="dropdown-menu-item text-foreground"
+                  ref={(el) => {
+                    submenuRefs.current[item.label] = el;
+                  }}
+                  onClick={() => {
+                    if (!isAnimating) handleSubmenuToggle(item.label);
+                  }}
+                >
+                  <span className="pl-3">
+                    {
+                      i18nText[language][
+                        item.label as keyof (typeof i18nText)[typeof language]
+                      ]
+                    }
+                  </span>
+                  <span className="icon">{item.icon}</span>
+                </div>
+              );
             }
           }
           return null;
@@ -635,7 +942,7 @@ export function ToolbarMenu({
       </div>
 
       {/* Render submenu outside the overflow-hidden container */}
-      {activeSubmenu === "dateRange" && (
+      {activeSubmenu === "dateRange" ? (
         <div
           style={{
             top: `${submenuPosition.top}px`,
@@ -655,7 +962,43 @@ export function ToolbarMenu({
             }}
           />
         </div>
-      )}
+      ) : activeSubmenu === "tagsFilter" ? (
+        <div
+          style={{
+            top: `${submenuPosition.top}px`,
+            right: `${submenuPosition.right}px`,
+            transformOrigin: "top center",
+          }}
+          className="fixed z-1100"
+        >
+          <TagFilter
+            tagText={tagText()}
+            onTagFilter={(tag) => {
+              onTagFilter(tag);
+              setActiveSubmenu(null);
+              onClose();
+            }}
+          />
+        </div>
+      ) : activeSubmenu === "locationFilter" ? (
+        <div
+          style={{
+            top: `${submenuPosition.top}px`,
+            right: `${submenuPosition.right}px`,
+            transformOrigin: "top center",
+          }}
+          className="fixed z-1100"
+        >
+          <LocationFilter
+            locationText={locationText()}
+            onLocationFilter={(location) => {
+              onLocationFilter(location);
+              setActiveSubmenu(null);
+              onClose();
+            }}
+          />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -673,6 +1016,11 @@ const i18nText = {
     todays: "历史今天",
     location: "位置",
     tags: "标签",
+    tagsFilter: "标签",
+    locationFilter: "位置",
+    noDates: "未找到日期",
+    noTags: "未找到标签",
+    noLocations: "未找到位置",
   },
   [UserLangEnum.ENUS]: {
     edit: "Edit",
@@ -686,5 +1034,10 @@ const i18nText = {
     todays: "Today in History",
     location: "Location",
     tags: "Tags",
+    tagsFilter: "Filter by Tags",
+    locationFilter: "Filter by Location",
+    noDates: "No dates found",
+    noTags: "No tags found",
+    noLocations: "No locations found",
   },
 };

@@ -175,7 +175,28 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddGroupColumnToTag,
 			Down:    RemoveGroupColumnFromTag,
 		},
+		{
+			Version: "v2.6.0",
+			Name:    "Add GIN indexes on entry payload tags",
+			Up:      AddEntryPayloadIndexes,
+			Down:    RemoveEntryPayloadIndexes,
+		},
 	}
+}
+
+// ------------------- v2.6.0 -------------------
+func AddEntryPayloadIndexes(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE INDEX idx_entry_payload_tags
+		ON public.d_entry
+		USING gin ((payload->'tags'));
+	`).Error
+}
+
+func RemoveEntryPayloadIndexes(db *gorm.DB) error {
+	return db.Exec(`
+		DROP INDEX IF EXISTS idx_entry_payload_tags;
+	`).Error
 }
 
 // ------------------- v2.5.0 -------------------

@@ -2,6 +2,7 @@ package entry
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/EricWvi/dashboard/config"
@@ -24,6 +25,17 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 	useRandomOperator := false
 	for _, cond := range cond {
 		switch cond.Operator {
+		case "tag":
+			m.Raw("payload->'tags' @> '[\"" + cond.Value.(string) + "\"]'")
+		case "location":
+			if locArray, ok := cond.Value.([]any); ok && len(locArray) > 0 {
+				m.Raw("jsonb_array_length(payload->'location') >= ?", len(locArray))
+				for i, loc := range locArray {
+					if locStr, ok := loc.(string); ok {
+						m.Raw("payload->'location'->>"+strconv.Itoa(i)+" = ?", locStr)
+					}
+				}
+			}
 		case "random":
 			useRandomOperator = true
 		case "todays":

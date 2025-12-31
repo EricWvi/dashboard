@@ -11,6 +11,8 @@ import { useGetCurrentYear } from "@/hooks/use-entries";
 
 interface HeaderProps {
   dateRangeText: () => string[];
+  tagText: () => string;
+  locationText: () => string[];
   scrollToTop: () => void;
   onSearch: (query: string) => void;
   onBookmarkFilter: () => void;
@@ -18,6 +20,8 @@ interface HeaderProps {
   onTodays: () => void;
   onDateFilter: (date: string) => void;
   onDateRangeFilter: (date: string) => void;
+  onTagFilter: (tag: string) => void;
+  onLocationFilter: (location: string[]) => void;
 }
 
 function Header(props: HeaderProps) {
@@ -162,12 +166,16 @@ function Header(props: HeaderProps) {
           >
             <ToolbarMenu
               dateRangeText={props.dateRangeText}
+              tagText={props.tagText}
+              locationText={props.locationText}
               isAnimating={isAnimating}
               onClose={handleToolbarMenuClose}
               onBookmarkFilter={props.onBookmarkFilter}
               onShuffle={props.onShuffle}
               onTodays={props.onTodays}
               onDateRangeFilter={props.onDateRangeFilter}
+              onTagFilter={props.onTagFilter}
+              onLocationFilter={props.onLocationFilter}
             />
           </motion.div>
         )}
