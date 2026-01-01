@@ -4,7 +4,8 @@ import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPng } from "html-to-image";
-import type { EntryMeta } from "@/hooks/use-entries";
+import { useEntry, type EntryMeta } from "@/hooks/use-entries";
+import { MapPin } from "lucide-react";
 
 function download(dataUrl: string, filename: string) {
   const link = document.createElement("a");
@@ -21,6 +22,7 @@ export default function ShareCard({
   onClose: () => void;
 }) {
   const { user } = useUserContext();
+  const { data: entry } = useEntry(meta.id);
   const entryCardRef = useRef<HTMLDivElement | null>(null);
   const avatarImageRef = useRef<HTMLImageElement | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -107,6 +109,18 @@ export default function ShareCard({
             <ContentHTML id={meta.draft} removeCache={false} />
           </div>
         </div>
+
+        {/* location badge */}
+        {entry?.payload.location && entry.payload.location.length > 0 && (
+          <div className="absolute bottom-5 left-6">
+            <div className="mt-6 flex w-fit items-center gap-[2px] rounded-2xl border border-white/60 bg-white/95 px-3 py-1 text-xs font-medium text-gray-700 shadow-lg backdrop-blur-sm">
+              <span>
+                <MapPin className="size-3" />
+              </span>
+              <span>{entry.payload.location.join(" · ")}</span>
+            </div>
+          </div>
+        )}
 
         {/* journal badge */}
         <div className="absolute right-8 bottom-5">

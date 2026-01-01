@@ -233,16 +233,20 @@ export default function Journal() {
 
   const loadInitialData = useCallback(async () => {
     loading.current = true;
-    try {
-      const [metas, more] = await listEntries(1, conditionRef.current);
-      setEntries(buildWrapper([], metas));
-      setHasMore(more);
-      setPage(2);
-    } catch (err) {
-      console.error("Error loading initial data:", err);
-    } finally {
-      loading.current = false;
-    }
+    listEntries(1, conditionRef.current)
+      .then(([metas, more]) => {
+        setTimeout(() => {
+          setEntries(buildWrapper([], metas));
+          setHasMore(more);
+          setPage(2);
+        }, 150);
+      })
+      .catch((err) => {
+        console.error("Error loading initial data:", err);
+      })
+      .finally(() => {
+        loading.current = false;
+      });
   }, []);
 
   const fetchMoreData = useCallback(async (page: number) => {

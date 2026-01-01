@@ -152,7 +152,7 @@ function EntryCard({
     let top = cardRect.bottom - padding - EntryCardMenuHeight;
 
     // Check if menu is too top
-    if (top < 160) {
+    if (top < 60) {
       top = cardRect.bottom + 4;
       setContextMenuOrigin("top right");
     } else {
