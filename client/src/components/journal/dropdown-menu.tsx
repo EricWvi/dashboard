@@ -36,7 +36,7 @@ const entryCardMenuItems = [
     type: "item",
     label: "edit",
     icon: (
-      <div className="h-4 w-5">
+      <div className="h-[14px] w-5">
         <EditPen />
       </div>
     ),
@@ -106,7 +106,7 @@ const entryCardMenuItems = [
     type: "item",
     label: "delete",
     icon: (
-      <div className="size-5">
+      <div className="h-[18px] w-5">
         <Delete />
       </div>
     ),
@@ -399,7 +399,7 @@ const DateRange = ({
       ) : (
         <div className="flex h-60">
           {/* Year Column */}
-          <div className="date-selector-column year-column">
+          <div className="date-selector-column year-column scrollbar-hide">
             {dates.dates.map((date) => (
               <button
                 key={date.year}
@@ -415,7 +415,7 @@ const DateRange = ({
           </div>
 
           {/* Month Column */}
-          <div className="date-selector-column month-column">
+          <div className="date-selector-column month-column scrollbar-hide">
             {dates.dates
               .find((date) => date.year === Number(selectedYear))
               ?.months.map((date) => (
@@ -433,7 +433,7 @@ const DateRange = ({
           </div>
 
           {/* Day Column */}
-          <div className="date-selector-column day-column">
+          <div className="date-selector-column day-column scrollbar-hide">
             {dates.dates
               .find((date) => date.year === Number(selectedYear))
               ?.months.find((month) => month.month === Number(selectedMonth))

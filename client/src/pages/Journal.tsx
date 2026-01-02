@@ -731,6 +731,7 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
             <Label htmlFor="entry-edit-tags">{i18nText[language].tags}</Label>
             <MultiSelect
               id="entry-edit-tags"
+              className="multiselect-border"
               placeholder=""
               options={tags?.tags ?? []}
               onValueChange={setSelectedTags}
@@ -749,6 +750,7 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
             </Label>
             <MultiSelect
               id="entry-edit-levelOne"
+              className="multiselect-border"
               placeholder=""
               options={loc1Options}
               onValueChange={handleLoc1Change}
@@ -769,6 +771,7 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
             </Label>
             <MultiSelect
               id="entry-edit-levelTwo"
+              className="multiselect-border"
               placeholder=""
               options={loc2Options}
               onValueChange={handleLoc2Change}
@@ -790,6 +793,7 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
             </Label>
             <MultiSelect
               id="entry-edit-levelThree"
+              className="multiselect-border"
               placeholder=""
               options={loc3Options}
               onValueChange={setSelectedLoc3}
