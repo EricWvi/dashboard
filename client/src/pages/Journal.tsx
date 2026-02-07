@@ -714,13 +714,7 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
-        className="sm:max-w-md"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault(); // stops Radix from focusing anything
-          (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
-        }}
-      >
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{i18nText[language].editTags}</DialogTitle>
           <DialogDescription></DialogDescription>

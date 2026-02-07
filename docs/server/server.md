@@ -69,25 +69,3 @@ Each model follows identical structure:
 4. The database columns use snake_case while the JSON API uses camelCase.
 
 **Note**: All list operations return `<Model>View` structs that include the id field for frontend operations, while excluding database timestamps and internal fields from API responses.
-
-## Client
-
-Client side code are in `client`. `index.html` is for Dashboard and `journal.html` is for Journal.
-
-### Architecture
-
-- **React + TypeScript** with Vite build system
-- **TanStack Query** for API state management and caching
-- **Tailwind CSS** for styling with dark mode support
-- **API hooks** in `client/src/hooks/` - one file per model
-
-### API Hooks Pattern
-
-Each model follows identical hook structure:
-
-- `use<Model>()` - fetch all records (uses ListAll<Model> endpoint)
-- `use<Model>(id)` - fetch single record (uses Get<Model> endpoint)
-- `useCreate<Model>()` - create mutation
-- `useUpdate<Model>()` - update mutation
-- `useDelete<Model>()` - delete mutation
-- `list<Model>(page, conditions)` - paginated fetch function (uses List<Model> endpoint)
