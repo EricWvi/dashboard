@@ -58,6 +58,7 @@ Each model follows identical structure:
    - <name>PageSize constant for pagination
    - <Name>View struct for API responses (includes id, excludes gorm.Model timestamps)
    - <Name>Field struct for data fields only (excludes id and timestamps)
+   - Legacy problem: Each model's id field is `ID`, not `Id`.
 2. Handlers in `handler/<name>/` with:
    - base.go, Create*.go, Get*.go, Update*.go, Delete*.go
    - List<Name>.go - paginated listing with Page parameter, returns []<Name>View

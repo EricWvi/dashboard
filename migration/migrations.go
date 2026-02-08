@@ -181,7 +181,53 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddEntryPayloadIndexes,
 			Down:    RemoveEntryPayloadIndexes,
 		},
+		{
+			Version: "v2.7.0",
+			Name:    "Add card and folder table",
+			Up:      AddCardFolderTables,
+			Down:    RemoveCardFolderTables,
+		},
 	}
+}
+
+// ------------------- v2.7.0 -------------------
+func AddCardFolderTables(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_card (
+			id SERIAL PRIMARY KEY,
+			creator_id int4 NOT NULL,
+			folder_id int4 DEFAULT 0 NULL,
+			title varchar(1024) NOT NULL,
+			draft int4 DEFAULT 0 NULL,
+			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+			raw_text text DEFAULT ''::text NOT NULL,
+			review_count int4 DEFAULT 0 NOT NULL,
+			created_at timestamptz DEFAULT now() NULL,
+			updated_at timestamptz DEFAULT now() NULL,
+			deleted_at timestamptz NULL
+		);
+		CREATE INDEX idx_card_creator_folder_created_at ON public.d_card USING btree (creator_id, folder_id, created_at DESC);
+		CREATE INDEX idx_card_raw_text_trgm ON public.d_card USING gin (raw_text gin_trgm_ops);
+
+		CREATE TABLE public.d_folder (
+			id SERIAL PRIMARY KEY,
+			creator_id int4 NOT NULL,
+			parent_id int4 DEFAULT 0 NULL,
+			title varchar(1024) NOT NULL,
+			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+			created_at timestamptz DEFAULT now() NULL,
+			updated_at timestamptz DEFAULT now() NULL,
+			deleted_at timestamptz NULL
+		);
+		CREATE INDEX idx_folder_creator_parent ON public.d_folder USING btree (creator_id, parent_id);
+	`).Error
+}
+
+func RemoveCardFolderTables(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_card CASCADE;
+		DROP TABLE IF EXISTS public.d_folder CASCADE;
+	`).Error
 }
 
 // ------------------- v2.6.0 -------------------
