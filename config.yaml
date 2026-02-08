@@ -2,7 +2,7 @@ addr: :8765
 miniflux: http://miniflux:8080
 minio:
   endpoint: minio.onlyquant.top
-  accessKeyID: 2EugvoLWSgyJDZ
+  accessKeyID: dashboardtest
   bucket: journal
   secure: true
   expiry: 160h
@@ -17,6 +17,6 @@ route:
     index: "client/journal/journal.html"
 db:
   name: dashboard_test
-  host: postgres
+  host: localhost
   port: 5432
   username: onlyquant
