@@ -49,9 +49,7 @@ func (c *Card) Get(db *gorm.DB, where map[string]any) error {
 
 func ListCards(db *gorm.DB, where map[string]any) ([]Card, error) {
 	cards := make([]Card, 0)
-	if err := db.Where(where).
-		Order("created_at DESC").
-		Find(&cards).Error; err != nil {
+	if err := db.Where(where).Find(&cards).Error; err != nil {
 		return nil, err
 	}
 	return cards, nil

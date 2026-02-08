@@ -5,8 +5,15 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+)
+
+const (
+	SiteDashboard = 1
+	SiteJournal   = 2
+	SiteFlomo     = 3
 )
 
 type MetaField struct {
@@ -15,6 +22,15 @@ type MetaField struct {
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `json:"deletedAt"`
 	CreatorId uint           `gorm:"column:creator_id;not null" json:"creatorId"`
+}
+
+type MetaFieldV2 struct {
+	Id            uuid.UUID `gorm:"primarykey" json:"id"`
+	CreatedAt     int64     `json:"createdAt"`
+	UpdatedAt     int64     `json:"updatedAt"`
+	ServerVersion int64     `json:"serverVersion"`
+	IsDeleted     bool      `json:"isDeleted"`
+	CreatorId     uint      `gorm:"column:creator_id;not null" json:"creatorId"`
 }
 
 type NullTime struct {
