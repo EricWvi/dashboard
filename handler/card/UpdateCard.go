@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) UpdateCard(c *gin.Context, req *UpdateCardRequest) *UpdateCardResponse {
@@ -25,7 +26,7 @@ func (b Base) UpdateCard(c *gin.Context, req *UpdateCardRequest) *UpdateCardResp
 }
 
 type UpdateCardRequest struct {
-	Id uint `json:"id"`
+	Id uuid.UUID `json:"id"`
 	model.CardField
 }
 

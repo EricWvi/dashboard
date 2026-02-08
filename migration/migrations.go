@@ -194,32 +194,71 @@ func GetAllMigrations() []MigrationStep {
 func AddCardFolderTables(db *gorm.DB) error {
 	return db.Exec(`
 		CREATE TABLE public.d_card (
-			id SERIAL PRIMARY KEY,
+			id UUID PRIMARY KEY,
 			creator_id int4 NOT NULL,
-			folder_id int4 DEFAULT 0 NULL,
+			folder_id UUID NULL,
 			title varchar(1024) NOT NULL,
-			draft int4 DEFAULT 0 NULL,
+			draft UUID NOT NULL,
 			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
 			raw_text text DEFAULT ''::text NOT NULL,
 			review_count int4 DEFAULT 0 NOT NULL,
-			created_at timestamptz DEFAULT now() NULL,
-			updated_at timestamptz DEFAULT now() NULL,
-			deleted_at timestamptz NULL
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL,
+			server_version BIGINT NOT NULL,
+			is_deleted BOOLEAN DEFAULT FALSE
 		);
-		CREATE INDEX idx_card_creator_folder_created_at ON public.d_card USING btree (creator_id, folder_id, created_at DESC);
-		CREATE INDEX idx_card_raw_text_trgm ON public.d_card USING gin (raw_text gin_trgm_ops);
+		CREATE INDEX idx_card_creator_server_version ON public.d_card USING btree (creator_id, server_version);
 
 		CREATE TABLE public.d_folder (
-			id SERIAL PRIMARY KEY,
+			id UUID PRIMARY KEY,
 			creator_id int4 NOT NULL,
-			parent_id int4 DEFAULT 0 NULL,
+			parent_id UUID NULL,
 			title varchar(1024) NOT NULL,
 			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
-			created_at timestamptz DEFAULT now() NULL,
-			updated_at timestamptz DEFAULT now() NULL,
-			deleted_at timestamptz NULL
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL,
+			server_version BIGINT NOT NULL,
+			is_deleted BOOLEAN DEFAULT FALSE
 		);
-		CREATE INDEX idx_folder_creator_parent ON public.d_folder USING btree (creator_id, parent_id);
+		CREATE INDEX idx_folder_creator_server_version ON public.d_folder USING btree (creator_id, server_version);
+
+		CREATE TABLE public.d_tiptap_v2 (
+			id UUID PRIMARY KEY,
+			creator_id int4 NOT NULL,
+			site SMALLINT NOT NULL,
+			"content" jsonb DEFAULT '{}'::jsonb NOT NULL,
+			history jsonb DEFAULT '[]'::jsonb NOT NULL,
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL,
+			server_version BIGINT NOT NULL,
+			is_deleted BOOLEAN DEFAULT FALSE
+		);
+		CREATE INDEX idx_tiptap_creator_server_version ON public.d_tiptap_v2 USING btree (creator_id, server_version);
+
+		CREATE SEQUENCE global_sync_version_seq;
+
+		-- Create a function that resets the version on update
+		CREATE OR REPLACE FUNCTION global_bump_server_version()
+		RETURNS TRIGGER AS $$
+		BEGIN
+			-- All tables pull from the same global counter
+			NEW.server_version = nextval('global_sync_version_seq');
+			RETURN NEW;
+		END;
+		$$ LANGUAGE plpgsql;
+
+		-- Attach the trigger to the table
+		CREATE TRIGGER trg_card_version
+		BEFORE INSERT OR UPDATE ON public.d_card
+		FOR EACH ROW EXECUTE FUNCTION global_bump_server_version();
+
+		CREATE TRIGGER trg_folder_version
+		BEFORE INSERT OR UPDATE ON public.d_folder
+		FOR EACH ROW EXECUTE FUNCTION global_bump_server_version();
+
+		CREATE TRIGGER trg_tiptap_version
+		BEFORE INSERT OR UPDATE ON public.d_tiptap_v2
+		FOR EACH ROW EXECUTE FUNCTION global_bump_server_version();
 	`).Error
 }
 
@@ -227,6 +266,9 @@ func RemoveCardFolderTables(db *gorm.DB) error {
 	return db.Exec(`
 		DROP TABLE IF EXISTS public.d_card CASCADE;
 		DROP TABLE IF EXISTS public.d_folder CASCADE;
+		DROP TABLE IF EXISTS public.d_tiptap_v2 CASCADE;
+		DROP FUNCTION IF EXISTS global_bump_server_version;
+		DROP SEQUENCE IF EXISTS global_sync_version_seq;
 	`).Error
 }
 

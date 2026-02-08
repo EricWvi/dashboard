@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) GetCard(c *gin.Context, req *GetCardRequest) *GetCardResponse {
@@ -25,7 +26,7 @@ func (b Base) GetCard(c *gin.Context, req *GetCardRequest) *GetCardResponse {
 }
 
 type GetCardRequest struct {
-	Id uint `form:"id"`
+	Id uuid.UUID `form:"id"`
 }
 
 type GetCardResponse struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) UpdateFolder(c *gin.Context, req *UpdateFolderRequest) *UpdateFolderResponse {
@@ -25,7 +26,7 @@ func (b Base) UpdateFolder(c *gin.Context, req *UpdateFolderRequest) *UpdateFold
 }
 
 type UpdateFolderRequest struct {
-	Id uint `json:"id"`
+	Id uuid.UUID `json:"id"`
 	model.FolderField
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) CreateCard(c *gin.Context, req *CreateCardRequest) *CreateCardResponse {
@@ -19,7 +20,7 @@ func (b Base) CreateCard(c *gin.Context, req *CreateCardRequest) *CreateCardResp
 	}
 
 	return &CreateCardResponse{
-		Id: card.ID,
+		Id: card.Id,
 	}
 }
 
@@ -28,5 +29,5 @@ type CreateCardRequest struct {
 }
 
 type CreateCardResponse struct {
-	Id uint `json:"id"`
+	Id uuid.UUID `json:"id"`
 }

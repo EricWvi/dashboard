@@ -3,23 +3,24 @@ package model
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type Card struct {
-	MetaField
+	MetaFieldV2
 	CardField
 }
 
 type CardField struct {
-	FolderId    uint           `gorm:"type:int;default:0" json:"folderId"`
+	FolderId    *uuid.UUID     `gorm:"type:uuid" json:"folderId"`
 	Title       string         `gorm:"type:varchar(1024);not null" json:"title"`
-	Draft       int            `gorm:"type:int;default:0" json:"draft"`
+	Draft       uuid.UUID      `gorm:"type:uuid;not null" json:"draft"`
 	Payload     datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	RawText     string         `gorm:"type:text;default:'';not null" json:"rawText"`
 	ReviewCount int            `gorm:"type:int;default:0;not null" json:"reviewCount"`
-	// CreatorId is inherited from MetaField
+	// CreatorId is inherited from MetaFieldV2
 }
 
 const (
@@ -49,9 +50,32 @@ func (c *Card) Get(db *gorm.DB, where map[string]any) error {
 
 func ListCards(db *gorm.DB, where map[string]any) ([]Card, error) {
 	cards := make([]Card, 0)
-	if err := db.Where(where).
-		Order("created_at DESC").
-		Find(&cards).Error; err != nil {
+	if err := db.Where(where).Find(&cards).Error; err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+func ListCardsSince(db *gorm.DB, since int64, creatorId uint) ([]Card, error) {
+	var cards []Card
+
+	whereExpr := WhereExpr{}
+	whereExpr.GT(ServerVersion, since)
+	whereExpr.Eq(CreatorId, creatorId)
+
+	if err := db.Where(whereExpr).Find(&cards).Error; err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+func FullCards(db *gorm.DB, creatorId uint) ([]Card, error) {
+	var cards []Card
+	whereExpr := WhereExpr{}
+	whereExpr.Eq(CreatorId, creatorId)
+	whereExpr.Eq(IsDeleted, false)
+
+	if err := db.Where(whereExpr).Find(&cards).Error; err != nil {
 		return nil, err
 	}
 	return cards, nil
@@ -67,4 +91,8 @@ func (c *Card) Update(db *gorm.DB, where map[string]any) error {
 
 func (c *Card) Delete(db *gorm.DB, where map[string]any) error {
 	return db.Where(where).Delete(c).Error
+}
+
+func (c *Card) MarkDeleted(db *gorm.DB, where map[string]any) error {
+	return db.Model(c).Where(where).Update(IsDeleted, true).Error
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) ListFolders(c *gin.Context, req *ListFoldersRequest) *ListFoldersResponse {
@@ -25,7 +26,7 @@ func (b Base) ListFolders(c *gin.Context, req *ListFoldersRequest) *ListFoldersR
 }
 
 type ListFoldersRequest struct {
-	ParentId uint `form:"parentId"`
+	ParentId *uuid.UUID `form:"parentId"`
 }
 
 type ListFoldersResponse struct {

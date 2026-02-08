@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) CreateFolder(c *gin.Context, req *CreateFolderRequest) *CreateFolderResponse {
@@ -19,7 +20,7 @@ func (b Base) CreateFolder(c *gin.Context, req *CreateFolderRequest) *CreateFold
 	}
 
 	return &CreateFolderResponse{
-		Id: folder.ID,
+		Id: folder.Id,
 	}
 }
 
@@ -28,5 +29,5 @@ type CreateFolderRequest struct {
 }
 
 type CreateFolderResponse struct {
-	Id uint `json:"id"`
+	Id uuid.UUID `json:"id"`
 }
