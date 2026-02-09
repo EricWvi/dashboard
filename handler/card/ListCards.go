@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) ListCards(c *gin.Context, req *ListCardsRequest) *ListCardsResponse {
@@ -25,7 +26,7 @@ func (b Base) ListCards(c *gin.Context, req *ListCardsRequest) *ListCardsRespons
 }
 
 type ListCardsRequest struct {
-	FolderId uint `form:"folderId"`
+	FolderId uuid.UUID `form:"folderId"`
 }
 
 type ListCardsResponse struct {

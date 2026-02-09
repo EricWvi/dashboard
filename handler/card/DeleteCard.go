@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) DeleteCard(c *gin.Context, req *DeleteCardRequest) *DeleteCardResponse {
@@ -23,7 +24,7 @@ func (b Base) DeleteCard(c *gin.Context, req *DeleteCardRequest) *DeleteCardResp
 }
 
 type DeleteCardRequest struct {
-	Id uint `json:"id"`
+	Id uuid.UUID `json:"id"`
 }
 
 type DeleteCardResponse struct {

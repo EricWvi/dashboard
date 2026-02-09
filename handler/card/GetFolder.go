@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) GetFolder(c *gin.Context, req *GetFolderRequest) *GetFolderResponse {
@@ -25,7 +26,7 @@ func (b Base) GetFolder(c *gin.Context, req *GetFolderRequest) *GetFolderRespons
 }
 
 type GetFolderRequest struct {
-	Id uint `form:"id"`
+	Id uuid.UUID `form:"id"`
 }
 
 type GetFolderResponse struct {

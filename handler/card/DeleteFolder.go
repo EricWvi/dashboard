@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (b Base) DeleteFolder(c *gin.Context, req *DeleteFolderRequest) *DeleteFolderResponse {
@@ -23,7 +24,7 @@ func (b Base) DeleteFolder(c *gin.Context, req *DeleteFolderRequest) *DeleteFold
 }
 
 type DeleteFolderRequest struct {
-	Id uint `json:"id"`
+	Id uuid.UUID `json:"id"`
 }
 
 type DeleteFolderResponse struct {
