@@ -3,23 +3,24 @@ package model
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type Card struct {
-	MetaField
+	MetaFieldV2
 	CardField
 }
 
 type CardField struct {
-	FolderId    uint           `gorm:"type:int;default:0" json:"folderId"`
+	FolderId    uuid.UUID      `gorm:"type:uuid" json:"folderId"`
 	Title       string         `gorm:"type:varchar(1024);not null" json:"title"`
-	Draft       int            `gorm:"type:int;default:0" json:"draft"`
+	Draft       uuid.UUID      `gorm:"type:uuid;not null" json:"draft"`
 	Payload     datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	RawText     string         `gorm:"type:text;default:'';not null" json:"rawText"`
 	ReviewCount int            `gorm:"type:int;default:0;not null" json:"reviewCount"`
-	// CreatorId is inherited from MetaField
+	// CreatorId is inherited from MetaFieldV2
 }
 
 const (
@@ -55,6 +56,32 @@ func ListCards(db *gorm.DB, where map[string]any) ([]Card, error) {
 	return cards, nil
 }
 
+func ListCardsSince(db *gorm.DB, since int64, creatorId uint) ([]Card, error) {
+	var cards []Card
+	where := WhereMap{}
+	where.Eq(CreatorId, creatorId)
+
+	whereExpr := WhereExpr{}
+	whereExpr.GT("server_version", since)
+
+	if err := db.Where(where).Where(whereExpr).Find(&cards).Error; err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+func FullCards(db *gorm.DB, creatorId uint) ([]Card, error) {
+	var cards []Card
+	where := WhereMap{}
+	where.Eq(CreatorId, creatorId)
+	where.Eq("is_deleted", false)
+
+	if err := db.Where(where).Find(&cards).Error; err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
 func (c *Card) Create(db *gorm.DB) error {
 	return db.Create(c).Error
 }
@@ -65,4 +92,8 @@ func (c *Card) Update(db *gorm.DB, where map[string]any) error {
 
 func (c *Card) Delete(db *gorm.DB, where map[string]any) error {
 	return db.Where(where).Delete(c).Error
+}
+
+func (c *Card) MarkDeleted(db *gorm.DB, where map[string]any) error {
+	return db.Model(c).Where(where).Update("is_deleted", true).Error
 }
