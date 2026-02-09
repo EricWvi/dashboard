@@ -26,7 +26,7 @@ func (b Base) ListCards(c *gin.Context, req *ListCardsRequest) *ListCardsRespons
 }
 
 type ListCardsRequest struct {
-	FolderId uuid.UUID `form:"folderId"`
+	FolderId *uuid.UUID `form:"folderId"`
 }
 
 type ListCardsResponse struct {

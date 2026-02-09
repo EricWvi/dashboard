@@ -26,7 +26,7 @@ func (b Base) ListFolders(c *gin.Context, req *ListFoldersRequest) *ListFoldersR
 }
 
 type ListFoldersRequest struct {
-	ParentId uuid.UUID `form:"parentId"`
+	ParentId *uuid.UUID `form:"parentId"`
 }
 
 type ListFoldersResponse struct {
