@@ -16,7 +16,7 @@ type Card struct {
 type CardField struct {
 	FolderId    uuid.UUID      `gorm:"type:uuid" json:"folderId"`
 	Title       string         `gorm:"type:varchar(1024);not null" json:"title"`
-	Draft       uuid.UUID      `gorm:"type:uuid;not null" json:"draft"`
+	DraftId     uuid.UUID      `gorm:"column:draft;type:uuid;not null" json:"draftId"`
 	Payload     datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	RawText     string         `gorm:"type:text;default:'';not null" json:"rawText"`
 	ReviewCount int            `gorm:"type:int;default:0;not null" json:"reviewCount"`

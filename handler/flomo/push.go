@@ -13,24 +13,24 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 	db := config.ContextDB(c)
 
 	// Process cards
-	for _, card := range req.Card {
-		card.CreatorId = userId
+	for i := range req.Card {
+		req.Card[i].CreatorId = userId
 		
 		// Check if card exists
 		existing := &model.Card{}
 		where := model.WhereMap{}
-		where.Eq(model.Id, card.Id)
+		where.Eq(model.Id, req.Card[i].Id)
 		err := existing.Get(db, where)
 		
 		if err != nil {
 			// Card doesn't exist, create it
-			if err := card.Create(db); err != nil {
+			if err := req.Card[i].Create(db); err != nil {
 				handler.Errorf(c, "failed to create card: %s", err.Error())
 				return nil
 			}
 		} else {
 			// Card exists, update it
-			if err := card.Update(db, where); err != nil {
+			if err := req.Card[i].Update(db, where); err != nil {
 				handler.Errorf(c, "failed to update card: %s", err.Error())
 				return nil
 			}
@@ -38,24 +38,24 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 	}
 
 	// Process folders
-	for _, folder := range req.Folder {
-		folder.CreatorId = userId
+	for i := range req.Folder {
+		req.Folder[i].CreatorId = userId
 		
 		// Check if folder exists
 		existing := &model.Folder{}
 		where := model.WhereMap{}
-		where.Eq(model.Id, folder.Id)
+		where.Eq(model.Id, req.Folder[i].Id)
 		err := existing.Get(db, where)
 		
 		if err != nil {
 			// Folder doesn't exist, create it
-			if err := folder.Create(db); err != nil {
+			if err := req.Folder[i].Create(db); err != nil {
 				handler.Errorf(c, "failed to create folder: %s", err.Error())
 				return nil
 			}
 		} else {
 			// Folder exists, update it
-			if err := folder.Update(db, where); err != nil {
+			if err := req.Folder[i].Update(db, where); err != nil {
 				handler.Errorf(c, "failed to update folder: %s", err.Error())
 				return nil
 			}
@@ -63,25 +63,25 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 	}
 
 	// Process tiptaps
-	for _, tiptap := range req.Tiptap {
-		tiptap.CreatorId = userId
-		tiptap.Site = model.SiteFlomo
+	for i := range req.Tiptap {
+		req.Tiptap[i].CreatorId = userId
+		req.Tiptap[i].Site = model.SiteFlomo
 		
 		// Check if tiptap exists
 		existing := &model.TiptapV2{}
 		where := model.WhereMap{}
-		where.Eq(model.Id, tiptap.Id)
+		where.Eq(model.Id, req.Tiptap[i].Id)
 		err := existing.Get(db, where)
 		
 		if err != nil {
 			// Tiptap doesn't exist, create it
-			if err := tiptap.Create(db); err != nil {
+			if err := req.Tiptap[i].Create(db); err != nil {
 				handler.Errorf(c, "failed to create tiptap: %s", err.Error())
 				return nil
 			}
 		} else {
 			// Tiptap exists, update it
-			if err := tiptap.Update(db, where); err != nil {
+			if err := req.Tiptap[i].Update(db, where); err != nil {
 				handler.Errorf(c, "failed to update tiptap: %s", err.Error())
 				return nil
 			}
