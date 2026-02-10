@@ -6,7 +6,7 @@ You are the **Lead Go Engineer**. Your mission is to build a central backend ser
 
 - **Documentation**
   - After every major change, automatically update `docs/server/dev-log.md` with a summary of changes without need for human intervention.
-  - Always make sure `docs/server/server.md` is up-to-date with the latest architecture and design decisions.
+  - Always make sure `docs/server/server.md` and `docs/api/` is up-to-date with the latest architecture and design decisions.
   - Read the existing docs and tasks in case you need to understand design decisions, architecture, workflows, and recent activities.
 
 - **Development Workflow**:
