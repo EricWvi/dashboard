@@ -1,14 +1,10 @@
 # Flomo API Documentation
 
-Flomo is a card-based note-taking system with folder organization.
+Flomo is a card-based note-taking system with folder organization and local-first synchronization.
 
-Base URL: `/api/card`
+## Base URLs
 
-## Authentication
-
-All requests require the following headers:
-
-- `Only-Session-Token`: Session token obtained from GetUser endpoint
+- **Local-First Sync**: `/api/flomo` - Bulk synchronization endpoints
 
 ## Request Format
 
@@ -41,58 +37,95 @@ All responses follow this structure:
 
 ```json
 {
-  "id": 1,
-  "createdAt": "2026-02-08T16:00:26.630354+08:00",
-  "updatedAt": "2026-02-08T16:00:26.630354+08:00",
-  "deletedAt": null,
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "createdAt": 1707398426630,
+  "updatedAt": 1707398426630,
+  "isDeleted": false,
   "creatorId": 2,
-  "folderId": 1,
+  "folderId": "660e8400-e29b-41d4-a716-446655440000",
   "title": "My First Card",
-  "draft": 0,
+  "draft": "770e8400-e29b-41d4-a716-446655440000",
   "payload": {},
-  "rawText": "This is my test note",
-  "reviewCount": 0
+  "rawText": "This is my test note"
 }
 ```
+
+**Field Descriptions:**
+
+- `id` (UUID): Client-generated unique identifier
+- `createdAt` (int64): Unix timestamp in milliseconds
+- `updatedAt` (int64): Unix timestamp in milliseconds
+- `isDeleted` (boolean): Soft delete flag
+- `creatorId` (uint): User ID who created the card
+- `folderId` (UUID): Parent folder ID
+- `title` (string): Card title (max 1024 chars)
+- `draft` (UUID): Associated draft document ID
+- `payload` (object): Additional metadata as JSON
+- `rawText` (string): Plain text content for search
 
 ### Folder
 
 ```json
 {
-  "id": 1,
-  "createdAt": "2026-02-08T16:00:08.661847+08:00",
-  "updatedAt": "2026-02-08T16:00:08.661847+08:00",
-  "deletedAt": null,
+  "id": "660e8400-e29b-41d4-a716-446655440000",
+  "createdAt": 1707398408661,
+  "updatedAt": 1707398408661,
+  "isDeleted": false,
   "creatorId": 2,
-  "parentId": 0,
+  "parentId": "00000000-0000-0000-0000-000000000000",
   "title": "Test Folder",
   "payload": {}
 }
 ```
 
-## Folder Endpoints
+**Field Descriptions:**
 
-### Create Folder
+- `id` (UUID): Client-generated unique identifier
+- `createdAt` (int64): Unix timestamp in milliseconds
+- `updatedAt` (int64): Unix timestamp in milliseconds
+- `isDeleted` (boolean): Soft delete flag
+- `creatorId` (uint): User ID who created the folder
+- `parentId` (UUID): Parent folder ID
+- `title` (string): Folder name (max 1024 chars)
+- `payload` (object): Additional metadata as JSON
 
-Creates a new folder.
-
-**Endpoint:** `POST /api/card?Action=CreateFolder`
-
-**Request Body:**
+### TiptapV2
 
 ```json
 {
-  "title": "My Folder",
-  "parentId": 0,
-  "payload": {}
+  "id": "880e8400-e29b-41d4-a716-446655440000",
+  "createdAt": 1707398408661,
+  "updatedAt": 1707398408661,
+  "isDeleted": false,
+  "creatorId": 2,
+  "site": 3,
+  "content": {},
+  "history": []
 }
 ```
 
-**Parameters:**
+**Field Descriptions:**
 
-- `title` (string, required): Folder name (max 1024 chars)
-- `parentId` (uint, optional): Parent folder ID, defaults to 0 (root)
-- `payload` (object, optional): Additional metadata as JSON
+- `id` (UUID): Client-generated unique identifier
+- `createdAt` (int64): Unix timestamp in milliseconds
+- `updatedAt` (int64): Unix timestamp in milliseconds
+- `isDeleted` (boolean): Soft delete flag
+- `creatorId` (uint): User ID who created the document
+- `site` (int): Site identifier (1=Dashboard, 2=Journal, 3=Flomo)
+- `content` (object): TipTap document content as JSON
+- `history` (array): Document history as JSON array
+
+## Local-First Sync Endpoints (`/api/flomo`)
+
+These endpoints support offline-first applications with efficient synchronization.
+
+### Full Sync
+
+Retrieves all non-deleted cards, folders, and tiptap documents. Used for initial sync or recovery.
+
+**Endpoint:** `GET /api/flomo?Action=FullSync`
+
+**Parameters:** None
 
 **Response:**
 
@@ -101,49 +134,23 @@ Creates a new folder.
   "requestId": "90902d95-81a2-4656-8350-4331bc05a148",
   "code": 200,
   "message": {
-    "id": 1
+    "serverVersion": 10,
+    "card": [...],
+    "folder": [...],
+    "tiptap": [...]
   }
 }
 ```
 
-### Get Folder
+### Pull (Incremental Sync)
 
-Retrieves a specific folder by ID.
+Retrieves all changes since a specific server version. Returns cards, folders, and tiptaps including deleted items.
 
-**Endpoint:** `GET /api/card?Action=GetFolder&id=1`
-
-**Parameters:**
-
-- `id` (uint, required): Folder ID
-
-**Response:**
-
-```json
-{
-  "requestId": "0756ccf6-c48e-4cbc-b309-c0aec0b2db80",
-  "code": 200,
-  "message": {
-    "id": 1,
-    "createdAt": "2026-02-08T16:00:08.661847+08:00",
-    "updatedAt": "2026-02-08T16:00:08.661847+08:00",
-    "deletedAt": null,
-    "creatorId": 2,
-    "parentId": 0,
-    "title": "Test Folder",
-    "payload": {}
-  }
-}
-```
-
-### List Folders
-
-Lists all folders under a specific parent folder.
-
-**Endpoint:** `GET /api/card?Action=ListFolders&parentId=0`
+**Endpoint:** `GET /api/flomo?Action=Pull&since=12340`
 
 **Parameters:**
 
-- `parentId` (uint, required): Parent folder ID (0 for root level)
+- `since` (int64, required): Last known server version from client
 
 **Response:**
 
@@ -152,45 +159,63 @@ Lists all folders under a specific parent folder.
   "requestId": "4ae97b39-676f-43f5-b54f-bad0c09faa1e",
   "code": 200,
   "message": {
-    "folders": [
+    "serverVersion": 12346,
+    "card": [
       {
-        "id": 1,
-        "createdAt": "2026-02-08T16:00:08.661847+08:00",
-        "updatedAt": "2026-02-08T16:00:08.661847+08:00",
-        "deletedAt": null,
-        "creatorId": 2,
-        "parentId": 0,
-        "title": "Test Folder",
-        "payload": {}
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "serverVersion": 12345,
+        "isDeleted": false,
+        ...
+      }
+    ],
+    "folder": [
+      {
+        "id": "660e8400-e29b-41d4-a716-446655440000",
+        "serverVersion": 12344,
+        "isDeleted": false,
+        ...
+      }
+    ],
+    "tiptap": [
+      {
+        "id": "880e8400-e29b-41d4-a716-446655440000",
+        "serverVersion": 12346,
+        "isDeleted": true,
+        ...
       }
     ]
   }
 }
 ```
 
-### Update Folder
+**Notes:**
 
-Updates folder information.
+- Returns all records with `serverVersion > since`
+- Includes deleted records (`isDeleted: true`) for client cleanup
+- Client should process deletions locally
+- Track `serverVersion` received for next pull
 
-**Endpoint:** `POST /api/card?Action=UpdateFolder`
+### Push (Upload Changes)
+
+Uploads local changes (creates and updates) to the server. Server performs upsert based on UUID.
+
+**Endpoint:** `POST /api/flomo?Action=Push`
 
 **Request Body:**
 
 ```json
 {
-  "id": 1,
-  "title": "Updated Folder Name",
-  "parentId": 2,
-  "payload": { "color": "blue" }
+  "card": [...],
+  "folder": [...],
+  "tiptap": [...]
 }
 ```
 
 **Parameters:**
 
-- `id` (uint, required): Folder ID
-- `title` (string, optional): New folder name
-- `parentId` (uint, optional): New parent folder ID
-- `payload` (object, optional): Updated metadata
+- `card` (array, optional): Array of card objects to upsert
+- `folder` (array, optional): Array of folder objects to upsert
+- `tiptap` (array, optional): Array of tiptap objects to upsert
 
 **Response:**
 
@@ -198,222 +223,20 @@ Updates folder information.
 {
   "requestId": "91124d98-9a65-4a23-98e1-ad71a816f873",
   "code": 200,
-  "message": {}
-}
-```
-
-### Delete Folder
-
-Soft deletes a folder.
-
-**Endpoint:** `POST /api/card?Action=DeleteFolder`
-
-**Request Body:**
-
-```json
-{
-  "id": 1
-}
-```
-
-**Parameters:**
-
-- `id` (uint, required): Folder ID
-
-**Response:**
-
-```json
-{
-  "requestId": "fba4cbbe-b96d-4f3c-bf9b-1d2bad9727cc",
-  "code": 200,
-  "message": {}
-}
-```
-
-## Card Endpoints
-
-### Create Card
-
-Creates a new card.
-
-**Endpoint:** `POST /api/card?Action=CreateCard`
-
-**Request Body:**
-
-```json
-{
-  "title": "My Note",
-  "folderId": 1,
-  "draft": 0,
-  "payload": {},
-  "rawText": "Note content here"
-}
-```
-
-**Parameters:**
-
-- `title` (string, required): Card title (max 1024 chars)
-- `folderId` (uint, optional): Folder ID, defaults to 0 (no folder)
-- `draft` (int, optional): Draft status (0=published, 1=draft), defaults to 0
-- `payload` (object, optional): Additional metadata as JSON
-- `rawText` (string, optional): Plain text content for search
-- `reviewCount` (int, read-only): Number of times reviewed (managed by system)
-
-**Response:**
-
-```json
-{
-  "requestId": "8783809c-de1a-4d57-b70c-d78f8b8d5dd5",
-  "code": 200,
   "message": {
-    "id": 1
+    "success": true
   }
 }
 ```
 
-### Get Card
+**Notes:**
 
-Retrieves a specific card by ID.
-
-**Endpoint:** `GET /api/card?Action=GetCard&id=1`
-
-**Parameters:**
-
-- `id` (uint, required): Card ID
-
-**Response:**
-
-```json
-{
-  "requestId": "2bf2a391-d62f-45fb-9709-72e49cb1e1e6",
-  "code": 200,
-  "message": {
-    "id": 1,
-    "createdAt": "2026-02-08T16:00:26.630354+08:00",
-    "updatedAt": "2026-02-08T16:00:26.630354+08:00",
-    "deletedAt": null,
-    "creatorId": 2,
-    "folderId": 1,
-    "title": "My First Card",
-    "draft": 0,
-    "payload": {},
-    "rawText": "This is my test note",
-    "reviewCount": 0
-  }
-}
-```
-
-### List Cards
-
-Lists all cards in a specific folder.
-
-**Endpoint:** `GET /api/card?Action=ListCards&folderId=1`
-
-**Parameters:**
-
-- `folderId` (uint, required): Folder ID (0 for cards without a folder)
-
-**Response:**
-
-```json
-{
-  "requestId": "06a40b1b-e68b-42a5-b422-94c39556935b",
-  "code": 200,
-  "message": {
-    "cards": [
-      {
-        "id": 1,
-        "createdAt": "2026-02-08T16:00:26.630354+08:00",
-        "updatedAt": "2026-02-08T16:00:26.630354+08:00",
-        "deletedAt": null,
-        "creatorId": 2,
-        "folderId": 1,
-        "title": "My First Card",
-        "draft": 0,
-        "payload": {},
-        "rawText": "This is my test note",
-        "reviewCount": 0
-      }
-    ]
-  }
-}
-```
-
-### Update Card
-
-Updates card information.
-
-**Endpoint:** `POST /api/card?Action=UpdateCard`
-
-**Request Body:**
-
-```json
-{
-  "id": 1,
-  "title": "Updated Card Title",
-  "folderId": 2,
-  "draft": 1,
-  "payload": { "tags": ["important"] },
-  "rawText": "Updated content"
-}
-```
-
-**Parameters:**
-
-- `id` (uint, required): Card ID
-- `title` (string, optional): New card title
-- `folderId` (uint, optional): New folder ID
-- `draft` (int, optional): Draft status
-- `payload` (object, optional): Updated metadata
-- `rawText` (string, optional): Updated plain text content
-
-**Note:** `reviewCount` cannot be updated directly via this endpoint.
-
-**Response:**
-
-```json
-{
-  "requestId": "19fcaf2f-da90-4736-9d8a-1c20e7ee8e79",
-  "code": 200,
-  "message": {}
-}
-```
-
-### Delete Card
-
-Soft deletes a card.
-
-**Endpoint:** `POST /api/card?Action=DeleteCard`
-
-**Headers:**
-
-```
-Content-Type: application/json
-Remote-Email: test@onlyquant.top
-Only-Session-Token: <your-session-token>
-```
-
-**Request Body:**
-
-```json
-{
-  "id": 1
-}
-```
-
-**Parameters:**
-
-- `id` (uint, required): Card ID
-
-**Response:**
-
-```json
-{
-  "requestId": "2ea7aeee-3bcd-4e71-b24e-a56e7da48a61",
-  "code": 200,
-  "message": {}
-}
-```
+- Server automatically sets `creatorId` from session
+- Server automatically sets `site=3` for tiptap documents
+- Server auto-increments `serverVersion` on each write
+- If record exists (by UUID), it's updated; otherwise created
+- Client must generate UUIDs for new records
+- Push before pull to avoid conflicts
 
 ## Error Responses
 
@@ -430,19 +253,27 @@ All endpoints may return error responses in the following format:
 Common error scenarios:
 
 - Missing `Action` parameter: `"request action is missing"`
-- Missing session token: `"Only-Session-Token header is required"`
 - Invalid ID or resource not found: `"can not find card"` or `"can not find folder"`
 - Missing required parameters
-- Unauthorized access (accessing another user's cards/folders)
 - Database errors
 
 ## Notes
 
-- All POST endpoints require authentication via session token
+### General
+
 - The `Action` parameter is **always** in the URL query string (for both GET and POST)
 - All responses include a `requestId` field for request tracking
 - All operations are scoped to the authenticated user (via `creatorId`)
-- Deletion is soft delete (sets `deletedAt` timestamp)
-- Cards are ordered by `created_at DESC` when listed
-- The `payload` field can store arbitrary JSON for extensibility
 - GET requests use URL parameters, POST requests use JSON body + URL parameters for Action
+
+### Local-First Sync (`/api/flomo`)
+
+- **UUIDs**: All IDs are UUIDs generated by the client
+- **Timestamps**: All timestamps are Unix milliseconds (int64)
+- **Server Version**: Auto-incremented by database triggers, used for sync tracking
+- **Soft Delete**: Uses `isDeleted` boolean flag instead of `deletedAt` timestamp
+- **Sync Strategy**:
+  1. **First Sync**: Use `FullSync` to get all non-deleted data
+  2. **Regular Sync**: Use `Pull` with last known `serverVersion`
+  3. **Upload Changes**: Use `Push` to send local changes (creates/updates/deletes)
+- **Best Practice**: Always push before pull to minimize conflicts

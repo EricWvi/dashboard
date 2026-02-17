@@ -12,6 +12,7 @@ import (
 	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/echo"
 	"github.com/EricWvi/dashboard/handler/entry"
+	"github.com/EricWvi/dashboard/handler/flomo"
 	"github.com/EricWvi/dashboard/handler/media"
 	"github.com/EricWvi/dashboard/handler/tiptap"
 	"github.com/EricWvi/dashboard/handler/todo"
@@ -77,7 +78,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	// middleware.JWT inject user ID
 	g.Use(middleware.JWT())
 	// middleware.Idempotency handles idempotency key
-	g.Use(middleware.Idempotency())
+	// g.Use(middleware.Idempotency())
 
 	raw := g.Group(viper.GetString("route.back.base"))
 	raw.POST("/upload", media.Upload)
@@ -87,7 +88,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	// middleware.Logging logs request and response
 	back.Use(middleware.Logging())
 	// middleware.Session maintains session status
-	back.Use(middleware.Session())
+	// back.Use(middleware.Session())
 
 	back.GET("/user", user.DefaultHandler)
 	back.POST("/user", user.DefaultHandler)
@@ -111,6 +112,8 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.POST("/entry", entry.DefaultHandler)
 	back.GET("/card", card.DefaultHandler)
 	back.POST("/card", card.DefaultHandler)
+	back.GET("/flomo", flomo.DefaultHandler)
+	back.POST("/flomo", flomo.DefaultHandler)
 
 	// Handle 404 for all unmatched routes
 	g.NoRoute(func(c *gin.Context) {

@@ -2,7 +2,51 @@ The backend is designed around models and actions on the models. Database tables
 
 The overall HTTP interface is through a `base` handler and using `Action` query and reflection to choose method on `base`. For each group of handlers, say `todo`, we will register it in `router.go`, using `GET` and `POST`. The corresponding handlers for actions of a specific model, say `todo`, are defined in `handler/<model>`, say `handler/todo`.
 
+## Architecture
+
+```
+handler/flomo/                      # Local-first sync endpoints
+├── base.go                         # Handler dispatcher
+├── full.go                         # FullSync - initial sync
+├── pull.go                         # Pull - incremental updates
+└── push.go                         # Push - upload changes
+
+handler/card/                       # Traditional CRUD endpoints
+├── base.go                         # Handler dispatcher
+├── CreateCard.go                   # Create individual card
+├── GetCard.go                      # Get single card
+├── ListCards.go                    # List cards in folder
+├── UpdateCard.go                   # Update card
+├── DeleteCard.go                   # Delete card
+└── (similar structure for Folder operations)
+
+model/
+├── card.go                         # Card model and queries
+├── folder.go                       # Folder model and queries
+└── tiptapv2.go                     # Rich text document model
+```
+
+## Server-Side Behavior
+
+1. **Global Version Sequence**:
+   - All Flomo tables share `global_sync_version_seq`
+   - Database triggers auto-increment `server_version` on write
+   - Ensures total ordering across all changes
+
+2. **Upsert Logic** (in `Push`):
+   - Check if record exists by UUID
+   - If not found → Create new record
+   - If found → Compare `updatedAt`, update if client is newer
+   - Trigger automatically sets `server_version`
+
+3. **Soft Deletes**:
+   - `isDeleted` flag instead of hard delete
+   - Allows clients to learn about deletions
+   - Prevents resurrection from stale offline data
+
 ## Database Schema (from migration/migrations.go)
+
+### Traditional Tables (auto-increment IDs, timestamp-based)
 
 - **d_user**: id, email, avatar, username, language, rss_token, email_token, email_feed, timestamps
 - **d_media**: id, creator_id, link (UUID), key, presigned_url, last_presigned_time, timestamps
@@ -16,6 +60,26 @@ The overall HTTP interface is through a `base` handler and using `Action` query 
 - **d_quick_note**: id, creator_id, title, draft, d_order, timestamps
 - **d_tag**: id, creator_id, name, timestamps
 - **d_entry**: id, creator_id, draft, visibility, payload (JSON), word_count, raw_text, timestamps
+
+### Local-First Sync Tables (UUID IDs, version-based)
+
+These tables use **v2.7.0 migration and above** schema with local-first sync support:
+
+- **d_card**: id (UUID), creator_id, folder_id (UUID), title, draft (UUID), payload (JSON), raw_text, review_count, created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_folder**: id (UUID), creator_id, parent_id (UUID), title, payload (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_tiptap_v2**: id (UUID), creator_id, site (SMALLINT), content (JSON), history (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+
+**Global Sync Infrastructure:**
+
+- **global_sync_version_seq**: Sequence shared across all local-first tables
+- **global_bump_server_version()**: Trigger function that auto-increments server_version on INSERT/UPDATE
+- Triggers attached to d_card, d_folder, d_tiptap_v2 tables
+
+**Site Constants:**
+
+- SiteDashboard = 1
+- SiteJournal = 2
+- SiteFlomo = 3
 
 ## Implemented Models & Handlers
 
@@ -32,6 +96,10 @@ The overall HTTP interface is through a `base` handler and using `Action` query 
 - **Entry**: Generic entry system
 - **QuickNote**: Quick note creation
 
+- **Card**: Local-first sync with UUID-based cards (Flomo feature)
+- **Folder**: Local-first sync with UUID-based folders (Flomo feature)
+- **TiptapV2**: Local-first sync for rich text content
+
 ## Router Endpoints
 
 - `/user` (GET/POST) → user.DefaultHandler
@@ -44,10 +112,14 @@ The overall HTTP interface is through a `base` handler and using `Action` query 
 - `/tiptap` (GET/POST) → tiptap.DefaultHandler
 - `/media` (GET/POST) → media.DefaultHandler
 - `/entry` (GET/POST) → entry.DefaultHandler
+- `/card` (GET/POST) → card.DefaultHandler (traditional CRUD for cards/folders)
+- `/flomo` (GET/POST) → flomo.DefaultHandler (local-first sync endpoints)
 - `/upload` (POST) → media.Upload
 - `/m/:link` (GET) → media.Serve
 
 ## Implementation Pattern
+
+### Traditional Pattern (MetaField-based)
 
 Each model follows identical structure:
 
@@ -67,3 +139,20 @@ Each model follows identical structure:
 4. The database columns use snake_case while the JSON API uses camelCase.
 
 **Note**: All list operations return `<Model>View` structs that include the id field for frontend operations, while excluding database timestamps and internal fields from API responses.
+
+### Local-First Sync Pattern (MetaFieldV2-based)
+
+For models with offline-first requirements:
+
+1. Model in `model/<name>.go` with:
+   - Uses `MetaFieldV2` (UUID id, int64 timestamps, server_version, is_deleted)
+   - TableName(), Get(), Create(), Update(), MarkDeleted()
+   - List<Name>Since(db, since int64, creatorId) - incremental sync query
+   - Full<Name>(db, creatorId) - full sync query (is_deleted=false)
+2. Handlers in `handler/<name>/` with:
+   - **FullSync**: Returns all non-deleted records for initial sync
+   - **Pull**: Returns records with server_version > since parameter
+   - **Push**: Accepts array of records, upserts each by UUID
+3. Routes registered in router.go (e.g., `/api/flomo` for sync endpoints)
+4. Client-generated UUIDs for optimistic offline creation
+5. Database triggers auto-increment server_version using global sequence

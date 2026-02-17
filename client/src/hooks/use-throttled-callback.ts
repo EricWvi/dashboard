@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 // Simple throttle implementation
 export function useThrottledCallback<T extends (...args: any[]) => any>(
@@ -7,6 +7,12 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
 ): T {
   const lastCall = useRef<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return useCallback(
     ((...args: Parameters<T>) => {

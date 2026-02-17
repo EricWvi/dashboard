@@ -1,6 +1,4 @@
-import { UserQueryOptions } from "@/hooks/use-user";
 import { QueryClient, type QueryFunction } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -11,20 +9,56 @@ async function throwIfResNotOk(res: Response) {
 
 export async function getRequest(
   url: string,
-  token: string = "",
+  token: string = "", // TODO remove token param
   retries = 3,
   baseTimeout = 2000,
   maxTimeout = 10000,
 ): Promise<Response> {
   const method = "GET";
   let errorMsg = `${method} ${url} failed after ${retries} attempts`;
-  let resCode = 0;
 
-  let sessionToken = token;
-  if (token === "") {
-    const user = await queryClient.fetchQuery(UserQueryOptions);
-    sessionToken = user.session;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    // Exponential backoff timeout (2s → 4s → 8s)
+    const timeout = Math.min(baseTimeout * 2 ** attempt, maxTimeout);
+    // Setup abort controller for timeout
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const res = await fetch(url, {
+        method,
+        credentials: "include",
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        errorMsg = `${method} ${url} failed with status ${res.status}`;
+        break; // fail fast on bad status
+      }
+
+      return res; // success
+    } catch (err) {
+      if (attempt < retries - 1) {
+        console.warn(`Retrying ${method} ${url} (attempt ${attempt + 2})...`);
+        continue;
+      }
+    } finally {
+      clearTimeout(id);
+    }
   }
+
+  throw new Error(errorMsg);
+}
+
+export async function postRequest(
+  url: string,
+  data: unknown,
+  retries = 3,
+  baseTimeout = 2000,
+  maxTimeout = 10000,
+): Promise<Response> {
+  const method = "POST";
+  let errorMsg = `${method} ${url} failed after ${retries} attempts`;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     // Exponential backoff timeout (2s → 4s → 8s)
@@ -37,64 +71,7 @@ export async function getRequest(
       const res = await fetch(url, {
         method,
         headers: {
-          "Only-Session-Token": sessionToken,
-        },
-        credentials: "include",
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        errorMsg = `${method} ${url} failed with status ${res.status}`;
-        resCode = res.status;
-        break; // fail fast on bad status
-      }
-
-      return res; // success
-    } catch (err) {
-      if (attempt < retries - 1) {
-        console.warn(`Retrying ${method} ${url} (attempt ${attempt + 2})...`);
-        continue;
-      }
-    } finally {
-      clearTimeout(id);
-    }
-  }
-
-  // All retries failed → show toast and rethrow
-  // 409 is for GetQueryStatus
-  if (resCode !== 409) {
-    toast.error("API Request failed", { description: errorMsg });
-  }
-  throw new Error(errorMsg);
-}
-
-export async function postRequest(
-  url: string,
-  data: unknown,
-  retries = 3,
-  baseTimeout = 3000,
-  maxTimeout = 10000,
-): Promise<Response> {
-  const method = "POST";
-  let errorMsg = `${method} ${url} failed after ${retries} attempts`;
-  let resCode = 0;
-
-  const user = await queryClient.fetchQuery(UserQueryOptions);
-
-  for (let attempt = 0; attempt < retries; attempt++) {
-    // Exponential backoff timeout (3s → 6s → max 10s)
-    const timeout = Math.min(baseTimeout * 2 ** attempt, maxTimeout);
-    // Setup abort controller for timeout
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: {
           "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID(),
-          "Only-Session-Token": user.session,
         },
         body: JSON.stringify(data),
         credentials: "include",
@@ -103,7 +80,6 @@ export async function postRequest(
 
       if (!res.ok) {
         errorMsg = `${method} ${url} failed with status ${res.status}`;
-        resCode = res.status;
         break; // fail fast on bad status
       }
 
@@ -118,11 +94,6 @@ export async function postRequest(
     }
   }
 
-  // All retries failed → show toast and rethrow
-  // 409 is for UpdateTiptap
-  if (resCode !== 409) {
-    toast.error("API Request failed", { description: errorMsg });
-  }
   throw new Error(errorMsg);
 }
 

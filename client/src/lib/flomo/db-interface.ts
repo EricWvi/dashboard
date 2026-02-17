@@ -1,0 +1,226 @@
+import { triggerRefresh } from "@/hooks/flomo/query-keys";
+import { db as DexieDb, DexieFlomoDatabase } from "./dexie";
+import {
+  type Card,
+  type CardField,
+  type Folder,
+  type FolderField,
+} from "./model";
+import {
+  type SyncMeta,
+  type TiptapV2,
+  type TiptapV2Field,
+} from "@/lib/model";
+
+// Database abstraction interface
+export interface IFlomoDatabase {
+  // Cards
+  getCard(id: string): Promise<Card | undefined>;
+  getCardsInFolder(folderId: string): Promise<Card[]>;
+  addCard(card: CardField): Promise<string>;
+  putCard(card: Card): Promise<void>;
+  putCards(cards: Card[]): Promise<void>;
+  updateCard(id: string, updates: Partial<CardField>): Promise<void>;
+  deleteCard(id: string): Promise<void>;
+  softDeleteCard(id: string): Promise<void>;
+  markCardSynced(id: string): Promise<void>;
+
+  // Folders
+  getFolder(id: string): Promise<Folder | undefined>;
+  getFoldersInParent(parentId: string): Promise<Folder[]>;
+  addFolder(folder: FolderField): Promise<string>;
+  putFolder(folder: Folder): Promise<void>;
+  putFolders(folders: Folder[]): Promise<void>;
+  updateFolder(id: string, updates: Partial<FolderField>): Promise<void>;
+  deleteFolder(id: string): Promise<void>;
+  softDeleteFolder(id: string): Promise<void>;
+  markFolderSynced(id: string): Promise<void>;
+
+  // Tiptaps
+  getTiptap(id: string): Promise<TiptapV2 | undefined>;
+  addTiptap(tiptap: TiptapV2Field): Promise<string>;
+  putTiptap(tiptap: TiptapV2): Promise<void>;
+  putTiptaps(tiptaps: TiptapV2[]): Promise<void>;
+  updateTiptap(id: string, updates: Partial<TiptapV2Field>): Promise<void>;
+  deleteTiptap(id: string): Promise<void>;
+  softDeleteTiptap(id: string): Promise<void>;
+  markTiptapSynced(id: string): Promise<void>;
+
+  // Sync
+  getPendingChanges(): Promise<{
+    cards: Card[];
+    folders: Folder[];
+    tiptaps: TiptapV2[];
+  }>;
+  getSyncMeta(key: string): Promise<SyncMeta | undefined>;
+  setSyncMeta(key: string, value: number | string): Promise<void>;
+  getLastServerVersion(): Promise<number>;
+  clearAllData(): Promise<void>;
+}
+
+export class RefreshDecorator implements IFlomoDatabase {
+  private baseDb: IFlomoDatabase;
+  private onTableChange: (table: string) => void;
+
+  constructor(baseDb: IFlomoDatabase, onTableChange: (table: string) => void) {
+    this.baseDb = baseDb;
+    this.onTableChange = onTableChange;
+  }
+
+  async getCard(id: string): Promise<Card | undefined> {
+    return this.baseDb.getCard(id);
+  }
+
+  async getCardsInFolder(folderId: string): Promise<Card[]> {
+    return this.baseDb.getCardsInFolder(folderId);
+  }
+
+  async addCard(card: CardField): Promise<string> {
+    const id = await this.baseDb.addCard(card);
+    this.onTableChange("cards");
+    return id;
+  }
+
+  async putCard(card: Card): Promise<void> {
+    await this.baseDb.putCard(card);
+    this.onTableChange("cards");
+  }
+
+  async putCards(cards: Card[]): Promise<void> {
+    await this.baseDb.putCards(cards);
+    this.onTableChange("cards");
+  }
+
+  async updateCard(id: string, updates: Partial<CardField>): Promise<void> {
+    await this.baseDb.updateCard(id, updates);
+    this.onTableChange("cards");
+  }
+
+  async deleteCard(id: string): Promise<void> {
+    return this.baseDb.deleteCard(id);
+  }
+
+  async softDeleteCard(id: string): Promise<void> {
+    await this.baseDb.softDeleteCard(id);
+    this.onTableChange("cards");
+  }
+
+  async markCardSynced(id: string): Promise<void> {
+    return this.baseDb.markCardSynced(id);
+  }
+
+  async getFolder(id: string): Promise<Folder | undefined> {
+    return this.baseDb.getFolder(id);
+  }
+
+  async getFoldersInParent(parentId: string): Promise<Folder[]> {
+    return this.baseDb.getFoldersInParent(parentId);
+  }
+
+  async addFolder(folder: FolderField): Promise<string> {
+    const id = await this.baseDb.addFolder(folder);
+    this.onTableChange("folders");
+    return id;
+  }
+
+  async putFolder(folder: Folder): Promise<void> {
+    await this.baseDb.putFolder(folder);
+    this.onTableChange("folders");
+  }
+
+  async putFolders(folders: Folder[]): Promise<void> {
+    await this.baseDb.putFolders(folders);
+    this.onTableChange("folders");
+  }
+
+  async updateFolder(id: string, updates: Partial<FolderField>): Promise<void> {
+    await this.baseDb.updateFolder(id, updates);
+    this.onTableChange("folders");
+  }
+
+  async deleteFolder(id: string): Promise<void> {
+    return this.baseDb.deleteFolder(id);
+  }
+
+  async softDeleteFolder(id: string): Promise<void> {
+    await this.baseDb.softDeleteFolder(id);
+    this.onTableChange("folders");
+  }
+
+  async markFolderSynced(id: string): Promise<void> {
+    return this.baseDb.markFolderSynced(id);
+  }
+
+  async getTiptap(id: string): Promise<TiptapV2 | undefined> {
+    return this.baseDb.getTiptap(id);
+  }
+
+  async addTiptap(tiptap: TiptapV2Field): Promise<string> {
+    const id = await this.baseDb.addTiptap(tiptap);
+    this.onTableChange("tiptaps");
+    return id;
+  }
+
+  async putTiptap(tiptap: TiptapV2): Promise<void> {
+    await this.baseDb.putTiptap(tiptap);
+    this.onTableChange("tiptaps");
+  }
+
+  async putTiptaps(tiptaps: TiptapV2[]): Promise<void> {
+    await this.baseDb.putTiptaps(tiptaps);
+    this.onTableChange("tiptaps");
+  }
+
+  async updateTiptap(
+    id: string,
+    updates: Partial<TiptapV2Field>,
+  ): Promise<void> {
+    await this.baseDb.updateTiptap(id, updates);
+    this.onTableChange("tiptaps");
+  }
+
+  async deleteTiptap(id: string): Promise<void> {
+    return this.baseDb.deleteTiptap(id);
+  }
+
+  async softDeleteTiptap(id: string): Promise<void> {
+    await this.baseDb.softDeleteTiptap(id);
+    this.onTableChange("tiptaps");
+  }
+
+  async markTiptapSynced(id: string): Promise<void> {
+    return this.baseDb.markTiptapSynced(id);
+  }
+
+  async getPendingChanges(): Promise<{
+    cards: Card[];
+    folders: Folder[];
+    tiptaps: TiptapV2[];
+  }> {
+    return this.baseDb.getPendingChanges();
+  }
+
+  async getSyncMeta(key: string): Promise<SyncMeta | undefined> {
+    return this.baseDb.getSyncMeta(key);
+  }
+
+  async setSyncMeta(key: string, value: number | string): Promise<void> {
+    return this.baseDb.setSyncMeta(key, value);
+  }
+
+  async getLastServerVersion(): Promise<number> {
+    return this.baseDb.getLastServerVersion();
+  }
+
+  async clearAllData(): Promise<void> {
+    return this.baseDb.clearAllData();
+  }
+}
+
+// Export singleton instance
+export const flomoDatabase: IFlomoDatabase = new RefreshDecorator(
+  new DexieFlomoDatabase(DexieDb),
+  (table) => {
+    triggerRefresh(table);
+  },
+);
