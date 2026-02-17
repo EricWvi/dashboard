@@ -1,4 +1,4 @@
-import { type Card, type Folder } from "./model";
+import { SchemaVersion, type Card, type Folder } from "./model";
 import { type TiptapV2, SyncStatus } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import type { IFlomoDatabase } from "./db-interface";
@@ -24,6 +24,15 @@ export class SyncManager {
     this.db = db;
   }
 
+  async needFullSync(): Promise<boolean> {
+    const lastServerVersion = await this.db.getLastServerVersion();
+    if (lastServerVersion === 0) {
+      return true;
+    }
+    const schemaVersion = await this.db.getSyncMeta("schemaVersion");
+    return schemaVersion!.value !== SchemaVersion;
+  }
+
   /**
    * Perform full synchronization (initial sync)
    * Downloads all data from server and replaces local database
@@ -35,6 +44,10 @@ export class SyncManager {
     }
 
     this.isSyncing = true;
+
+    this.db.clearAllData().catch((error) => {
+      console.error("Failed to clear local database during full sync:", error);
+    });
 
     try {
       console.log("Starting full sync...");
@@ -67,7 +80,7 @@ export class SyncManager {
         this.db.putTiptaps(tiptaps),
       ]);
 
-      // Update last server version
+      await this.db.setSyncMeta("schemaVersion", SchemaVersion);
       await this.db.setSyncMeta("lastServerVersion", serverData.serverVersion);
 
       console.log(

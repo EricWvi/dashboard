@@ -29,10 +29,7 @@ export default function Flomo() {
     syncManagerRef.current = manager;
 
     const initSync = async () => {
-      // Check if we have synced before
-      const lastServerVersion = await flomoDatabase.getLastServerVersion();
-
-      if (lastServerVersion === 0) {
+      if (await manager.needFullSync()) {
         // First time use - perform full sync
         console.log("performing full sync");
         manager.fullSync().then(() => {

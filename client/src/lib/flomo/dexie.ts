@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import Dexie, { type EntityTable } from "dexie";
 import {
+  SchemaVersion,
   type Card,
   type CardField,
   type Folder,
@@ -26,7 +27,7 @@ export interface FlomoDB {
 export const db = new Dexie("FlomoDB") as Dexie & FlomoDB;
 
 // Schema definition
-db.version(1).stores({
+db.version(SchemaVersion).stores({
   cards: "id, serverVersion, syncStatus, folderId, updatedAt",
   folders: "id, serverVersion, syncStatus, parentId, updatedAt",
   tiptaps: "id, serverVersion, syncStatus, updatedAt",
