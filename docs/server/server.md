@@ -23,7 +23,8 @@ handler/card/                       # Traditional CRUD endpoints
 model/
 ├── card.go                         # Card model and queries
 ├── folder.go                       # Folder model and queries
-└── tiptapv2.go                     # Rich text document model
+├── tiptapv2.go                     # Rich text document model
+└── userv2.go                       # user v2 model
 ```
 
 ## Server-Side Behavior
@@ -43,6 +44,13 @@ model/
    - `isDeleted` flag instead of hard delete
    - Allows clients to learn about deletions
    - Prevents resurrection from stale offline data
+
+4. **Concurrent Processing**:
+   - All Flomo sync handlers (`FullSync`, `Pull`, `Push`) use goroutines for parallel processing
+   - `FullSync` and `Pull` fetch data for users, cards, folders, and tiptaps concurrently
+   - `Push` processes each entity type (users, cards, folders, tiptaps) in parallel
+   - Uses `sync.WaitGroup` for coordination and proper error handling
+   - Significantly improves response time for sync operations
 
 ## Database Schema (from migration/migrations.go)
 
@@ -65,6 +73,7 @@ model/
 
 These tables use **v2.7.0 migration and above** schema with local-first sync support:
 
+- **d_user_v2**: id (UINT), email (VARCHAR), rss_token (VARCHAR), email_token (VARCHAR), email_feed (VARCHAR), avatar (VARCHAR), username (VARCHAR), language (VARCHAR), updated_at (BIGINT), server_version (BIGINT)
 - **d_card**: id (UUID), creator_id, folder_id (UUID), title, draft (UUID), payload (JSON), raw_text, review_count, created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 - **d_folder**: id (UUID), creator_id, parent_id (UUID), title, payload (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 - **d_tiptap_v2**: id (UUID), creator_id, site (SMALLINT), content (JSON), history (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
@@ -83,7 +92,7 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 
 ## Implemented Models & Handlers
 
-- **User**: Complete CRUD with session management, RSS/email tokens
+- **User**: Complete CRUD with session management, RSS/email tokens (legacy table: d_user)
 - **Todo**: Complete CRUD with completion tracking, scheduling, ordering, collections
 - **Collection**: Complete CRUD for todo organization
 - **Blog**: Complete CRUD with draft support, visibility controls, JSON payload
@@ -99,6 +108,7 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 - **Card**: Local-first sync with UUID-based cards (Flomo feature)
 - **Folder**: Local-first sync with UUID-based folders (Flomo feature)
 - **TiptapV2**: Local-first sync for rich text content
+- **UserV2**: New user model for local-first sync with server_version tracking (table: d_user_v2)
 
 ## Router Endpoints
 

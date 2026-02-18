@@ -25,3 +25,15 @@ export interface SyncMeta {
   key: string;
   value: number | string;
 }
+
+export interface UserField {
+  username: string;
+  avatar: string;
+  language: string;
+}
+
+export interface User extends UserField {
+  key: string;
+  updatedAt: number; // Unix timestamp in milliseconds
+  syncStatus: number;
+}

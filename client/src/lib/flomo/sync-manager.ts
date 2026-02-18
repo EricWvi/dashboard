@@ -1,11 +1,12 @@
 import { SchemaVersion, type Card, type Folder } from "./model";
-import { type TiptapV2, SyncStatus } from "@/lib/model";
+import { type TiptapV2, SyncStatus, type User } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import type { IFlomoDatabase } from "./db-interface";
 
 // API response types
 interface FlomoSyncResponse {
   serverVersion: number;
+  user: Omit<User, "key" | "syncStatus">[];
   card: Omit<Card, "syncStatus">[];
   folder: Omit<Folder, "syncStatus">[];
   tiptap: Omit<TiptapV2, "syncStatus">[];
@@ -75,6 +76,10 @@ export class SyncManager {
 
       // Bulk insert
       await Promise.all([
+        this.db.putUser({
+          ...serverData.user[0],
+          syncStatus: SyncStatus.Synced,
+        }),
         this.db.putCards(cards),
         this.db.putFolders(folders),
         this.db.putTiptaps(tiptaps),
@@ -84,7 +89,7 @@ export class SyncManager {
       await this.db.setSyncMeta("lastServerVersion", serverData.serverVersion);
 
       console.log(
-        `Full sync complete: ${cards.length} cards, ${folders.length} folders, ${tiptaps.length} tiptaps`,
+        `Full sync complete: ${serverData.user?.length || 0} user, ${cards.length} cards, ${folders.length} folders, ${tiptaps.length} tiptaps`,
       );
     } catch (error) {
       console.error("Full sync failed:", error);
@@ -157,6 +162,7 @@ export class SyncManager {
       const serverData = data.message as FlomoSyncResponse;
 
       if (
+        serverData.user.length === 0 &&
         serverData.card.length === 0 &&
         serverData.folder.length === 0 &&
         serverData.tiptap.length === 0
@@ -166,6 +172,18 @@ export class SyncManager {
 
       // Apply changes using Last-Write-Wins (LWW) strategy
       const updates: Array<Promise<void>> = [];
+
+      // Handle user data
+      if (serverData.user && serverData.user.length > 0) {
+        const remoteUser = serverData.user[0];
+        const localUser = await this.db.getUser();
+        // Only update if remote is newer or local doesn't exist
+        if (!localUser || remoteUser.updatedAt > localUser.updatedAt) {
+          updates.push(
+            this.db.putUser({ ...remoteUser, syncStatus: SyncStatus.Synced }),
+          );
+        }
+      }
 
       for (const remoteCard of serverData.card) {
         if (remoteCard.isDeleted) {
@@ -226,7 +244,7 @@ export class SyncManager {
       await this.db.setSyncMeta("lastServerVersion", serverData.serverVersion);
 
       console.log(
-        `Pulled ${serverData.card.length} cards, ${serverData.folder.length} folders, ${serverData.tiptap.length} tiptaps`,
+        `Pulled ${serverData.user?.length || 0} user, ${serverData.card.length} cards, ${serverData.folder.length} folders, ${serverData.tiptap.length} tiptaps`,
       );
     } catch (error) {
       console.error("Pull failed:", error);

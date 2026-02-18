@@ -64,6 +64,26 @@ interface MetaField {
 }
 ```
 
+### User
+
+User profile information synchronized from the server:
+
+```typescript
+export interface UserField {
+  username: string;
+  avatar: string;
+  language: string;
+}
+
+export interface User extends UserField {
+  key: string;
+  updatedAt: number; // Unix timestamp in milliseconds
+  syncStatus: number;
+}
+```
+
+**Note**: User profile is managed centrally through the dashboard and synced read-only to Flomo.
+
 ### Card
 
 A card represents a single note with the following structure:
@@ -117,14 +137,14 @@ These endpoints support efficient offline-first synchronization:
 
 - **Endpoint**: `GET /api/flomo?Action=FullSync`
 - **Purpose**: Initial sync or recovery
-- **Returns**: All non-deleted cards, folders, and tiptap documents
+- **Returns**: All non-deleted user profile, cards, folders, and tiptap documents
 - **Use Case**: First app launch, after clearing local data
 
 #### Pull
 
 - **Endpoint**: `GET /api/flomo?Action=Pull&since={serverVersion}`
 - **Purpose**: Incremental sync from server
-- **Returns**: All changes with `serverVersion > since`
+- **Returns**: All changes with `serverVersion > since`, including user profile updates
 - **Includes**: Deleted items for local cleanup
 - **Use Case**: Regular sync loop, background refresh
 
@@ -132,7 +152,7 @@ These endpoints support efficient offline-first synchronization:
 
 - **Endpoint**: `POST /api/flomo?Action=Push`
 - **Purpose**: Upload local changes to server
-- **Body**: Arrays of cards, folders, tiptaps
+- **Body**: Arrays of cards, folders, tiptaps (user profile not pushed from Flomo)
 - **Logic**: Upsert by UUID, checks `updatedAt` for Last-Write-Wins
 - **Use Case**: After local edits, periodic upload
 

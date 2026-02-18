@@ -10,10 +10,15 @@ import {
   type SyncMeta,
   type TiptapV2,
   type TiptapV2Field,
+  type User,
 } from "@/lib/model";
 
 // Database abstraction interface
 export interface IFlomoDatabase {
+  // User
+  getUser(): Promise<User | undefined>;
+  putUser(user: Omit<User, "key">): Promise<void>;
+
   // Cards
   getCard(id: string): Promise<Card | undefined>;
   getCardsInFolder(folderId: string): Promise<Card[]>;
@@ -65,6 +70,15 @@ export class RefreshDecorator implements IFlomoDatabase {
   constructor(baseDb: IFlomoDatabase, onTableChange: (table: string) => void) {
     this.baseDb = baseDb;
     this.onTableChange = onTableChange;
+  }
+
+  async getUser(): Promise<User | undefined> {
+    return this.baseDb.getUser();
+  }
+
+  async putUser(user: Omit<User, "key">): Promise<void> {
+    await this.baseDb.putUser(user);
+    this.onTableChange("user");
   }
 
   async getCard(id: string): Promise<Card | undefined> {

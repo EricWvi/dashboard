@@ -187,7 +187,38 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddCardFolderTables,
 			Down:    RemoveCardFolderTables,
 		},
+		{
+			Version: "v2.8.0",
+			Name:    "Add userv2 table",
+			Up:      AddUserV2Table,
+			Down:    RemoveUserV2Table,
+		},
 	}
+}
+
+// ------------------- v2.8.0 -------------------
+func AddUserV2Table(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_user_v2 (
+			id int4 PRIMARY KEY,
+			email varchar(100) NOT NULL,
+			updated_at BIGINT NOT NULL,
+			server_version BIGINT NOT NULL,
+			avatar varchar(1024) DEFAULT ''::character varying NOT NULL,
+			username varchar(255) DEFAULT ''::character varying NOT NULL,
+			rss_token varchar(255) DEFAULT ''::character varying NOT NULL,
+			email_token varchar(255) DEFAULT ''::character varying NOT NULL,
+			email_feed varchar(255) DEFAULT ''::character varying NOT NULL,
+			"language" varchar(10) DEFAULT 'zh-CN'::character varying NOT NULL,
+			CONSTRAINT d_user_v2_email_key UNIQUE (email)
+		);
+	`).Error
+}
+
+func RemoveUserV2Table(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_user_v2 CASCADE;
+	`).Error
 }
 
 // ------------------- v2.7.0 -------------------

@@ -12,11 +12,15 @@ import {
   type SyncMeta,
   type TiptapV2,
   type TiptapV2Field,
+  type User,
 } from "@/lib/model";
 import type { IFlomoDatabase } from "./db-interface";
 
+const USER_KEY = "current_user";
+
 // Database interface for type safety
 export interface FlomoDB {
+  user: EntityTable<User, "key">;
   cards: EntityTable<Card, "id">;
   folders: EntityTable<Folder, "id">;
   tiptaps: EntityTable<TiptapV2, "id">;
@@ -28,9 +32,10 @@ export const db = new Dexie("FlomoDB") as Dexie & FlomoDB;
 
 // Schema definition
 db.version(SchemaVersion).stores({
-  cards: "id, serverVersion, syncStatus, folderId, updatedAt",
-  folders: "id, serverVersion, syncStatus, parentId, updatedAt",
-  tiptaps: "id, serverVersion, syncStatus, updatedAt",
+  user: "key",
+  cards: "id, syncStatus, folderId, updatedAt",
+  folders: "id, syncStatus, parentId, updatedAt",
+  tiptaps: "id, syncStatus, updatedAt",
   syncMeta: "key",
 });
 
@@ -40,6 +45,14 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
 
   constructor(db: Dexie & FlomoDB) {
     this.db = db;
+  }
+
+  async getUser(): Promise<User | undefined> {
+    return this.db.user.get(USER_KEY);
+  }
+
+  async putUser(user: User): Promise<void> {
+    await this.db.user.put({ ...user, key: USER_KEY });
   }
 
   async getCard(id: string): Promise<Card | undefined> {
@@ -237,12 +250,16 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
   async clearAllData(): Promise<void> {
     await this.db.transaction(
       "rw",
-      this.db.cards,
-      this.db.folders,
-      this.db.tiptaps,
-      this.db.syncMeta,
+      [
+        this.db.user,
+        this.db.cards,
+        this.db.folders,
+        this.db.tiptaps,
+        this.db.syncMeta,
+      ],
       async () => {
         await Promise.all([
+          this.db.user.clear(),
           this.db.cards.clear(),
           this.db.folders.clear(),
           this.db.tiptaps.clear(),

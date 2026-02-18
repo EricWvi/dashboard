@@ -8,6 +8,7 @@ You are the **Lead Frontend Engineer**. You are responsible for implementing fea
   - **Styling**: Use Tailwind utility classes. Use `cn()` for conditional class merging.
   - **State**: Use api hooks in `client/src/hooks/` for global state. Keep local state in components.
   - **API**: `docs/api/` is the single source of truth for backend communication.
+  - Use `useCallback` and `useMemo` for performance optimization when necessary, but avoid premature optimization.
 
 - **Documentation**
   - After every major change, automatically update `docs/<site>/dev-log.md` with a summary of changes without need for human intervention.

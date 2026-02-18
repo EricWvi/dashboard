@@ -33,6 +33,28 @@ All responses follow this structure:
 
 ## Data Models
 
+### User
+
+```json
+{
+  "updatedAt": 1707398426630,
+  "serverVersion": 12345,
+  "avatar": "https://example.com/avatar.jpg",
+  "username": "johndoe",
+  "language": "zh-CN"
+}
+```
+
+**Field Descriptions:**
+
+- `updatedAt` (int64): Unix timestamp in milliseconds
+- `serverVersion` (int64): Auto-incremented version for sync tracking
+- `avatar` (string): User avatar URL (max 1024 chars)
+- `username` (string): Display name (max 255 chars)
+- `language` (string): Language preference (max 10 chars, default: 'zh-CN')
+
+**Note:** Email, RSS token, email token, and email feed are stored in the full UserV2 model but not exposed in the sync API for security reasons.
+
 ### Card
 
 ```json
@@ -121,7 +143,7 @@ These endpoints support offline-first applications with efficient synchronizatio
 
 ### Full Sync
 
-Retrieves all non-deleted cards, folders, and tiptap documents. Used for initial sync or recovery.
+Retrieves all non-deleted cards, folders, tiptap documents, and user profile. Used for initial sync or recovery.
 
 **Endpoint:** `GET /api/flomo?Action=FullSync`
 
@@ -135,6 +157,7 @@ Retrieves all non-deleted cards, folders, and tiptap documents. Used for initial
   "code": 200,
   "message": {
     "serverVersion": 10,
+    "user": [...],
     "card": [...],
     "folder": [...],
     "tiptap": [...]
@@ -142,9 +165,11 @@ Retrieves all non-deleted cards, folders, and tiptap documents. Used for initial
 }
 ```
 
+**Performance:** This endpoint uses concurrent goroutines to fetch all entity types in parallel, significantly improving response time.
+
 ### Pull (Incremental Sync)
 
-Retrieves all changes since a specific server version. Returns cards, folders, and tiptaps including deleted items.
+Retrieves all changes since a specific server version. Returns user profile updates, cards, folders, and tiptaps including deleted items.
 
 **Endpoint:** `GET /api/flomo?Action=Pull&since=12340`
 
@@ -160,6 +185,15 @@ Retrieves all changes since a specific server version. Returns cards, folders, a
   "code": 200,
   "message": {
     "serverVersion": 12346,
+    "user": [
+      {
+        "serverVersion": 12341,
+        "updatedAt": 1707398426630,
+        "avatar": "https://example.com/avatar.jpg",
+        "username": "johndoe",
+        "language": "zh-CN"
+      }
+    ],
     "card": [
       {
         "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -195,6 +229,8 @@ Retrieves all changes since a specific server version. Returns cards, folders, a
 - Client should process deletions locally
 - Track `serverVersion` received for next pull
 
+**Performance:** This endpoint uses concurrent goroutines to fetch all entity types in parallel, significantly improving response time.
+
 ### Push (Upload Changes)
 
 Uploads local changes (creates and updates) to the server. Server performs upsert based on UUID.
@@ -205,6 +241,7 @@ Uploads local changes (creates and updates) to the server. Server performs upser
 
 ```json
 {
+  "user": [...],
   "card": [...],
   "folder": [...],
   "tiptap": [...]
@@ -213,6 +250,7 @@ Uploads local changes (creates and updates) to the server. Server performs upser
 
 **Parameters:**
 
+- `user` (array, optional): Array of user objects to upsert
 - `card` (array, optional): Array of card objects to upsert
 - `folder` (array, optional): Array of folder objects to upsert
 - `tiptap` (array, optional): Array of tiptap objects to upsert
@@ -237,6 +275,8 @@ Uploads local changes (creates and updates) to the server. Server performs upser
 - If record exists (by UUID), it's updated; otherwise created
 - Client must generate UUIDs for new records
 - Push before pull to avoid conflicts
+
+**Performance:** This endpoint uses concurrent goroutines to process each entity type in parallel, significantly improving throughput for large batches.
 
 ## Error Responses
 

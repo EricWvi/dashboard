@@ -2,6 +2,9 @@ import { queryClient } from "@/lib/queryClient";
 import debounce from "lodash/debounce";
 
 const keys = {
+  user: {
+    current: ["user"] as const,
+  },
   cards: {
     all: ["cards"] as const,
     inFolder: (folderId: string) =>
@@ -21,6 +24,7 @@ export default keys;
 const TABLE_MAP: Record<string, readonly unknown[]> = {
   cards: keys.cards.all,
   folders: keys.folders.all,
+  user: keys.user.current,
 };
 
 const notifyUI = debounce((table: string) => {
