@@ -145,6 +145,12 @@
     width: 0.25rem;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
   * {
     @apply border-border outline-ring/50;
     scrollbar-width: thin;

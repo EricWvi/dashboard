@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
-import { type FolderField } from "@/lib/flomo/model";
+import { RootFolderId, type FolderField } from "@/lib/flomo/model";
 import keys from "./query-keys";
 
 /**
@@ -11,6 +11,27 @@ export function useFoldersInParent(parentId: string) {
     queryKey: keys.folders.subFolders(parentId),
     queryFn: async () => {
       return flomoDatabase.getFoldersInParent(parentId);
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useFolderPath(folderId: string) {
+  return useQuery({
+    queryKey: keys.folders.path(folderId),
+    queryFn: async () => {
+      const path = [];
+      let currentId = folderId;
+      while (currentId !== RootFolderId) {
+        const folder = await flomoDatabase.getFolder(currentId);
+        if (!folder) {
+          break;
+        }
+        path.push({ id: folder.id, title: folder.title });
+        currentId = folder.parentId;
+      }
+      return path.reverse();
     },
     staleTime: Infinity,
     placeholderData: (previousData) => previousData,

@@ -17,6 +17,6 @@ route:
     index: "client/journal/journal.html"
 db:
   name: dashboard_test
-  host: localhost
+  host: postgres
   port: 5432
   username: onlyquant

@@ -26,10 +26,19 @@ export interface SyncMeta {
   value: number | string;
 }
 
+export type UserLang = "zh-CN" | "en-US";
+export const UserLangEnum: {
+  ZHCN: UserLang;
+  ENUS: UserLang;
+} = {
+  ZHCN: "zh-CN",
+  ENUS: "en-US",
+};
+
 export interface UserField {
   username: string;
   avatar: string;
-  language: string;
+  language: UserLang;
 }
 
 export interface User extends UserField {

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
+import { flomoDatabase } from "@/lib/flomo/db-interface";
 
 export type UserLang = "zh-CN" | "en-US";
 export const UserLangEnum: {
@@ -175,5 +176,16 @@ export async function syncSessionStatus() {
   });
   queryClient.invalidateQueries({
     predicate: (query) => query.queryKey[0] !== "/meta/user",
+  });
+}
+
+export function useUserV2() {
+  return useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      return flomoDatabase.getUser();
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
   });
 }

@@ -200,7 +200,7 @@ func GetAllMigrations() []MigrationStep {
 func AddUserV2Table(db *gorm.DB) error {
 	return db.Exec(`
 		CREATE TABLE public.d_user_v2 (
-			id int4 PRIMARY KEY,
+			id serial4 PRIMARY KEY,
 			email varchar(100) NOT NULL,
 			updated_at BIGINT NOT NULL,
 			server_version BIGINT NOT NULL,
@@ -212,6 +212,9 @@ func AddUserV2Table(db *gorm.DB) error {
 			"language" varchar(10) DEFAULT 'zh-CN'::character varying NOT NULL,
 			CONSTRAINT d_user_v2_email_key UNIQUE (email)
 		);
+		CREATE TRIGGER trg_user_v2_version
+		BEFORE INSERT OR UPDATE ON public.d_user_v2
+		FOR EACH ROW EXECUTE FUNCTION global_bump_server_version();
 	`).Error
 }
 

@@ -16,6 +16,8 @@ const keys = {
     detail: (id: string) => [...keys.folders.all, "detail", id] as const,
     subFolders: (parentId: string) =>
       [...keys.folders.all, "list", parentId] as const,
+    path: (folderId: string) =>
+      [...keys.folders.all, "path", folderId] as const,
   },
 };
 

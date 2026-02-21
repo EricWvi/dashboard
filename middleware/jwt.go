@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"net/http"
 	"os"
 	"sync"
 
 	"github.com/EricWvi/dashboard/config"
+	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/gin-gonic/gin"
@@ -57,7 +59,9 @@ func JWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		email := c.Request.Header.Get("Remote-Email")
 		if len(email) == 0 {
-			c.Set("UserId", uint(0))
+			handler.ReplyError(c, http.StatusBadRequest, "request is not authenticated")
+			c.Abort()
+			return
 		} else {
 			c.Set("UserId", getId(email))
 		}

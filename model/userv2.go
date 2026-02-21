@@ -40,7 +40,7 @@ func (u *UserV2) TableName() string {
 
 func FullUsers(db *gorm.DB, creatorId uint) ([]UserV2View, error) {
 	var users []UserV2View
-	if err := db.Where(Id, creatorId).Find(&users).Error; err != nil {
+	if err := db.Table(UserV2_Table).Where(Id, creatorId).Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
@@ -56,7 +56,7 @@ func ListUserSince(db *gorm.DB, since int64, creatorId uint) ([]UserV2View, erro
 		db = db.Where(whereExpr[i])
 	}
 
-	if err := db.Find(&users).Error; err != nil {
+	if err := db.Table(UserV2_Table).Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil

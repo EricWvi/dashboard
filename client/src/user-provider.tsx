@@ -1,5 +1,6 @@
-import { useUser, type User, type UserLang } from "@/hooks/use-user";
+import { useUser, useUserV2, type User, type UserLang } from "@/hooks/use-user";
 import { createContext, useContext, type ReactNode } from "react";
+import type { UserField } from "@/lib/model";
 
 type UserContextType = {
   user: User;
@@ -22,6 +23,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 export const useUserContext = () => {
   const context = useContext(UserContext);
+  if (!context)
+    throw new Error("useLanguageContext must be used within LanguageProvider");
+  return context;
+};
+
+type UserContextTypeV2 = {
+  user: UserField;
+  language: UserLang;
+};
+const UserContextV2 = createContext<UserContextTypeV2 | undefined>(undefined);
+
+export const UserProviderV2 = ({ children }: { children: ReactNode }) => {
+  const { data: userInfo } = useUserV2();
+  if (!userInfo) return null;
+
+  return (
+    <UserContextV2.Provider
+      value={{ language: userInfo.language, user: userInfo }}
+    >
+      {children}
+    </UserContextV2.Provider>
+  );
+};
+
+export const useUserContextV2 = () => {
+  const context = useContext(UserContextV2);
   if (!context)
     throw new Error("useLanguageContext must be used within LanguageProvider");
   return context;
