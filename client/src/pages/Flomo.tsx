@@ -2,6 +2,9 @@ import { FlomoLogo } from "@/components/flomo/icons";
 import { useEffect, useState, useRef } from "react";
 import { SyncManager } from "@/lib/flomo/sync-manager";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
+import { AppSidebar } from "@/components/flomo/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { CardContent } from "@/components/flomo/card-content";
 
 // Create singleton sync manager
 let syncManager: SyncManager | null = null;
@@ -56,5 +59,14 @@ export default function Flomo() {
     );
   }
 
-  return <></>;
+  return (
+    <div className="h-full">
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <CardContent />
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  );
 }

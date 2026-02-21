@@ -19,12 +19,20 @@ client/src/
 ├── FlomoApp.tsx                    # Main app component
 ├── components/
 │   ├── flomo/                      # Flomo-specific components
-│   │   └── icons.tsx               # Custom icons
+│   │   ├── icons.tsx               # Custom icons
+│   │   ├── sidebar.tsx             # AppSidebar: root sidebar component
+│   │   ├── card-content.tsx        # Main content area for the selected folder
+│   │   ├── card-header.tsx         # Header with breadcrumb folder-path navigation
+│   │   ├── nav-folders.tsx         # Sidebar section: subfolders of current folder
+│   │   ├── nav-cards.tsx           # Sidebar section: cards in current folder
+│   │   ├── nav-adds.tsx            # Sidebar section: add-card / add-folder actions
+│   │   └── nav-tabs.tsx            # Sidebar footer: currently opened editors
 │   ├── tiptap-*/                   # Shared TipTap editor components
 │   └── ui/                         # Shared UI library (shadcn/ui)
 ├── hooks/
 │   ├── flomo/                      # Flomo-specific React hooks
 │   │   ├── query-keys.ts           # React Query cache keys
+│   │   ├── use-app-state.ts        # Zustand store
 │   │   ├── use-cards.ts            # Card CRUD operations hook
 │   │   └── use-folders.ts          # Folder CRUD operations hook
 │   ├── tiptap/
@@ -179,6 +187,54 @@ These endpoints support efficient offline-first synchronization:
    - Apply server changes to local database
    - Handle deletions (remove items where `isDeleted: true`)
    - Update tracked `serverVersion`
+
+## UI Components
+
+### AppSidebar (`sidebar.tsx`)
+
+The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Composed of:
+
+| Section          | Component    | Description                                                                                         |
+| ---------------- | ------------ | --------------------------------------------------------------------------------------------------- |
+| Header           | _(static)_   | App branding / logo                                                                                 |
+| Content – top    | `NavFolders` | Lists subfolders of the current folder, sorted alphabetically. Clicking a folder navigates into it. |
+| Content – middle | `NavCards`   | Lists cards in the current folder, sorted newest-first.                                             |
+| Content – bottom | `NavAdds`    | Add-card and add-folder action buttons that open dialogs.                                           |
+| Footer           | `NavTabs`    | Switch between currently opened editors.                                                            |
+
+### CardContent (`card-content.tsx`)
+
+The main content pane rendered inside `SidebarInset`.
+
+### CardHeader (`card-header.tsx`)
+
+Sticky header inside the content pane. Shows a breadcrumb trail of the current folder path (root → … → current) using `useFolderPath`. Each breadcrumb segment is clickable and calls `setCurrentFolderId` to navigate up the hierarchy.
+
+### NavAdds (`nav-adds.tsx`)
+
+Provides two modal dialogs:
+
+- **Add Card** – creates a card under the current folder (`useCreateCard`). Accepts a title via text input; submits on Enter or button click.
+- **Add Folder** – creates a subfolder under the current folder (`useCreateFolder`). Same input behaviour.
+
+Both dialogs support IME composition (CJK input) via `onCompositionStart`/`onCompositionEnd`.
+
+## App State
+
+### `useAppState` (Zustand store)
+
+File: `client/src/hooks/flomo/use-app-state.ts`
+
+A global Zustand store that tracks the currently focused folder as the user navigates the sidebar.
+
+```typescript
+interface AppState {
+  currentFolderId: string; // defaults to RootFolderId
+  setCurrentFolderId: (id: string) => void;
+}
+```
+
+`currentFolderId` is initialised to `RootFolderId` (the virtual root). Components read and update this value to drive which folders and cards are displayed in both the sidebar and the main content area.
 
 ## Features
 
