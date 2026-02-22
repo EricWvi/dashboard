@@ -41,6 +41,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-emoji-accent: var(--emoji-accent);
 }
 
 :root {
@@ -83,6 +85,7 @@
   --dashed-borderColor: oklch(55.4% 0.046 257.417);
   --mark-icon-fill: url(#gradient-light);
   --mark-icon-stroke: #a78bfa;
+  --emoji-accent: oklch(0.92 0 0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -125,6 +128,7 @@
     --dashed-borderColor: oklch(86.9% 0.022 252.894);
     --mark-icon-fill: url(#gradient-dark);
     --mark-icon-stroke: #3b82f6;
+    --emoji-accent: oklch(0.35 0 0);
   }
 }
 

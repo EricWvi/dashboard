@@ -97,11 +97,15 @@ export interface User extends UserField {
 A card represents a single note with the following structure:
 
 ```typescript
+export interface CardPayload {
+  emoji?: string;
+}
+
 export interface CardField {
   folderId: string; // UUID
   title: string;
   draft: string; // UUID
-  payload: Record<string, unknown>;
+  payload: CardPayload;
   rawText: string;
 }
 
@@ -113,10 +117,14 @@ export interface Card extends MetaField, CardField {}
 Folders organize cards hierarchically:
 
 ```typescript
+export interface FolderPayload {
+  emoji?: string;
+}
+
 export interface FolderField {
   parentId: string; // UUID
   title: string;
-  payload: Record<string, unknown>;
+  payload: FolderPayload;
 }
 
 export interface Folder extends MetaField, FolderField {}
@@ -194,13 +202,13 @@ These endpoints support efficient offline-first synchronization:
 
 The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Composed of:
 
-| Section          | Component    | Description                                                                                         |
-| ---------------- | ------------ | --------------------------------------------------------------------------------------------------- |
-| Header           | _(static)_   | App branding / logo                                                                                 |
-| Content – top    | `NavFolders` | Lists subfolders of the current folder, sorted alphabetically. Clicking a folder navigates into it. |
-| Content – middle | `NavCards`   | Lists cards in the current folder, sorted newest-first.                                             |
-| Content – bottom | `NavAdds`    | Add-card and add-folder action buttons that open dialogs.                                           |
-| Footer           | `NavTabs`    | Switch between currently opened editors.                                                            |
+| Section          | Component    | Description                                                                                                                                                               |
+| ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Header           | _(static)_   | App branding / logo                                                                                                                                                       |
+| Content – top    | `NavFolders` | Lists subfolders of the current folder, sorted alphabetically. Clicking a folder navigates into it. Each folder has a context menu with Rename, Move, and Delete actions. |
+| Content – middle | `NavCards`   | Lists cards in the current folder, sorted newest-first. Each card has a context menu with Rename, Move, and Delete actions.                                               |
+| Content – bottom | `NavAdds`    | Add-card and add-folder action buttons that open dialogs.                                                                                                                 |
+| Footer           | `NavTabs`    | Switch between currently opened editors.                                                                                                                                  |
 
 ### CardContent (`card-content.tsx`)
 
@@ -209,6 +217,28 @@ The main content pane rendered inside `SidebarInset`.
 ### CardHeader (`card-header.tsx`)
 
 Sticky header inside the content pane. Shows a breadcrumb trail of the current folder path (root → … → current) using `useFolderPath`. Each breadcrumb segment is clickable and calls `setCurrentFolderId` to navigate up the hierarchy.
+
+### NavFolders (`nav-folders.tsx`)
+
+Each folder entry shows an emoji (defaulting to 📂) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes three actions, each backed by a dedicated dialog:
+
+| Dialog | Component            | Behaviour                                                                                                                                  |
+| ------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rename | `RenameFolderDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                                                                            |
+| Move   | `MoveFolderDialog`   | Breadcrumb + folder-list navigator. The folder being moved is excluded from the target list. Calls `useUpdateFolder` to update `parentId`. |
+| Delete | `DeleteFolderDialog` | Confirmation dialog. Calls `useDeleteFolder`.                                                                                              |
+
+### NavCards (`nav-cards.tsx`)
+
+Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes three actions:
+
+| Dialog | Component          | Behaviour                                                                       |
+| ------ | ------------------ | ------------------------------------------------------------------------------- |
+| Rename | `RenameCardDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                 |
+| Move   | `MoveCardDialog`   | Breadcrumb + folder-list navigator. Calls `useUpdateCard` to update `folderId`. |
+| Delete | `DeleteCardDialog` | Confirmation dialog. Calls `useDeleteCard`.                                     |
+
+The Move dialogs for both folders and cards share the same UX pattern: a horizontally scrollable breadcrumb trail (auto-scrolls to the rightmost segment) and a scrollable folder list fetched on-the-fly via `flomoDatabase.getFoldersInParent`.
 
 ### NavAdds (`nav-adds.tsx`)
 
