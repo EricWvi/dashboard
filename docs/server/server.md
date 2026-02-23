@@ -38,17 +38,21 @@ model/
    - Check if record exists by UUID
    - If not found → Create new record
    - If found → Compare `updatedAt`, update if client is newer
-   - Trigger automatically sets `server_version`
+   - Trigger automatically sets `server_version`; `Update()` explicitly omits `server_version` so the DB trigger controls it
 
 3. **Soft Deletes**:
-   - `isDeleted` flag instead of hard delete
+   - `isDeleted` flag (`*bool` pointer type) instead of hard delete
    - Allows clients to learn about deletions
    - Prevents resurrection from stale offline data
 
-4. **Concurrent Processing**:
+4. **Archive & Bookmark Flags**:
+   - `is_archived` and `is_bookmarked` (SMALLINT, 0/1) on d_card and d_folder
+   - Clients filter display based on these flags; server stores and syncs them like any other field
+
+5. **Concurrent Processing**:
    - All Flomo sync handlers (`FullSync`, `Pull`, `Push`) use goroutines for parallel processing
    - `FullSync` and `Pull` fetch data for users, cards, folders, and tiptaps concurrently
-   - `Push` processes each entity type (users, cards, folders, tiptaps) in parallel
+   - `Push` processes each entity type (cards, folders, tiptaps) in parallel (3 goroutines)
    - Uses `sync.WaitGroup` for coordination and proper error handling
    - Significantly improves response time for sync operations
 
@@ -73,16 +77,16 @@ model/
 
 These tables use **v2.7.0 migration and above** schema with local-first sync support:
 
-- **d_user_v2**: id (UINT), email (VARCHAR), rss_token (VARCHAR), email_token (VARCHAR), email_feed (VARCHAR), avatar (VARCHAR), username (VARCHAR), language (VARCHAR), updated_at (BIGINT), server_version (BIGINT)
-- **d_card**: id (UUID), creator_id, folder_id (UUID), title, draft (UUID), payload (JSON), raw_text, review_count, created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
-- **d_folder**: id (UUID), creator_id, parent_id (UUID), title, payload (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_user_v2**: id (SERIAL), email (VARCHAR, unique), rss_token (VARCHAR), email_token (VARCHAR), email_feed (VARCHAR), avatar (VARCHAR), username (VARCHAR), language (VARCHAR), updated_at (BIGINT), server_version (BIGINT)
+- **d_card**: id (UUID), creator_id, folder_id (UUID), title, draft (UUID), payload (JSON), raw_text, review_count, is_bookmarked (SMALLINT default 0), is_archived (SMALLINT default 0), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_folder**: id (UUID), creator_id, parent_id (UUID), title, payload (JSON), is_bookmarked (SMALLINT default 0), is_archived (SMALLINT default 0), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 - **d_tiptap_v2**: id (UUID), creator_id, site (SMALLINT), content (JSON), history (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 
 **Global Sync Infrastructure:**
 
 - **global_sync_version_seq**: Sequence shared across all local-first tables
 - **global_bump_server_version()**: Trigger function that auto-increments server_version on INSERT/UPDATE
-- Triggers attached to d_card, d_folder, d_tiptap_v2 tables
+- Triggers attached to d_card, d_folder, d_tiptap_v2, d_user_v2 tables
 
 **Site Constants:**
 
@@ -155,14 +159,18 @@ Each model follows identical structure:
 For models with offline-first requirements:
 
 1. Model in `model/<name>.go` with:
-   - Uses `MetaFieldV2` (UUID id, int64 timestamps, server_version, is_deleted)
+   - Uses `MetaFieldV2` (UUID id, int64 timestamps with `autoUpdateTime:false`, server_version, is_deleted as `*bool`)
+   - `CreatedAt` and `UpdatedAt` are **client-supplied** (GORM auto-update disabled)
+   - `IsDeleted` is `*bool` (pointer) to correctly distinguish `false` from zero value
+   - `BoolPtr(b bool) *bool` helper in `model/model.go` for creating bool pointers
    - TableName(), Get(), Create(), Update(), MarkDeleted()
+   - `Update()` **always omits** `server_version` — the DB trigger sets it
    - List<Name>Since(db, since int64, creatorId) - incremental sync query
    - Full<Name>(db, creatorId) - full sync query (is_deleted=false)
 2. Handlers in `handler/<name>/` with:
-   - **FullSync**: Returns all non-deleted records for initial sync
-   - **Pull**: Returns records with server_version > since parameter
-   - **Push**: Accepts array of records, upserts each by UUID
+   - **FullSync**: Returns all non-deleted records; response uses **plural** JSON keys: `users`, `cards`, `folders`, `tiptaps`
+   - **Pull**: Returns records with server_version > since; response uses plural keys
+   - **Push**: Accepts **plural** JSON keys (`cards`, `folders`, `tiptaps`); upserts each by UUID
 3. Routes registered in router.go (e.g., `/api/flomo` for sync endpoints)
 4. Client-generated UUIDs for optimistic offline creation
 5. Database triggers auto-increment server_version using global sequence

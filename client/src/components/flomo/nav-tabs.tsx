@@ -1,6 +1,6 @@
 import {
+  Archive,
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
   CloudUpload,
   CreditCard,
@@ -25,16 +25,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useUserContextV2 } from "@/user-provider";
 import { getSyncManager } from "@/lib/flomo/sync-manager";
-
-const user = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
-};
+import { UserLangEnum } from "@/lib/model";
+import { useAppState } from "@/hooks/flomo/use-app-state";
 
 export function NavTabs() {
   const { isMobile } = useSidebar();
-  // const { user } = useUserContextV2();
+  const { user } = useUserContextV2();
+  const { enterArchiveMode } = useAppState();
 
   const pushLocalDataToServer = () => {
     const manager = getSyncManager();
@@ -53,11 +50,11 @@ export function NavTabs() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={user.avatar} alt={user.username} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{user.username}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -72,11 +69,11 @@ export function NavTabs() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={user.avatar} alt={user.username} />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{user.username}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
@@ -98,15 +95,15 @@ export function NavTabs() {
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+              <DropdownMenuItem onClick={() => enterArchiveMode()}>
+                <Archive />
+                {i18nText[user.language].archived}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={pushLocalDataToServer}>
+            <DropdownMenuItem onClick={() => pushLocalDataToServer()}>
               <CloudUpload />
-              Push
+              {i18nText[user.language].push}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -114,3 +111,14 @@ export function NavTabs() {
     </SidebarMenu>
   );
 }
+
+const i18nText = {
+  [UserLangEnum.ZHCN]: {
+    archived: "已归档",
+    push: "上传",
+  },
+  [UserLangEnum.ENUS]: {
+    archived: "Archived",
+    push: "Push",
+  },
+};

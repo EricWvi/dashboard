@@ -62,13 +62,17 @@ All responses follow this structure:
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "createdAt": 1707398426630,
   "updatedAt": 1707398426630,
+  "serverVersion": 12345,
   "isDeleted": false,
   "creatorId": 2,
   "folderId": "660e8400-e29b-41d4-a716-446655440000",
   "title": "My First Card",
   "draft": "770e8400-e29b-41d4-a716-446655440000",
   "payload": {},
-  "rawText": "This is my test note"
+  "rawText": "This is my test note",
+  "reviewCount": 0,
+  "isBookmarked": 0,
+  "isArchived": 1
 }
 ```
 
@@ -77,6 +81,7 @@ All responses follow this structure:
 - `id` (UUID): Client-generated unique identifier
 - `createdAt` (int64): Unix timestamp in milliseconds
 - `updatedAt` (int64): Unix timestamp in milliseconds
+- `serverVersion` (int64): Auto-incremented version for sync tracking
 - `isDeleted` (boolean): Soft delete flag
 - `creatorId` (uint): User ID who created the card
 - `folderId` (UUID): Parent folder ID
@@ -84,6 +89,9 @@ All responses follow this structure:
 - `draft` (UUID): Associated draft document ID
 - `payload` (object): Additional metadata as JSON
 - `rawText` (string): Plain text content for search
+- `reviewCount` (int): Number of times the card has been reviewed
+- `isBookmarked` (int): Whether the card is bookmarked
+- `isArchived` (int): Whether the card is archived
 
 ### Folder
 
@@ -92,11 +100,14 @@ All responses follow this structure:
   "id": "660e8400-e29b-41d4-a716-446655440000",
   "createdAt": 1707398408661,
   "updatedAt": 1707398408661,
+  "serverVersion": 12344,
   "isDeleted": false,
   "creatorId": 2,
   "parentId": "00000000-0000-0000-0000-000000000000",
   "title": "Test Folder",
-  "payload": {}
+  "payload": {},
+  "isBookmarked": 1,
+  "isArchived": 0
 }
 ```
 
@@ -105,11 +116,14 @@ All responses follow this structure:
 - `id` (UUID): Client-generated unique identifier
 - `createdAt` (int64): Unix timestamp in milliseconds
 - `updatedAt` (int64): Unix timestamp in milliseconds
+- `serverVersion` (int64): Auto-incremented version for sync tracking
 - `isDeleted` (boolean): Soft delete flag
 - `creatorId` (uint): User ID who created the folder
 - `parentId` (UUID): Parent folder ID
 - `title` (string): Folder name (max 1024 chars)
 - `payload` (object): Additional metadata as JSON
+- `isBookmarked` (int): Whether the folder is bookmarked
+- `isArchived` (int): Whether the folder is archived
 
 ### TiptapV2
 

@@ -1,4 +1,4 @@
-import { FolderPlus, Plus } from "lucide-react";
+import { FolderPlus, Plus, LogOut } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +24,28 @@ import { useCreateFolder } from "@/hooks/flomo/use-folders";
 
 export function NavAdds() {
   const { language } = useUserContextV2();
+  const { isArchiveMode, exitArchiveMode } = useAppState();
   const [addCardDialogOpen, setAddCardDialogOpen] = useState(false);
   const [addFolderDialogOpen, setAddFolderDialogOpen] = useState(false);
+
+  if (isArchiveMode) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem className="cursor-pointer">
+              <SidebarMenuButton asChild onClick={() => exitArchiveMode()}>
+                <div className="text-yellow-700 hover:text-yellow-700 active:text-yellow-700 dark:text-yellow-600 dark:hover:text-yellow-600 dark:active:text-yellow-600">
+                  <LogOut />
+                  <span>{i18nText[language].exitArchiveMode}</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
 
   return (
     <>
@@ -214,6 +234,7 @@ const i18nText = {
     add: "添加",
     cardNamePlaceholder: "输入卡片标题",
     folderNamePlaceholder: "输入文件夹标题",
+    exitArchiveMode: "退出归档模式",
   },
   [UserLangEnum.ENUS]: {
     addCard: "Add Card",
@@ -222,5 +243,6 @@ const i18nText = {
     add: "Add",
     cardNamePlaceholder: "Enter card name...",
     folderNamePlaceholder: "Enter folder name...",
+    exitArchiveMode: "Exit Archive Mode",
   },
 };

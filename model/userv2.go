@@ -19,7 +19,7 @@ type UserV2View struct {
 	UpdatedAt     int64  `json:"updatedAt"`
 	ServerVersion int64  `json:"serverVersion"`
 	Avatar        string `gorm:"size:1024" json:"avatar"`
-	Email         string `gorm:"size:100;uniqueIndex;not null"`
+	Email         string `gorm:"size:100;uniqueIndex;not null" json:"email"`
 	Username      string `gorm:"size:255" json:"username"`
 	Language      string `gorm:"column:language;size:10;default:'zh-CN';not null" json:"language"`
 }

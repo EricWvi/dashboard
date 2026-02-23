@@ -88,7 +88,7 @@ func (t *TiptapV2) Create(db *gorm.DB) error {
 }
 
 func (t *TiptapV2) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Updates(t).Error
+	return db.Where(where).Omit(ServerVersion).Updates(t).Error
 }
 
 func (t *TiptapV2) MarkDeleted(db *gorm.DB, where map[string]any) error {

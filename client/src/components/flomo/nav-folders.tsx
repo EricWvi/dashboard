@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Archive,
   FolderInput,
   MoreHorizontal,
   TextCursorInput,
@@ -59,13 +60,25 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
   const { language } = useUserContextV2();
   const { isMobile } = useSidebar();
   const { data: folders } = useFoldersInParent(currentFolderId);
-  const { setCurrentFolderId } = useAppState();
+  const { isArchiveMode, setCurrentFolderId } = useAppState();
 
   const updateFolderMutation = useUpdateFolder();
   const changeEmoji = (folder: Folder, emoji: string) => {
     return updateFolderMutation.mutateAsync({
       id: folder.id,
       data: { payload: { ...folder.payload, emoji } },
+    });
+  };
+  const archiveFolder = (folderId: string) => {
+    return updateFolderMutation.mutateAsync({
+      id: folderId,
+      data: { isArchived: 1 },
+    });
+  };
+  const restoreFolder = (folderId: string) => {
+    return updateFolderMutation.mutateAsync({
+      id: folderId,
+      data: { isArchived: 0 },
     });
   };
 
@@ -86,6 +99,57 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     id: string;
     title: string;
   } | null>(null);
+
+  if (isArchiveMode) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel>{i18nText[language].folders}</SidebarGroupLabel>
+        <SidebarMenu>
+          {folders
+            ?.sort((a, b) => a.title.localeCompare(b.title))
+            .map((folder) => (
+              <SidebarMenuItem key={folder.id} className="cursor-pointer">
+                <SidebarMenuButton
+                  asChild
+                  className="gap-0"
+                  onClick={() => setCurrentFolderId(folder.id)}
+                >
+                  <div>
+                    <span className="mr-1 rounded-sm px-1 text-base">
+                      {folder.payload.emoji || "📂"}
+                    </span>
+
+                    <span>{folder.title}</span>
+                  </div>
+                </SidebarMenuButton>
+                {folder.isArchived === 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction showOnHover>
+                        <MoreHorizontal />
+                        <span className="sr-only">More</span>
+                      </SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-48"
+                      side={isMobile ? "bottom" : "right"}
+                      align={isMobile ? "end" : "start"}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => restoreFolder(folder.id)}
+                      >
+                        <TextCursorInput className="text-muted-foreground" />
+                        <span>{i18nText[language].restore}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </SidebarMenuItem>
+            ))}
+        </SidebarMenu>
+      </SidebarGroup>
+    );
+  }
 
   return (
     <>
@@ -146,6 +210,13 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                       <span>{i18nText[language].move}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+                      onClick={() => archiveFolder(folder.id)}
+                    >
+                      <Archive className="text-yellow-700 dark:text-yellow-600" />
+                      <span>{i18nText[language].archive}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => {
@@ -456,7 +527,9 @@ const i18nText = {
     folders: "文件夹",
     rename: "重命名",
     move: "移动",
+    archive: "归档",
     delete: "删除",
+    restore: "恢复",
     renameFolder: "重命名文件夹",
     folderNamePlaceholder: "输入文件夹名称",
     cancel: "取消",
@@ -472,7 +545,9 @@ const i18nText = {
     folders: "Folders",
     rename: "Rename",
     move: "Move",
+    archive: "Archive",
     delete: "Delete",
+    restore: "Restore",
     renameFolder: "Rename Folder",
     folderNamePlaceholder: "Enter folder name...",
     cancel: "Cancel",

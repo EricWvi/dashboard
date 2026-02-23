@@ -1,6 +1,11 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
-import { RootFolderId, type FolderField } from "@/lib/flomo/model";
+import {
+  ArchiveFolderId,
+  RootFolderId,
+  type FolderField,
+  type FolderPayload,
+} from "@/lib/flomo/model";
 import keys from "./query-keys";
 
 /**
@@ -22,13 +27,20 @@ export function useFolderPath(folderId: string) {
     queryKey: keys.folders.path(folderId),
     queryFn: async () => {
       const path = [];
+      if (folderId === ArchiveFolderId) {
+        return [];
+      }
       let currentId = folderId;
       while (currentId !== RootFolderId) {
         const folder = await flomoDatabase.getFolder(currentId);
         if (!folder) {
           break;
         }
-        path.push({ id: folder.id, title: folder.title });
+        path.push({
+          id: folder.id,
+          title: folder.title,
+          isArchived: folder.isArchived,
+        });
         currentId = folder.parentId;
       }
       return path.reverse();
@@ -57,8 +69,16 @@ export function useFolder(id: string) {
  */
 export function useCreateFolder() {
   return useMutation({
-    mutationFn: async (data: FolderField) => {
-      return flomoDatabase.addFolder(data);
+    mutationFn: async (data: {
+      parentId: string;
+      title: string;
+      payload: FolderPayload;
+    }) => {
+      return flomoDatabase.addFolder({
+        ...data,
+        isBookmarked: 0,
+        isArchived: 0,
+      });
     },
   });
 }

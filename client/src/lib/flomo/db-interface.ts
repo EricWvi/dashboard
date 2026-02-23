@@ -28,7 +28,8 @@ export interface IFlomoDatabase {
   updateCard(id: string, updates: Partial<CardField>): Promise<void>;
   deleteCard(id: string): Promise<void>;
   softDeleteCard(id: string): Promise<void>;
-  markCardSynced(id: string): Promise<void>;
+  markCardSynced(id: string, updatedAt: number): Promise<void>;
+  getArchivedCards(): Promise<Card[]>;
 
   // Folders
   getFolder(id: string): Promise<Folder | undefined>;
@@ -39,7 +40,8 @@ export interface IFlomoDatabase {
   updateFolder(id: string, updates: Partial<FolderField>): Promise<void>;
   deleteFolder(id: string): Promise<void>;
   softDeleteFolder(id: string): Promise<void>;
-  markFolderSynced(id: string): Promise<void>;
+  markFolderSynced(id: string, updatedAt: number): Promise<void>;
+  getArchivedFolders(): Promise<Folder[]>;
 
   // Tiptaps
   getTiptap(id: string): Promise<TiptapV2 | undefined>;
@@ -49,7 +51,7 @@ export interface IFlomoDatabase {
   updateTiptap(id: string, updates: Partial<TiptapV2Field>): Promise<void>;
   deleteTiptap(id: string): Promise<void>;
   softDeleteTiptap(id: string): Promise<void>;
-  markTiptapSynced(id: string): Promise<void>;
+  markTiptapSynced(id: string, updatedAt: number): Promise<void>;
 
   // Sync
   getPendingChanges(): Promise<{
@@ -77,6 +79,7 @@ export class RefreshDecorator implements IFlomoDatabase {
     this.onTableChange = onTableChange;
   }
 
+  // User
   async getUser(): Promise<User | undefined> {
     return this.baseDb.getUser();
   }
@@ -86,6 +89,7 @@ export class RefreshDecorator implements IFlomoDatabase {
     this.onTableChange("user");
   }
 
+  // Cards
   async getCard(id: string): Promise<Card | undefined> {
     return this.baseDb.getCard(id);
   }
@@ -116,7 +120,8 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 
   async deleteCard(id: string): Promise<void> {
-    return this.baseDb.deleteCard(id);
+    await this.baseDb.deleteCard(id);
+    this.onTableChange("cards");
   }
 
   async softDeleteCard(id: string): Promise<void> {
@@ -124,10 +129,15 @@ export class RefreshDecorator implements IFlomoDatabase {
     this.onTableChange("cards");
   }
 
-  async markCardSynced(id: string): Promise<void> {
-    return this.baseDb.markCardSynced(id);
+  async markCardSynced(id: string, updatedAt: number): Promise<void> {
+    return this.baseDb.markCardSynced(id, updatedAt);
   }
 
+  async getArchivedCards(): Promise<Card[]> {
+    return this.baseDb.getArchivedCards();
+  }
+
+  // Folders
   async getFolder(id: string): Promise<Folder | undefined> {
     return this.baseDb.getFolder(id);
   }
@@ -158,7 +168,8 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 
   async deleteFolder(id: string): Promise<void> {
-    return this.baseDb.deleteFolder(id);
+    await this.baseDb.deleteFolder(id);
+    this.onTableChange("folders");
   }
 
   async softDeleteFolder(id: string): Promise<void> {
@@ -166,10 +177,15 @@ export class RefreshDecorator implements IFlomoDatabase {
     this.onTableChange("folders");
   }
 
-  async markFolderSynced(id: string): Promise<void> {
-    return this.baseDb.markFolderSynced(id);
+  async markFolderSynced(id: string, updatedAt: number): Promise<void> {
+    return this.baseDb.markFolderSynced(id, updatedAt);
   }
 
+  async getArchivedFolders(): Promise<Folder[]> {
+    return this.baseDb.getArchivedFolders();
+  }
+
+  // Tiptaps
   async getTiptap(id: string): Promise<TiptapV2 | undefined> {
     return this.baseDb.getTiptap(id);
   }
@@ -199,7 +215,8 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 
   async deleteTiptap(id: string): Promise<void> {
-    return this.baseDb.deleteTiptap(id);
+    await this.baseDb.deleteTiptap(id);
+    this.onTableChange("tiptaps");
   }
 
   async softDeleteTiptap(id: string): Promise<void> {
@@ -207,10 +224,11 @@ export class RefreshDecorator implements IFlomoDatabase {
     this.onTableChange("tiptaps");
   }
 
-  async markTiptapSynced(id: string): Promise<void> {
-    return this.baseDb.markTiptapSynced(id);
+  async markTiptapSynced(id: string, updatedAt: number): Promise<void> {
+    return this.baseDb.markTiptapSynced(id, updatedAt);
   }
 
+  // Sync
   async getPendingChanges(): Promise<{
     cards: Card[];
     folders: Folder[];

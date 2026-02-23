@@ -193,7 +193,38 @@ func GetAllMigrations() []MigrationStep {
 			Up:      AddUserV2Table,
 			Down:    RemoveUserV2Table,
 		},
+		{
+			Version: "v2.9.0",
+			Name:    "Add is_bookmarked and is_archived columns to card and folder tables",
+			Up:      AddIsBookmarkedAndIsArchivedColumns,
+			Down:    RemoveIsBookmarkedAndIsArchivedColumns,
+		},
 	}
+}
+
+// ------------------- v2.9.0 -------------------
+func AddIsBookmarkedAndIsArchivedColumns(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_card
+		ADD COLUMN is_bookmarked SMALLINT DEFAULT 0,
+		ADD COLUMN is_archived SMALLINT DEFAULT 0;
+
+		ALTER TABLE public.d_folder
+		ADD COLUMN is_bookmarked SMALLINT DEFAULT 0,
+		ADD COLUMN is_archived SMALLINT DEFAULT 0;
+	`).Error
+}
+
+func RemoveIsBookmarkedAndIsArchivedColumns(db *gorm.DB) error {
+	return db.Exec(`
+		ALTER TABLE public.d_card
+		DROP COLUMN IF EXISTS is_bookmarked,
+		DROP COLUMN IF EXISTS is_archived;
+
+		ALTER TABLE public.d_folder
+		DROP COLUMN IF EXISTS is_bookmarked,
+		DROP COLUMN IF EXISTS is_archived;
+	`).Error
 }
 
 // ------------------- v2.8.0 -------------------

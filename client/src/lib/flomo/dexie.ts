@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import Dexie, { type EntityTable } from "dexie";
 import {
+  ArchiveFolderId,
   SchemaVersion,
   type Card,
   type CardField,
@@ -33,8 +34,8 @@ export const db = new Dexie("FlomoDB") as Dexie & FlomoDB;
 // Schema definition
 db.version(SchemaVersion).stores({
   user: "key",
-  cards: "id, syncStatus, folderId, updatedAt",
-  folders: "id, syncStatus, parentId, updatedAt",
+  cards: "id, syncStatus, folderId, updatedAt, isBookmarked, isArchived",
+  folders: "id, syncStatus, parentId, updatedAt, isBookmarked, isArchived",
   tiptaps: "id, syncStatus, updatedAt",
   syncMeta: "key",
 });
@@ -47,6 +48,7 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     this.db = db;
   }
 
+  // User
   async getUser(): Promise<User | undefined> {
     return this.db.user.get(USER_KEY);
   }
@@ -55,15 +57,23 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     await this.db.user.put({ ...user, key: USER_KEY });
   }
 
+  // Cards
   async getCard(id: string): Promise<Card | undefined> {
     return this.db.cards.get(id);
   }
 
   async getCardsInFolder(folderId: string): Promise<Card[]> {
+    if (folderId === ArchiveFolderId) {
+      return this.db.cards
+        .where("isArchived")
+        .equals(1)
+        .and((card) => !card.isDeleted)
+        .toArray();
+    }
     return this.db.cards
       .where("folderId")
       .equals(folderId)
-      .and((card) => !card.isDeleted)
+      .and((card) => !card.isDeleted && card.isArchived === 0)
       .toArray();
   }
 
@@ -108,19 +118,39 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     });
   }
 
-  async markCardSynced(id: string): Promise<void> {
-    await this.db.cards.update(id, { syncStatus: SyncStatus.Synced });
+  async markCardSynced(id: string, updatedAt: number): Promise<void> {
+    await this.db.cards
+      .where("id")
+      .equals(id)
+      .and((card) => card.updatedAt === updatedAt)
+      .modify({ syncStatus: SyncStatus.Synced });
   }
 
+  async getArchivedCards(): Promise<Card[]> {
+    return this.db.cards
+      .where("isArchived")
+      .equals(1)
+      .and((card) => !card.isDeleted)
+      .toArray();
+  }
+
+  // Folders
   async getFolder(id: string): Promise<Folder | undefined> {
     return this.db.folders.get(id);
   }
 
   async getFoldersInParent(parentId: string): Promise<Folder[]> {
+    if (parentId === ArchiveFolderId) {
+      return this.db.folders
+        .where("isArchived")
+        .equals(1)
+        .and((folder) => !folder.isDeleted)
+        .toArray();
+    }
     return this.db.folders
       .where("parentId")
       .equals(parentId)
-      .and((folder) => !folder.isDeleted)
+      .and((folder) => !folder.isDeleted && folder.isArchived === 0)
       .toArray();
   }
 
@@ -165,10 +195,23 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     });
   }
 
-  async markFolderSynced(id: string): Promise<void> {
-    await this.db.folders.update(id, { syncStatus: SyncStatus.Synced });
+  async markFolderSynced(id: string, updatedAt: number): Promise<void> {
+    await this.db.folders
+      .where("id")
+      .equals(id)
+      .and((folder) => folder.updatedAt === updatedAt)
+      .modify({ syncStatus: SyncStatus.Synced });
   }
 
+  async getArchivedFolders(): Promise<Folder[]> {
+    return this.db.folders
+      .where("isArchived")
+      .equals(1)
+      .and((folder) => !folder.isDeleted)
+      .toArray();
+  }
+
+  // Tiptaps
   async getTiptap(id: string): Promise<TiptapV2 | undefined> {
     return this.db.tiptaps.get(id);
   }
@@ -217,8 +260,12 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     });
   }
 
-  async markTiptapSynced(id: string): Promise<void> {
-    await this.db.tiptaps.update(id, { syncStatus: SyncStatus.Synced });
+  async markTiptapSynced(id: string, updatedAt: number): Promise<void> {
+    await this.db.tiptaps
+      .where("id")
+      .equals(id)
+      .and((tiptap) => tiptap.updatedAt === updatedAt)
+      .modify({ syncStatus: SyncStatus.Synced });
   }
 
   async getPendingChanges(): Promise<{

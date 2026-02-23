@@ -14,23 +14,27 @@ type Card struct {
 }
 
 type CardField struct {
-	FolderId    *uuid.UUID     `gorm:"type:uuid" json:"folderId"`
-	Title       string         `gorm:"type:varchar(1024);not null" json:"title"`
-	Draft       uuid.UUID      `gorm:"type:uuid;not null" json:"draft"`
-	Payload     datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
-	RawText     string         `gorm:"type:text;default:'';not null" json:"rawText"`
-	ReviewCount int            `gorm:"type:int;default:0;not null" json:"reviewCount"`
+	FolderId     *uuid.UUID     `gorm:"type:uuid" json:"folderId"`
+	Title        string         `gorm:"type:varchar(1024);not null" json:"title"`
+	Draft        uuid.UUID      `gorm:"type:uuid;not null" json:"draft"`
+	Payload      datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
+	RawText      string         `gorm:"type:text;default:'';not null" json:"rawText"`
+	ReviewCount  int            `gorm:"type:int;default:0;not null" json:"reviewCount"`
+	IsBookmarked *int           `gorm:"column:is_bookmarked;default:0" json:"isBookmarked"`
+	IsArchived   *int           `gorm:"column:is_archived;default:0" json:"isArchived"`
 	// CreatorId is inherited from MetaFieldV2
 }
 
 const (
-	Card_Table       = "d_card"
-	Card_FolderId    = "folder_id"
-	Card_Title       = "title"
-	Card_Draft       = "draft"
-	Card_Payload     = "payload"
-	Card_RawText     = "raw_text"
-	Card_ReviewCount = "review_count"
+	Card_Table        = "d_card"
+	Card_FolderId     = "folder_id"
+	Card_Title        = "title"
+	Card_Draft        = "draft"
+	Card_Payload      = "payload"
+	Card_RawText      = "raw_text"
+	Card_ReviewCount  = "review_count"
+	Card_IsBookmarked = "is_bookmarked"
+	Card_IsArchived   = "is_archived"
 )
 
 func (c *Card) TableName() string {
@@ -92,7 +96,7 @@ func (c *Card) Create(db *gorm.DB) error {
 }
 
 func (c *Card) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Omit(Card_ReviewCount).Updates(c).Error
+	return db.Where(where).Omit(ServerVersion).Omit(Card_ReviewCount).Updates(c).Error
 }
 
 func (c *Card) Delete(db *gorm.DB, where map[string]any) error {

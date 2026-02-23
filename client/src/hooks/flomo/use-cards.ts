@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
-import { type CardField } from "@/lib/flomo/model";
+import { type CardField, type CardPayload } from "@/lib/flomo/model";
 import keys from "./query-keys";
 import { createTiptap } from "@/hooks/tiptap/use-tiptapv2";
 
@@ -40,13 +40,15 @@ export function useCreateCard() {
     mutationFn: async (data: {
       folderId: string;
       title: string;
-      payload: Record<string, unknown>;
+      payload: CardPayload;
     }) => {
       const draftId = await createTiptap();
       return flomoDatabase.addCard({
         ...data,
         draft: draftId,
         rawText: "",
+        isBookmarked: 0,
+        isArchived: 0,
       });
     },
   });

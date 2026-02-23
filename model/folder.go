@@ -14,17 +14,21 @@ type Folder struct {
 }
 
 type FolderField struct {
-	ParentId *uuid.UUID     `gorm:"type:uuid" json:"parentId"`
-	Title    string         `gorm:"type:varchar(1024);not null" json:"title"`
-	Payload  datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
+	ParentId     *uuid.UUID     `gorm:"type:uuid" json:"parentId"`
+	Title        string         `gorm:"type:varchar(1024);not null" json:"title"`
+	Payload      datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
+	IsBookmarked *int           `gorm:"column:is_bookmarked;default:0" json:"isBookmarked"`
+	IsArchived   *int           `gorm:"column:is_archived;default:0" json:"isArchived"`
 	// CreatorId is inherited from MetaFieldV2
 }
 
 const (
-	Folder_Table    = "d_folder"
-	Folder_ParentId = "parent_id"
-	Folder_Title    = "title"
-	Folder_Payload  = "payload"
+	Folder_Table        = "d_folder"
+	Folder_ParentId     = "parent_id"
+	Folder_Title        = "title"
+	Folder_Payload      = "payload"
+	Folder_IsBookmarked = "is_bookmarked"
+	Folder_IsArchived   = "is_archived"
 )
 
 func (f *Folder) TableName() string {
@@ -86,7 +90,7 @@ func (f *Folder) Create(db *gorm.DB) error {
 }
 
 func (f *Folder) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Updates(f).Error
+	return db.Where(where).Omit(ServerVersion).Updates(f).Error
 }
 
 func (f *Folder) Delete(db *gorm.DB, where map[string]any) error {

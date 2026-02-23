@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
-import { RootFolderId } from "@/lib/flomo/model";
+import { ArchiveFolderId, RootFolderId } from "@/lib/flomo/model";
 import { UserLangEnum } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import { useUserContextV2 } from "@/user-provider";
@@ -22,7 +22,58 @@ interface CardHeaderProps {
 export function CardHeader({ currentFolderId }: CardHeaderProps) {
   const { language } = useUserContextV2();
   const { data: path } = useFolderPath(currentFolderId);
-  const { setCurrentFolderId } = useAppState();
+  const { isArchiveMode, setCurrentFolderId } = useAppState();
+
+  if (isArchiveMode) {
+    const index = path?.findIndex((f) => f.isArchived === 1) ?? -1;
+    const filteredPath = index !== -1 ? path!.slice(index) : path;
+
+    return (
+      <header className="flex h-16 shrink-0 items-center gap-2">
+        <div className="flex items-center gap-2 px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem
+                className="hidden cursor-pointer md:block"
+                onClick={() => setCurrentFolderId(ArchiveFolderId)}
+              >
+                {currentFolderId === ArchiveFolderId ? (
+                  <BreadcrumbPage>{i18nText[language].archived}</BreadcrumbPage>
+                ) : (
+                  i18nText[language].archived
+                )}
+              </BreadcrumbItem>
+              {filteredPath?.map((segment, index) => (
+                <Fragment key={index}>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem
+                    className={cn(
+                      "cursor-pointer",
+                      index === filteredPath.length - 1
+                        ? ""
+                        : "hidden md:block",
+                    )}
+                    onClick={() => setCurrentFolderId(segment.id)}
+                  >
+                    {index === filteredPath.length - 1 ? (
+                      <BreadcrumbPage>{segment.title}</BreadcrumbPage>
+                    ) : (
+                      segment.title
+                    )}
+                  </BreadcrumbItem>
+                </Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2">
@@ -72,10 +123,12 @@ export function CardHeader({ currentFolderId }: CardHeaderProps) {
 const i18nText = {
   [UserLangEnum.ZHCN]: {
     home: "根目录",
+    archived: "归档",
     edit: "编辑",
   },
   [UserLangEnum.ENUS]: {
     home: "Home",
+    archived: "Archived",
     edit: "Edit",
   },
 };

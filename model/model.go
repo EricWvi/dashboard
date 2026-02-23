@@ -29,7 +29,7 @@ type MetaFieldV2 struct {
 	CreatedAt     int64     `gorm:"autoUpdateTime:false" json:"createdAt"`
 	UpdatedAt     int64     `gorm:"autoUpdateTime:false" json:"updatedAt"`
 	ServerVersion int64     `json:"serverVersion"`
-	IsDeleted     bool      `json:"isDeleted"`
+	IsDeleted     *bool     `json:"isDeleted"`
 	CreatorId     uint      `gorm:"column:creator_id;not null" json:"creatorId"`
 }
 
@@ -99,6 +99,11 @@ func (m WhereMap) In(key string, values []any) {
 }
 
 type WhereExpr []clause.Expr
+
+// BoolPtr returns a pointer to the given bool value
+func BoolPtr(b bool) *bool {
+	return &b
+}
 
 func (m *WhereExpr) Ne(key string, value any) {
 	*m = append(*m, gorm.Expr(key+" != ?", value))

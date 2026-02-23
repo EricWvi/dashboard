@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import {
+  Archive,
   FolderInput,
   MoreHorizontal,
   TextCursorInput,
@@ -49,6 +50,7 @@ import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card, type Folder } from "@/lib/flomo/model";
 import { EmojiPicker } from "./emoji-picker";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
+import { useAppState } from "@/hooks/flomo/use-app-state";
 
 interface NavCardsProps {
   currentFolderId: string;
@@ -59,12 +61,25 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
   const { language } = useUserContextV2();
 
   const { data: cards } = useCardsInFolder(currentFolderId);
+  const { isArchiveMode } = useAppState();
 
   const updateCardMutation = useUpdateCard();
   const changeEmoji = (card: Card, emoji: string) => {
     return updateCardMutation.mutateAsync({
       id: card.id,
       data: { payload: { ...card.payload, emoji } },
+    });
+  };
+  const archiveCard = (cardId: string) => {
+    return updateCardMutation.mutateAsync({
+      id: cardId,
+      data: { isArchived: 1 },
+    });
+  };
+  const restoreCard = (cardId: string) => {
+    return updateCardMutation.mutateAsync({
+      id: cardId,
+      data: { isArchived: 0 },
     });
   };
 
@@ -85,6 +100,51 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
     id: string;
     title: string;
   } | null>(null);
+
+  if (isArchiveMode) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroupLabel>{i18nText[language].cards}</SidebarGroupLabel>
+        <SidebarMenu>
+          {cards
+            ?.sort((a, b) => b.createdAt - a.createdAt)
+            .map((card) => (
+              <SidebarMenuItem key={card.id} className="cursor-pointer">
+                <SidebarMenuButton asChild className="gap-0">
+                  <div>
+                    <span className="mr-1 rounded-sm px-1 text-base">
+                      {card.payload.emoji || "📄"}
+                    </span>
+
+                    <span>{card.title}</span>
+                  </div>
+                </SidebarMenuButton>
+                {card.isArchived === 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction showOnHover>
+                        <MoreHorizontal />
+                        <span className="sr-only">More</span>
+                      </SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-48"
+                      side={isMobile ? "bottom" : "right"}
+                      align={isMobile ? "end" : "start"}
+                    >
+                      <DropdownMenuItem onClick={() => restoreCard(card.id)}>
+                        <TextCursorInput className="text-muted-foreground" />
+                        <span>{i18nText[language].restore}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </SidebarMenuItem>
+            ))}
+        </SidebarMenu>
+      </SidebarGroup>
+    );
+  }
 
   return (
     <>
@@ -141,6 +201,13 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
                       <span>{i18nText[language].move}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+                      onClick={() => archiveCard(card.id)}
+                    >
+                      <Archive className="text-yellow-700 dark:text-yellow-600" />
+                      <span>{i18nText[language].archive}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => {
@@ -442,7 +509,9 @@ const i18nText = {
     cards: "卡片",
     rename: "重命名",
     move: "移动",
+    archive: "归档",
     delete: "删除",
+    restore: "恢复",
     renameCard: "重命名卡片",
     cardNamePlaceholder: "输入卡片名称",
     cancel: "取消",
@@ -458,7 +527,9 @@ const i18nText = {
     cards: "Cards",
     rename: "Rename",
     move: "Move",
+    archive: "Archive",
     delete: "Delete",
+    restore: "Restore",
     renameCard: "Rename Card",
     cardNamePlaceholder: "Enter card name...",
     cancel: "Cancel",

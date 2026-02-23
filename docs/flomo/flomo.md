@@ -58,6 +58,31 @@ client/
 └── public-flomo/                   # Flomo-specific static assets
 ```
 
+## Features
+
+### Core Functionality
+
+- **Quick Capture**: Fast note creation with minimal friction
+- **Folder Organization**: Hierarchical folder structure for grouping
+- **Rich Text**: Full TipTap editor with formatting, links, etc.
+- **Search**: Full-text search across card titles and content (`rawText`)
+- **Archive Mode**: Cards and folders can be archived (`isArchived = 1`) to remove them from normal view without deleting. Toggle between normal and archive views via `isArchiveMode` in app state. The components and corresponding styles are designed to support both modes seamlessly.
+- **Bookmarks**: Cards and folders support a bookmark flag (`isBookmarked`) for quick-access marking.
+
+### Offline-First Benefits
+
+- **No Latency**: All operations instant on local device
+- **Reliable**: Works without internet connection
+- **Conflict-Free**: UUID-based identity prevents conflicts
+- **Efficient**: Only sync changed data, not full dataset
+
+### Sync Guarantees
+
+- **Eventual Consistency**: All devices converge to same state
+- **Causal Ordering**: `server_version` preserves operation order
+- **Soft Delete Sync**: Deletions propagate to all clients
+- **Last-Write-Wins**: Conflicts resolved by `updatedAt` timestamp
+
 ## Data Model
 
 ### MetaField
@@ -107,6 +132,8 @@ export interface CardField {
   draft: string; // UUID
   payload: CardPayload;
   rawText: string;
+  isBookmarked: 0 | 1;
+  isArchived: 0 | 1;
 }
 
 export interface Card extends MetaField, CardField {}
@@ -125,6 +152,8 @@ export interface FolderField {
   parentId: string; // UUID
   title: string;
   payload: FolderPayload;
+  isBookmarked: 0 | 1;
+  isArchived: 0 | 1;
 }
 
 export interface Folder extends MetaField, FolderField {}
@@ -202,14 +231,14 @@ These endpoints support efficient offline-first synchronization:
 
 Flomo uses a neutral, monochromatic palette via CSS custom properties (oklch tokens). Key semantic tokens:
 
-| Token                  | Light                        | Dark                         | Usage                        |
-| ---------------------- | ---------------------------- | ---------------------------- | ---------------------------- |
-| `background`           | `oklch(1 0 0)` (white)       | `oklch(0.145 0 0)` (near-black) | Page / sidebar background |
-| `foreground`           | `oklch(0.145 0 0)`           | `oklch(0.985 0 0)`           | Default text                 |
-| `muted-foreground`     | `oklch(0.556 0 0)`           | `oklch(0.708 0 0)`           | Placeholder / secondary text |
-| `accent`               | `oklch(0.97 0 0)`            | `oklch(0.269 0 0)`           | Hover highlight              |
-| `destructive`          | `oklch(0.581 0.214 27.33)`   | same                         | Delete actions               |
-| `emoji-accent`         | `oklch(0.92 0 0)`            | `oklch(0.35 0 0)`            | Emoji button hover           |
+| Token              | Light                      | Dark                            | Usage                        |
+| ------------------ | -------------------------- | ------------------------------- | ---------------------------- |
+| `background`       | `oklch(1 0 0)` (white)     | `oklch(0.145 0 0)` (near-black) | Page / sidebar background    |
+| `foreground`       | `oklch(0.145 0 0)`         | `oklch(0.985 0 0)`              | Default text                 |
+| `muted-foreground` | `oklch(0.556 0 0)`         | `oklch(0.708 0 0)`              | Placeholder / secondary text |
+| `accent`           | `oklch(0.97 0 0)`          | `oklch(0.269 0 0)`              | Hover highlight              |
+| `destructive`      | `oklch(0.581 0.214 27.33)` | same                            | Delete actions               |
+| `emoji-accent`     | `oklch(0.92 0 0)`          | `oklch(0.35 0 0)`               | Emoji button hover           |
 
 Dark mode switches automatically via `@media (prefers-color-scheme: dark)`.
 
@@ -271,23 +300,25 @@ Sticky header inside the content pane. Shows a breadcrumb trail of the current f
 
 ### NavFolders (`nav-folders.tsx`)
 
-Each folder entry shows an emoji (defaulting to 📂) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes three actions, each backed by a dedicated dialog:
+Each folder entry shows an emoji (defaulting to 📂) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes actions backed by dedicated dialogs:
 
-| Dialog | Component            | Behaviour                                                                                                                                  |
-| ------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Rename | `RenameFolderDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                                                                            |
-| Move   | `MoveFolderDialog`   | Breadcrumb + folder-list navigator. The folder being moved is excluded from the target list. Calls `useUpdateFolder` to update `parentId`. |
-| Delete | `DeleteFolderDialog` | Confirmation dialog. Calls `useDeleteFolder`.                                                                                              |
+| Action  | Component            | Behaviour                                                                                                                                  |
+| ------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rename  | `RenameFolderDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                                                                            |
+| Move    | `MoveFolderDialog`   | Breadcrumb + folder-list navigator. The folder being moved is excluded from the target list. Calls `useUpdateFolder` to update `parentId`. |
+| Archive | fire directly        | Sets `isArchived = 1` via `useUpdateFolder`. Archived folders are hidden from normal navigation.                                           |
+| Delete  | `DeleteFolderDialog` | Confirmation dialog. Calls `useDeleteFolder`.                                                                                              |
 
 ### NavCards (`nav-cards.tsx`)
 
-Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes three actions:
+Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes actions:
 
-| Dialog | Component          | Behaviour                                                                       |
-| ------ | ------------------ | ------------------------------------------------------------------------------- |
-| Rename | `RenameCardDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                 |
-| Move   | `MoveCardDialog`   | Breadcrumb + folder-list navigator. Calls `useUpdateCard` to update `folderId`. |
-| Delete | `DeleteCardDialog` | Confirmation dialog. Calls `useDeleteCard`.                                     |
+| Dialog  | Component          | Behaviour                                                                                 |
+| ------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| Rename  | `RenameCardDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                           |
+| Move    | `MoveCardDialog`   | Breadcrumb + folder-list navigator. Calls `useUpdateCard` to update `folderId`.           |
+| Archive | fire directly      | Sets `isArchived = 1` via `useUpdateCard`. Archived cards are hidden from normal listing. |
+| Delete  | `DeleteCardDialog` | Confirmation dialog. Calls `useDeleteCard`.                                               |
 
 The Move dialogs for both folders and cards share the same UX pattern: a horizontally scrollable breadcrumb trail (auto-scrolls to the rightmost segment) and a scrollable folder list fetched on-the-fly via `flomoDatabase.getFoldersInParent`.
 
@@ -310,35 +341,16 @@ A global Zustand store that tracks the currently focused folder as the user navi
 
 ```typescript
 interface AppState {
-  currentFolderId: string; // defaults to RootFolderId
+  currentFolderId: string;
   setCurrentFolderId: (id: string) => void;
+
+  isArchiveMode: boolean;
+  enterArchiveMode: () => void;
+  exitArchiveMode: () => void;
 }
 ```
 
-`currentFolderId` is initialised to `RootFolderId` (the virtual root). Components read and update this value to drive which folders and cards are displayed in both the sidebar and the main content area.
-
-## Features
-
-### Core Functionality
-
-- **Quick Capture**: Fast note creation with minimal friction
-- **Folder Organization**: Hierarchical folder structure for grouping
-- **Rich Text**: Full TipTap editor with formatting, links, etc.
-- **Search**: Full-text search across card titles and content (`rawText`)
-
-### Offline-First Benefits
-
-- **No Latency**: All operations instant on local device
-- **Reliable**: Works without internet connection
-- **Conflict-Free**: UUID-based identity prevents conflicts
-- **Efficient**: Only sync changed data, not full dataset
-
-### Sync Guarantees
-
-- **Eventual Consistency**: All devices converge to same state
-- **Causal Ordering**: `server_version` preserves operation order
-- **Soft Delete Sync**: Deletions propagate to all clients
-- **Last-Write-Wins**: Conflicts resolved by `updatedAt` timestamp
+`currentFolderId` is initialised to `RootFolderId` (the virtual root). `isArchiveMode` controls whether the sidebar and content area show archived or regular cards/folders. Components read and update these values to drive the navigation state.
 
 ## Development
 

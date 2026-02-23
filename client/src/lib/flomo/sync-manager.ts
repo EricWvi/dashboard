@@ -150,15 +150,15 @@ export class SyncManager {
         const updates: Array<Promise<void>> = [];
 
         for (const card of pending.cards) {
-          updates.push(this.db.markCardSynced(card.id));
+          updates.push(this.db.markCardSynced(card.id, card.updatedAt));
         }
 
         for (const folder of pending.folders) {
-          updates.push(this.db.markFolderSynced(folder.id));
+          updates.push(this.db.markFolderSynced(folder.id, folder.updatedAt));
         }
 
         for (const tiptap of pending.tiptaps) {
-          updates.push(this.db.markTiptapSynced(tiptap.id));
+          updates.push(this.db.markTiptapSynced(tiptap.id, tiptap.updatedAt));
         }
 
         await Promise.all(updates);
