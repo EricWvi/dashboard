@@ -196,6 +196,57 @@ These endpoints support efficient offline-first synchronization:
    - Handle deletions (remove items where `isDeleted: true`)
    - Update tracked `serverVersion`
 
+## UI Style Guidelines
+
+### Colors
+
+Flomo uses a neutral, monochromatic palette via CSS custom properties (oklch tokens). Key semantic tokens:
+
+| Token                  | Light                        | Dark                         | Usage                        |
+| ---------------------- | ---------------------------- | ---------------------------- | ---------------------------- |
+| `background`           | `oklch(1 0 0)` (white)       | `oklch(0.145 0 0)` (near-black) | Page / sidebar background |
+| `foreground`           | `oklch(0.145 0 0)`           | `oklch(0.985 0 0)`           | Default text                 |
+| `muted-foreground`     | `oklch(0.556 0 0)`           | `oklch(0.708 0 0)`           | Placeholder / secondary text |
+| `accent`               | `oklch(0.97 0 0)`            | `oklch(0.269 0 0)`           | Hover highlight              |
+| `destructive`          | `oklch(0.581 0.214 27.33)`   | same                         | Delete actions               |
+| `emoji-accent`         | `oklch(0.92 0 0)`            | `oklch(0.35 0 0)`            | Emoji button hover           |
+
+Dark mode switches automatically via `@media (prefers-color-scheme: dark)`.
+
+### Typography
+
+- **Font**: OPPO Sans 4.0, falling back to system sans-serif.
+- **Size**: `text-sm` for sidebar items; `text-xs` for supplementary labels.
+- **Weight**: `font-medium` for titles; default for body.
+- **Line height**: `leading-tight` in compact list rows.
+
+### Spacing & Layout
+
+- Spacing follows Tailwind's scale: `gap-2` / `gap-4`, `px-2` / `px-4`, `py-2`.
+- **Two-panel**: `SidebarProvider` (inset variant) + `SidebarInset`. Sidebar collapses on mobile.
+- **Dialogs**: `sm:max-w-md` width, `space-y-4` internal spacing.
+- **Responsive**: `hidden md:block` hides non-essential elements on small screens.
+
+### Icons
+
+- **Lucide React** for all system icons (e.g. `Search`, `FolderPlus`, `Trash2`, `MoreHorizontal`).
+- **Custom SVG components** for brand marks: `FlomoLogo`, `FlomoText`.
+- **Emoji system**: default folder emoji 📂, default card emoji 📄; user-customizable via `EmojiPicker`.
+
+### Interactive States
+
+- Hover: `hover:bg-accent` on list items; `hover:bg-emoji-accent` on emoji buttons.
+- Active / open dropdown: `data-[state=open]:bg-sidebar-accent`.
+- Destructive actions: `text-destructive` (red) with matching icon color.
+- Buttons are `disabled` during async mutations to prevent double-submission.
+
+### Dialogs & Forms
+
+- Every create / rename / move / delete action uses a **modal dialog**.
+- Text inputs auto-focus, submit on **Enter**, and handle IME composition (CJK-safe).
+- Button pairs: **Cancel** (outline) + **Confirm / Action** (primary or destructive).
+- Internationalization (i18n): all user-facing strings go through the inline `i18nText` map (Chinese & English).
+
 ## UI Components
 
 ### AppSidebar (`sidebar.tsx`)
