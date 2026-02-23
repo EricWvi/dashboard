@@ -86,6 +86,7 @@
   --mark-icon-fill: url(#gradient-light);
   --mark-icon-stroke: #a78bfa;
   --emoji-accent: oklch(0.92 0 0);
+  --archive-frame: rgb(246, 230, 205);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -129,6 +130,7 @@
     --mark-icon-fill: url(#gradient-dark);
     --mark-icon-stroke: #3b82f6;
     --emoji-accent: oklch(0.35 0 0);
+    --archive-frame: rgb(90, 55, 10);
   }
 }
 
