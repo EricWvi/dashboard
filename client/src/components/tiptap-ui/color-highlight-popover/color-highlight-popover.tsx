@@ -36,7 +36,7 @@ import {
   useColorHighlight,
 } from "@/components/tiptap-ui/color-highlight-button";
 import { UserLangEnum } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 export interface ColorHighlightPopoverContentProps {
   /**
@@ -67,7 +67,7 @@ export const ColorHighlightPopoverButton = React.forwardRef<
   HTMLButtonElement,
   ButtonProps
 >(({ className, children, ...props }, ref) => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   return (
     <Button
       type="button"
@@ -98,7 +98,7 @@ export function ColorHighlightPopoverContent({
     "var(--tt-color-highlight-yellow)",
   ]),
 }: ColorHighlightPopoverContentProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { handleRemoveHighlight } = useColorHighlight({ editor });
   const isMobile = useIsMobile();
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -182,7 +182,7 @@ export function ColorHighlightPopover({
   onApplied,
   ...props
 }: ColorHighlightPopoverProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { editor } = useTiptapEditor(providedEditor);
   const [isOpen, setIsOpen] = React.useState(false);
   const { isVisible, canColorHighlight, isActive, label, Icon } =

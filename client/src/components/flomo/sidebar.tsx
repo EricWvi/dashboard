@@ -11,6 +11,7 @@ import {
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { FlomoLogo, FlomoText } from "./icons";
 import { Search } from "lucide-react";
+import { NavPath } from "./nav-path";
 
 export function AppSidebar() {
   const { currentFolderId } = useAppState();
@@ -37,6 +38,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
+        <NavPath currentFolderId={currentFolderId} />
         <NavFolders currentFolderId={currentFolderId} />
         <NavCards currentFolderId={currentFolderId} />
         <div className="mt-auto">

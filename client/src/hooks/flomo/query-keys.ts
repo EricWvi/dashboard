@@ -19,6 +19,10 @@ const keys = {
     path: (folderId: string) =>
       [...keys.folders.all, "path", folderId] as const,
   },
+  tiptaps: {
+    all: ["tiptaps"] as const,
+    detail: (id: string) => [...keys.tiptaps.all, "detail", id] as const,
+  },
 };
 
 export default keys;
@@ -27,6 +31,7 @@ const TABLE_MAP: Record<string, readonly unknown[]> = {
   cards: keys.cards.all,
   folders: keys.folders.all,
   user: keys.user.current,
+  tiptaps: keys.tiptaps.all,
 };
 
 const notifyUI = debounce((table: string) => {
@@ -37,3 +42,10 @@ const notifyUI = debounce((table: string) => {
 }, 100);
 
 export const triggerRefresh = (table: string) => notifyUI(table);
+
+export const tiptapRefresh = debounce((id: string) => {
+  queryClient.invalidateQueries({
+    queryKey: keys.tiptaps.detail(id),
+    exact: true,
+  });
+}, 100);

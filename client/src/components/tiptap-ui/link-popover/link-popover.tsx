@@ -31,7 +31,7 @@ import {
 } from "@/components/tiptap-ui-primitive/card";
 import { Input, InputGroup } from "@/components/tiptap-ui-primitive/input";
 import { UserLangEnum } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 export interface LinkMainProps {
   /**
@@ -79,7 +79,7 @@ export interface LinkPopoverProps
  */
 export const LinkButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, children, ...props }, ref) => {
-    const { language } = useUserContext();
+    const { language } = useUserContextV2();
     return (
       <Button
         type="button"
@@ -111,7 +111,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
   openLink,
   isActive,
 }) => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const isMobile = useIsMobile();
 
   const handleKeyDown = (event: React.KeyboardEvent) => {

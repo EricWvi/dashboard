@@ -14,7 +14,7 @@ import { isExtensionAvailable, isNodeTypeSelected } from "@/lib/tiptap-utils";
 // --- Icons ---
 import { ImagePlusIcon } from "@/components/tiptap-icons/image-plus-icon";
 import { UserLangEnum } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 export const IMAGE_UPLOAD_SHORTCUT_KEY = "mod+shift+i";
 
@@ -135,7 +135,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useImageUpload(config?: UseImageUploadConfig) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,

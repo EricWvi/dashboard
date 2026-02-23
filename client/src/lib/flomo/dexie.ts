@@ -237,6 +237,17 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     await this.db.tiptaps.bulkPut(tiptaps);
   }
 
+  async syncTiptap(
+    id: string,
+    content: Record<string, unknown>,
+  ): Promise<void> {
+    await this.db.tiptaps.update(id, {
+      content,
+      updatedAt: Date.now(),
+      syncStatus: SyncStatus.Pending,
+    });
+  }
+
   async updateTiptap(
     id: string,
     updates: Partial<TiptapV2Field>,
@@ -268,6 +279,46 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
       .modify({ syncStatus: SyncStatus.Synced });
   }
 
+  async listTiptapHistory(id: string): Promise<number[]> {
+    const tiptap = await this.db.tiptaps.get(id);
+    if (!tiptap) {
+      return [];
+    }
+    return tiptap.history.map((entry) => entry.time);
+  }
+
+  async getTiptapHistory(
+    id: string,
+    ts: number,
+  ): Promise<Record<string, unknown>> {
+    const tiptap = await this.db.tiptaps.get(id);
+    if (!tiptap) {
+      throw new Error("Tiptap not found");
+    }
+    const entry = tiptap.history.find((h) => h.time === ts);
+    if (!entry) {
+      throw new Error("History entry not found");
+    }
+    return entry.content;
+  }
+
+  async restoreTiptapHistory(id: string, ts: number): Promise<void> {
+    const tiptap = await this.db.tiptaps.get(id);
+    if (!tiptap) {
+      throw new Error("Tiptap not found");
+    }
+    const entry = tiptap.history.find((h) => h.time === ts);
+    if (!entry) {
+      throw new Error("History entry not found");
+    }
+    await this.db.tiptaps.update(id, {
+      content: entry.content,
+      updatedAt: Date.now(),
+      syncStatus: SyncStatus.Pending,
+    });
+  }
+
+  // Sync
   async getPendingChanges(): Promise<{
     cards: Card[];
     folders: Folder[];

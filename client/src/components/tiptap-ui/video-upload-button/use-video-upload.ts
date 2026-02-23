@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 // --- Lib ---
 import { isExtensionAvailable, handleVideoUpload } from "@/lib/tiptap-utils";
 import { UserLangEnum } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 // --- Icons ---
 import { VideoIcon } from "lucide-react";
@@ -159,7 +159,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useVideoUpload(config?: UseVideoUploadConfig) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const {
     editor: providedEditor,
     hideWhenUnavailable = false,

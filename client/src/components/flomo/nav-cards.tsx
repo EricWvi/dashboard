@@ -61,7 +61,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
   const { language } = useUserContextV2();
 
   const { data: cards } = useCardsInFolder(currentFolderId);
-  const { isArchiveMode } = useAppState();
+  const { isArchiveMode, openTab } = useAppState();
 
   const updateCardMutation = useUpdateCard();
   const changeEmoji = (card: Card, emoji: string) => {
@@ -155,7 +155,18 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
             ?.sort((a, b) => b.createdAt - a.createdAt)
             .map((card) => (
               <SidebarMenuItem key={card.id} className="cursor-pointer">
-                <SidebarMenuButton asChild className="gap-0">
+                <SidebarMenuButton
+                  asChild
+                  className="gap-0"
+                  onClick={() =>
+                    openTab({
+                      cardId: card.id,
+                      draftId: card.draft,
+                      title: card.title,
+                      readMode: true,
+                    })
+                  }
+                >
                   <div>
                     <EmojiPicker
                       onSelectEmoji={(emoji) => {

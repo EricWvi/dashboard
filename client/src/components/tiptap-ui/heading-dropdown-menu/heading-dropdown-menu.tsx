@@ -22,7 +22,7 @@ import {
 } from "@/components/tiptap-ui-primitive/dropdown-menu";
 import { Card, CardBody } from "@/components/tiptap-ui-primitive/card";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 export interface HeadingDropdownMenuProps
   extends Omit<ButtonProps, "type">,
@@ -58,7 +58,7 @@ export const HeadingDropdownMenu = React.forwardRef<
     },
     ref,
   ) => {
-    const { language } = useUserContext();
+    const { language } = useUserContextV2();
     const { editor } = useTiptapEditor(providedEditor);
     const [isOpen, setIsOpen] = React.useState(false);
     const { isVisible, isActive, canToggle, Icon } = useHeadingDropdownMenu({

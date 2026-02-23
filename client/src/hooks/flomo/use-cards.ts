@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { type CardField, type CardPayload } from "@/lib/flomo/model";
 import keys from "./query-keys";
-import { createTiptap } from "@/hooks/flomo/use-tiptapv2";
+import { createTiptapWithTitle } from "@/hooks/flomo/use-tiptapv2";
 
 /**
  * Hook to fetch cards in a specific folder
@@ -42,7 +42,7 @@ export function useCreateCard() {
       title: string;
       payload: CardPayload;
     }) => {
-      const draftId = await createTiptap();
+      const draftId = await createTiptapWithTitle(data.title);
       return flomoDatabase.addCard({
         ...data,
         draft: draftId,

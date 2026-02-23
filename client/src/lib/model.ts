@@ -16,7 +16,7 @@ export interface MetaField {
 
 export interface TiptapV2Field {
   content: Record<string, unknown>;
-  history: unknown[];
+  history: { time: number; content: Record<string, unknown> }[];
 }
 
 export interface TiptapV2 extends MetaField, TiptapV2Field {}

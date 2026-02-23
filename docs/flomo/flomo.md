@@ -21,11 +21,13 @@ client/src/
 │   ├── flomo/                      # Flomo-specific components
 │   │   ├── icons.tsx               # Custom icons
 │   │   ├── sidebar.tsx             # AppSidebar: root sidebar component
+│   │   ├── emoji-picker.tsx        # Emoji Picker for card/folder icon
 │   │   ├── card-content.tsx        # Main content area for the selected folder
 │   │   ├── card-header.tsx         # Header with breadcrumb folder-path navigation
 │   │   ├── nav-folders.tsx         # Sidebar section: subfolders of current folder
 │   │   ├── nav-cards.tsx           # Sidebar section: cards in current folder
 │   │   ├── nav-adds.tsx            # Sidebar section: add-card / add-folder actions
+│   │   ├── nav-path.tsx            # Sidebar section: tree-style current folder path
 │   │   └── nav-tabs.tsx            # Sidebar footer: currently opened editors
 │   ├── tiptap-*/                   # Shared TipTap editor components
 │   └── ui/                         # Shared UI library (shadcn/ui)
@@ -284,7 +286,8 @@ The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Com
 | Section          | Component    | Description                                                                                                                                                               |
 | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Header           | _(static)_   | App branding / logo                                                                                                                                                       |
-| Content – top    | `NavFolders` | Lists subfolders of the current folder, sorted alphabetically. Clicking a folder navigates into it. Each folder has a context menu with Rename, Move, and Delete actions. |
+| Content – top    | `NavPath`    | Tree-style path navigator showing the ancestry from root (or archive root) to the current folder. Each node is clickable and calls `setCurrentFolderId`.                 |
+| Content – upper  | `NavFolders` | Lists subfolders of the current folder, sorted alphabetically. Clicking a folder navigates into it. Each folder has a context menu with Rename, Move, and Delete actions. |
 | Content – middle | `NavCards`   | Lists cards in the current folder, sorted newest-first. Each card has a context menu with Rename, Move, and Delete actions.                                               |
 | Content – bottom | `NavAdds`    | Add-card and add-folder action buttons that open dialogs.                                                                                                                 |
 | Footer           | `NavTabs`    | Switch between currently opened editors.                                                                                                                                  |
@@ -293,9 +296,13 @@ The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Com
 
 The main content pane rendered inside `SidebarInset`.
 
+### NavPath (`nav-path.tsx`)
+
+A sidebar section rendered at the top of the `AppSidebar` content area. Displays the folder ancestry from root (or the nearest archived ancestor in archive mode) down to the current folder as a vertical tree: connected nodes with lines and circles, where the current folder node is highlighted. Each node is clickable and calls `setCurrentFolderId` to jump directly to that level. Uses `useFolderPath` internally.
+
 ### CardHeader (`card-header.tsx`)
 
-Sticky header inside the content pane. Shows a breadcrumb trail of the current folder path (root → … → current) using `useFolderPath`. Each breadcrumb segment is clickable and calls `setCurrentFolderId` to navigate up the hierarchy.
+Sticky header inside the content pane. Shows the sidebar trigger and a separator. Path navigation has been moved to `NavPath` in the sidebar.
 
 ### NavFolders (`nav-folders.tsx`)
 
