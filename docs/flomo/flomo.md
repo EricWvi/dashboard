@@ -21,6 +21,7 @@ client/src/
 │   ├── flomo/                      # Flomo-specific components
 │   │   ├── icons.tsx               # Custom icons
 │   │   ├── sidebar.tsx             # AppSidebar: root sidebar component
+│   │   ├── emoji-picker.tsx        # Emoji Picker for card/folder icon
 │   │   ├── card-content.tsx        # Main content area for the selected folder
 │   │   ├── card-header.tsx         # Header with breadcrumb folder-path navigation
 │   │   ├── nav-folders.tsx         # Sidebar section: subfolders of current folder

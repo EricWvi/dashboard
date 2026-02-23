@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { SyncManager, getSyncManager } from "@/lib/flomo/sync-manager";
 import { AppSidebar } from "@/components/flomo/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { CardContent } from "@/components/flomo/card-content";
+import { CardPane } from "@/components/flomo/card-pane";
 import { ArchiveFrame } from "@/components/flomo/archive-decoration";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 
@@ -52,10 +52,10 @@ export default function Flomo() {
 
   return (
     <div className="h-full">
-      <SidebarProvider>
+      <SidebarProvider className="h-full">
         <AppSidebar />
-        <SidebarInset>
-          <CardContent />
+        <SidebarInset className="overflow-hidden">
+          <CardPane />
         </SidebarInset>
       </SidebarProvider>
       <FlomoArchiveFrame />

@@ -1,4 +1,4 @@
-import { triggerRefresh } from "@/hooks/flomo/query-keys";
+import { tiptapRefresh, triggerRefresh } from "@/hooks/flomo/query-keys";
 import { db as DexieDb, DexieFlomoDatabase } from "./dexie";
 import {
   type Card,
@@ -48,10 +48,14 @@ export interface IFlomoDatabase {
   addTiptap(tiptap: TiptapV2Field): Promise<string>;
   putTiptap(tiptap: TiptapV2): Promise<void>;
   putTiptaps(tiptaps: TiptapV2[]): Promise<void>;
+  syncTiptap(id: string, content: Record<string, unknown>): Promise<void>;
   updateTiptap(id: string, updates: Partial<TiptapV2Field>): Promise<void>;
   deleteTiptap(id: string): Promise<void>;
   softDeleteTiptap(id: string): Promise<void>;
   markTiptapSynced(id: string, updatedAt: number): Promise<void>;
+  listTiptapHistory(id: string): Promise<number[]>;
+  getTiptapHistory(id: string, ts: number): Promise<Record<string, unknown>>;
+  restoreTiptapHistory(id: string, ts: number): Promise<void>;
 
   // Sync
   getPendingChanges(): Promise<{
@@ -72,9 +76,12 @@ export interface IFlomoDatabase {
 
 export class RefreshDecorator implements IFlomoDatabase {
   private baseDb: IFlomoDatabase;
-  private onTableChange: (table: string) => void;
+  private onTableChange: (table: string, id?: string) => void;
 
-  constructor(baseDb: IFlomoDatabase, onTableChange: (table: string) => void) {
+  constructor(
+    baseDb: IFlomoDatabase,
+    onTableChange: (table: string, id?: string) => void,
+  ) {
     this.baseDb = baseDb;
     this.onTableChange = onTableChange;
   }
@@ -191,14 +198,12 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 
   async addTiptap(tiptap: TiptapV2Field): Promise<string> {
-    const id = await this.baseDb.addTiptap(tiptap);
-    this.onTableChange("tiptaps");
-    return id;
+    return this.baseDb.addTiptap(tiptap);
   }
 
   async putTiptap(tiptap: TiptapV2): Promise<void> {
     await this.baseDb.putTiptap(tiptap);
-    this.onTableChange("tiptaps");
+    this.onTableChange("tiptap", tiptap.id);
   }
 
   async putTiptaps(tiptaps: TiptapV2[]): Promise<void> {
@@ -206,26 +211,47 @@ export class RefreshDecorator implements IFlomoDatabase {
     this.onTableChange("tiptaps");
   }
 
+  async syncTiptap(
+    id: string,
+    content: Record<string, unknown>,
+  ): Promise<void> {
+    return this.baseDb.syncTiptap(id, content);
+  }
+
   async updateTiptap(
     id: string,
     updates: Partial<TiptapV2Field>,
   ): Promise<void> {
     await this.baseDb.updateTiptap(id, updates);
-    this.onTableChange("tiptaps");
+    this.onTableChange("tiptap", id);
   }
 
   async deleteTiptap(id: string): Promise<void> {
-    await this.baseDb.deleteTiptap(id);
-    this.onTableChange("tiptaps");
+    return this.baseDb.deleteTiptap(id);
   }
 
   async softDeleteTiptap(id: string): Promise<void> {
-    await this.baseDb.softDeleteTiptap(id);
-    this.onTableChange("tiptaps");
+    return this.baseDb.softDeleteTiptap(id);
   }
 
   async markTiptapSynced(id: string, updatedAt: number): Promise<void> {
     return this.baseDb.markTiptapSynced(id, updatedAt);
+  }
+
+  async listTiptapHistory(id: string): Promise<number[]> {
+    return this.baseDb.listTiptapHistory(id);
+  }
+
+  async getTiptapHistory(
+    id: string,
+    ts: number,
+  ): Promise<Record<string, unknown>> {
+    return this.baseDb.getTiptapHistory(id, ts);
+  }
+
+  async restoreTiptapHistory(id: string, ts: number): Promise<void> {
+    await this.baseDb.restoreTiptapHistory(id, ts);
+    this.onTableChange("tiptap", id);
   }
 
   // Sync
@@ -265,7 +291,10 @@ export class RefreshDecorator implements IFlomoDatabase {
 // Export singleton instance
 export const flomoDatabase: IFlomoDatabase = new RefreshDecorator(
   new DexieFlomoDatabase(DexieDb),
-  (table) => {
+  (table, id?: string) => {
+    if (table === "tiptap") {
+      tiptapRefresh(id!);
+    }
     triggerRefresh(table);
   },
 );

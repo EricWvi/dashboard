@@ -18,7 +18,7 @@ import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
 import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Badge } from "@/components/tiptap-ui-primitive/badge";
 import { UserLangEnum } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 export interface BlockquoteButtonProps
   extends Omit<ButtonProps, "type">,
@@ -64,7 +64,7 @@ export const BlockquoteButton = React.forwardRef<
     },
     ref,
   ) => {
-    const { language } = useUserContext();
+    const { language } = useUserContextV2();
     const { editor } = useTiptapEditor(providedEditor);
     const {
       isVisible,

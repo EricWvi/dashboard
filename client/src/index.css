@@ -130,7 +130,7 @@
     --mark-icon-fill: url(#gradient-dark);
     --mark-icon-stroke: #3b82f6;
     --emoji-accent: oklch(0.35 0 0);
-    --archive-frame: rgb(90, 55, 10);
+    --archive-frame: rgb(61, 37, 6);
   }
 }
 

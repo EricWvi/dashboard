@@ -20,7 +20,7 @@ import {
   EMOJI_LIST,
 } from "@/components/tiptap-ui/emoji-button/use-emoji";
 import { UserLangEnum } from "@/hooks/use-user";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 export interface EmojiPopoverContentProps {
   /**
@@ -57,7 +57,7 @@ export const EmojiPopoverButton = React.forwardRef<
   HTMLButtonElement,
   ButtonProps
 >(({ className, children, ...props }, ref) => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   return (
     <Button
       type="button"
