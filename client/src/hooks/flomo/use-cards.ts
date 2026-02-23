@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { type CardField, type CardPayload } from "@/lib/flomo/model";
 import keys from "./query-keys";
-import { createTiptap } from "@/hooks/tiptap/use-tiptapv2";
+import { createTiptap } from "@/hooks/flomo/use-tiptapv2";
 
 /**
  * Hook to fetch cards in a specific folder

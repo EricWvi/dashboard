@@ -51,8 +51,8 @@ import { dateString, formatMediaUrl } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
 import { useTTContext } from "@/components/editor";
 import { createTiptap } from "@/hooks/use-draft";
-import WatchCheckpoints from "@/components/watch-checkpoint";
-import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
+import WatchCheckpoints from "@/components/dashboard/journey/watch-checkpoint";
+import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 

@@ -1,9 +1,9 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WeeklyRetro } from "@/components/weekly-retro";
-import { AnnualRetro } from "@/components/annual-retro";
-import { DecadeRetro } from "@/components/decade-retro";
+import { WeeklyRetro } from "@/components/dashboard/echo/weekly-retro";
+import { AnnualRetro } from "@/components/dashboard/echo/annual-retro";
+import { DecadeRetro } from "@/components/dashboard/echo/decade-retro";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 

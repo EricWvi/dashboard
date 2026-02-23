@@ -19,7 +19,7 @@ import { RotateCcw } from "lucide-react";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import WatchReview from "@/components/watch-review";
+import WatchReview from "@/components/dashboard/journey/watch-review";
 
 export default function DroppedList() {
   const { language } = useUserContext();

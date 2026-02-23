@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import WatchCheckpoints from "@/components/watch-checkpoint";
+import WatchCheckpoints from "@/components/dashboard/journey/watch-checkpoint";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";

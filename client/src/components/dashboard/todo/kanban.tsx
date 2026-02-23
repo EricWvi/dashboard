@@ -1,4 +1,4 @@
-import KanbanRender from "@/components/kanban-render";
+import KanbanRender from "@/components/dashboard/todo/kanban-render";
 import { useKanban } from "@/hooks/use-kanban";
 import { createContext, useContext, useState, type ReactNode } from "react";
 

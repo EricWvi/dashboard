@@ -1,14 +1,17 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { toast } from "sonner";
-import TabbedApp from "@/components/tabbed-app";
-import SignUp from "@/components/sign-up";
+import TabbedApp from "@/components/dashboard/tabbed-app";
+import SignUp from "@/components/dashboard/sign-up";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { TTProvider, SimpleEditorWrapper } from "@/components/editor";
-import { KanbanProvider, KanbanWrapper } from "@/components/kanban";
+import {
+  KanbanProvider,
+  KanbanWrapper,
+} from "@/components/dashboard/todo/kanban";
 import { Toaster } from "@/components/ui/sonner";
 import { UserLangEnum } from "@/hooks/use-user";
-import SearchCommand from "@/components/search-command";
+import SearchCommand from "@/components/dashboard/search-command";
 import { UserProvider, useUserContext } from "@/user-provider";
 import { useEffect } from "react";
 

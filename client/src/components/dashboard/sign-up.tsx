@@ -13,7 +13,7 @@ import { useUserContext } from "@/user-provider";
 import { ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { LanguageSwitch } from "@/components/language-switch";
+import { LanguageSwitch } from "@/components/dashboard/language-switch";
 
 export default function SignUp() {
   const { language } = useUserContext();

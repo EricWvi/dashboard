@@ -41,7 +41,7 @@ import {
   TextCursorInput,
   Trash2,
 } from "lucide-react";
-import { useKanbanContext } from "@/components/kanban";
+import { useKanbanContext } from "@/components/dashboard/todo/kanban";
 import { dateString } from "@/lib/utils";
 import {
   type Task,
@@ -60,7 +60,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import { useIsMobile } from "@/hooks/use-mobile";
-import PopoverText from "@/components/popovertext";
+import PopoverText from "@/components/dashboard/todo/popovertext";
 
 export default function KanbanRender({ data }: { data: KanbanObj }) {
   const { language } = useUserContext();

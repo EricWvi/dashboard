@@ -9,7 +9,6 @@ async function throwIfResNotOk(res: Response) {
 
 export async function getRequest(
   url: string,
-  token: string = "", // TODO remove token param
   retries = 3,
   baseTimeout = 2000,
   maxTimeout = 10000,

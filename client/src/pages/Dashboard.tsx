@@ -1,5 +1,5 @@
-import QuickNoteList from "@/components/quick-note";
-import { Profile } from "@/components/profile";
+import QuickNoteList from "@/components/dashboard/quick-note";
+import { Profile } from "@/components/dashboard/profile";
 import { TodayTodoList } from "@/components/todo/todo-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";

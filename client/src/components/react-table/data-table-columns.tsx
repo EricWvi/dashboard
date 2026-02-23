@@ -54,7 +54,7 @@ import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
-import WatchReview from "@/components/watch-review";
+import WatchReview from "@/components/dashboard/journey/watch-review";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState } from "react";
 

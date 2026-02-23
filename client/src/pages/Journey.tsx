@@ -14,10 +14,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWatches, WatchStatus } from "@/hooks/use-watches";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
-import { WatchingList } from "@/components/watching-list";
+import { WatchingList } from "@/components/dashboard/journey/watching-list";
 import { Package2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import DroppedList from "@/components/dropped-watch";
+import DroppedList from "@/components/dashboard/journey/dropped-watch";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 

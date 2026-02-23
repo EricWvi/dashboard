@@ -34,8 +34,7 @@ client/src/
 │   │   ├── query-keys.ts           # React Query cache keys
 │   │   ├── use-app-state.ts        # Zustand store
 │   │   ├── use-cards.ts            # Card CRUD operations hook
-│   │   └── use-folders.ts          # Folder CRUD operations hook
-│   ├── tiptap/
+│   │   ├── use-folders.ts          # Folder CRUD operations hook
 │   │   └── use-tiptapv2.ts         # TipTap document operations hook
 │   ├── use-mobile.ts               # Mobile/desktop detection hook
 │   ├── use-throttled-callback.ts   # Performance optimization hook

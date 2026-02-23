@@ -45,7 +45,7 @@ import { Slot } from "@radix-ui/react-slot";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { useComposedRefs } from "@/lib/compose-refs";
+import { useComposedRefs } from "@/lib/dashboard/compose-refs";
 import { cn } from "@/lib/utils";
 
 const directions: string[] = [

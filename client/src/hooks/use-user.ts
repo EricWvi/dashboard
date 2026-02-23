@@ -39,7 +39,7 @@ export const UserQueryOptions = {
     try {
       const response = await getRequest(
         "/api/user?Action=GetUser",
-        localStorage.getItem("onlyTokenString") || crypto.randomUUID(),
+        // localStorage.getItem("onlyTokenString") || crypto.randomUUID(),
       );
       const data = await response.json();
       localStorage.setItem("onlyTokenString", data.message.session);
@@ -76,7 +76,7 @@ export function useMailCount() {
     queryFn: async () => {
       const response = await getRequest(
         "/api/user?Action=GetQQMailCount",
-        "",
+        // "",
         3,
         4000,
         5000,

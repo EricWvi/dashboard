@@ -40,7 +40,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import PopoverText from "@/components/popovertext";
+import PopoverText from "@/components/dashboard/todo/popovertext";
 import {
   Popover,
   PopoverContent,
@@ -77,13 +77,13 @@ import {
   fullDateString,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
-import { useKanbanContext } from "@/components/kanban";
+import { useKanbanContext } from "@/components/dashboard/todo/kanban";
 import { createTiptap } from "@/hooks/use-draft";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { createKanban } from "@/hooks/use-kanban";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BasicCannon, CannonMix, SchoolPride } from "@/lib/confetti";
+import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 
