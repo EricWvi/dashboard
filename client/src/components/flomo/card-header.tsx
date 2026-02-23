@@ -14,6 +14,7 @@ import { UserLangEnum } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import { useUserContextV2 } from "@/user-provider";
 import { Fragment } from "react";
+import { HeaderArchiveWave } from "./archive-decoration";
 
 interface CardHeaderProps {
   currentFolderId: string;
@@ -29,7 +30,7 @@ export function CardHeader({ currentFolderId }: CardHeaderProps) {
     const filteredPath = index !== -1 ? path!.slice(index) : path;
 
     return (
-      <header className="flex h-16 shrink-0 items-center gap-2">
+      <header className="relative flex h-16 shrink-0 items-center gap-2">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
@@ -71,6 +72,7 @@ export function CardHeader({ currentFolderId }: CardHeaderProps) {
             </BreadcrumbList>
           </Breadcrumb>
         </div>
+        <HeaderArchiveWave />
       </header>
     );
   }

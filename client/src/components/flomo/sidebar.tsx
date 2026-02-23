@@ -10,10 +10,11 @@ import {
 } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { FlomoLogo, FlomoText } from "./icons";
+import { SidebarArchiveWave } from "./archive-decoration";
 import { Search } from "lucide-react";
 
 export function AppSidebar() {
-  const { currentFolderId } = useAppState();
+  const { currentFolderId, isArchiveMode } = useAppState();
   if (currentFolderId === undefined) {
     return null;
   }
@@ -35,6 +36,7 @@ export function AppSidebar() {
             <Search className="size-4 stroke-[2.5]" />
           </div>
         </div>
+        {isArchiveMode && <SidebarArchiveWave />}
       </SidebarHeader>
       <SidebarContent>
         <NavFolders currentFolderId={currentFolderId} />
