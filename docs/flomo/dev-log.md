@@ -2,16 +2,16 @@
 
 ## 2026-02-23: Archive mode visual decorations
 
-Added warm-toned wavy SVG decorations to the sidebar header and card header when archive mode is active, providing a clear visual cue that the user is browsing archived content.
+Added a warm-toned frame overlay around the entire viewport when archive mode is active, providing a clear visual cue that the user is browsing archived content.
 
 **Files changed:**
-- `client/src/components/flomo/archive-decoration.tsx` — New file with `SidebarArchiveWave` and `HeaderArchiveWave` components
-- `client/src/components/flomo/sidebar.tsx` — Conditionally renders `SidebarArchiveWave` inside `SidebarHeader` when `isArchiveMode` is true
-- `client/src/components/flomo/card-header.tsx` — Renders `HeaderArchiveWave` at the bottom edge of the header in archive mode
+- `client/src/components/flomo/archive-decoration.tsx` — New file with `ArchiveFrame` component using box-shadow cutout technique
+- `client/src/pages/Flomo.tsx` — Conditionally renders `ArchiveFrame` when `isArchiveMode` is true
+- `client/src/index.css` — Added `--archive-frame` CSS variable for light/dark theme colors
 
 **Design notes:**
-- Two overlapping wavy curves in the sidebar (amber-600 + yellow-700) for a ribbon-like effect
-- Single wavy curve in the card header for subtlety
-- Colors use warm amber/yellow tones matching the existing `text-yellow-700 dark:text-yellow-600` palette
-- Reduced opacity ensures harmony with both light and dark backgrounds
-- Decorations are hidden via `aria-hidden="true"` for accessibility
+- Full-viewport fixed overlay with `pointer-events-none` (no layout shift, no interaction blocking)
+- Box-shadow cutout technique: inner `div` at `inset-1` (4px) with `rounded-lg` casts a 9999px outward shadow, creating a colored frame with inner rounded corners and straight outer edges
+- Colors via `--archive-frame` CSS variable: `rgba(180, 83, 9, 0.13)` for light, `rgba(217, 119, 6, 0.10)` for dark
+- `aria-hidden="true"` for accessibility
+- `sidebar.tsx` and `card-header.tsx` remain untouched

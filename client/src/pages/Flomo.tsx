@@ -4,6 +4,8 @@ import { SyncManager, getSyncManager } from "@/lib/flomo/sync-manager";
 import { AppSidebar } from "@/components/flomo/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CardContent } from "@/components/flomo/card-content";
+import { ArchiveFrame } from "@/components/flomo/archive-decoration";
+import { useAppState } from "@/hooks/flomo/use-app-state";
 
 export default function Flomo() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -56,6 +58,13 @@ export default function Flomo() {
           <CardContent />
         </SidebarInset>
       </SidebarProvider>
+      <FlomoArchiveFrame />
     </div>
   );
+}
+
+function FlomoArchiveFrame() {
+  const { isArchiveMode } = useAppState();
+  if (!isArchiveMode) return null;
+  return <ArchiveFrame />;
 }
