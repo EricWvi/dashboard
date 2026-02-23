@@ -2,8 +2,8 @@ import {
   BadgeCheck,
   Bell,
   ChevronsUpDown,
+  CloudUpload,
   CreditCard,
-  LogOut,
   Sparkles,
 } from "lucide-react";
 
@@ -23,6 +23,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useUserContextV2 } from "@/user-provider";
+import { getSyncManager } from "@/lib/flomo/sync-manager";
 
 const user = {
   name: "shadcn",
@@ -32,6 +34,14 @@ const user = {
 
 export function NavTabs() {
   const { isMobile } = useSidebar();
+  // const { user } = useUserContextV2();
+
+  const pushLocalDataToServer = () => {
+    const manager = getSyncManager();
+    manager.pushLocalData().catch((error) => {
+      console.error("Error pushing local data:", error);
+    });
+  };
 
   return (
     <SidebarMenu>
@@ -94,9 +104,9 @@ export function NavTabs() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
+            <DropdownMenuItem onClick={pushLocalDataToServer}>
+              <CloudUpload />
+              Push
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

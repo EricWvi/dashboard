@@ -26,8 +26,8 @@ type MetaField struct {
 
 type MetaFieldV2 struct {
 	Id            uuid.UUID `gorm:"primarykey" json:"id"`
-	CreatedAt     int64     `json:"createdAt"`
-	UpdatedAt     int64     `json:"updatedAt"`
+	CreatedAt     int64     `gorm:"autoUpdateTime:false" json:"createdAt"`
+	UpdatedAt     int64     `gorm:"autoUpdateTime:false" json:"updatedAt"`
 	ServerVersion int64     `json:"serverVersion"`
 	IsDeleted     bool      `json:"isDeleted"`
 	CreatorId     uint      `gorm:"column:creator_id;not null" json:"creatorId"`

@@ -9,7 +9,6 @@ import (
 
 type UserV2 struct {
 	Id         uint   `gorm:"primarykey"`
-	Email      string `gorm:"size:100;uniqueIndex;not null"`
 	RssToken   string `gorm:"column:rss_token;size:255" json:"rssToken"`
 	EmailToken string `gorm:"column:email_token;size:255" json:"emailToken"`
 	EmailFeed  string `gorm:"column:email_feed;size:255" json:"emailFeed"`
@@ -20,6 +19,7 @@ type UserV2View struct {
 	UpdatedAt     int64  `json:"updatedAt"`
 	ServerVersion int64  `json:"serverVersion"`
 	Avatar        string `gorm:"size:1024" json:"avatar"`
+	Email         string `gorm:"size:100;uniqueIndex;not null"`
 	Username      string `gorm:"size:255" json:"username"`
 	Language      string `gorm:"column:language;size:10;default:'zh-CN';not null" json:"language"`
 }
@@ -100,7 +100,8 @@ func GetRssTokenV2(db *gorm.DB, where map[string]any) (string, error) {
 }
 
 func CreateUserV2(db *gorm.DB, email string) (uint, error) {
-	user := UserV2{Email: email}
+	user := UserV2{}
+	user.Email = email
 	if err := db.Create(&user).Error; err != nil {
 		return 0, errors.New("failed to create user: " + err.Error())
 	}

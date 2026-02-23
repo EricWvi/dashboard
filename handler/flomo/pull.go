@@ -114,8 +114,8 @@ type PullRequest struct {
 
 type PullResponse struct {
 	ServerVersion int64              `json:"serverVersion"`
-	User          []model.UserV2View `json:"user"`
-	Card          []model.Card       `json:"card"`
-	Folder        []model.Folder     `json:"folder"`
-	Tiptap        []model.TiptapV2   `json:"tiptap"`
+	User          []model.UserV2View `json:"users"`
+	Card          []model.Card       `json:"cards"`
+	Folder        []model.Folder     `json:"folders"`
+	Tiptap        []model.TiptapV2   `json:"tiptaps"`
 }

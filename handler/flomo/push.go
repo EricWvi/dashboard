@@ -16,7 +16,7 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 
 	var wg sync.WaitGroup
 	var pushErr error
-	errChan := make(chan error, 3) // Buffer for up to 4 entity types
+	errChan := make(chan error, 3) // Buffer for up to 3 entity types
 
 	// Process cards in parallel
 	if len(req.Card) > 0 {
@@ -144,9 +144,9 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 }
 
 type PushRequest struct {
-	Card   []model.Card     `json:"card"`
-	Folder []model.Folder   `json:"folder"`
-	Tiptap []model.TiptapV2 `json:"tiptap"`
+	Card   []model.Card     `json:"cards"`
+	Folder []model.Folder   `json:"folders"`
+	Tiptap []model.TiptapV2 `json:"tiptaps"`
 }
 
 type PushResponse struct {

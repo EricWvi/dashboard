@@ -234,6 +234,19 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     return { cards, folders, tiptaps };
   }
 
+  async getLocalDataForSync(): Promise<{
+    cards: Card[];
+    folders: Folder[];
+    tiptaps: TiptapV2[];
+  }> {
+    const [cards, folders, tiptaps] = await Promise.all([
+      this.db.cards.toArray(),
+      this.db.folders.toArray(),
+      this.db.tiptaps.toArray(),
+    ]);
+    return { cards, folders, tiptaps };
+  }
+
   async getSyncMeta(key: string): Promise<SyncMeta | undefined> {
     return this.db.syncMeta.get(key);
   }

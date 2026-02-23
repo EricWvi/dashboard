@@ -1,20 +1,9 @@
 import { FlomoLogo } from "@/components/flomo/icons";
 import { useEffect, useState, useRef } from "react";
-import { SyncManager } from "@/lib/flomo/sync-manager";
-import { flomoDatabase } from "@/lib/flomo/db-interface";
+import { SyncManager, getSyncManager } from "@/lib/flomo/sync-manager";
 import { AppSidebar } from "@/components/flomo/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CardContent } from "@/components/flomo/card-content";
-
-// Create singleton sync manager
-let syncManager: SyncManager | null = null;
-
-function getSyncManager() {
-  if (!syncManager) {
-    syncManager = new SyncManager(flomoDatabase);
-  }
-  return syncManager;
-}
 
 export default function Flomo() {
   const [isInitializing, setIsInitializing] = useState(true);

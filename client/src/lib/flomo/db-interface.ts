@@ -57,6 +57,11 @@ export interface IFlomoDatabase {
     folders: Folder[];
     tiptaps: TiptapV2[];
   }>;
+  getLocalDataForSync(): Promise<{
+    cards: Card[];
+    folders: Folder[];
+    tiptaps: TiptapV2[];
+  }>;
   getSyncMeta(key: string): Promise<SyncMeta | undefined>;
   setSyncMeta(key: string, value: number | string): Promise<void>;
   getLastServerVersion(): Promise<number>;
@@ -212,6 +217,14 @@ export class RefreshDecorator implements IFlomoDatabase {
     tiptaps: TiptapV2[];
   }> {
     return this.baseDb.getPendingChanges();
+  }
+
+  async getLocalDataForSync(): Promise<{
+    cards: Card[];
+    folders: Folder[];
+    tiptaps: TiptapV2[];
+  }> {
+    return this.baseDb.getLocalDataForSync();
   }
 
   async getSyncMeta(key: string): Promise<SyncMeta | undefined> {

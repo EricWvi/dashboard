@@ -157,10 +157,10 @@ Retrieves all non-deleted cards, folders, tiptap documents, and user profile. Us
   "code": 200,
   "message": {
     "serverVersion": 10,
-    "user": [...],
-    "card": [...],
-    "folder": [...],
-    "tiptap": [...]
+    "users": [...],
+    "cards": [...],
+    "folders": [...],
+    "tiptaps": [...]
   }
 }
 ```
@@ -185,7 +185,7 @@ Retrieves all changes since a specific server version. Returns user profile upda
   "code": 200,
   "message": {
     "serverVersion": 12346,
-    "user": [
+    "users": [
       {
         "serverVersion": 12341,
         "updatedAt": 1707398426630,
@@ -194,7 +194,7 @@ Retrieves all changes since a specific server version. Returns user profile upda
         "language": "zh-CN"
       }
     ],
-    "card": [
+    "cards": [
       {
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "serverVersion": 12345,
@@ -202,7 +202,7 @@ Retrieves all changes since a specific server version. Returns user profile upda
         ...
       }
     ],
-    "folder": [
+    "folders": [
       {
         "id": "660e8400-e29b-41d4-a716-446655440000",
         "serverVersion": 12344,
@@ -210,7 +210,7 @@ Retrieves all changes since a specific server version. Returns user profile upda
         ...
       }
     ],
-    "tiptap": [
+    "tiptaps": [
       {
         "id": "880e8400-e29b-41d4-a716-446655440000",
         "serverVersion": 12346,
@@ -241,19 +241,19 @@ Uploads local changes (creates and updates) to the server. Server performs upser
 
 ```json
 {
-  "user": [...],
-  "card": [...],
-  "folder": [...],
-  "tiptap": [...]
+  "users": [...],
+  "cards": [...],
+  "folders": [...],
+  "tiptaps": [...]
 }
 ```
 
 **Parameters:**
 
-- `user` (array, optional): Array of user objects to upsert
-- `card` (array, optional): Array of card objects to upsert
-- `folder` (array, optional): Array of folder objects to upsert
-- `tiptap` (array, optional): Array of tiptap objects to upsert
+- `users` (array, optional): Array of user objects to upsert
+- `cards` (array, optional): Array of card objects to upsert
+- `folders` (array, optional): Array of folder objects to upsert
+- `tiptaps` (array, optional): Array of tiptap objects to upsert
 
 **Response:**
 

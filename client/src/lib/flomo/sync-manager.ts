@@ -1,15 +1,15 @@
 import { SchemaVersion, type Card, type Folder } from "./model";
 import { type TiptapV2, SyncStatus, type User } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
-import type { IFlomoDatabase } from "./db-interface";
+import { flomoDatabase, type IFlomoDatabase } from "./db-interface";
 
 // API response types
 interface FlomoSyncResponse {
   serverVersion: number;
-  user: Omit<User, "key" | "syncStatus">[];
-  card: Omit<Card, "syncStatus">[];
-  folder: Omit<Folder, "syncStatus">[];
-  tiptap: Omit<TiptapV2, "syncStatus">[];
+  users: Omit<User, "key" | "syncStatus">[];
+  cards: Omit<Card, "syncStatus">[];
+  folders: Omit<Folder, "syncStatus">[];
+  tiptaps: Omit<TiptapV2, "syncStatus">[];
 }
 
 /**
@@ -61,15 +61,15 @@ export class SyncManager {
       // Clear existing data
       await this.db.clearAllData();
 
-      const cards: Card[] = serverData.card.map((card) => ({
+      const cards: Card[] = serverData.cards.map((card) => ({
         ...card,
         syncStatus: SyncStatus.Synced,
       }));
-      const folders: Folder[] = serverData.folder.map((folder) => ({
+      const folders: Folder[] = serverData.folders.map((folder) => ({
         ...folder,
         syncStatus: SyncStatus.Synced,
       }));
-      const tiptaps: TiptapV2[] = serverData.tiptap.map((tiptap) => ({
+      const tiptaps: TiptapV2[] = serverData.tiptaps.map((tiptap) => ({
         ...tiptap,
         syncStatus: SyncStatus.Synced,
       }));
@@ -77,7 +77,7 @@ export class SyncManager {
       // Bulk insert
       await Promise.all([
         this.db.putUser({
-          ...serverData.user[0],
+          ...serverData.users[0],
           syncStatus: SyncStatus.Synced,
         }),
         this.db.putCards(cards),
@@ -89,13 +89,41 @@ export class SyncManager {
       await this.db.setSyncMeta("lastServerVersion", serverData.serverVersion);
 
       console.log(
-        `Full sync complete: ${serverData.user?.length || 0} user, ${cards.length} cards, ${folders.length} folders, ${tiptaps.length} tiptaps`,
+        `Full sync complete: ${serverData.users?.length || 0} user, ${cards.length} cards, ${folders.length} folders, ${tiptaps.length} tiptaps`,
       );
     } catch (error) {
       console.error("Full sync failed:", error);
       throw error;
     } finally {
       this.isSyncing = false;
+    }
+  }
+
+  async pushLocalData(): Promise<void> {
+    try {
+      const allData = await this.db.getLocalDataForSync();
+
+      if (
+        allData.cards.length === 0 &&
+        allData.folders.length === 0 &&
+        allData.tiptaps.length === 0
+      ) {
+        return;
+      }
+
+      // Send to server
+      const response = await postRequest("/api/flomo?Action=Push", allData);
+
+      if (response.ok) {
+        console.log(
+          `Manually pushed ${allData.cards.length} cards, ${allData.folders.length} folders, ${allData.tiptaps.length} tiptaps`,
+        );
+      } else {
+        throw new Error(`Push failed: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error("pushLocalData failed:", error);
+      throw error;
     }
   }
 
@@ -162,10 +190,10 @@ export class SyncManager {
       const serverData = data.message as FlomoSyncResponse;
 
       if (
-        serverData.user.length === 0 &&
-        serverData.card.length === 0 &&
-        serverData.folder.length === 0 &&
-        serverData.tiptap.length === 0
+        serverData.users.length === 0 &&
+        serverData.cards.length === 0 &&
+        serverData.folders.length === 0 &&
+        serverData.tiptaps.length === 0
       ) {
         return;
       }
@@ -174,18 +202,21 @@ export class SyncManager {
       const updates: Array<Promise<void>> = [];
 
       // Handle user data
-      if (serverData.user && serverData.user.length > 0) {
-        const remoteUser = serverData.user[0];
+      let userApplied = 0;
+      if (serverData.users && serverData.users.length > 0) {
+        const remoteUser = serverData.users[0];
         const localUser = await this.db.getUser();
         // Only update if remote is newer or local doesn't exist
         if (!localUser || remoteUser.updatedAt > localUser.updatedAt) {
           updates.push(
             this.db.putUser({ ...remoteUser, syncStatus: SyncStatus.Synced }),
           );
+          userApplied++;
         }
       }
 
-      for (const remoteCard of serverData.card) {
+      let cardApplied = 0;
+      for (const remoteCard of serverData.cards) {
         if (remoteCard.isDeleted) {
           // If server says it's deleted, delete locally
           updates.push(this.db.deleteCard(remoteCard.id));
@@ -201,10 +232,12 @@ export class SyncManager {
               syncStatus: SyncStatus.Synced,
             }),
           );
+          cardApplied++;
         }
       }
 
-      for (const remoteFolder of serverData.folder) {
+      let folderApplied = 0;
+      for (const remoteFolder of serverData.folders) {
         if (remoteFolder.isDeleted) {
           updates.push(this.db.deleteFolder(remoteFolder.id));
           continue;
@@ -218,10 +251,12 @@ export class SyncManager {
               syncStatus: SyncStatus.Synced,
             }),
           );
+          folderApplied++;
         }
       }
 
-      for (const remoteTiptap of serverData.tiptap) {
+      let tiptapApplied = 0;
+      for (const remoteTiptap of serverData.tiptaps) {
         if (remoteTiptap.isDeleted) {
           updates.push(this.db.deleteTiptap(remoteTiptap.id));
           continue;
@@ -235,6 +270,7 @@ export class SyncManager {
               syncStatus: SyncStatus.Synced,
             }),
           );
+          tiptapApplied++;
         }
       }
 
@@ -243,9 +279,16 @@ export class SyncManager {
       // Update last server version
       await this.db.setSyncMeta("lastServerVersion", serverData.serverVersion);
 
-      console.log(
-        `Pulled ${serverData.user?.length || 0} user, ${serverData.card.length} cards, ${serverData.folder.length} folders, ${serverData.tiptap.length} tiptaps`,
-      );
+      if (
+        userApplied > 0 ||
+        cardApplied > 0 ||
+        folderApplied > 0 ||
+        tiptapApplied > 0
+      ) {
+        console.log(
+          `Pulled ${userApplied} user, ${cardApplied} cards, ${folderApplied} folders, ${tiptapApplied} tiptaps`,
+        );
+      }
     } catch (error) {
       console.error("Pull failed:", error);
       throw error;
@@ -306,4 +349,14 @@ export class SyncManager {
       }, this.intervalMs);
     });
   }
+}
+
+// Create singleton sync manager
+let syncManager: SyncManager | null = null;
+
+export function getSyncManager() {
+  if (!syncManager) {
+    syncManager = new SyncManager(flomoDatabase);
+  }
+  return syncManager;
 }

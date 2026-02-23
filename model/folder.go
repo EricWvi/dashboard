@@ -14,7 +14,7 @@ type Folder struct {
 }
 
 type FolderField struct {
-	ParentId uuid.UUID      `gorm:"type:uuid" json:"parentId"`
+	ParentId *uuid.UUID     `gorm:"type:uuid" json:"parentId"`
 	Title    string         `gorm:"type:varchar(1024);not null" json:"title"`
 	Payload  datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	// CreatorId is inherited from MetaFieldV2

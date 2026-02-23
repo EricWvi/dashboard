@@ -37,6 +37,7 @@ export const UserLangEnum: {
 
 export interface UserField {
   username: string;
+  email: string;
   avatar: string;
   language: UserLang;
 }
