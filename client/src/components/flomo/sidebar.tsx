@@ -1,5 +1,3 @@
-import { Command } from "lucide-react";
-
 import { NavFolders } from "./nav-folders";
 import { NavCards } from "./nav-cards";
 import { NavAdds } from "./nav-adds";
@@ -9,11 +7,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
+import { FlomoLogo, FlomoText } from "./icons";
+import { Search } from "lucide-react";
 
 export function AppSidebar() {
   const { currentFolderId } = useAppState();
@@ -24,21 +21,20 @@ export function AppSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
-                  <span className="truncate text-xs">Enterprise</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center">
+            <div className="size-8 rounded-lg">
+              <FlomoLogo />
+            </div>
+            <div className="fill-foreground h-4">
+              <FlomoText />
+            </div>
+          </div>
+
+          <div className="hover:bg-emoji-accent cursor-pointer rounded-md p-2">
+            <Search className="size-4 stroke-[2.5]" />
+          </div>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <NavFolders currentFolderId={currentFolderId} />
