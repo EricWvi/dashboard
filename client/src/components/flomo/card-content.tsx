@@ -1,11 +1,18 @@
 import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useDraft } from "@/hooks/flomo/use-tiptapv2";
+import { SimpleEditor } from "../tiptap-editor/simple-editor";
 
 export function CardContent() {
+  const { activeTabId } = useAppState();
+  const { data: draft } = useDraft(activeTabId || "");
+
+  if (!draft) {
+    return null;
+  }
+
   return (
     <div className="transform-gpu">
-      <div className="min-h-[100vh] shrink-0 rounded-xl bg-red-200" />
-      <div className="min-h-[100vh] shrink-0 rounded-xl bg-blue-200" />
-      <div className="min-h-[100vh] shrink-0 rounded-xl bg-green-200" />
+      <SimpleEditor draft={draft} onClose={() => {}} />
     </div>
   );
 }
