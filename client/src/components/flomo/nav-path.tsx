@@ -1,10 +1,3 @@
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
@@ -12,7 +5,6 @@ import { ArchiveFolderId, RootFolderId } from "@/lib/flomo/model";
 import { UserLangEnum } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import { useUserContextV2 } from "@/user-provider";
-import { Fragment, useEffect, useRef } from "react";
 
 interface NavPathProps {
   currentFolderId: string;
@@ -23,17 +15,6 @@ export function NavPath({ currentFolderId }: NavPathProps) {
   const { data: path } = useFolderPath(currentFolderId);
   const { isArchiveMode, setCurrentFolderId } = useAppState();
 
-  const scrollRef = useRef<HTMLOListElement>(null);
-  useEffect(() => {
-    if (scrollRef.current) {
-      const container = scrollRef.current;
-      container.scrollTo({
-        left: container.scrollWidth, // 滚向最右侧
-        behavior: "smooth",
-      });
-    }
-  }, [path]);
-
   if (isArchiveMode) {
     const index = path?.findIndex((f) => f.isArchived === 1) ?? -1;
     const filteredPath = index !== -1 ? path!.slice(index) : path;
@@ -41,43 +22,33 @@ export function NavPath({ currentFolderId }: NavPathProps) {
     return (
       <SidebarGroup>
         <SidebarMenu>
-          <Breadcrumb>
-            <BreadcrumbList
-              ref={scrollRef}
-              className="flex-nowrap overflow-x-auto whitespace-nowrap"
+          <div className="flex flex-col">
+            <div
+              className={cn(
+                "cursor-pointer text-sm",
+                currentFolderId === ArchiveFolderId
+                  ? "font-medium"
+                  : "text-muted-foreground",
+              )}
+              onClick={() => setCurrentFolderId(ArchiveFolderId)}
             >
-              <BreadcrumbItem
-                className="hidden cursor-pointer md:block"
-                onClick={() => setCurrentFolderId(ArchiveFolderId)}
-              >
-                {currentFolderId === ArchiveFolderId ? (
-                  <BreadcrumbPage>{i18nText[language].archived}</BreadcrumbPage>
-                ) : (
-                  i18nText[language].archived
+              {i18nText[language].archived}
+            </div>
+            {filteredPath?.map((segment, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "cursor-pointer border-l-2 border-border ml-1 pl-3 py-1 text-sm",
+                  index === filteredPath.length - 1
+                    ? "font-medium"
+                    : "text-muted-foreground",
                 )}
-              </BreadcrumbItem>
-              {filteredPath?.map((segment, index) => (
-                <Fragment key={index}>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem
-                    className={cn(
-                      "cursor-pointer",
-                      index === filteredPath.length - 1
-                        ? ""
-                        : "hidden md:block",
-                    )}
-                    onClick={() => setCurrentFolderId(segment.id)}
-                  >
-                    {index === filteredPath.length - 1 ? (
-                      <BreadcrumbPage>{segment.title}</BreadcrumbPage>
-                    ) : (
-                      segment.title
-                    )}
-                  </BreadcrumbItem>
-                </Fragment>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
+                onClick={() => setCurrentFolderId(segment.id)}
+              >
+                {segment.title}
+              </div>
+            ))}
+          </div>
         </SidebarMenu>
       </SidebarGroup>
     );
@@ -86,42 +57,32 @@ export function NavPath({ currentFolderId }: NavPathProps) {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        <Breadcrumb>
-          <BreadcrumbList
-            ref={scrollRef}
-            className="flex-nowrap overflow-x-auto whitespace-nowrap"
+        <div className="flex flex-col">
+          <div
+            className={cn(
+              "cursor-pointer text-sm",
+              !path?.length ? "font-medium" : "text-muted-foreground",
+            )}
+            onClick={() => setCurrentFolderId(RootFolderId)}
           >
-            <BreadcrumbItem
-              className="hidden cursor-pointer md:block"
-              onClick={() => setCurrentFolderId(RootFolderId)}
-            >
-              {currentFolderId === RootFolderId ? (
-                <BreadcrumbPage>{i18nText[language].home}</BreadcrumbPage>
-              ) : (
-                i18nText[language].home
+            {i18nText[language].home}
+          </div>
+          {path?.map((segment, index) => (
+            <div
+              key={index}
+              className={cn(
+                "cursor-pointer border-l-2 border-border ml-1 pl-3 py-1 text-sm",
+                index === path.length - 1
+                  ? "font-medium"
+                  : "text-muted-foreground",
               )}
-            </BreadcrumbItem>
-            {path?.map((segment, index) => (
-              <Fragment key={index}>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem
-                  className={cn(
-                    "cursor-pointer",
-                    index === path.length - 1 ? "" : "hidden md:block",
-                  )}
-                  onClick={() => setCurrentFolderId(segment.id)}
-                >
-                  {index === path.length - 1 ? (
-                    <BreadcrumbPage>{segment.title}</BreadcrumbPage>
-                  ) : (
-                    segment.title
-                  )}
-                </BreadcrumbItem>
-              </Fragment>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
-      </SidebarMenu>{" "}
+              onClick={() => setCurrentFolderId(segment.id)}
+            >
+              {segment.title}
+            </div>
+          ))}
+        </div>
+      </SidebarMenu>
     </SidebarGroup>
   );
 }
