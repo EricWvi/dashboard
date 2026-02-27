@@ -1,6 +1,7 @@
 import { FlomoLogo } from "@/components/flomo/icons";
 import { useEffect, useState, useRef } from "react";
 import { SyncManager, getSyncManager } from "@/lib/flomo/sync-manager";
+import { syncEvents } from "@/lib/sync-events";
 import { AppSidebar } from "@/components/flomo/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CardPane } from "@/components/flomo/card-pane";
@@ -10,6 +11,17 @@ import { useAppState } from "@/hooks/flomo/use-app-state";
 export default function Flomo() {
   const [isInitializing, setIsInitializing] = useState(true);
   const syncManagerRef = useRef<SyncManager | null>(null);
+  const invalidateTabInstance = useAppState(
+    (state) => state.invalidateTabInstance,
+  );
+
+  // Subscribe to sync events and invalidate affected tab instances
+  useEffect(() => {
+    const unsubscribe = syncEvents.on((draftId) => {
+      invalidateTabInstance(draftId);
+    });
+    return unsubscribe;
+  }, [invalidateTabInstance]);
 
   useEffect(() => {
     const manager = getSyncManager();
@@ -26,7 +38,7 @@ export default function Flomo() {
           setIsInitializing(false);
         });
       } else {
-        manager.startAutoSync();
+        // manager.startAutoSync();
         setTimeout(() => {
           setIsInitializing(false);
         }, 500);

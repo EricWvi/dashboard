@@ -2,6 +2,7 @@ import { SchemaVersion, type Card, type Folder } from "./model";
 import { type TiptapV2, SyncStatus, type User } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { flomoDatabase, type IFlomoDatabase } from "./db-interface";
+import { syncEvents } from "@/lib/sync-events";
 
 // API response types
 interface FlomoSyncResponse {
@@ -256,6 +257,7 @@ export class SyncManager {
       }
 
       let tiptapApplied = 0;
+      const updatedTiptapIds: string[] = [];
       for (const remoteTiptap of serverData.tiptaps) {
         if (remoteTiptap.isDeleted) {
           updates.push(this.db.deleteTiptap(remoteTiptap.id));
@@ -264,6 +266,7 @@ export class SyncManager {
 
         const localTiptap = await this.db.getTiptap(remoteTiptap.id);
         if (!localTiptap || remoteTiptap.updatedAt > localTiptap.updatedAt) {
+          updatedTiptapIds.push(remoteTiptap.id);
           updates.push(
             this.db.putTiptap({
               ...remoteTiptap,
@@ -275,6 +278,11 @@ export class SyncManager {
       }
 
       await Promise.all(updates);
+
+      // Emit events for updated tiptaps
+      if (updatedTiptapIds.length > 0) {
+        syncEvents.emitMany(updatedTiptapIds);
+      }
 
       // Update last server version
       await this.db.setSyncMeta("lastServerVersion", serverData.serverVersion);

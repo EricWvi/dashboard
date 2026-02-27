@@ -1,4 +1,5 @@
 import { ArchiveFolderId, RootFolderId } from "@/lib/flomo/model";
+import type { EditorState } from "@tiptap/pm/state";
 import { create } from "zustand";
 
 interface EditorTab {
@@ -6,6 +7,7 @@ interface EditorTab {
   draftId: string;
   title: string;
   readMode: boolean;
+  instance: EditorState | null;
 }
 
 interface AppState {
@@ -22,9 +24,15 @@ interface AppState {
   openTab: (tab: EditorTab) => void; // add or focus existing tab
   closeTab: (draftId: string) => void; // remove tab
   setActiveTab: (draftId: string) => void; // switch focus
+  setTabReadMode: (draftId: string, readMode: boolean) => void; // toggle read/edit mode
+  getCurrentInstance: () => EditorState | null; // get editor instance for a tab
+  saveInstance: (draftId: string, instance: EditorState) => void; // update editor instance
+  getTabById: (draftId: string) => EditorTab | undefined; // get tab by draftId
+  invalidateTabInstance: (draftId: string) => void; // mark tab instance as stale, forcing reload from IndexedDB
+  invalidateAllTabs: () => void; // mark all tabs as stale (for full sync)
 }
 
-export const useAppState = create<AppState>((set) => ({
+export const useAppState = create<AppState>((set, get) => ({
   currentFolderId: RootFolderId,
   setCurrentFolderId: (id: string) => set(() => ({ currentFolderId: id })),
 
@@ -61,4 +69,35 @@ export const useAppState = create<AppState>((set) => ({
       };
     }),
   setActiveTab: (draftId: string) => set(() => ({ activeTabId: draftId })),
+  setTabReadMode: (draftId: string, readMode: boolean) =>
+    set((state) => ({
+      openTabs: state.openTabs.map((t) =>
+        t.draftId === draftId ? { ...t, readMode } : t,
+      ),
+    })),
+  getCurrentInstance: () => {
+    const { openTabs, activeTabId } = get();
+    const activeTab = openTabs.find((t) => t.draftId === activeTabId);
+    return activeTab ? activeTab.instance : null;
+  },
+  saveInstance: (draftId: string, instance: EditorState) =>
+    set((state) => ({
+      openTabs: state.openTabs.map((t) =>
+        t.draftId === draftId ? { ...t, instance } : t,
+      ),
+    })),
+  getTabById: (draftId: string) => {
+    const { openTabs } = get();
+    return openTabs.find((t) => t.draftId === draftId);
+  },
+  invalidateTabInstance: (draftId: string) =>
+    set((state) => ({
+      openTabs: state.openTabs.map((t) =>
+        t.draftId === draftId ? { ...t, instance: null } : t,
+      ),
+    })),
+  invalidateAllTabs: () =>
+    set((state) => ({
+      openTabs: state.openTabs.map((t) => ({ ...t, instance: null })),
+    })),
 }));
