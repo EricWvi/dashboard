@@ -64,6 +64,14 @@ export async function syncDraft({
   id: string;
   content: Record<string, unknown>;
 }) {
+  const prev = await flomoDatabase.getTiptap(id);
+  if (prev && prev.history.length === 0) {
+    await flomoDatabase.updateTiptap(id, {
+      content,
+      history: [{ time: prev.updatedAt, content: prev.content }],
+    });
+    return;
+  }
   return flomoDatabase.updateTiptap(id, { content });
 }
 
@@ -79,6 +87,10 @@ export async function saveDraft({
     content,
     history: [{ time: Date.now(), content }, ...(prev?.history || [])],
   });
+}
+
+export async function getContent(id: string) {
+  return flomoDatabase.getTiptap(id);
 }
 
 export async function getHistory(id: string, ts: number) {

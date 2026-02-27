@@ -82,6 +82,16 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
       data: { isArchived: 0 },
     });
   };
+  const openCard = (card: Card) => {
+    // Simply open tab with null instance
+    // Content will be loaded from IndexedDB by EditorProvider
+    openTab({
+      cardId: card.id,
+      draftId: card.draft,
+      title: card.title,
+      readMode: true,
+    });
+  };
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -158,14 +168,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
                 <SidebarMenuButton
                   asChild
                   className="gap-0"
-                  onClick={() =>
-                    openTab({
-                      cardId: card.id,
-                      draftId: card.draft,
-                      title: card.title,
-                      readMode: true,
-                    })
-                  }
+                  onClick={() => openCard(card)}
                 >
                   <div>
                     <EmojiPicker

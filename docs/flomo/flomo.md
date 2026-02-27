@@ -24,6 +24,8 @@ client/src/
 │   │   ├── emoji-picker.tsx        # Emoji Picker for card/folder icon
 │   │   ├── card-content.tsx        # Main content area for the selected folder
 │   │   ├── card-header.tsx         # Header with breadcrumb folder-path navigation
+│   │   ├── card-pane.tsx           #
+│   │   ├── editor-provider.tsx     #
 │   │   ├── nav-folders.tsx         # Sidebar section: subfolders of current folder
 │   │   ├── nav-cards.tsx           # Sidebar section: cards in current folder
 │   │   ├── nav-adds.tsx            # Sidebar section: add-card / add-folder actions
@@ -277,6 +279,50 @@ Dark mode switches automatically via `@media (prefers-color-scheme: dark)`.
 - Button pairs: **Cancel** (outline) + **Confirm / Action** (primary or destructive).
 - Internationalization (i18n): all user-facing strings go through the inline `i18nText` map (Chinese & English).
 
+## Editor Architecture
+
+### Overview
+
+The TipTap editor follows a **single shared instance** model. One `Editor` object is created per `CardPane` and shared to all child components through `EditorContext`. Tab switching is handled by saving/restoring ProseMirror `EditorState` objects rather than destroying and recreating the editor.
+
+### `TiptapProvider` (`editor-provider.tsx`)
+
+The root of the editor subsystem. Rendered by `CardPane` as a wrapper around `CardHeader` and `CardContent`.
+
+Responsibilities:
+
+- Creates the single `Editor` instance via `useSimpleEditor` (configured with all extensions).
+- Exposes the editor to descendants via `EditorContext.Provider` (from `@tiptap/react`).
+- Wires up a **debounced auto-save** (500 ms, via `syncDraft`) that fires on every editor update.
+
+The `EditorState` sub-component (rendered inside `TiptapProvider`, returns `null`) owns all side-effects:
+
+| Effect             | Trigger                                              | Action                                                                                                               |
+| ------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Tab switch         | `activeTabId` changes                                | Flush debounce; save current `EditorState` to `instanceMap`; restore cached state for new tab or load from IndexedDB |
+| Cache invalidation | `instanceMap` entry for `activeTabId` becomes `null` | Reload draft content from IndexedDB                                                                                  |
+
+### `useSimpleEditor` hook (`simple-editor.tsx`)
+
+A thin wrapper around TipTap's `useEditor` that configures all extensions (StarterKit, custom nodes, etc.) and accepts an optional `onUpdate` callback. Used exclusively by `TiptapProvider` to create the shared editor.
+
+### `EditorToolbar` component (`simple-editor.tsx`)
+
+Previously this UI lived inside `SimpleEditor`. It is now a standalone component that reads the shared editor from `EditorContext` via `useTiptapEditor()`. Rendered by `CardHeader` so the toolbar appears in the page header rather than inline with the content.
+
+The toolbar provides:
+
+- Formatting actions (desktop toolbar + mobile toolbar with view switcher)
+- **Save** — calls `saveDraft` and optionally invokes `onClose`
+- **Discard** — reverts to `getInitialContent` and calls `syncDraft` with the original content
+- Keyboard shortcut `Mod+S` to save
+
+### `SimpleEditor` component (`simple-editor.tsx`)
+
+Renders the contenteditable area for the active tab. Reads the editor from `EditorContext`; does **not** instantiate or own the editor itself. Guarded by `activeTabId` in `CardContent` (returns `null` when no tab is active).
+
+---
+
 ## UI Components
 
 ### AppSidebar (`sidebar.tsx`)
@@ -286,15 +332,15 @@ The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Com
 | Section          | Component    | Description                                                                                                                                                               |
 | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Header           | _(static)_   | App branding / logo                                                                                                                                                       |
-| Content – top    | `NavPath`    | Tree-style path navigator showing the ancestry from root (or archive root) to the current folder. Each node is clickable and calls `setCurrentFolderId`.                 |
+| Content – top    | `NavPath`    | Tree-style path navigator showing the ancestry from root (or archive root) to the current folder. Each node is clickable and calls `setCurrentFolderId`.                  |
 | Content – upper  | `NavFolders` | Lists subfolders of the current folder, sorted alphabetically. Clicking a folder navigates into it. Each folder has a context menu with Rename, Move, and Delete actions. |
 | Content – middle | `NavCards`   | Lists cards in the current folder, sorted newest-first. Each card has a context menu with Rename, Move, and Delete actions.                                               |
 | Content – bottom | `NavAdds`    | Add-card and add-folder action buttons that open dialogs.                                                                                                                 |
-| Footer           | `NavTabs`    | Switch between currently opened editors.                                                                                                                                  |
+| Footer           | `NavTabs`    | Dropdown showing open editor tabs. Each entry displays an eye (`Eye`) or pen (`PenLine`) icon to indicate read/edit mode, and clicking it switches the active tab.        |
 
 ### CardContent (`card-content.tsx`)
 
-The main content pane rendered inside `SidebarInset`.
+The main content pane rendered inside `SidebarInset`. Guards on `activeTabId` — returns `null` when no tab is open. Renders `<SimpleEditor />` which reads the shared editor from context.
 
 ### NavPath (`nav-path.tsx`)
 
@@ -302,7 +348,7 @@ A sidebar section rendered at the top of the `AppSidebar` content area. Displays
 
 ### CardHeader (`card-header.tsx`)
 
-Sticky header inside the content pane. Shows the sidebar trigger and a separator. Path navigation has been moved to `NavPath` in the sidebar.
+Sticky header inside the content pane. Guards on `activeTabId` — returns `null` when no tab is open. Shows the sidebar trigger, a separator, and `<EditorToolbar />` so all formatting actions are accessible from the top of the viewport.
 
 ### NavFolders (`nav-folders.tsx`)
 
@@ -326,6 +372,8 @@ Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` 
 | Archive | fire directly      | Sets `isArchived = 1` via `useUpdateCard`. Archived cards are hidden from normal listing. |
 | Delete  | `DeleteCardDialog` | Confirmation dialog. Calls `useDeleteCard`.                                               |
 
+Clicking a card calls `openCard`, which opens an editor tab without passing content — content loading is fully delegated to `TiptapProvider` (either from the `instanceMap` cache or from IndexedDB).
+
 The Move dialogs for both folders and cards share the same UX pattern: a horizontally scrollable breadcrumb trail (auto-scrolls to the rightmost segment) and a scrollable folder list fetched on-the-fly via `flomoDatabase.getFoldersInParent`.
 
 ### NavAdds (`nav-adds.tsx`)
@@ -343,20 +391,49 @@ Both dialogs support IME composition (CJK input) via `onCompositionStart`/`onCom
 
 File: `client/src/hooks/flomo/use-app-state.ts`
 
-A global Zustand store that tracks the currently focused folder as the user navigates the sidebar.
+A global Zustand store that covers navigation state, open editor tabs, and the editor instance cache.
 
 ```typescript
 interface AppState {
+  // Navigation
   currentFolderId: string;
   setCurrentFolderId: (id: string) => void;
 
   isArchiveMode: boolean;
   enterArchiveMode: () => void;
   exitArchiveMode: () => void;
+
+  // Editor tabs
+  openTabs: EditorTab[];
+  activeTabId: string | null; // draftId of focused tab
+  openTab: (tab: EditorTab) => void; // add or focus existing tab
+  closeTab: (draftId: string) => void; // remove tab
+  setActiveTab: (draftId: string) => void; // switch focus
+  getTabById: (draftId: string) => EditorTab | undefined; // get tab by draftId
+  setTabReadMode: (draftId: string, readMode: boolean) => void; // toggle read/edit mode
+
+  instanceMap: Record<string, EditorState | null>; // Map of draftId to editor instance
+  getCurrentInstance: () => EditorState | null; // get editor instance for a tab
+  invalidateTabInstance: (draftId: string) => void; // mark tab instance as stale, forcing reload from IndexedDB
+  saveInstance: (draftId: string, instance: EditorState) => void; // update editor instance
+  invalidateAllTabs: () => void; // mark all tabs as stale (for full sync)
+
+  initialContentMap: Record<string, Record<string, unknown> | null>; // Map of draftId to initial content
+  setInitialContent: (
+    draftId: string,
+    content: Record<string, unknown>,
+  ) => void; // set initial content for a tab (used when opening a card)
+  getInitialContent: (draftId: string) => Record<string, unknown> | null; // get initial content for a tab
 }
 ```
 
-`currentFolderId` is initialised to `RootFolderId` (the virtual root). `isArchiveMode` controls whether the sidebar and content area show archived or regular cards/folders. Components read and update these values to drive the navigation state.
+`currentFolderId` is initialised to `RootFolderId` (the virtual root). `isArchiveMode` controls whether the sidebar and content area show archived or regular cards/folders.
+
+`instanceMap` is the key to fast tab switching: when the user leaves a tab, its live `EditorState` (including cursor position, selection, undo history) is serialised into the map. When returning to that tab, the state is restored synchronously with `editor.view.updateState()`. A `null` entry means the tab must reload from IndexedDB.
+
+`initialContentMap` stores the JSON content as it was when a draft was first loaded into the editor, enabling the **Discard** action to revert cleanly without a round-trip to the server.
+
+Closing a tab removes its entries from both `instanceMap` and `initialContentMap` to avoid memory leaks.
 
 ## Development
 

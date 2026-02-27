@@ -1,4 +1,5 @@
 import { ArchiveFolderId, RootFolderId } from "@/lib/flomo/model";
+import type { EditorState } from "@tiptap/pm/state";
 import { create } from "zustand";
 
 interface EditorTab {
@@ -9,6 +10,7 @@ interface EditorTab {
 }
 
 interface AppState {
+  // Navigation
   currentFolderId: string;
   setCurrentFolderId: (id: string) => void;
 
@@ -22,9 +24,24 @@ interface AppState {
   openTab: (tab: EditorTab) => void; // add or focus existing tab
   closeTab: (draftId: string) => void; // remove tab
   setActiveTab: (draftId: string) => void; // switch focus
+  getTabById: (draftId: string) => EditorTab | undefined; // get tab by draftId
+  setTabReadMode: (draftId: string, readMode: boolean) => void; // toggle read/edit mode
+
+  instanceMap: Record<string, EditorState | null>; // Map of draftId to editor instance
+  getCurrentInstance: () => EditorState | null; // get editor instance for a tab
+  invalidateTabInstance: (draftId: string) => void; // mark tab instance as stale, forcing reload from IndexedDB
+  saveInstance: (draftId: string, instance: EditorState) => void; // update editor instance
+  invalidateAllTabs: () => void; // mark all tabs as stale (for full sync)
+
+  initialContentMap: Record<string, Record<string, unknown> | null>; // Map of draftId to initial content
+  setInitialContent: (
+    draftId: string,
+    content: Record<string, unknown>,
+  ) => void; // set initial content for a tab (used when opening a card)
+  getInitialContent: (draftId: string) => Record<string, unknown> | null; // get initial content for a tab
 }
 
-export const useAppState = create<AppState>((set) => ({
+export const useAppState = create<AppState>((set, get) => ({
   currentFolderId: RootFolderId,
   setCurrentFolderId: (id: string) => set(() => ({ currentFolderId: id })),
 
@@ -50,9 +67,16 @@ export const useAppState = create<AppState>((set) => ({
   closeTab: (draftId: string) =>
     set((state) => {
       const newTabs = state.openTabs.filter((t) => t.draftId !== draftId);
+      const newInstanceMap = { ...state.instanceMap };
+      delete newInstanceMap[draftId];
+      const newInitialContentMap = { ...state.initialContentMap };
+      delete newInitialContentMap[draftId];
+
       const isActiveClosed = state.activeTabId === draftId;
       return {
         openTabs: newTabs,
+        instanceMap: newInstanceMap,
+        initialContentMap: newInitialContentMap,
         activeTabId: isActiveClosed
           ? newTabs.length > 0
             ? newTabs[newTabs.length - 1].draftId // Focus last tab if active closed
@@ -61,4 +85,48 @@ export const useAppState = create<AppState>((set) => ({
       };
     }),
   setActiveTab: (draftId: string) => set(() => ({ activeTabId: draftId })),
+  getTabById: (draftId: string) => {
+    const { openTabs } = get();
+    return openTabs.find((t) => t.draftId === draftId);
+  },
+  setTabReadMode: (draftId: string, readMode: boolean) =>
+    set((state) => ({
+      openTabs: state.openTabs.map((t) =>
+        t.draftId === draftId ? { ...t, readMode } : t,
+      ),
+    })),
+
+  instanceMap: {},
+  getCurrentInstance: () => {
+    const { instanceMap, activeTabId } = get();
+    return activeTabId ? instanceMap[activeTabId] || null : null;
+  },
+  saveInstance: (draftId: string, instance: EditorState) =>
+    set((state) => ({
+      instanceMap: {
+        ...state.instanceMap,
+        [draftId]: instance,
+      },
+    })),
+  invalidateTabInstance: (draftId: string) =>
+    set((state) => ({
+      instanceMap: {
+        ...state.instanceMap,
+        [draftId]: null,
+      },
+    })),
+  invalidateAllTabs: () => set(() => ({ instanceMap: {} })),
+
+  initialContentMap: {},
+  setInitialContent: (draftId: string, content: Record<string, unknown>) =>
+    set((state) => ({
+      initialContentMap: {
+        ...state.initialContentMap,
+        [draftId]: content,
+      },
+    })),
+  getInitialContent: (draftId: string) => {
+    const { initialContentMap } = get();
+    return initialContentMap[draftId] || null;
+  },
 }));

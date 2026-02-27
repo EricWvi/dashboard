@@ -85,9 +85,11 @@ import { useEffect, useRef } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserLangEnum, type TiptapV2 } from "@/lib/model";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { saveDraft, syncDraft, useDraft } from "@/hooks/flomo/use-tiptapv2";
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
+import { useAppState } from "@/hooks/flomo/use-app-state";
 
 const MainToolbarContent = ({
   editor,
@@ -238,28 +240,12 @@ const MobileToolbarContent = ({
   </>
 );
 
-export function SimpleEditor({
-  draft,
-  onClose,
-}: {
-  draft: TiptapV2;
-  onClose: (e: Editor, changed: boolean) => void;
-}) {
+export const useSimpleEditor = (
+  onUpdate?: (props: { editor: Editor }) => void,
+) => {
   const { language } = useUserContextV2();
-  const isChanged = useRef(false);
-  const isDirtyRef = useRef(false);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const isMobile = useIsMobile();
-  const [mobileView, setMobileView] = React.useState<
-    "main" | "highlighter" | "link"
-  >("main");
-  const toolbarRef = React.useRef<HTMLDivElement>(null);
-
-  const editor = useEditor({
-    immediatelyRender: false,
-    shouldRerenderOnTransaction: false,
+  return useEditor({
+    editable: true,
     editorProps: {
       attributes: {
         autocomplete: "off",
@@ -286,12 +272,22 @@ export function SimpleEditor({
           }),
       }),
     ],
-    content: draft.content,
-    onUpdate: () => {
-      isDirtyRef.current = true;
-      isChanged.current = true;
-    },
+    onUpdate: onUpdate,
   });
+};
+
+export function EditorToolbar({
+  onClose,
+}: {
+  onClose?: (e: Editor, changed: boolean) => void;
+}) {
+  const { activeTabId: draftId, getInitialContent } = useAppState();
+
+  const { editor } = useTiptapEditor();
+  const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = React.useState<
+    "main" | "highlighter" | "link"
+  >("main");
 
   React.useEffect(() => {
     if (!isMobile && mobileView !== "main") {
@@ -299,22 +295,66 @@ export function SimpleEditor({
     }
   }, [isMobile, mobileView]);
 
-  useEffect(() => {
+  const handleSave = () => {
     if (editor) {
-      // sync every second
-      const interval = setInterval(() => {
-        if (isDirtyRef.current) {
-          syncDraft({
-            id: draft.id,
-            content: editor.getJSON(),
-          }).then(() => {
-            isDirtyRef.current = false;
-          });
-        }
-      }, 1000);
-      return () => clearInterval(interval);
+      saveDraft({
+        id: draftId!,
+        content: editor.getJSON(),
+      }).then(() => {
+        onClose?.(editor, true);
+      });
     }
+  };
+
+  const handleDrop = async () => {
+    if (editor) {
+      syncDraft({
+        id: draftId!,
+        content: getInitialContent(draftId!) || { type: "doc", content: [] },
+      }).then(() => {
+        onClose?.(editor, false);
+      });
+    }
+  };
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
   }, [editor]);
+
+  if (!editor) return null;
+
+  return (
+    <Toolbar>
+      {mobileView === "main" ? (
+        <MainToolbarContent
+          editor={editor}
+          onHighlighterClick={() => setMobileView("highlighter")}
+          onLinkClick={() => setMobileView("link")}
+          isMobile={isMobile}
+          onSave={handleSave}
+          dropChange={handleDrop}
+          id={draftId!}
+        />
+      ) : (
+        <MobileToolbarContent
+          type={mobileView === "highlighter" ? "highlighter" : "link"}
+          onBack={() => setMobileView("main")}
+        />
+      )}
+    </Toolbar>
+  );
+}
+
+export function SimpleEditor() {
+  const { editor } = useTiptapEditor();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // warning before reload or leave page
   useEffect(() => {
@@ -328,86 +368,26 @@ export function SimpleEditor({
     };
   }, []);
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        handleSave();
-      }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, [editor]);
-
-  const handleSave = async () => {
-    if (editor) {
-      isDirtyRef.current = false;
-      if (isChanged.current) {
-        saveDraft({
-          id: draft.id,
-          content: editor.getJSON(),
-        }).then(() => {
-          onClose(editor, true);
-        });
-      } else {
-        onClose(editor, false);
-      }
-    }
-  };
-
-  const handleDrop = async () => {
-    if (editor) {
-      isDirtyRef.current = false;
-      syncDraft({
-        id: draft.id,
-        content: draft.content,
-      }).then(() => {
-        onClose(editor, false);
-      });
-    }
-  };
+  if (!editor) return null;
 
   return (
-    editor && (
-      <div
-        ref={scrollRef}
-        className="dashboard-editor h-full w-full overflow-auto"
-      >
-        <div className="simple-editor-wrapper">
-          <EditorContext.Provider value={{ editor }}>
-            <Toolbar ref={toolbarRef}>
-              {mobileView === "main" ? (
-                <MainToolbarContent
-                  editor={editor}
-                  onHighlighterClick={() => setMobileView("highlighter")}
-                  onLinkClick={() => setMobileView("link")}
-                  isMobile={isMobile}
-                  onSave={handleSave}
-                  dropChange={handleDrop}
-                  id={draft.id}
-                />
-              ) : (
-                <MobileToolbarContent
-                  type={mobileView === "highlighter" ? "highlighter" : "link"}
-                  onBack={() => setMobileView("main")}
-                />
-              )}
-            </Toolbar>
+    <div
+      ref={scrollRef}
+      className="dashboard-editor h-full w-full overflow-auto"
+    >
+      <div className="simple-editor-wrapper">
+        <EditorContent
+          editor={editor}
+          role="presentation"
+          className="simple-editor-content"
+        />
 
-            <EditorContent
-              editor={editor}
-              role="presentation"
-              className="simple-editor-content"
-            />
-
-            {/* Table of Contents - only show on desktop */}
-            <div className="hidden xl:block">
-              <TableOfContents editor={editor} scrollRef={scrollRef} />
-            </div>
-          </EditorContext.Provider>
+        {/* Table of Contents - only show on desktop */}
+        <div className="hidden xl:block">
+          <TableOfContents editor={editor} scrollRef={scrollRef} />
         </div>
       </div>
-    )
+    </div>
   );
 }
 
@@ -444,8 +424,6 @@ export function ReadOnlyTiptap({
 }) {
   const editor = useEditor({
     editable: false,
-    immediatelyRender: false,
-    shouldRerenderOnTransaction: false,
     editorProps: {
       attributes: {
         autocomplete: "off",
@@ -478,7 +456,7 @@ export function ReadOnlyTiptap({
 
 export function ContentRender({ id }: { id: string }) {
   const isMobile = useIsMobile();
-  const { data: draft, isFetching } = useDraft(id);
+  const { data: draft, isFetching } = useDraft(id); // TODO
   const [showLoading, setShowLoading] = React.useState(true);
   useEffect(() => {
     if (!isFetching) {
@@ -509,7 +487,7 @@ export function ContentRender({ id }: { id: string }) {
 }
 
 export function ContentHTML({ id }: { id: string }) {
-  const { data: draft, isFetching } = useDraft(id);
+  const { data: draft, isFetching } = useDraft(id); // TODO
 
   if (isFetching) return null;
   return (

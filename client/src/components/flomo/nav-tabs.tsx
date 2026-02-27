@@ -4,7 +4,8 @@ import {
   ChevronsUpDown,
   CloudUpload,
   CreditCard,
-  Sparkles,
+  Eye,
+  PenLine,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,7 +32,7 @@ import { useAppState } from "@/hooks/flomo/use-app-state";
 export function NavTabs() {
   const { isMobile } = useSidebar();
   const { user } = useUserContextV2();
-  const { enterArchiveMode } = useAppState();
+  const { openTabs, enterArchiveMode, setActiveTab } = useAppState();
 
   const pushLocalDataToServer = () => {
     const manager = getSyncManager();
@@ -78,13 +79,22 @@ export function NavTabs() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+            {openTabs.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {openTabs.map((tab) => (
+                    <DropdownMenuItem
+                      key={tab.cardId}
+                      onClick={() => setActiveTab(tab.draftId)}
+                    >
+                      {tab.readMode ? <Eye /> : <PenLine />}
+                      {tab.title}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
