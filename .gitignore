@@ -3,3 +3,4 @@ dev-dist
 dist
 client/journal
 client/flomo
+client/src-tauri/target
