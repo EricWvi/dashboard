@@ -1,6 +1,5 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { UserLangEnum } from "@/lib/model";
 import { EditorToolbar } from "@/components/tiptap-editor/simple-editor";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 
@@ -22,12 +21,3 @@ export function CardHeader() {
     </header>
   );
 }
-
-const i18nText = {
-  [UserLangEnum.ZHCN]: {
-    edit: "编辑",
-  },
-  [UserLangEnum.ENUS]: {
-    edit: "Edit",
-  },
-};
