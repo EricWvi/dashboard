@@ -256,7 +256,7 @@ impl FlomoDb {
                 folder_id: row.get(1)?,
                 title: row.get(2)?,
                 draft: row.get(3)?,
-                payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                payload: parse_json_or_empty(&payload_str),
                 raw_text: row.get(5)?,
                 is_bookmarked: row.get(6)?,
                 is_archived: row.get(7)?,
@@ -286,7 +286,7 @@ impl FlomoDb {
                     folder_id: row.get(1)?,
                     title: row.get(2)?,
                     draft: row.get(3)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     raw_text: row.get(5)?,
                     is_bookmarked: row.get(6)?,
                     is_archived: row.get(7)?,
@@ -309,7 +309,7 @@ impl FlomoDb {
                     folder_id: row.get(1)?,
                     title: row.get(2)?,
                     draft: row.get(3)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     raw_text: row.get(5)?,
                     is_bookmarked: row.get(6)?,
                     is_archived: row.get(7)?,
@@ -447,7 +447,7 @@ impl FlomoDb {
                 folder_id: row.get(1)?,
                 title: row.get(2)?,
                 draft: row.get(3)?,
-                payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                payload: parse_json_or_empty(&payload_str),
                 raw_text: row.get(5)?,
                 is_bookmarked: row.get(6)?,
                 is_archived: row.get(7)?,
@@ -474,7 +474,7 @@ impl FlomoDb {
                 id: row.get(0)?,
                 parent_id: row.get(1)?,
                 title: row.get(2)?,
-                payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                payload: parse_json_or_empty(&payload_str),
                 is_bookmarked: row.get(4)?,
                 is_archived: row.get(5)?,
                 created_at: row.get(6)?,
@@ -502,7 +502,7 @@ impl FlomoDb {
                     id: row.get(0)?,
                     parent_id: row.get(1)?,
                     title: row.get(2)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     is_bookmarked: row.get(4)?,
                     is_archived: row.get(5)?,
                     created_at: row.get(6)?,
@@ -523,7 +523,7 @@ impl FlomoDb {
                     id: row.get(0)?,
                     parent_id: row.get(1)?,
                     title: row.get(2)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     is_bookmarked: row.get(4)?,
                     is_archived: row.get(5)?,
                     created_at: row.get(6)?,
@@ -657,7 +657,7 @@ impl FlomoDb {
                 id: row.get(0)?,
                 parent_id: row.get(1)?,
                 title: row.get(2)?,
-                payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                payload: parse_json_or_empty(&payload_str),
                 is_bookmarked: row.get(4)?,
                 is_archived: row.get(5)?,
                 created_at: row.get(6)?,
@@ -682,7 +682,7 @@ impl FlomoDb {
             let is_deleted: i64 = row.get(5)?;
             Ok(TiptapV2 {
                 id: row.get(0)?,
-                content: serde_json::from_str(&content_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                content: parse_json_or_empty(&content_str),
                 history: serde_json::from_str(&history_str).unwrap_or_default(),
                 created_at: row.get(3)?,
                 updated_at: row.get(4)?,
@@ -909,7 +909,7 @@ impl FlomoDb {
                     folder_id: row.get(1)?,
                     title: row.get(2)?,
                     draft: row.get(3)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     raw_text: row.get(5)?,
                     is_bookmarked: row.get(6)?,
                     is_archived: row.get(7)?,
@@ -933,7 +933,7 @@ impl FlomoDb {
                     id: row.get(0)?,
                     parent_id: row.get(1)?,
                     title: row.get(2)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     is_bookmarked: row.get(4)?,
                     is_archived: row.get(5)?,
                     created_at: row.get(6)?,
@@ -955,7 +955,7 @@ impl FlomoDb {
                 let is_deleted: i64 = row.get(5)?;
                 Ok(TiptapV2 {
                     id: row.get(0)?,
-                    content: serde_json::from_str(&content_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    content: parse_json_or_empty(&content_str),
                     history: serde_json::from_str(&history_str).unwrap_or_default(),
                     created_at: row.get(3)?,
                     updated_at: row.get(4)?,
@@ -988,7 +988,7 @@ impl FlomoDb {
                     folder_id: row.get(1)?,
                     title: row.get(2)?,
                     draft: row.get(3)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     raw_text: row.get(5)?,
                     is_bookmarked: row.get(6)?,
                     is_archived: row.get(7)?,
@@ -1012,7 +1012,7 @@ impl FlomoDb {
                     id: row.get(0)?,
                     parent_id: row.get(1)?,
                     title: row.get(2)?,
-                    payload: serde_json::from_str(&payload_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    payload: parse_json_or_empty(&payload_str),
                     is_bookmarked: row.get(4)?,
                     is_archived: row.get(5)?,
                     created_at: row.get(6)?,
@@ -1034,7 +1034,7 @@ impl FlomoDb {
                 let is_deleted: i64 = row.get(5)?;
                 Ok(TiptapV2 {
                     id: row.get(0)?,
-                    content: serde_json::from_str(&content_str).unwrap_or(serde_json::Value::Object(Default::default())),
+                    content: parse_json_or_empty(&content_str),
                     history: serde_json::from_str(&history_str).unwrap_or_default(),
                     created_at: row.get(3)?,
                     updated_at: row.get(4)?,
@@ -1059,7 +1059,7 @@ impl FlomoDb {
             let value_str: String = row.get(1)?;
             Ok(SyncMeta {
                 key: row.get(0)?,
-                value: serde_json::from_str(&value_str).unwrap_or(serde_json::Value::String(value_str.clone())),
+                value: serde_json::from_str(&value_str).unwrap_or(serde_json::Value::String(value_str)),
             })
         })?;
         match rows.next() {
@@ -1109,6 +1109,10 @@ impl FlomoDb {
 }
 
 // --- Helpers ---
+
+fn parse_json_or_empty(s: &str) -> serde_json::Value {
+    serde_json::from_str(s).unwrap_or(serde_json::Value::Object(Default::default()))
+}
 
 fn current_time_ms() -> i64 {
     std::time::SystemTime::now()
