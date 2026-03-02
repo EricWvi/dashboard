@@ -28,24 +28,23 @@ export interface FlomoDB {
   syncMeta: EntityTable<SyncMeta, "key">;
 }
 
-// Database instance
-export const db = new Dexie("FlomoDB") as Dexie & FlomoDB;
-
-// Schema definition
-db.version(SchemaVersion).stores({
-  user: "key",
-  cards: "id, syncStatus, folderId, updatedAt, isBookmarked, isArchived",
-  folders: "id, syncStatus, parentId, updatedAt, isBookmarked, isArchived",
-  tiptaps: "id, syncStatus, updatedAt",
-  syncMeta: "key",
-});
-
 // Dexie implementation
 export class DexieFlomoDatabase implements IFlomoDatabase {
   private db: Dexie & FlomoDB;
 
-  constructor(db: Dexie & FlomoDB) {
-    this.db = db;
+  constructor() {
+    this.db = new Dexie("FlomoDB") as Dexie & FlomoDB;
+    this.initSchema();
+  }
+
+  private initSchema() {
+    this.db.version(SchemaVersion).stores({
+      user: "key",
+      cards: "id, syncStatus, folderId, updatedAt, isBookmarked, isArchived",
+      folders: "id, syncStatus, parentId, updatedAt, isBookmarked, isArchived",
+      tiptaps: "id, syncStatus, updatedAt",
+      syncMeta: "key",
+    });
   }
 
   // User

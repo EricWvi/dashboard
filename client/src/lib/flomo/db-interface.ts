@@ -1,5 +1,6 @@
 import { tiptapRefresh, triggerRefresh } from "@/hooks/flomo/query-keys";
-import { db as DexieDb, DexieFlomoDatabase } from "./dexie";
+import { DexieFlomoDatabase } from "./dexie";
+import { SqliteFlomoDatabase } from "./sqlite";
 import {
   type Card,
   type CardField,
@@ -12,6 +13,7 @@ import {
   type TiptapV2Field,
   type User,
 } from "@/lib/model";
+import { isTauri } from "@/lib/utils";
 
 // Database abstraction interface
 export interface IFlomoDatabase {
@@ -288,9 +290,17 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 }
 
+// Create base database based on runtime environment
+function createBaseDatabase(): IFlomoDatabase {
+  if (isTauri()) {
+    return new SqliteFlomoDatabase();
+  }
+  return new DexieFlomoDatabase();
+}
+
 // Export singleton instance
 export const flomoDatabase: IFlomoDatabase = new RefreshDecorator(
-  new DexieFlomoDatabase(DexieDb),
+  createBaseDatabase(),
   (table, id?: string) => {
     if (table === "tiptap") {
       tiptapRefresh(id!);
