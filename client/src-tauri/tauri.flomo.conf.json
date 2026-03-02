@@ -7,7 +7,8 @@
     "frontendDist": "../flomo",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev:flomo",
-    "beforeBuildCommand": "npm run build:flomo"
+    "beforeBuildCommand": "npm run build:flomo",
+    "features": ["flomo"]
   },
   "app": {
     "windows": [

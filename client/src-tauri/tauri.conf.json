@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "App",
+  "version": "0.1.0",
+  "identifier": "top.onlyquant.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3000"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "App",
+        "width": 800,
+        "height": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}
