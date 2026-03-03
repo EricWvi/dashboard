@@ -8,7 +8,7 @@ WORKDIR /app
 COPY client/package*.json ./client/
 COPY client/patches ./client/patches
 WORKDIR /app/client
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy frontend source and build
 COPY client/ .

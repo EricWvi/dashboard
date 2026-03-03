@@ -26,6 +26,7 @@ export function TiptapProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <EditorTheme />
       <EditorState
         draftIdRef={draftIdRef}
         editor={editor}
@@ -38,6 +39,30 @@ export function TiptapProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const EditorTheme = () => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => setIsDarkMode(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    const initialDarkMode =
+      !!document.querySelector('meta[name="color-scheme"][content="dark"]') ||
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setIsDarkMode(initialDarkMode);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
+
+  return null;
+};
+
 const EditorState = ({
   draftIdRef,
   editor,
@@ -49,6 +74,8 @@ const EditorState = ({
 }) => {
   const {
     activeTabId,
+    openTabs,
+    getTabEditable,
     getCurrentInstance,
     saveInstance,
     instanceMap,
@@ -56,6 +83,7 @@ const EditorState = ({
   } = useAppState();
 
   const [loadingDraftId, setLoadingDraftId] = useState<string | null>(null);
+  const hasEditableTabsRef = useRef(false);
 
   // Load draft content from IndexedDB
   const loadDraftContent = async (draftId: string) => {
@@ -71,11 +99,26 @@ const EditorState = ({
         plugins: editor.state.plugins,
       });
       editor.view.updateState(newState);
+      editor.setEditable(getTabEditable(draftId));
       setInitialContent(draftId, contentJSON);
     } finally {
       setLoadingDraftId(null);
     }
   };
+
+  // warning before reload or leave page
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (hasEditableTabsRef.current) {
+        // Cancel the event as permitted by the standard
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+    };
+  }, []);
 
   // Handle tab switching
   useEffect(() => {
@@ -91,6 +134,7 @@ const EditorState = ({
       // Use cached EditorState, but ensure it's applied after the current render cycle
       setTimeout(() => {
         editor.view.updateState(instance);
+        editor.setEditable(getTabEditable(activeTabId));
       }, 0);
     } else {
       // No cached instance - load from IndexedDB
@@ -109,6 +153,16 @@ const EditorState = ({
       loadDraftContent(activeTabId);
     }
   }, [activeTabId, instanceMap]);
+
+  // Handle editable state changes
+  useEffect(() => {
+    if (activeTabId && draftIdRef.current === activeTabId) {
+      if (editor.isEditable !== getTabEditable(activeTabId)) {
+        editor.setEditable(getTabEditable(activeTabId));
+      }
+    }
+    hasEditableTabsRef.current = openTabs.some((tab) => tab.editable);
+  }, [activeTabId, openTabs]);
 
   return null;
 };

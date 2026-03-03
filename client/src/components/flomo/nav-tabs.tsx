@@ -88,7 +88,7 @@ export function NavTabs() {
                       key={tab.cardId}
                       onClick={() => setActiveTab(tab.draftId)}
                     >
-                      {tab.readMode ? <Eye /> : <PenLine />}
+                      {tab.editable ? <PenLine /> : <Eye />}
                       {tab.title}
                     </DropdownMenuItem>
                   ))}

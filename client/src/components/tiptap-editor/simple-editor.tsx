@@ -205,7 +205,7 @@ const MainToolbarContent = ({
           <Eraser className="size-4" />
         </Button>
         <HistoryPopover id={id} editor={editor} />
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
       </ToolbarGroup>
     </>
   );
@@ -245,7 +245,6 @@ export const useSimpleEditor = (
 ) => {
   const { language } = useUserContextV2();
   return useEditor({
-    editable: true,
     editorProps: {
       attributes: {
         autocomplete: "off",
@@ -355,18 +354,6 @@ export function EditorToolbar({
 export function SimpleEditor() {
   const { editor } = useTiptapEditor();
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // warning before reload or leave page
-  useEffect(() => {
-    const handler = (event: BeforeUnloadEvent) => {
-      // Cancel the event as permitted by the standard
-      event.preventDefault();
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => {
-      window.removeEventListener("beforeunload", handler);
-    };
-  }, []);
 
   if (!editor) return null;
 

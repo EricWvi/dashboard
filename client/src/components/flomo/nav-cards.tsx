@@ -89,7 +89,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
       cardId: card.id,
       draftId: card.draft,
       title: card.title,
-      readMode: true,
+      editable: false,
     });
   };
 

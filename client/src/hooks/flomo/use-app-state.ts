@@ -6,7 +6,7 @@ interface EditorTab {
   cardId: string;
   draftId: string;
   title: string;
-  readMode: boolean;
+  editable: boolean;
 }
 
 interface AppState {
@@ -25,7 +25,8 @@ interface AppState {
   closeTab: (draftId: string) => void; // remove tab
   setActiveTab: (draftId: string) => void; // switch focus
   getTabById: (draftId: string) => EditorTab | undefined; // get tab by draftId
-  setTabReadMode: (draftId: string, readMode: boolean) => void; // toggle read/edit mode
+  getTabEditable: (draftId: string) => boolean; // get read/edit mode for a tab
+  setTabEditable: (draftId: string, editable: boolean) => void; // toggle read/edit mode
 
   instanceMap: Record<string, EditorState | null>; // Map of draftId to editor instance
   getCurrentInstance: () => EditorState | null; // get editor instance for a tab
@@ -89,10 +90,14 @@ export const useAppState = create<AppState>((set, get) => ({
     const { openTabs } = get();
     return openTabs.find((t) => t.draftId === draftId);
   },
-  setTabReadMode: (draftId: string, readMode: boolean) =>
+  getTabEditable: (draftId: string) => {
+    const tab = get().getTabById(draftId);
+    return tab ? tab.editable : false;
+  },
+  setTabEditable: (draftId: string, editable: boolean) =>
     set((state) => ({
       openTabs: state.openTabs.map((t) =>
-        t.draftId === draftId ? { ...t, readMode } : t,
+        t.draftId === draftId ? { ...t, editable } : t,
       ),
     })),
 
