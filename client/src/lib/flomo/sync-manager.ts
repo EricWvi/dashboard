@@ -3,6 +3,7 @@ import { type TiptapV2, SyncStatus, type User } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { flomoDatabase, type IFlomoDatabase } from "./db-interface";
 import { syncEvents } from "@/lib/sync-events";
+import { flomoBaseUrl } from "@/lib/utils";
 
 // API response types
 interface FlomoSyncResponse {
@@ -55,7 +56,7 @@ export class SyncManager {
       console.log("Starting full sync...");
 
       // Fetch all data from server
-      const response = await getRequest("/api/flomo?Action=FullSync");
+      const response = await getRequest(`${flomoBaseUrl()}/api/flomo?Action=FullSync`);
       const data = await response.json();
       const serverData = data.message as FlomoSyncResponse;
 
@@ -113,7 +114,7 @@ export class SyncManager {
       }
 
       // Send to server
-      const response = await postRequest("/api/flomo?Action=Push", allData);
+      const response = await postRequest(`${flomoBaseUrl()}/api/flomo?Action=Push`, allData);
 
       if (response.ok) {
         console.log(
@@ -144,7 +145,7 @@ export class SyncManager {
       }
 
       // Send to server
-      const response = await postRequest("/api/flomo?Action=Push", pending);
+      const response = await postRequest(`${flomoBaseUrl()}/api/flomo?Action=Push`, pending);
 
       if (response.ok) {
         // Mark as synced locally
@@ -185,7 +186,7 @@ export class SyncManager {
 
       // Fetch changes since last version
       const response = await getRequest(
-        `/api/flomo?Action=Pull&since=${lastVersion}`,
+        `${flomoBaseUrl()}/api/flomo?Action=Pull&since=${lastVersion}`,
       );
       const data = await response.json();
       const serverData = data.message as FlomoSyncResponse;

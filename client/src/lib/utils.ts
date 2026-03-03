@@ -10,6 +10,10 @@ export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+export function flomoBaseUrl(): string {
+  return isTauri() ? "https://flomo.io" : "";
+}
+
 export function formatMediaUrl(url: string): string {
   if (url.startsWith("/api/m/")) {
     return url;
