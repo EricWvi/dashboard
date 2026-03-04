@@ -1,3 +1,5 @@
+import { useRef, useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
@@ -48,6 +50,25 @@ export function NavPath({ currentFolderId }: NavPathProps) {
   const { data: path } = useFolderPath(currentFolderId);
   const { isArchiveMode, setCurrentFolderId } = useAppState();
 
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const [measuredHeight, setMeasuredHeight] = useState<number | "auto">("auto");
+
+  const contentRefCallback = (el: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    if (el) {
+      observerRef.current = new ResizeObserver(([entry]) => {
+        setMeasuredHeight(entry.contentRect.height);
+      });
+      observerRef.current.observe(el);
+    }
+  };
+
+  useEffect(() => {
+    return () => observerRef.current?.disconnect();
+  }, []);
+
   if (isArchiveMode) {
     const index = path?.findIndex((f) => f.isArchived === 1) ?? -1;
     const filteredPath = index !== -1 ? path!.slice(index) : path;
@@ -68,13 +89,18 @@ export function NavPath({ currentFolderId }: NavPathProps) {
     return (
       <SidebarGroup>
         <SidebarMenu>
-          <div className="flex flex-col">
-            {items.map((item, index) => (
-              <div key={item.id} onClick={() => setCurrentFolderId(item.id)}>
-                <TreeNode item={item} isFirst={index === 0} />
-              </div>
-            ))}
-          </div>
+          <motion.div
+            animate={{ height: measuredHeight }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <div ref={contentRefCallback} className="flex flex-col">
+              {items.map((item, index) => (
+                <div key={item.id} onClick={() => setCurrentFolderId(item.id)}>
+                  <TreeNode item={item} isFirst={index === 0} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </SidebarMenu>
       </SidebarGroup>
     );
@@ -96,13 +122,18 @@ export function NavPath({ currentFolderId }: NavPathProps) {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        <div className="flex flex-col">
-          {items.map((item, index) => (
-            <div key={item.id} onClick={() => setCurrentFolderId(item.id)}>
-              <TreeNode item={item} isFirst={index === 0} />
-            </div>
-          ))}
-        </div>
+        <motion.div
+          animate={{ height: measuredHeight }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
+          <div ref={contentRefCallback} className="flex flex-col">
+            {items.map((item, index) => (
+              <div key={item.id} onClick={() => setCurrentFolderId(item.id)}>
+                <TreeNode item={item} isFirst={index === 0} />
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </SidebarMenu>
     </SidebarGroup>
   );

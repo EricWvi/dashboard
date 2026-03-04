@@ -1,5 +1,20 @@
 # Flomo Development Log
 
+## 2026-03-04: Sidebar transition animations for folder navigation
+
+Added smooth transition animations to `NavFolders`, `NavCards`, and `NavPath` to eliminate jarring visual collapses when navigating between folders.
+
+**Files changed:**
+- `client/src/components/flomo/nav-folders.tsx` — Wrapped `SidebarMenu` content in `AnimatePresence` + `motion.div` keyed by `currentFolderId`. On folder change, content fades from 40% to 100% opacity over 300ms (easeOut).
+- `client/src/components/flomo/nav-cards.tsx` — Same opacity fade-in animation as `NavFolders`, keyed by `currentFolderId`.
+- `client/src/components/flomo/nav-path.tsx` — Wrapped tree content in `motion.div` with animated height via `ResizeObserver`. When the path grows/shrinks (e.g. navigating deeper), the container height animates over 250ms (easeOut), smoothly pushing `NavFolders`/`NavCards` down or up.
+
+**Design notes:**
+- Uses `framer-motion` (already installed) for all animations, matching existing patterns in `journal/` components.
+- `NavPath` uses a callback ref + `ResizeObserver` to measure content height, then `motion.div animate={{ height }}` to animate. This handles dynamic tree node additions/removals.
+- `NavFolders`/`NavCards` use `AnimatePresence mode="wait"` with `key={currentFolderId}` so that changing folders triggers a new mount with the opacity entrance animation.
+- Both archive mode and normal mode branches are animated.
+
 ## 2026-02-23: Move folder path navigation from CardHeader to NavPath
 
 Extracted the breadcrumb/path navigation out of `CardHeader` and into a dedicated `NavPath` sidebar component.

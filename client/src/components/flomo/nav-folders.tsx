@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -49,6 +50,10 @@ import {
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Folder } from "@/lib/flomo/model";
+import {
+  folderTransitionVariants,
+  folderTransition,
+} from "@/lib/flomo/animations";
 import { Fragment } from "react";
 import { EmojiPicker } from "./emoji-picker";
 
@@ -116,50 +121,60 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     return (
       <SidebarGroup>
         <SidebarGroupLabel>{i18nText[language].folders}</SidebarGroupLabel>
-        <SidebarMenu>
-          {folders
-            ?.sort((a, b) => a.title.localeCompare(b.title))
-            .map((folder) => (
-              <SidebarMenuItem key={folder.id} className="cursor-pointer">
-                <SidebarMenuButton
-                  asChild
-                  className="gap-0"
-                  onClick={() => setCurrentFolderId(folder.id)}
-                >
-                  <div>
-                    <span className="mr-1 rounded-sm px-1 text-base">
-                      {folder.payload.emoji || "📂"}
-                    </span>
-
-                    <span>{folder.title}</span>
-                  </div>
-                </SidebarMenuButton>
-                {folder.isArchived === 1 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover>
-                        <MoreHorizontal />
-                        <span className="sr-only">More</span>
-                      </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="w-48"
-                      side={isMobile ? "bottom" : "right"}
-                      align={isMobile ? "end" : "start"}
-                      onCloseAutoFocus={(e) => e.preventDefault()}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentFolderId}
+            variants={folderTransitionVariants}
+            initial="initial"
+            animate="animate"
+            transition={folderTransition}
+          >
+            <SidebarMenu>
+              {folders
+                ?.sort((a, b) => a.title.localeCompare(b.title))
+                .map((folder) => (
+                  <SidebarMenuItem key={folder.id} className="cursor-pointer">
+                    <SidebarMenuButton
+                      asChild
+                      className="gap-0"
+                      onClick={() => setCurrentFolderId(folder.id)}
                     >
-                      <DropdownMenuItem
-                        onClick={() => restoreFolder(folder.id)}
-                      >
-                        <TextCursorInput className="text-muted-foreground" />
-                        <span>{i18nText[language].restore}</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
+                      <div>
+                        <span className="mr-1 rounded-sm px-1 text-base">
+                          {folder.payload.emoji || "📂"}
+                        </span>
+
+                        <span>{folder.title}</span>
+                      </div>
+                    </SidebarMenuButton>
+                    {folder.isArchived === 1 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuAction showOnHover>
+                            <MoreHorizontal />
+                            <span className="sr-only">More</span>
+                          </SidebarMenuAction>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-48"
+                          side={isMobile ? "bottom" : "right"}
+                          align={isMobile ? "end" : "start"}
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
+                          <DropdownMenuItem
+                            onClick={() => restoreFolder(folder.id)}
+                          >
+                            <TextCursorInput className="text-muted-foreground" />
+                            <span>{i18nText[language].restore}</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </motion.div>
+        </AnimatePresence>
       </SidebarGroup>
     );
   }
@@ -168,84 +183,94 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     <>
       <SidebarGroup>
         <SidebarGroupLabel>{i18nText[language].folders}</SidebarGroupLabel>
-        <SidebarMenu>
-          {folders
-            ?.sort((a, b) => a.title.localeCompare(b.title))
-            .map((folder) => (
-              <SidebarMenuItem key={folder.id} className="cursor-pointer">
-                <SidebarMenuButton
-                  asChild
-                  className="gap-0"
-                  onClick={() => setCurrentFolderId(folder.id)}
-                >
-                  <div>
-                    <EmojiPicker
-                      onSelectEmoji={(emoji) => {
-                        return changeEmoji(folder, emoji);
-                      }}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentFolderId}
+            variants={folderTransitionVariants}
+            initial="initial"
+            animate="animate"
+            transition={folderTransition}
+          >
+            <SidebarMenu>
+              {folders
+                ?.sort((a, b) => a.title.localeCompare(b.title))
+                .map((folder) => (
+                  <SidebarMenuItem key={folder.id} className="cursor-pointer">
+                    <SidebarMenuButton
+                      asChild
+                      className="gap-0"
+                      onClick={() => setCurrentFolderId(folder.id)}
                     >
-                      <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
-                        {folder.payload.emoji || "📂"}
-                      </span>
-                    </EmojiPicker>
+                      <div>
+                        <EmojiPicker
+                          onSelectEmoji={(emoji) => {
+                            return changeEmoji(folder, emoji);
+                          }}
+                        >
+                          <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
+                            {folder.payload.emoji || "📂"}
+                          </span>
+                        </EmojiPicker>
 
-                    <span>{folder.title}</span>
-                  </div>
-                </SidebarMenuButton>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuAction showOnHover>
-                      <MoreHorizontal />
-                      <span className="sr-only">More</span>
-                    </SidebarMenuAction>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-48"
-                    side={isMobile ? "bottom" : "right"}
-                    align={isMobile ? "end" : "start"}
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                  >
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setRenamingFolder(folder);
-                        setRenameDialogOpen(true);
-                      }}
-                    >
-                      <TextCursorInput className="text-muted-foreground" />
-                      <span>{i18nText[language].rename}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setMovingFolder(folder);
-                        setMoveDialogOpen(true);
-                      }}
-                    >
-                      <FolderInput className="text-muted-foreground" />
-                      <span>{i18nText[language].move}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                      onClick={() => archiveFolder(folder.id)}
-                    >
-                      <Archive className="text-yellow-700 dark:text-yellow-600" />
-                      <span>{i18nText[language].archive}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => {
-                        setDeletingFolder(folder);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="text-destructive" />
-                      <span>{i18nText[language].delete}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
+                        <span>{folder.title}</span>
+                      </div>
+                    </SidebarMenuButton>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuAction showOnHover>
+                          <MoreHorizontal />
+                          <span className="sr-only">More</span>
+                        </SidebarMenuAction>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-48"
+                        side={isMobile ? "bottom" : "right"}
+                        align={isMobile ? "end" : "start"}
+                        onCloseAutoFocus={(e) => e.preventDefault()}
+                      >
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setRenamingFolder(folder);
+                            setRenameDialogOpen(true);
+                          }}
+                        >
+                          <TextCursorInput className="text-muted-foreground" />
+                          <span>{i18nText[language].rename}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMovingFolder(folder);
+                            setMoveDialogOpen(true);
+                          }}
+                        >
+                          <FolderInput className="text-muted-foreground" />
+                          <span>{i18nText[language].move}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+                          onClick={() => archiveFolder(folder.id)}
+                        >
+                          <Archive className="text-yellow-700 dark:text-yellow-600" />
+                          <span>{i18nText[language].archive}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => {
+                            setDeletingFolder(folder);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="text-destructive" />
+                          <span>{i18nText[language].delete}</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </motion.div>
+        </AnimatePresence>
       </SidebarGroup>
 
       <RenameFolderDialog

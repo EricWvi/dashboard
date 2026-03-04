@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Archive,
   FolderInput,
@@ -48,6 +49,10 @@ import {
 } from "@/hooks/flomo/use-cards";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card, type Folder } from "@/lib/flomo/model";
+import {
+  folderTransitionVariants,
+  folderTransition,
+} from "@/lib/flomo/animations";
 import { EmojiPicker } from "./emoji-picker";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
 import { useAppState } from "@/hooks/flomo/use-app-state";
@@ -127,44 +132,56 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel>{i18nText[language].cards}</SidebarGroupLabel>
-        <SidebarMenu>
-          {cards
-            ?.sort((a, b) => b.createdAt - a.createdAt)
-            .map((card) => (
-              <SidebarMenuItem key={card.id} className="cursor-pointer">
-                <SidebarMenuButton asChild className="gap-0">
-                  <div>
-                    <span className="mr-1 rounded-sm px-1 text-base">
-                      {card.payload.emoji || "📄"}
-                    </span>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentFolderId}
+            variants={folderTransitionVariants}
+            initial="initial"
+            animate="animate"
+            transition={folderTransition}
+          >
+            <SidebarMenu>
+              {cards
+                ?.sort((a, b) => b.createdAt - a.createdAt)
+                .map((card) => (
+                  <SidebarMenuItem key={card.id} className="cursor-pointer">
+                    <SidebarMenuButton asChild className="gap-0">
+                      <div>
+                        <span className="mr-1 rounded-sm px-1 text-base">
+                          {card.payload.emoji || "📄"}
+                        </span>
 
-                    <span>{card.title}</span>
-                  </div>
-                </SidebarMenuButton>
-                {card.isArchived === 1 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover>
-                        <MoreHorizontal />
-                        <span className="sr-only">More</span>
-                      </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="w-48"
-                      side={isMobile ? "bottom" : "right"}
-                      align={isMobile ? "end" : "start"}
-                      onCloseAutoFocus={(e) => e.preventDefault()}
-                    >
-                      <DropdownMenuItem onClick={() => restoreCard(card.id)}>
-                        <TextCursorInput className="text-muted-foreground" />
-                        <span>{i18nText[language].restore}</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
+                        <span>{card.title}</span>
+                      </div>
+                    </SidebarMenuButton>
+                    {card.isArchived === 1 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuAction showOnHover>
+                            <MoreHorizontal />
+                            <span className="sr-only">More</span>
+                          </SidebarMenuAction>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-48"
+                          side={isMobile ? "bottom" : "right"}
+                          align={isMobile ? "end" : "start"}
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
+                          <DropdownMenuItem
+                            onClick={() => restoreCard(card.id)}
+                          >
+                            <TextCursorInput className="text-muted-foreground" />
+                            <span>{i18nText[language].restore}</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </motion.div>
+        </AnimatePresence>
       </SidebarGroup>
     );
   }
@@ -173,84 +190,94 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
     <>
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel>{i18nText[language].cards}</SidebarGroupLabel>
-        <SidebarMenu>
-          {cards
-            ?.sort((a, b) => b.createdAt - a.createdAt)
-            .map((card) => (
-              <SidebarMenuItem key={card.id} className="cursor-pointer">
-                <SidebarMenuButton
-                  asChild
-                  className="gap-0"
-                  onClick={() => openCard(card)}
-                >
-                  <div>
-                    <EmojiPicker
-                      onSelectEmoji={(emoji) => {
-                        return changeEmoji(card, emoji);
-                      }}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentFolderId}
+            variants={folderTransitionVariants}
+            initial="initial"
+            animate="animate"
+            transition={folderTransition}
+          >
+            <SidebarMenu>
+              {cards
+                ?.sort((a, b) => b.createdAt - a.createdAt)
+                .map((card) => (
+                  <SidebarMenuItem key={card.id} className="cursor-pointer">
+                    <SidebarMenuButton
+                      asChild
+                      className="gap-0"
+                      onClick={() => openCard(card)}
                     >
-                      <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
-                        {card.payload.emoji || "📄"}
-                      </span>
-                    </EmojiPicker>
+                      <div>
+                        <EmojiPicker
+                          onSelectEmoji={(emoji) => {
+                            return changeEmoji(card, emoji);
+                          }}
+                        >
+                          <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
+                            {card.payload.emoji || "📄"}
+                          </span>
+                        </EmojiPicker>
 
-                    <span>{card.title}</span>
-                  </div>
-                </SidebarMenuButton>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuAction showOnHover>
-                      <MoreHorizontal />
-                      <span className="sr-only">More</span>
-                    </SidebarMenuAction>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-48"
-                    side={isMobile ? "bottom" : "right"}
-                    align={isMobile ? "end" : "start"}
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                  >
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setRenamingCard(card);
-                        setRenameDialogOpen(true);
-                      }}
-                    >
-                      <TextCursorInput className="text-muted-foreground" />
-                      <span>{i18nText[language].rename}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setMovingCard(card);
-                        setMoveDialogOpen(true);
-                      }}
-                    >
-                      <FolderInput className="text-muted-foreground" />
-                      <span>{i18nText[language].move}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                      onClick={() => archiveCard(card.id)}
-                    >
-                      <Archive className="text-yellow-700 dark:text-yellow-600" />
-                      <span>{i18nText[language].archive}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => {
-                        setDeletingCard(card);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="text-destructive" />
-                      <span>{i18nText[language].delete}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarMenuItem>
-            ))}
-        </SidebarMenu>
+                        <span>{card.title}</span>
+                      </div>
+                    </SidebarMenuButton>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuAction showOnHover>
+                          <MoreHorizontal />
+                          <span className="sr-only">More</span>
+                        </SidebarMenuAction>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-48"
+                        side={isMobile ? "bottom" : "right"}
+                        align={isMobile ? "end" : "start"}
+                        onCloseAutoFocus={(e) => e.preventDefault()}
+                      >
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setRenamingCard(card);
+                            setRenameDialogOpen(true);
+                          }}
+                        >
+                          <TextCursorInput className="text-muted-foreground" />
+                          <span>{i18nText[language].rename}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMovingCard(card);
+                            setMoveDialogOpen(true);
+                          }}
+                        >
+                          <FolderInput className="text-muted-foreground" />
+                          <span>{i18nText[language].move}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+                          onClick={() => archiveCard(card.id)}
+                        >
+                          <Archive className="text-yellow-700 dark:text-yellow-600" />
+                          <span>{i18nText[language].archive}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => {
+                            setDeletingCard(card);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="text-destructive" />
+                          <span>{i18nText[language].delete}</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+          </motion.div>
+        </AnimatePresence>
       </SidebarGroup>
 
       <RenameCardDialog
