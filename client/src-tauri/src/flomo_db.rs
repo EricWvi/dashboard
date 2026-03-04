@@ -1,6 +1,88 @@
 use rusqlite::{params, Connection, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+// --- Migration ---
+
+struct MigrationStep {
+    version: &'static str,
+    name: &'static str,
+    sql: &'static str,
+}
+
+fn migrations() -> Vec<MigrationStep> {
+    vec![MigrationStep {
+        version: "v0.1.0",
+        name: "Create user+cards+folders+tiptaps+sync_meta+migration",
+        sql: "
+            CREATE TABLE IF NOT EXISTS user (
+                key TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                email TEXT NOT NULL,
+                avatar TEXT NOT NULL,
+                language TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                sync_status INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS cards (
+                id TEXT PRIMARY KEY,
+                folder_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                draft TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                raw_text TEXT NOT NULL,
+                is_bookmarked INTEGER NOT NULL,
+                is_archived INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                is_deleted INTEGER NOT NULL DEFAULT 0,
+                sync_status INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_cards_sync_status ON cards(sync_status);
+            CREATE INDEX IF NOT EXISTS idx_cards_folder_id ON cards(folder_id);
+            CREATE INDEX IF NOT EXISTS idx_cards_is_archived ON cards(is_archived);
+            CREATE INDEX IF NOT EXISTS idx_cards_is_bookmarked ON cards(is_bookmarked);
+            CREATE INDEX IF NOT EXISTS idx_cards_updated_at ON cards(updated_at);
+
+            CREATE TABLE IF NOT EXISTS folders (
+                id TEXT PRIMARY KEY,
+                parent_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                is_bookmarked INTEGER NOT NULL,
+                is_archived INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                is_deleted INTEGER NOT NULL DEFAULT 0,
+                sync_status INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_folders_sync_status ON folders(sync_status);
+            CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id);
+            CREATE INDEX IF NOT EXISTS idx_folders_is_archived ON folders(is_archived);
+            CREATE INDEX IF NOT EXISTS idx_folders_is_bookmarked ON folders(is_bookmarked);
+            CREATE INDEX IF NOT EXISTS idx_folders_updated_at ON folders(updated_at);
+
+            CREATE TABLE IF NOT EXISTS tiptaps (
+                id TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                history TEXT NOT NULL DEFAULT '[]',
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                is_deleted INTEGER NOT NULL DEFAULT 0,
+                sync_status INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_tiptaps_sync_status ON tiptaps(sync_status);
+            CREATE INDEX IF NOT EXISTS idx_tiptaps_updated_at ON tiptaps(updated_at);
+
+            CREATE TABLE IF NOT EXISTS sync_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+        ",
+    }]
+}
 
 // --- Models ---
 
@@ -126,7 +208,7 @@ impl FlomoDb {
         let db = FlomoDb {
             conn: Mutex::new(conn),
         };
-        db.init_tables()?;
+        db.run_migrations()?;
         Ok(db)
     }
 
@@ -136,80 +218,47 @@ impl FlomoDb {
         let db = FlomoDb {
             conn: Mutex::new(conn),
         };
-        db.init_tables()?;
+        db.run_migrations()?;
         Ok(db)
     }
 
-    fn init_tables(&self) -> SqliteResult<()> {
+    fn run_migrations(&self) -> SqliteResult<()> {
         let conn = self.conn.lock().unwrap();
+
+        // Ensure the migration tracking table exists
         conn.execute_batch(
-            "
-            CREATE TABLE IF NOT EXISTS user (
-                key TEXT PRIMARY KEY,
-                username TEXT NOT NULL,
-                email TEXT NOT NULL,
-                avatar TEXT NOT NULL,
-                language TEXT NOT NULL,
-                updated_at INTEGER NOT NULL,
-                sync_status INTEGER NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS cards (
-                id TEXT PRIMARY KEY,
-                folder_id TEXT NOT NULL,
-                title TEXT NOT NULL,
-                draft TEXT NOT NULL,
-                payload TEXT NOT NULL,
-                raw_text TEXT NOT NULL,
-                is_bookmarked INTEGER NOT NULL,
-                is_archived INTEGER NOT NULL,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                is_deleted INTEGER NOT NULL DEFAULT 0,
-                sync_status INTEGER NOT NULL
-            );
-            CREATE INDEX IF NOT EXISTS idx_cards_sync_status ON cards(sync_status);
-            CREATE INDEX IF NOT EXISTS idx_cards_folder_id ON cards(folder_id);
-            CREATE INDEX IF NOT EXISTS idx_cards_is_archived ON cards(is_archived);
-            CREATE INDEX IF NOT EXISTS idx_cards_is_bookmarked ON cards(is_bookmarked);
-            CREATE INDEX IF NOT EXISTS idx_cards_updated_at ON cards(updated_at);
-
-            CREATE TABLE IF NOT EXISTS folders (
-                id TEXT PRIMARY KEY,
-                parent_id TEXT NOT NULL,
-                title TEXT NOT NULL,
-                payload TEXT NOT NULL,
-                is_bookmarked INTEGER NOT NULL,
-                is_archived INTEGER NOT NULL,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                is_deleted INTEGER NOT NULL DEFAULT 0,
-                sync_status INTEGER NOT NULL
-            );
-            CREATE INDEX IF NOT EXISTS idx_folders_sync_status ON folders(sync_status);
-            CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id);
-            CREATE INDEX IF NOT EXISTS idx_folders_is_archived ON folders(is_archived);
-            CREATE INDEX IF NOT EXISTS idx_folders_is_bookmarked ON folders(is_bookmarked);
-            CREATE INDEX IF NOT EXISTS idx_folders_updated_at ON folders(updated_at);
-
-            CREATE TABLE IF NOT EXISTS tiptaps (
-                id TEXT PRIMARY KEY,
-                content TEXT NOT NULL,
-                history TEXT NOT NULL DEFAULT '[]',
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                is_deleted INTEGER NOT NULL DEFAULT 0,
-                sync_status INTEGER NOT NULL
-            );
-            CREATE INDEX IF NOT EXISTS idx_tiptaps_sync_status ON tiptaps(sync_status);
-            CREATE INDEX IF NOT EXISTS idx_tiptaps_updated_at ON tiptaps(updated_at);
-
-            CREATE TABLE IF NOT EXISTS sync_meta (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL
-            );
-            ",
+            "CREATE TABLE IF NOT EXISTS migration (
+                \"version\" TEXT PRIMARY KEY,
+                \"name\" TEXT NOT NULL,
+                applied_at INTEGER NOT NULL
+            );",
         )?;
+
+        for step in migrations() {
+            let already_applied: bool = conn
+                .query_row(
+                    "SELECT 1 FROM migration WHERE version = ?1 LIMIT 1",
+                    params![step.version],
+                    |_| Ok(()),
+                )
+                .is_ok();
+
+            if already_applied {
+                continue;
+            }
+
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64;
+
+            conn.execute_batch(step.sql)?;
+            conn.execute(
+                "INSERT INTO migration (version, name, applied_at) VALUES (?1, ?2, ?3)",
+                params![step.version, step.name, now],
+            )?;
+        }
+
         Ok(())
     }
 
