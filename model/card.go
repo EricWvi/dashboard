@@ -95,8 +95,9 @@ func (c *Card) Create(db *gorm.DB) error {
 	return db.Create(c).Error
 }
 
-func (c *Card) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Omit(ServerVersion).Omit(Card_ReviewCount).Updates(c).Error
+func (c *Card) SyncFromClient(db *gorm.DB, where map[string]any) error {
+	syncDb := OmitMetaFields(db)
+	return syncDb.Where(where).Omit(Card_ReviewCount).UpdateColumns(c).Error
 }
 
 func (c *Card) Delete(db *gorm.DB, where map[string]any) error {

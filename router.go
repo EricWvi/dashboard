@@ -8,7 +8,6 @@ import (
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/handler/blog"
 	"github.com/EricWvi/dashboard/handler/bookmark"
-	"github.com/EricWvi/dashboard/handler/card"
 	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/echo"
 	"github.com/EricWvi/dashboard/handler/entry"
@@ -110,8 +109,6 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.POST("/blog", blog.DefaultHandler)
 	back.GET("/entry", entry.DefaultHandler)
 	back.POST("/entry", entry.DefaultHandler)
-	back.GET("/card", card.DefaultHandler)
-	back.POST("/card", card.DefaultHandler)
 	back.GET("/flomo", flomo.DefaultHandler)
 	back.POST("/flomo", flomo.DefaultHandler)
 
