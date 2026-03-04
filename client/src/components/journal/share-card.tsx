@@ -1,4 +1,4 @@
-import { ContentHTML } from "@/components/tiptap-templates/simple/simple-editor";
+import { ReadOnlyTiptap } from "@/components/tiptap-templates/simple/simple-editor";
 import { useEffect, useRef, useState } from "react";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
@@ -12,6 +12,17 @@ function download(dataUrl: string, filename: string) {
   link.download = `${filename}.png`;
   link.href = dataUrl;
   link.click();
+}
+
+function ContentHTML({ id }: { id: string }) {
+  const { data: draft, isFetching } = useDraft(id); // TODO
+
+  if (isFetching) return null;
+  return (
+    <div className="w-full">
+      <ReadOnlyTiptap draft={draft?.content} style="padding: 0 0 12px" />
+    </div>
+  );
 }
 
 export default function ShareCard({

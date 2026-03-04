@@ -72,7 +72,6 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 // --- Components ---
-import { ThemeToggle } from "@/components/tiptap-editor/theme-toggle";
 import { HistoryPopover } from "@/components/tiptap-editor/history-popover";
 
 // --- Lib ---
@@ -81,163 +80,182 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-editor/simple-editor.scss";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
-import { saveDraft, syncDraft, useDraft } from "@/hooks/flomo/use-tiptapv2";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
-import { useAppState } from "@/hooks/flomo/use-app-state";
 
-const MainToolbarContent = ({
-  editor,
-  onHighlighterClick,
-  onLinkClick,
-  isMobile,
-  onSave,
-  dropChange,
-  id,
-}: {
-  editor: Editor;
-  onHighlighterClick: () => void;
-  onLinkClick: () => void;
-  isMobile: boolean;
-  onSave: () => void;
-  dropChange: () => void;
+type SaveDraftFn = (params: {
   id: string;
-}) => {
-  const { language } = useUserContextV2();
-  return (
-    <>
-      <ToolbarGroup>
-        <Button
-          data-style="ghost"
-          tooltip={i18nText[language].save}
-          onClick={onSave}
-        >
-          <Save className="size-4" />
-        </Button>
-      </ToolbarGroup>
+  content: Record<string, unknown>;
+}) => Promise<unknown>;
+type SyncDraftFn = (params: {
+  id: string;
+  content: Record<string, unknown>;
+}) => Promise<unknown>;
+type ListHistoryFn = (id: string) => Promise<number[]>;
+type GetHistoryFn = (id: string, ts: number) => Promise<unknown>;
+type RestoreHistoryFn = (id: string, ts: number) => Promise<unknown>;
 
-      <Spacer />
-
-      <ToolbarGroup>
-        <UndoRedoButton action="undo" />
-        <UndoRedoButton action="redo" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      {isMobile && (
+const MainToolbarContent = React.memo(
+  ({
+    editor,
+    onHighlighterClick,
+    onLinkClick,
+    isMobile,
+    onSave,
+    dropChange,
+    id,
+    listHistory,
+    getHistory,
+    restoreHistory,
+  }: {
+    editor: Editor;
+    onHighlighterClick: () => void;
+    onLinkClick: () => void;
+    isMobile: boolean;
+    onSave: () => void;
+    dropChange: () => void;
+    id: string;
+    listHistory: ListHistoryFn;
+    getHistory: GetHistoryFn;
+    restoreHistory: RestoreHistoryFn;
+  }) => {
+    const { language } = useUserContextV2();
+    return (
+      <>
         <ToolbarGroup>
-          <ImageUploadButton />
-          <VideoUploadButton />
-          <EmojiPopover />
+          <Button
+            data-style="ghost"
+            tooltip={i18nText[language].save}
+            onClick={onSave}
+          >
+            <Save className="size-4" />
+          </Button>
         </ToolbarGroup>
-      )}
 
-      <ToolbarGroup>
-        <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-        <ListDropdownMenu
-          types={["bulletList", "orderedList", "taskList"]}
-          portal={isMobile}
-        />
-        <BlockquoteButton />
-        <CodeBlockButton />
-      </ToolbarGroup>
+        <Spacer />
 
-      <ToolbarSeparator />
+        <ToolbarGroup>
+          <UndoRedoButton action="undo" />
+          <UndoRedoButton action="redo" />
+        </ToolbarGroup>
 
-      <ToolbarGroup>
-        <MarkButton type="bold" />
-        <MarkButton type="italic" />
-        <MarkButton type="strike" />
-        <MarkButton type="code" />
-        <MarkButton type="underline" />
-        {!isMobile ? (
-          <ColorHighlightPopover />
-        ) : (
-          <ColorHighlightPopoverButton onClick={onHighlighterClick} />
-        )}
-        {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
-        {!isMobile && <EmojiPopover />}
-      </ToolbarGroup>
+        <ToolbarSeparator />
 
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <MarkButton type="superscript" />
-        <MarkButton type="subscript" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <TextAlignButton align="left" />
-        <TextAlignButton align="center" />
-        <TextAlignButton align="right" />
-        <TextAlignButton align="justify" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      {!isMobile && (
-        <>
+        {isMobile && (
           <ToolbarGroup>
             <ImageUploadButton />
             <VideoUploadButton />
+            <EmojiPopover />
           </ToolbarGroup>
-
-          <Spacer />
-        </>
-      )}
-
-      {isMobile && <ToolbarSeparator />}
-
-      <ToolbarGroup>
-        <Button
-          data-style="ghost"
-          tooltip={i18nText[language].drop}
-          onClick={dropChange}
-        >
-          <Eraser className="size-4" />
-        </Button>
-        <HistoryPopover id={id} editor={editor} />
-        {/* <ThemeToggle /> */}
-      </ToolbarGroup>
-    </>
-  );
-};
-
-const MobileToolbarContent = ({
-  type,
-  onBack,
-}: {
-  type: "highlighter" | "link";
-  onBack: () => void;
-}) => (
-  <>
-    <ToolbarGroup>
-      <Button data-style="ghost" onClick={onBack}>
-        <ArrowLeftIcon className="tiptap-button-icon" />
-        {type === "highlighter" ? (
-          <HighlighterIcon className="tiptap-button-icon" />
-        ) : (
-          <LinkIcon className="tiptap-button-icon" />
         )}
-      </Button>
-    </ToolbarGroup>
 
-    <ToolbarSeparator />
+        <ToolbarGroup>
+          <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
+          <ListDropdownMenu
+            types={["bulletList", "orderedList", "taskList"]}
+            portal={isMobile}
+          />
+          <BlockquoteButton />
+          <CodeBlockButton />
+        </ToolbarGroup>
 
-    {type === "highlighter" ? (
-      <ColorHighlightPopoverContent />
-    ) : (
-      <LinkContent />
-    )}
-  </>
+        <ToolbarSeparator />
+
+        <ToolbarGroup>
+          <MarkButton type="bold" />
+          <MarkButton type="italic" />
+          <MarkButton type="strike" />
+          <MarkButton type="code" />
+          <MarkButton type="underline" />
+          {!isMobile ? (
+            <ColorHighlightPopover />
+          ) : (
+            <ColorHighlightPopoverButton onClick={onHighlighterClick} />
+          )}
+          {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
+          {!isMobile && <EmojiPopover />}
+        </ToolbarGroup>
+
+        <ToolbarSeparator />
+
+        <ToolbarGroup>
+          <MarkButton type="superscript" />
+          <MarkButton type="subscript" />
+        </ToolbarGroup>
+
+        <ToolbarSeparator />
+
+        <ToolbarGroup>
+          <TextAlignButton align="left" />
+          <TextAlignButton align="center" />
+          <TextAlignButton align="right" />
+          <TextAlignButton align="justify" />
+        </ToolbarGroup>
+
+        <ToolbarSeparator />
+
+        {!isMobile && (
+          <>
+            <ToolbarGroup>
+              <ImageUploadButton />
+              <VideoUploadButton />
+            </ToolbarGroup>
+
+            <Spacer />
+          </>
+        )}
+
+        {isMobile && <ToolbarSeparator />}
+
+        <ToolbarGroup>
+          <Button
+            data-style="ghost"
+            tooltip={i18nText[language].drop}
+            onClick={dropChange}
+          >
+            <Eraser className="size-4" />
+          </Button>
+          <HistoryPopover
+            id={id}
+            editor={editor}
+            listHistory={listHistory}
+            getHistory={getHistory}
+            restoreHistory={restoreHistory}
+          />
+          {/* <ThemeToggle /> */}
+        </ToolbarGroup>
+      </>
+    );
+  },
+);
+
+const MobileToolbarContent = React.memo(
+  ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
+    <>
+      <ToolbarGroup>
+        <Button data-style="ghost" onClick={onBack}>
+          <ArrowLeftIcon className="tiptap-button-icon" />
+          {type === "highlighter" ? (
+            <HighlighterIcon className="tiptap-button-icon" />
+          ) : (
+            <LinkIcon className="tiptap-button-icon" />
+          )}
+        </Button>
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {type === "highlighter" ? (
+        <ColorHighlightPopoverContent />
+      ) : (
+        <LinkContent />
+      )}
+    </>
+  ),
 );
 
 export const useSimpleEditor = (
@@ -277,11 +295,23 @@ export const useSimpleEditor = (
 
 export function EditorToolbar({
   onClose,
+  saveDraft,
+  syncDraft,
+  draftId,
+  getInitialContent,
+  listHistory,
+  getHistory,
+  restoreHistory,
 }: {
   onClose?: (e: Editor, changed: boolean) => void;
+  saveDraft: SaveDraftFn;
+  syncDraft: SyncDraftFn;
+  draftId: string;
+  getInitialContent: (id: string) => Record<string, unknown> | null;
+  listHistory: ListHistoryFn;
+  getHistory: GetHistoryFn;
+  restoreHistory: RestoreHistoryFn;
 }) {
-  const { activeTabId: draftId, getInitialContent } = useAppState();
-
   const { editor } = useTiptapEditor();
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = React.useState<
@@ -294,27 +324,27 @@ export function EditorToolbar({
     }
   }, [isMobile, mobileView]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (editor) {
       saveDraft({
-        id: draftId!,
-        content: editor.getJSON(),
+        id: draftId,
+        content: editor.getJSON() as Record<string, unknown>,
       }).then(() => {
         onClose?.(editor, true);
       });
     }
-  };
+  }, [editor, draftId, saveDraft, onClose]);
 
-  const handleDrop = async () => {
+  const handleDrop = useCallback(async () => {
     if (editor) {
       syncDraft({
-        id: draftId!,
-        content: getInitialContent(draftId!) || { type: "doc", content: [] },
+        id: draftId,
+        content: getInitialContent(draftId) || { type: "doc", content: [] },
       }).then(() => {
         onClose?.(editor, false);
       });
     }
-  };
+  }, [editor, draftId, syncDraft, getInitialContent, onClose]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -325,7 +355,7 @@ export function EditorToolbar({
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [editor]);
+  }, [handleSave]);
 
   if (!editor) return null;
 
@@ -339,7 +369,10 @@ export function EditorToolbar({
           isMobile={isMobile}
           onSave={handleSave}
           dropChange={handleDrop}
-          id={draftId!}
+          id={draftId}
+          listHistory={listHistory}
+          getHistory={getHistory}
+          restoreHistory={restoreHistory}
         />
       ) : (
         <MobileToolbarContent
@@ -426,10 +459,6 @@ export function ReadOnlyTiptap({
   });
   return (
     <div className="simple-editor-wrapper">
-      <div className="hidden">
-        {/* tiptap dark mode style depends on explicit `dark` class */}
-        <ThemeToggle />
-      </div>
       <EditorContext.Provider value={{ editor }}>
         <EditorContent
           editor={editor}
@@ -437,49 +466,6 @@ export function ReadOnlyTiptap({
           className="simple-editor-content"
         />
       </EditorContext.Provider>
-    </div>
-  );
-}
-
-export function ContentRender({ id }: { id: string }) {
-  const isMobile = useIsMobile();
-  const { data: draft, isFetching } = useDraft(id); // TODO
-  const [showLoading, setShowLoading] = React.useState(true);
-  useEffect(() => {
-    if (!isFetching) {
-      setTimeout(() => {
-        setShowLoading(false);
-      }, 200);
-    } else {
-      setShowLoading(true);
-    }
-  }, [isFetching]);
-
-  return (
-    <div
-      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-4"}`}
-    >
-      {showLoading ? (
-        <div className="mx-auto mt-6 max-w-[870px] space-y-4">
-          <Skeleton className="h-8 w-40 rounded-sm" />
-          <Skeleton className="h-[30vh] rounded-sm" />
-          <Skeleton className="h-8 w-30 rounded-sm" />
-          <Skeleton className="h-[30vh] rounded-sm" />
-        </div>
-      ) : (
-        <ReadOnlyTiptap draft={draft?.content} />
-      )}
-    </div>
-  );
-}
-
-export function ContentHTML({ id }: { id: string }) {
-  const { data: draft, isFetching } = useDraft(id); // TODO
-
-  if (isFetching) return null;
-  return (
-    <div className="w-full">
-      <ReadOnlyTiptap draft={draft?.content} style="padding: 0 0 12px" />
     </div>
   );
 }

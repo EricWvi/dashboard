@@ -19,6 +19,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BlogTableRowActions,
   BookmarkTableRowActions,
@@ -49,14 +50,14 @@ import {
   Tv,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
-import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
 import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/use-blogs";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import WatchReview from "@/components/dashboard/journey/watch-review";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ratings = [
   {
@@ -189,6 +190,38 @@ const i18nText = {
     updated: "Updated",
   },
 };
+
+function ContentRender({ id }: { id: string }) {
+  const isMobile = useIsMobile();
+  const { data: draft, isFetching } = useDraft(id); // TODO
+  const [showLoading, setShowLoading] = useState(true);
+  useEffect(() => {
+    if (!isFetching) {
+      setTimeout(() => {
+        setShowLoading(false);
+      }, 200);
+    } else {
+      setShowLoading(true);
+    }
+  }, [isFetching]);
+
+  return (
+    <div
+      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-4"}`}
+    >
+      {showLoading ? (
+        <div className="mx-auto mt-6 max-w-[870px] space-y-4">
+          <Skeleton className="h-8 w-40 rounded-sm" />
+          <Skeleton className="h-[30vh] rounded-sm" />
+          <Skeleton className="h-8 w-30 rounded-sm" />
+          <Skeleton className="h-[30vh] rounded-sm" />
+        </div>
+      ) : (
+        <ReadOnlyTiptap draft={draft?.content} />
+      )}
+    </div>
+  );
+}
 
 export const watchedColumns: ColumnDef<Watch>[] = [
   {
