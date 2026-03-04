@@ -11,21 +11,14 @@ handler/flomo/                      # Local-first sync endpoints
 ├── pull.go                         # Pull - incremental updates
 └── push.go                         # Push - upload changes
 
-handler/card/                       # Traditional CRUD endpoints
-├── base.go                         # Handler dispatcher
-├── CreateCard.go                   # Create individual card
-├── GetCard.go                      # Get single card
-├── ListCards.go                    # List cards in folder
-├── UpdateCard.go                   # Update card
-├── DeleteCard.go                   # Delete card
-└── (similar structure for Folder operations)
-
 model/
 ├── card.go                         # Card model and queries
 ├── folder.go                       # Folder model and queries
 ├── tiptapv2.go                     # Rich text document model
 └── userv2.go                       # user v2 model
 ```
+
+> **Note:** The traditional CRUD `handler/card/` package (CreateCard, GetCard, ListCards, UpdateCard, DeleteCard, and Folder equivalents) was removed. Cards and folders are now exclusively managed through the Flomo local-first sync endpoints (`/flomo`).
 
 ## Server-Side Behavior
 
@@ -38,7 +31,8 @@ model/
    - Check if record exists by UUID
    - If not found → Create new record
    - If found → Compare `updatedAt`, update if client is newer
-   - Trigger automatically sets `server_version`; `Update()` explicitly omits `server_version` so the DB trigger controls it
+   - `SyncFromClient()` calls `OmitMetaFields()` to omit `id`, `created_at`, `server_version`, and `creator_id` before writing, so the DB trigger controls `server_version`
+   - Uses `UpdateColumns` (not `Updates`) to ensure zero values are also written to the database
 
 3. **Soft Deletes**:
    - `isDeleted` flag (`*bool` pointer type) instead of hard delete
@@ -109,8 +103,8 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 - **Entry**: Generic entry system
 - **QuickNote**: Quick note creation
 
-- **Card**: Local-first sync with UUID-based cards (Flomo feature)
-- **Folder**: Local-first sync with UUID-based folders (Flomo feature)
+- **Card**: Local-first sync with UUID-based cards via `/flomo` (traditional CRUD endpoints removed)
+- **Folder**: Local-first sync with UUID-based folders via `/flomo` (traditional CRUD endpoints removed)
 - **TiptapV2**: Local-first sync for rich text content
 - **UserV2**: New user model for local-first sync with server_version tracking (table: d_user_v2)
 
@@ -126,8 +120,7 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 - `/tiptap` (GET/POST) → tiptap.DefaultHandler
 - `/media` (GET/POST) → media.DefaultHandler
 - `/entry` (GET/POST) → entry.DefaultHandler
-- `/card` (GET/POST) → card.DefaultHandler (traditional CRUD for cards/folders)
-- `/flomo` (GET/POST) → flomo.DefaultHandler (local-first sync endpoints)
+- `/flomo` (GET/POST) → flomo.DefaultHandler (local-first sync endpoints; cards and folders are managed exclusively here)
 - `/upload` (POST) → media.Upload
 - `/m/:link` (GET) → media.Serve
 
@@ -164,13 +157,14 @@ For models with offline-first requirements:
    - `IsDeleted` is `*bool` (pointer) to correctly distinguish `false` from zero value
    - `BoolPtr(b bool) *bool` helper in `model/model.go` for creating bool pointers
    - TableName(), Get(), Create(), Update(), MarkDeleted()
-   - `Update()` **always omits** `server_version` — the DB trigger sets it
+   - `SyncFromClient(db, where)` — used for client-driven updates; calls `OmitMetaFields(db)` which omits `id`, `created_at`, `server_version`, and `creator_id`, then calls `UpdateColumns` so zero values are written and the DB trigger controls `server_version`
+   - `OmitMetaFields(db *gorm.DB) *gorm.DB` — helper in `model/model.go`; centralizes the field exclusion pattern for all sync models
    - List<Name>Since(db, since int64, creatorId) - incremental sync query
    - Full<Name>(db, creatorId) - full sync query (is_deleted=false)
 2. Handlers in `handler/<name>/` with:
    - **FullSync**: Returns all non-deleted records; response uses **plural** JSON keys: `users`, `cards`, `folders`, `tiptaps`
    - **Pull**: Returns records with server_version > since; response uses plural keys
-   - **Push**: Accepts **plural** JSON keys (`cards`, `folders`, `tiptaps`); upserts each by UUID
+   - **Push**: Accepts **plural** JSON keys (`cards`, `folders`, `tiptaps`); upserts each by UUID using `SyncFromClient()`
 3. Routes registered in router.go (e.g., `/api/flomo` for sync endpoints)
 4. Client-generated UUIDs for optimistic offline creation
 5. Database triggers auto-increment server_version using global sequence
