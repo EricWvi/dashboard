@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
@@ -64,6 +64,10 @@ export function NavPath({ currentFolderId }: NavPathProps) {
       observerRef.current.observe(el);
     }
   };
+
+  useEffect(() => {
+    return () => observerRef.current?.disconnect();
+  }, []);
 
   if (isArchiveMode) {
     const index = path?.findIndex((f) => f.isArchived === 1) ?? -1;

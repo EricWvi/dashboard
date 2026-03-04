@@ -49,6 +49,10 @@ import {
 } from "@/hooks/flomo/use-cards";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card, type Folder } from "@/lib/flomo/model";
+import {
+  folderTransitionVariants,
+  folderTransition,
+} from "@/lib/flomo/animations";
 import { EmojiPicker } from "./emoji-picker";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
 import { useAppState } from "@/hooks/flomo/use-app-state";
@@ -124,13 +128,6 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
     title: string;
   } | null>(null);
 
-  const contentVariants = {
-    initial: { opacity: 0.4 },
-    animate: { opacity: 1 },
-  };
-
-  const contentTransition = { duration: 0.3, ease: "easeOut" as const };
-
   if (isArchiveMode) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -138,10 +135,10 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentFolderId}
-            variants={contentVariants}
+            variants={folderTransitionVariants}
             initial="initial"
             animate="animate"
-            transition={contentTransition}
+            transition={folderTransition}
           >
             <SidebarMenu>
               {cards
@@ -196,10 +193,10 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentFolderId}
-            variants={contentVariants}
+            variants={folderTransitionVariants}
             initial="initial"
             animate="animate"
-            transition={contentTransition}
+            transition={folderTransition}
           >
             <SidebarMenu>
               {cards
