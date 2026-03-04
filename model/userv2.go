@@ -108,6 +108,7 @@ func CreateUserV2(db *gorm.DB, email string) (uint, error) {
 	return user.Id, nil
 }
 
-func (u *UserV2) Update(db *gorm.DB, where WhereExpr) error {
-	return db.Where(where).Updates(u).Error
+func (u *UserV2) SyncFromClient(db *gorm.DB, where map[string]any) error {
+	syncDb := OmitMetaFields(db)
+	return syncDb.Where(where).UpdateColumns(u).Error
 }

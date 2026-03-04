@@ -69,6 +69,11 @@ const (
 	CreatorId     = "creator_id"
 )
 
+func OmitMetaFields(db *gorm.DB) *gorm.DB {
+	return db.Select("*").
+		Omit(Id, CreatedAt, ServerVersion, CreatorId)
+}
+
 type WhereMap map[string]any
 
 // func (m WhereMap) Gt(key string, value any) {

@@ -89,8 +89,9 @@ func (f *Folder) Create(db *gorm.DB) error {
 	return db.Create(f).Error
 }
 
-func (f *Folder) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Omit(ServerVersion).Updates(f).Error
+func (f *Folder) SyncFromClient(db *gorm.DB, where map[string]any) error {
+	syncDb := OmitMetaFields(db)
+	return syncDb.Where(where).UpdateColumns(f).Error
 }
 
 func (f *Folder) Delete(db *gorm.DB, where map[string]any) error {

@@ -4,3 +4,4 @@ dist
 client/journal
 client/flomo
 client/src-tauri/gen/
+dashboard

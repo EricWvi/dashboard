@@ -87,8 +87,9 @@ func (t *TiptapV2) Create(db *gorm.DB) error {
 	return db.Create(t).Error
 }
 
-func (t *TiptapV2) Update(db *gorm.DB, where map[string]any) error {
-	return db.Where(where).Omit(ServerVersion).Updates(t).Error
+func (t *TiptapV2) SyncFromClient(db *gorm.DB, where map[string]any) error {
+	syncDb := OmitMetaFields(db)
+	return syncDb.Where(where).UpdateColumns(t).Error
 }
 
 func (t *TiptapV2) MarkDeleted(db *gorm.DB, where map[string]any) error {

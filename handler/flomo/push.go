@@ -43,7 +43,7 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 					if existing.UpdatedAt >= req.Card[i].UpdatedAt {
 						continue
 					}
-					if err := req.Card[i].Update(db, where); err != nil {
+					if err := req.Card[i].SyncFromClient(db, where); err != nil {
 						errChan <- err
 						return
 					}
@@ -77,7 +77,7 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 					if existing.UpdatedAt >= req.Folder[i].UpdatedAt {
 						continue
 					}
-					if err := req.Folder[i].Update(db, where); err != nil {
+					if err := req.Folder[i].SyncFromClient(db, where); err != nil {
 						errChan <- err
 						return
 					}
@@ -112,7 +112,7 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 					if existing.UpdatedAt >= req.Tiptap[i].UpdatedAt {
 						continue
 					}
-					if err := req.Tiptap[i].Update(db, where); err != nil {
+					if err := req.Tiptap[i].SyncFromClient(db, where); err != nil {
 						errChan <- err
 						return
 					}
