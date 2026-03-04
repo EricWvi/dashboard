@@ -250,7 +250,7 @@ impl FlomoDb {
             let now = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
-                .as_secs() as i64;
+                .as_millis() as i64;
 
             conn.execute_batch(step.sql)?;
             conn.execute(
