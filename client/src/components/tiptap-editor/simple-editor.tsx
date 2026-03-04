@@ -81,17 +81,22 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-editor/simple-editor.scss";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
-import { saveDraft, syncDraft, useDraft } from "@/hooks/flomo/use-tiptapv2";
+import { useDraft } from "@/hooks/flomo/use-tiptapv2";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
-import { useAppState } from "@/hooks/flomo/use-app-state";
 
-const MainToolbarContent = ({
+type SaveDraftFn = (params: { id: string; content: Record<string, unknown> }) => Promise<unknown>;
+type SyncDraftFn = (params: { id: string; content: Record<string, unknown> }) => Promise<unknown>;
+type ListHistoryFn = (id: string) => Promise<number[]>;
+type GetHistoryFn = (id: string, ts: number) => Promise<unknown>;
+type RestoreHistoryFn = (id: string, ts: number) => Promise<unknown>;
+
+const MainToolbarContent = React.memo(({
   editor,
   onHighlighterClick,
   onLinkClick,
@@ -99,6 +104,9 @@ const MainToolbarContent = ({
   onSave,
   dropChange,
   id,
+  listHistory,
+  getHistory,
+  restoreHistory,
 }: {
   editor: Editor;
   onHighlighterClick: () => void;
@@ -107,6 +115,9 @@ const MainToolbarContent = ({
   onSave: () => void;
   dropChange: () => void;
   id: string;
+  listHistory: ListHistoryFn;
+  getHistory: GetHistoryFn;
+  restoreHistory: RestoreHistoryFn;
 }) => {
   const { language } = useUserContextV2();
   return (
@@ -204,14 +215,14 @@ const MainToolbarContent = ({
         >
           <Eraser className="size-4" />
         </Button>
-        <HistoryPopover id={id} editor={editor} />
+        <HistoryPopover id={id} editor={editor} listHistory={listHistory} getHistory={getHistory} restoreHistory={restoreHistory} />
         {/* <ThemeToggle /> */}
       </ToolbarGroup>
     </>
   );
-};
+});
 
-const MobileToolbarContent = ({
+const MobileToolbarContent = React.memo(({
   type,
   onBack,
 }: {
@@ -238,7 +249,7 @@ const MobileToolbarContent = ({
       <LinkContent />
     )}
   </>
-);
+));
 
 export const useSimpleEditor = (
   onUpdate?: (props: { editor: Editor }) => void,
@@ -277,11 +288,23 @@ export const useSimpleEditor = (
 
 export function EditorToolbar({
   onClose,
+  saveDraft,
+  syncDraft,
+  draftId,
+  getInitialContent,
+  listHistory,
+  getHistory,
+  restoreHistory,
 }: {
   onClose?: (e: Editor, changed: boolean) => void;
+  saveDraft: SaveDraftFn;
+  syncDraft: SyncDraftFn;
+  draftId: string;
+  getInitialContent: (id: string) => Record<string, unknown> | null;
+  listHistory: ListHistoryFn;
+  getHistory: GetHistoryFn;
+  restoreHistory: RestoreHistoryFn;
 }) {
-  const { activeTabId: draftId, getInitialContent } = useAppState();
-
   const { editor } = useTiptapEditor();
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = React.useState<
@@ -294,27 +317,27 @@ export function EditorToolbar({
     }
   }, [isMobile, mobileView]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (editor) {
       saveDraft({
-        id: draftId!,
-        content: editor.getJSON(),
+        id: draftId,
+        content: editor.getJSON() as Record<string, unknown>,
       }).then(() => {
         onClose?.(editor, true);
       });
     }
-  };
+  }, [editor, draftId, saveDraft, onClose]);
 
-  const handleDrop = async () => {
+  const handleDrop = useCallback(async () => {
     if (editor) {
       syncDraft({
-        id: draftId!,
-        content: getInitialContent(draftId!) || { type: "doc", content: [] },
+        id: draftId,
+        content: getInitialContent(draftId) || { type: "doc", content: [] },
       }).then(() => {
         onClose?.(editor, false);
       });
     }
-  };
+  }, [editor, draftId, syncDraft, getInitialContent, onClose]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -325,7 +348,7 @@ export function EditorToolbar({
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [editor]);
+  }, [handleSave]);
 
   if (!editor) return null;
 
@@ -339,7 +362,10 @@ export function EditorToolbar({
           isMobile={isMobile}
           onSave={handleSave}
           dropChange={handleDrop}
-          id={draftId!}
+          id={draftId}
+          listHistory={listHistory}
+          getHistory={getHistory}
+          restoreHistory={restoreHistory}
         />
       ) : (
         <MobileToolbarContent

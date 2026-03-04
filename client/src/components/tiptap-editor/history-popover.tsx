@@ -1,3 +1,4 @@
+import React from "react";
 import { Button } from "@/components/tiptap-ui-primitive/button/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button as UIButton } from "@/components/ui/button";
@@ -27,27 +28,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ReadOnlyTiptap } from "./simple-editor";
 import { dateString } from "@/lib/utils";
-import {
-  getHistory,
-  listHistory,
-  restoreHistory,
-} from "@/hooks/flomo/use-tiptapv2";
 import { RestoreIcon } from "@/components/tiptap-icons/restore-icon";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContextV2 } from "@/user-provider";
 import { diffJSONContent } from "@/lib/tiptap-diff";
 import { Editor, type JSONContent } from "@tiptap/react";
 
-export const HistoryPopover = ({
+type ListHistoryFn = (id: string) => Promise<number[]>;
+type GetHistoryFn = (id: string, ts: number) => Promise<unknown>;
+type RestoreHistoryFn = (id: string, ts: number) => Promise<unknown>;
+
+export const HistoryPopover = React.memo(({
   id,
   editor,
+  listHistory,
+  getHistory,
+  restoreHistory,
 }: {
   id: string;
   editor: Editor;
+  listHistory: ListHistoryFn;
+  getHistory: GetHistoryFn;
+  restoreHistory: RestoreHistoryFn;
 }) => {
   const { language } = useUserContextV2();
   const [history, setHistory] = useState<number[]>([]);
@@ -58,7 +64,7 @@ export const HistoryPopover = ({
     useState(false);
   const [selectedTimestamp, setSelectedTimestamp] = useState<number>(0);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     if (id === "") return;
 
     setIsFetching(true);
@@ -67,23 +73,23 @@ export const HistoryPopover = ({
         setHistory(res);
       })
       .finally(() => setIsFetching(false));
-  };
+  }, [id, listHistory]);
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
     if (open) {
       fetchHistory();
     }
-  };
+  }, [fetchHistory]);
 
-  const handleHistoryClick = (timestamp: number) => {
+  const handleHistoryClick = useCallback((timestamp: number) => {
     setSelectedTimestamp(timestamp);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleRestore = () => {
+  const handleRestore = useCallback(() => {
     setRestoreHistoryDialogOpen(true);
-  };
+  }, []);
 
   const getVersionNumber = (timestamp: number) => {
     const index = history.indexOf(timestamp);
@@ -166,7 +172,7 @@ export const HistoryPopover = ({
             <DialogDescription></DialogDescription>
           </DialogHeader>
 
-          <HistoryContent id={id} ts={selectedTimestamp} editor={editor} />
+          <HistoryContent id={id} ts={selectedTimestamp} editor={editor} getHistory={getHistory} />
         </DialogContent>
       </Dialog>
 
@@ -196,16 +202,18 @@ export const HistoryPopover = ({
       </AlertDialog>
     </>
   );
-};
+});
 
-export function HistoryContent({
+export const HistoryContent = React.memo(function HistoryContent({
   id,
   ts,
   editor,
+  getHistory,
 }: {
   id: string;
   ts: number;
   editor: Editor;
+  getHistory: GetHistoryFn;
 }) {
   const isMobile = useIsMobile();
   const [currentContent, _] = useState<any>(editor.getJSON());
@@ -213,18 +221,18 @@ export function HistoryContent({
   const [isFetching, setIsFetching] = useState(true);
   const [showLoading, setShowLoading] = useState(true);
 
-  const fetchHistoryContent = async () => {
+  const fetchHistoryContent = useCallback(async () => {
     setIsFetching(true);
     getHistory(id, ts)
       .then((res) => {
         setHistoryContent(res);
       })
       .finally(() => setIsFetching(false));
-  };
+  }, [id, ts, getHistory]);
 
   useEffect(() => {
     fetchHistoryContent();
-  }, [id, ts]);
+  }, [fetchHistoryContent]);
 
   useEffect(() => {
     if (!isFetching) {
@@ -261,7 +269,7 @@ export function HistoryContent({
       )}
     </div>
   );
-}
+});
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
