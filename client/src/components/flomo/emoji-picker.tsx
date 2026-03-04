@@ -25,27 +25,34 @@ export function EmojiPicker({ children, onSelectEmoji }: CardHeaderProps) {
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-        {children}
-      </PopoverTrigger>
+    <>
+      {/* Overlay to prevent clicks from passing through when picker is open */}
+      {open && (
+        <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+      )}
 
-      {/* 选择器容器：注意 w-auto 确保不被 Popover 默认宽度限制 */}
-      <PopoverContent
-        className="w-auto border-none p-0 shadow-2xl"
-        align="start"
-        onClick={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()} // 修复在移动设备上无法滚动的问题
-      >
-        <Picker
-          data={data}
-          onEmojiSelect={handleEmojiSelect}
-          theme="auto"
-          locale={language === UserLangEnum.ZHCN ? "zh" : "en"}
-          previewPosition="none"
-          skinTonePosition="none"
-        />
-      </PopoverContent>
-    </Popover>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+          {children}
+        </PopoverTrigger>
+
+        {/* 选择器容器：注意 w-auto 确保不被 Popover 默认宽度限制 */}
+        <PopoverContent
+          className="w-auto border-none p-0 shadow-2xl"
+          align="start"
+          onClick={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()} // 修复在移动设备上无法滚动的问题
+        >
+          <Picker
+            data={data}
+            onEmojiSelect={handleEmojiSelect}
+            theme="auto"
+            locale={language === UserLangEnum.ZHCN ? "zh" : "en"}
+            previewPosition="none"
+            skinTonePosition="none"
+          />
+        </PopoverContent>
+      </Popover>
+    </>
   );
 }

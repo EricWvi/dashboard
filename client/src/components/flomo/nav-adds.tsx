@@ -49,7 +49,7 @@ export function NavAdds() {
 
   return (
     <>
-      <SidebarGroup>
+      <SidebarGroup className="px-0 py-2">
         <SidebarGroupContent>
           <SidebarMenu>
             {/* add card */}

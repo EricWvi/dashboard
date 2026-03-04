@@ -36,16 +36,24 @@ export function AppSidebar() {
             <Search className="size-4 stroke-[2.5]" />
           </div>
         </div>
-      </SidebarHeader>
-      <SidebarContent>
         <NavPath currentFolderId={currentFolderId} />
+      </SidebarHeader>
+      <SidebarContent
+        className="pb-10"
+        style={{
+          maskImage: `linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 1) 94%,
+            rgba(0, 0, 0, 0) 100%
+          )`,
+        }}
+      >
         <NavFolders currentFolderId={currentFolderId} />
         <NavCards currentFolderId={currentFolderId} />
-        <div className="mt-auto">
-          <NavAdds />
-        </div>
       </SidebarContent>
       <SidebarFooter>
+        <NavAdds />
         <NavTabs />
       </SidebarFooter>
     </Sidebar>

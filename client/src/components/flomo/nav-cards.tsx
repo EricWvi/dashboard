@@ -76,7 +76,19 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
       data: { isArchived: 1 },
     });
   };
-  const restoreCard = (cardId: string) => {
+  const restoreCard = async (cardId: string) => {
+    const card = await flomoDatabase.getCard(cardId);
+    if (!card) {
+      throw new Error("Card not found");
+    }
+    const parentFolder = await flomoDatabase.getFolder(card.folderId);
+    if (!parentFolder) {
+      // If parent folder is deleted, restore card to root folder
+      return updateCardMutation.mutateAsync({
+        id: cardId,
+        data: { isArchived: 0, folderId: RootFolderId },
+      });
+    }
     return updateCardMutation.mutateAsync({
       id: cardId,
       data: { isArchived: 0 },
@@ -141,6 +153,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
                       className="w-48"
                       side={isMobile ? "bottom" : "right"}
                       align={isMobile ? "end" : "start"}
+                      onCloseAutoFocus={(e) => e.preventDefault()}
                     >
                       <DropdownMenuItem onClick={() => restoreCard(card.id)}>
                         <TextCursorInput className="text-muted-foreground" />
@@ -195,6 +208,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
                     className="w-48"
                     side={isMobile ? "bottom" : "right"}
                     align={isMobile ? "end" : "start"}
+                    onCloseAutoFocus={(e) => e.preventDefault()}
                   >
                     <DropdownMenuItem
                       onClick={() => {

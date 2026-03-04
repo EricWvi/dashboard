@@ -75,7 +75,19 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
       data: { isArchived: 1 },
     });
   };
-  const restoreFolder = (folderId: string) => {
+  const restoreFolder = async (folderId: string) => {
+    const folder = await flomoDatabase.getFolder(folderId);
+    if (!folder) {
+      throw new Error("Folder not found");
+    }
+    const parentFolder = flomoDatabase.getFolder(folder.parentId);
+    if (!parentFolder) {
+      // If parent folder doesn't exist (e.g. has been deleted), restore to root
+      return updateFolderMutation.mutateAsync({
+        id: folderId,
+        data: { parentId: RootFolderId, isArchived: 0 },
+      });
+    }
     return updateFolderMutation.mutateAsync({
       id: folderId,
       data: { isArchived: 0 },
@@ -134,6 +146,7 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                       className="w-48"
                       side={isMobile ? "bottom" : "right"}
                       align={isMobile ? "end" : "start"}
+                      onCloseAutoFocus={(e) => e.preventDefault()}
                     >
                       <DropdownMenuItem
                         onClick={() => restoreFolder(folder.id)}
@@ -190,6 +203,7 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                     className="w-48"
                     side={isMobile ? "bottom" : "right"}
                     align={isMobile ? "end" : "start"}
+                    onCloseAutoFocus={(e) => e.preventDefault()}
                   >
                     <DropdownMenuItem
                       onClick={() => {

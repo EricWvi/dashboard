@@ -68,7 +68,7 @@ export function NavPath({ currentFolderId }: NavPathProps) {
     return (
       <SidebarGroup>
         <SidebarMenu>
-          <div className="flex flex-col p-2">
+          <div className="flex flex-col">
             {items.map((item, index) => (
               <div key={item.id} onClick={() => setCurrentFolderId(item.id)}>
                 <TreeNode item={item} isFirst={index === 0} />
@@ -96,7 +96,7 @@ export function NavPath({ currentFolderId }: NavPathProps) {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        <div className="flex flex-col p-2">
+        <div className="flex flex-col">
           {items.map((item, index) => (
             <div key={item.id} onClick={() => setCurrentFolderId(item.id)}>
               <TreeNode item={item} isFirst={index === 0} />
