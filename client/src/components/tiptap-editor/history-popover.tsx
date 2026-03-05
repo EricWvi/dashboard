@@ -38,179 +38,182 @@ import { useUserContextV2 } from "@/user-provider";
 import { diffJSONContent } from "@/lib/tiptap-diff";
 import { Editor, type JSONContent } from "@tiptap/react";
 
-type ListHistoryFn = (id: string) => Promise<number[]>;
-type GetHistoryFn = (id: string, ts: number) => Promise<unknown>;
-type RestoreHistoryFn = (id: string, ts: number) => Promise<unknown>;
+type ListHistoryFn = () => Promise<number[]>;
+type GetHistoryFn = (ts: number) => Promise<unknown>;
+type RestoreHistoryFn = (ts: number) => Promise<unknown>;
 
-export const HistoryPopover = React.memo(({
-  id,
-  editor,
-  listHistory,
-  getHistory,
-  restoreHistory,
-}: {
-  id: string;
-  editor: Editor;
-  listHistory: ListHistoryFn;
-  getHistory: GetHistoryFn;
-  restoreHistory: RestoreHistoryFn;
-}) => {
-  const { language } = useUserContextV2();
-  const [history, setHistory] = useState<number[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [restoreHistoryDialogOpen, setRestoreHistoryDialogOpen] =
-    useState(false);
-  const [selectedTimestamp, setSelectedTimestamp] = useState<number>(0);
+export const HistoryPopover = React.memo(
+  ({
+    editor,
+    listHistory,
+    getHistory,
+    restoreHistory,
+  }: {
+    editor: Editor;
+    listHistory: ListHistoryFn;
+    getHistory: GetHistoryFn;
+    restoreHistory: RestoreHistoryFn;
+  }) => {
+    const { language } = useUserContextV2();
+    const [history, setHistory] = useState<number[]>([]);
+    const [isFetching, setIsFetching] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [restoreHistoryDialogOpen, setRestoreHistoryDialogOpen] =
+      useState(false);
+    const [selectedTimestamp, setSelectedTimestamp] = useState<number>(0);
 
-  const fetchHistory = useCallback(async () => {
-    if (id === "") return;
+    const fetchHistory = useCallback(async () => {
+      setIsFetching(true);
+      listHistory()
+        .then((res) => {
+          setHistory(res);
+        })
+        .finally(() => setIsFetching(false));
+    }, [listHistory]);
 
-    setIsFetching(true);
-    listHistory(id)
-      .then((res) => {
-        setHistory(res);
-      })
-      .finally(() => setIsFetching(false));
-  }, [id, listHistory]);
+    const handleOpenChange = useCallback(
+      (open: boolean) => {
+        setIsOpen(open);
+        if (open) {
+          fetchHistory();
+        }
+      },
+      [fetchHistory],
+    );
 
-  const handleOpenChange = useCallback((open: boolean) => {
-    setIsOpen(open);
-    if (open) {
-      fetchHistory();
-    }
-  }, [fetchHistory]);
+    const handleHistoryClick = useCallback((timestamp: number) => {
+      setSelectedTimestamp(timestamp);
+      setDialogOpen(true);
+    }, []);
 
-  const handleHistoryClick = useCallback((timestamp: number) => {
-    setSelectedTimestamp(timestamp);
-    setDialogOpen(true);
-  }, []);
+    const handleRestore = useCallback(() => {
+      setRestoreHistoryDialogOpen(true);
+    }, []);
 
-  const handleRestore = useCallback(() => {
-    setRestoreHistoryDialogOpen(true);
-  }, []);
+    const getVersionNumber = (timestamp: number) => {
+      const index = history.indexOf(timestamp);
+      return history.length - index;
+    };
 
-  const getVersionNumber = (timestamp: number) => {
-    const index = history.indexOf(timestamp);
-    return history.length - index;
-  };
+    return (
+      <>
+        <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+          <SheetTrigger asChild>
+            <Button data-style="ghost" tooltip={i18nText[language].history}>
+              <History className="size-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-80 gap-2">
+            <SheetHeader>
+              <SheetTitle>{i18nText[language].documentHistory}</SheetTitle>
+              <SheetDescription></SheetDescription>
+            </SheetHeader>
+            <div>
+              {isFetching ? (
+                <div className="space-y-2">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : history && history.length > 0 ? (
+                <div className="max-h-[calc(100vh-100px)] space-y-2 overflow-y-auto px-4">
+                  {history.map((timestamp, index) => (
+                    <div
+                      key={timestamp}
+                      className="hover:bg-muted cursor-pointer rounded-md border p-3 text-sm"
+                      onClick={() => handleHistoryClick(timestamp)}
+                    >
+                      <div className="font-medium">
+                        {i18nText[language].version} {history.length - index}
+                      </div>
+                      <div className="text-muted-foreground mt-1 text-xs">
+                        {`${dateString(new Date(timestamp))} · ${new Date(timestamp).toLocaleTimeString("zh-CN")}`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-muted-foreground px-4 text-sm">
+                  {i18nText[language].noHistory}
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
 
-  return (
-    <>
-      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>
-          <Button data-style="ghost" tooltip={i18nText[language].history}>
-            <History className="size-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="w-80 gap-2">
-          <SheetHeader>
-            <SheetTitle>{i18nText[language].documentHistory}</SheetTitle>
-            <SheetDescription></SheetDescription>
-          </SheetHeader>
-          <div>
-            {isFetching ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : history && history.length > 0 ? (
-              <div className="max-h-[calc(100vh-100px)] space-y-2 overflow-y-auto px-4">
-                {history.map((timestamp, index) => (
-                  <div
-                    key={timestamp}
-                    className="hover:bg-muted cursor-pointer rounded-md border p-3 text-sm"
-                    onClick={() => handleHistoryClick(timestamp)}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent
+            showCloseButton={false}
+            className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
+            onOpenAutoFocus={(e) => {
+              e.preventDefault(); // stops Radix from focusing anything
+              (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle className="text-left">
+                <div className="relative">
+                  {`${i18nText[language].version} ${getVersionNumber(selectedTimestamp)} `}
+                  <span className="text-muted-foreground text-sm">
+                    {`(${dateString(new Date(selectedTimestamp))} · ${new Date(selectedTimestamp).toLocaleTimeString("zh-CN")})`}
+                  </span>
+
+                  <UIButton
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground absolute top-1/2 right-2 h-6 translate-x-1/2 -translate-y-1/2"
+                    onClick={handleRestore}
                   >
-                    <div className="font-medium">
-                      {i18nText[language].version} {history.length - index}
-                    </div>
-                    <div className="text-muted-foreground mt-1 text-xs">
-                      {`${dateString(new Date(timestamp))} · ${new Date(timestamp).toLocaleTimeString("zh-CN")}`}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-muted-foreground px-4 text-sm">
-                {i18nText[language].noHistory}
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+                    <RestoreIcon />
+                  </UIButton>
+                </div>
+              </DialogTitle>
+              <DialogDescription></DialogDescription>
+            </DialogHeader>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent
-          showCloseButton={false}
-          className="w-[calc(100%-2rem)] !max-w-[800px] gap-0"
-          onOpenAutoFocus={(e) => {
-            e.preventDefault(); // stops Radix from focusing anything
-            (e.currentTarget as HTMLElement).focus(); // focus the dialog container itself
-          }}
+            <HistoryContent
+              ts={selectedTimestamp}
+              editor={editor}
+              getHistory={getHistory}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* restore history confirmation dialog */}
+        <AlertDialog
+          open={restoreHistoryDialogOpen}
+          onOpenChange={setRestoreHistoryDialogOpen}
         >
-          <DialogHeader>
-            <DialogTitle className="text-left">
-              <div className="relative">
-                {`${i18nText[language].version} ${getVersionNumber(selectedTimestamp)} `}
-                <span className="text-muted-foreground text-sm">
-                  {`(${dateString(new Date(selectedTimestamp))} · ${new Date(selectedTimestamp).toLocaleTimeString("zh-CN")})`}
-                </span>
-
-                <UIButton
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground absolute top-1/2 right-2 h-6 translate-x-1/2 -translate-y-1/2"
-                  onClick={handleRestore}
-                >
-                  <RestoreIcon />
-                </UIButton>
-              </div>
-            </DialogTitle>
-            <DialogDescription></DialogDescription>
-          </DialogHeader>
-
-          <HistoryContent id={id} ts={selectedTimestamp} editor={editor} getHistory={getHistory} />
-        </DialogContent>
-      </Dialog>
-
-      {/* restore history confirmation dialog */}
-      <AlertDialog
-        open={restoreHistoryDialogOpen}
-        onOpenChange={setRestoreHistoryDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {i18nText[language].restoreHistory}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="wrap-anywhere">
-              {i18nText[language].confirmRestore}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{i18nText[language].cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => restoreHistory(id, selectedTimestamp)}
-            >
-              {i18nText[language].restore}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-});
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {i18nText[language].restoreHistory}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="wrap-anywhere">
+                {i18nText[language].confirmRestore}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{i18nText[language].cancel}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => restoreHistory(selectedTimestamp)}
+              >
+                {i18nText[language].restore}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  },
+);
 
 export const HistoryContent = React.memo(function HistoryContent({
-  id,
   ts,
   editor,
   getHistory,
 }: {
-  id: string;
   ts: number;
   editor: Editor;
   getHistory: GetHistoryFn;
@@ -223,12 +226,12 @@ export const HistoryContent = React.memo(function HistoryContent({
 
   const fetchHistoryContent = useCallback(async () => {
     setIsFetching(true);
-    getHistory(id, ts)
+    getHistory(ts)
       .then((res) => {
         setHistoryContent(res);
       })
       .finally(() => setIsFetching(false));
-  }, [id, ts, getHistory]);
+  }, [ts, getHistory]);
 
   useEffect(() => {
     fetchHistoryContent();

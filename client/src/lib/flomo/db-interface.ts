@@ -1,4 +1,4 @@
-import { tiptapRefresh, triggerRefresh } from "@/hooks/flomo/query-keys";
+import { triggerRefresh } from "@/hooks/flomo/query-keys";
 import { DexieFlomoDatabase } from "./dexie";
 import { SqliteFlomoDatabase } from "./sqlite";
 import {
@@ -78,12 +78,9 @@ export interface IFlomoDatabase {
 
 export class RefreshDecorator implements IFlomoDatabase {
   private baseDb: IFlomoDatabase;
-  private onTableChange: (table: string, id?: string) => void;
+  private onTableChange: (table: string) => void;
 
-  constructor(
-    baseDb: IFlomoDatabase,
-    onTableChange: (table: string, id?: string) => void,
-  ) {
+  constructor(baseDb: IFlomoDatabase, onTableChange: (table: string) => void) {
     this.baseDb = baseDb;
     this.onTableChange = onTableChange;
   }
@@ -205,7 +202,7 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async putTiptap(tiptap: TiptapV2): Promise<void> {
     await this.baseDb.putTiptap(tiptap);
-    this.onTableChange("tiptap", tiptap.id);
+    this.onTableChange("tiptaps");
   }
 
   async putTiptaps(tiptaps: TiptapV2[]): Promise<void> {
@@ -225,7 +222,7 @@ export class RefreshDecorator implements IFlomoDatabase {
     updates: Partial<TiptapV2Field>,
   ): Promise<void> {
     await this.baseDb.updateTiptap(id, updates);
-    this.onTableChange("tiptap", id);
+    this.onTableChange("tiptaps");
   }
 
   async deleteTiptap(id: string): Promise<void> {
@@ -253,7 +250,7 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async restoreTiptapHistory(id: string, ts: number): Promise<void> {
     await this.baseDb.restoreTiptapHistory(id, ts);
-    this.onTableChange("tiptap", id);
+    this.onTableChange("tiptaps");
   }
 
   // Sync
@@ -301,10 +298,5 @@ function createBaseDatabase(): IFlomoDatabase {
 // Export singleton instance
 export const flomoDatabase: IFlomoDatabase = new RefreshDecorator(
   createBaseDatabase(),
-  (table, id?: string) => {
-    if (table === "tiptap") {
-      tiptapRefresh(id!);
-    }
-    triggerRefresh(table);
-  },
+  (table) => triggerRefresh(table),
 );

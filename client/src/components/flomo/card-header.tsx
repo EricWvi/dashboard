@@ -11,10 +11,69 @@ import {
 } from "@/hooks/flomo/use-tiptapv2";
 import { PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCallback } from "react";
+import type { Editor } from "@tiptap/react";
+import { tiptapRefresh } from "@/hooks/flomo/query-keys";
 
 export function CardHeader() {
   const { activeTabId, getTabEditable, setTabEditable, getInitialContent } =
     useAppState();
+
+  const handleClose = useCallback(() => {
+    if (activeTabId) {
+      setTabEditable(activeTabId, false);
+    }
+  }, [activeTabId, setTabEditable]);
+
+  const handleSave = useCallback(
+    async (e: Editor) => {
+      if (activeTabId) {
+        await saveDraft({
+          id: activeTabId,
+          content: e.getJSON() as Record<string, unknown>,
+        });
+        tiptapRefresh(activeTabId);
+      }
+    },
+    [activeTabId],
+  );
+
+  const handleDrop = useCallback(async () => {
+    if (activeTabId) {
+      const content = getInitialContent(activeTabId);
+      if (content) {
+        await syncDraft({ id: activeTabId, content });
+        tiptapRefresh(activeTabId);
+      }
+    }
+  }, [activeTabId, getInitialContent]);
+
+  const handleRestoreHistory = useCallback(
+    async (ts: number) => {
+      if (activeTabId) {
+        await restoreHistory(activeTabId, ts);
+        tiptapRefresh(activeTabId);
+      }
+    },
+    [activeTabId],
+  );
+
+  const handleListHistory = useCallback(async () => {
+    if (activeTabId) {
+      return await listHistory(activeTabId);
+    }
+    return [];
+  }, [activeTabId]);
+
+  const handleGetHistory = useCallback(
+    async (ts: number) => {
+      if (activeTabId) {
+        return await getHistory(activeTabId, ts);
+      }
+      return null;
+    },
+    [activeTabId],
+  );
 
   if (!activeTabId) return null;
 
@@ -28,13 +87,12 @@ export function CardHeader() {
         />
         {getTabEditable(activeTabId) ? (
           <EditorToolbar
-            draftId={activeTabId}
-            saveDraft={saveDraft}
-            syncDraft={syncDraft}
-            getInitialContent={getInitialContent}
-            listHistory={listHistory}
-            getHistory={getHistory}
-            restoreHistory={restoreHistory}
+            onClose={handleClose}
+            onSave={handleSave}
+            onDrop={handleDrop}
+            listHistory={handleListHistory}
+            getHistory={handleGetHistory}
+            restoreHistory={handleRestoreHistory}
           />
         ) : (
           <Button

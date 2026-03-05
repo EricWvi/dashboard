@@ -1,4 +1,5 @@
 import { queryClient } from "@/lib/queryClient";
+import { syncEvents } from "@/lib/sync-events";
 import debounce from "lodash/debounce";
 
 const keys = {
@@ -44,8 +45,5 @@ const notifyUI = debounce((table: string) => {
 export const triggerRefresh = (table: string) => notifyUI(table);
 
 export const tiptapRefresh = debounce((id: string) => {
-  queryClient.invalidateQueries({
-    queryKey: keys.tiptaps.detail(id),
-    exact: true,
-  });
+  syncEvents.emit(id);
 }, 100);

@@ -45,18 +45,6 @@ export async function createTiptapWithTitle(title: string) {
   });
 }
 
-export function useDraft(id: string) {
-  return useQuery({
-    enabled: !!id,
-    queryKey: keys.tiptaps.detail(id),
-    queryFn: async () => {
-      return flomoDatabase.getTiptap(id);
-    },
-    staleTime: Infinity,
-    placeholderData: (previousData) => previousData,
-  });
-}
-
 export async function syncDraft({
   id,
   content,
@@ -72,7 +60,7 @@ export async function syncDraft({
     });
     return;
   }
-  return flomoDatabase.updateTiptap(id, { content });
+  return flomoDatabase.syncTiptap(id, content);
 }
 
 export async function saveDraft({

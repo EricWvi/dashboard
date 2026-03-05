@@ -87,17 +87,9 @@ import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
-type SaveDraftFn = (params: {
-  id: string;
-  content: Record<string, unknown>;
-}) => Promise<unknown>;
-type SyncDraftFn = (params: {
-  id: string;
-  content: Record<string, unknown>;
-}) => Promise<unknown>;
-type ListHistoryFn = (id: string) => Promise<number[]>;
-type GetHistoryFn = (id: string, ts: number) => Promise<unknown>;
-type RestoreHistoryFn = (id: string, ts: number) => Promise<unknown>;
+type ListHistoryFn = () => Promise<number[]>;
+type GetHistoryFn = (ts: number) => Promise<unknown>;
+type RestoreHistoryFn = (ts: number) => Promise<unknown>;
 
 const MainToolbarContent = React.memo(
   ({
@@ -107,7 +99,6 @@ const MainToolbarContent = React.memo(
     isMobile,
     onSave,
     dropChange,
-    id,
     listHistory,
     getHistory,
     restoreHistory,
@@ -118,7 +109,6 @@ const MainToolbarContent = React.memo(
     isMobile: boolean;
     onSave: () => void;
     dropChange: () => void;
-    id: string;
     listHistory: ListHistoryFn;
     getHistory: GetHistoryFn;
     restoreHistory: RestoreHistoryFn;
@@ -220,7 +210,6 @@ const MainToolbarContent = React.memo(
             <Eraser className="size-4" />
           </Button>
           <HistoryPopover
-            id={id}
             editor={editor}
             listHistory={listHistory}
             getHistory={getHistory}
@@ -295,19 +284,15 @@ export const useSimpleEditor = (
 
 export function EditorToolbar({
   onClose,
-  saveDraft,
-  syncDraft,
-  draftId,
-  getInitialContent,
+  onSave,
+  onDrop,
   listHistory,
   getHistory,
   restoreHistory,
 }: {
   onClose?: (e: Editor, changed: boolean) => void;
-  saveDraft: SaveDraftFn;
-  syncDraft: SyncDraftFn;
-  draftId: string;
-  getInitialContent: (id: string) => Record<string, unknown> | null;
+  onSave: (e: Editor) => Promise<unknown>;
+  onDrop: (e: Editor) => Promise<unknown>;
   listHistory: ListHistoryFn;
   getHistory: GetHistoryFn;
   restoreHistory: RestoreHistoryFn;
@@ -326,25 +311,19 @@ export function EditorToolbar({
 
   const handleSave = useCallback(() => {
     if (editor) {
-      saveDraft({
-        id: draftId,
-        content: editor.getJSON() as Record<string, unknown>,
-      }).then(() => {
+      onSave(editor).then(() => {
         onClose?.(editor, true);
       });
     }
-  }, [editor, draftId, saveDraft, onClose]);
+  }, [editor, onSave, onClose]);
 
   const handleDrop = useCallback(async () => {
     if (editor) {
-      syncDraft({
-        id: draftId,
-        content: getInitialContent(draftId) || { type: "doc", content: [] },
-      }).then(() => {
+      onDrop(editor).then(() => {
         onClose?.(editor, false);
       });
     }
-  }, [editor, draftId, syncDraft, getInitialContent, onClose]);
+  }, [editor, onDrop, onClose]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -369,7 +348,6 @@ export function EditorToolbar({
           isMobile={isMobile}
           onSave={handleSave}
           dropChange={handleDrop}
-          id={draftId}
           listHistory={listHistory}
           getHistory={getHistory}
           restoreHistory={restoreHistory}
