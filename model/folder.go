@@ -14,11 +14,11 @@ type Folder struct {
 }
 
 type FolderField struct {
-	ParentId     *uuid.UUID     `gorm:"type:uuid" json:"parentId"`
+	ParentId     uuid.UUID      `gorm:"type:uuid" json:"parentId"`
 	Title        string         `gorm:"type:varchar(1024);not null" json:"title"`
 	Payload      datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
-	IsBookmarked *int           `gorm:"column:is_bookmarked;default:0" json:"isBookmarked"`
-	IsArchived   *int           `gorm:"column:is_archived;default:0" json:"isArchived"`
+	IsBookmarked int            `gorm:"column:is_bookmarked;default:0" json:"isBookmarked"`
+	IsArchived   int            `gorm:"column:is_archived;default:0" json:"isArchived"`
 	// CreatorId is inherited from MetaFieldV2
 }
 

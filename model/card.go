@@ -14,14 +14,14 @@ type Card struct {
 }
 
 type CardField struct {
-	FolderId     *uuid.UUID     `gorm:"type:uuid" json:"folderId"`
+	FolderId     uuid.UUID      `gorm:"type:uuid" json:"folderId"`
 	Title        string         `gorm:"type:varchar(1024);not null" json:"title"`
 	Draft        uuid.UUID      `gorm:"type:uuid;not null" json:"draft"`
 	Payload      datatypes.JSON `gorm:"type:jsonb;default:'{}';not null" json:"payload"`
 	RawText      string         `gorm:"type:text;default:'';not null" json:"rawText"`
 	ReviewCount  int            `gorm:"type:int;default:0;not null" json:"reviewCount"`
-	IsBookmarked *int           `gorm:"column:is_bookmarked;default:0" json:"isBookmarked"`
-	IsArchived   *int           `gorm:"column:is_archived;default:0" json:"isArchived"`
+	IsBookmarked int            `gorm:"column:is_bookmarked;default:0" json:"isBookmarked"`
+	IsArchived   int            `gorm:"column:is_archived;default:0" json:"isArchived"`
 	// CreatorId is inherited from MetaFieldV2
 }
 

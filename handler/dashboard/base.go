@@ -1,4 +1,4 @@
-package sync
+package dashboard
 
 import (
 	"github.com/EricWvi/dashboard/handler"
