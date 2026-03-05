@@ -5,17 +5,38 @@ The overall HTTP interface is through a `base` handler and using `Action` query 
 ## Architecture
 
 ```
-handler/flomo/                      # Local-first sync endpoints
+handler/flomo/                      # Local-first sync endpoints (cards, folders)
+├── base.go                         # Handler dispatcher
+├── full.go                         # FullSync - initial sync
+├── pull.go                         # Pull - incremental updates
+└── push.go                         # Push - upload changes
+
+handler/dashboard/                  # Local-first sync endpoints (dashboard site)
+├── base.go                         # Handler dispatcher
+├── full.go                         # FullSync - initial sync
+├── pull.go                         # Pull - incremental updates
+└── push.go                         # Push - upload changes
+
+handler/journal/                    # Local-first sync endpoints (journal site)
 ├── base.go                         # Handler dispatcher
 ├── full.go                         # FullSync - initial sync
 ├── pull.go                         # Pull - incremental updates
 └── push.go                         # Push - upload changes
 
 model/
-├── card.go                         # Card model and queries
-├── folder.go                       # Folder model and queries
-├── tiptapv2.go                     # Rich text document model
-└── userv2.go                       # user v2 model
+├── card.go                         # Card model (flomo)
+├── folder.go                       # Folder model (flomo)
+├── tiptapv2.go                     # Rich text document model (shared)
+├── userv2.go                       # User v2 model (shared)
+├── blogv2.go                       # Blog v2 model (dashboard)
+├── bookmarkv2.go                   # Bookmark v2 model (dashboard)
+├── collectionv2.go                 # Collection v2 model (dashboard)
+├── echov2.go                       # Echo v2 model (dashboard)
+├── quicknotev2.go                  # QuickNote v2 model (dashboard)
+├── tagv2.go                        # Tag v2 model (dashboard/journal)
+├── todov2.go                       # Todo v2 model (dashboard)
+├── watchv2.go                      # Watch v2 model (dashboard)
+└── entryv2.go                      # Entry v2 model (journal)
 ```
 
 > **Note:** The traditional CRUD `handler/card/` package (CreateCard, GetCard, ListCards, UpdateCard, DeleteCard, and Folder equivalents) was removed. Cards and folders are now exclusively managed through the Flomo local-first sync endpoints (`/flomo`).
@@ -75,12 +96,21 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 - **d_card**: id (UUID), creator_id, folder_id (UUID), title, draft (UUID), payload (JSON), raw_text, review_count, is_bookmarked (SMALLINT default 0), is_archived (SMALLINT default 0), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 - **d_folder**: id (UUID), creator_id, parent_id (UUID), title, payload (JSON), is_bookmarked (SMALLINT default 0), is_archived (SMALLINT default 0), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 - **d_tiptap_v2**: id (UUID), creator_id, site (SMALLINT), content (JSON), history (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_blog_v2**: id (UUID), creator_id, title (VARCHAR), visibility (VARCHAR, default 'Private'), draft (UUID), payload (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_bookmark_v2**: id (UUID), creator_id, url (VARCHAR), title (VARCHAR), click (INT), domain (VARCHAR), payload (JSON), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_collection_v2**: id (UUID), creator_id, name (VARCHAR), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_echo_v2**: id (UUID), creator_id, e_type (VARCHAR), year (INT), sub (INT), draft (UUID), mark (BOOLEAN), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_entry_v2**: id (UUID), creator_id, draft (UUID), payload (JSON), word_count (INT), raw_text (TEXT), bookmark (BOOLEAN), review_count (INT), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_quick_note_v2**: id (UUID), creator_id, title (VARCHAR), draft (UUID), d_order (INT), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_tag_v2**: id (UUID), creator_id, name (VARCHAR), t_group (VARCHAR, default 'dashboard'), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_todo_v2**: id (UUID), creator_id, title (VARCHAR), completed (BOOLEAN), collection_id (UUID), difficulty (INT), d_order (INT), link (VARCHAR), draft (UUID), schedule (BIGINT), done (BOOLEAN), d_count (INT), kanban (UUID), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
+- **d_watch_v2**: id (UUID), creator_id, w_type (VARCHAR), title (VARCHAR), status (VARCHAR), year (INT), rate (INT), payload (JSON), author (VARCHAR), created_at (BIGINT), updated_at (BIGINT), server_version (BIGINT), is_deleted (BOOLEAN)
 
 **Global Sync Infrastructure:**
 
 - **global_sync_version_seq**: Sequence shared across all local-first tables
 - **global_bump_server_version()**: Trigger function that auto-increments server_version on INSERT/UPDATE
-- Triggers attached to d_card, d_folder, d_tiptap_v2, d_user_v2 tables
+- Triggers attached to d_card, d_folder, d_tiptap_v2, d_user_v2, d_blog_v2, d_bookmark_v2, d_collection_v2, d_echo_v2, d_entry_v2, d_quick_note_v2, d_tag_v2, d_todo_v2, d_watch_v2 tables
 
 **Site Constants:**
 
@@ -105,8 +135,17 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 
 - **Card**: Local-first sync with UUID-based cards via `/flomo` (traditional CRUD endpoints removed)
 - **Folder**: Local-first sync with UUID-based folders via `/flomo` (traditional CRUD endpoints removed)
-- **TiptapV2**: Local-first sync for rich text content
+- **TiptapV2**: Local-first sync for rich text content (shared across flomo, dashboard, journal; site field distinguishes)
 - **UserV2**: New user model for local-first sync with server_version tracking (table: d_user_v2)
+- **BlogV2**: Local-first sync via `/dashboard`
+- **BookmarkV2**: Local-first sync via `/dashboard`
+- **CollectionV2**: Local-first sync via `/dashboard`
+- **EchoV2**: Local-first sync via `/dashboard`
+- **QuickNoteV2**: Local-first sync via `/dashboard`
+- **TagV2**: Local-first sync via `/dashboard` (t_group="dashboard") and `/journal` (t_group="journal")
+- **TodoV2**: Local-first sync via `/dashboard`
+- **WatchV2**: Local-first sync via `/dashboard`
+- **EntryV2**: Local-first sync via `/journal`
 
 ## Router Endpoints
 
@@ -121,6 +160,8 @@ These tables use **v2.7.0 migration and above** schema with local-first sync sup
 - `/media` (GET/POST) → media.DefaultHandler
 - `/entry` (GET/POST) → entry.DefaultHandler
 - `/flomo` (GET/POST) → flomo.DefaultHandler (local-first sync endpoints; cards and folders are managed exclusively here)
+- `/dashboard` (GET/POST) → dashboard.DefaultHandler (local-first sync endpoints for dashboard models)
+- `/journal` (GET/POST) → journal.DefaultHandler (local-first sync endpoints for journal models)
 - `/upload` (POST) → media.Upload
 - `/m/:link` (GET) → media.Serve
 
