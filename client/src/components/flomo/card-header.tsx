@@ -1,7 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { EditorToolbar } from "@/components/tiptap-editor/simple-editor";
-import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useEditorState } from "@/hooks/use-editor-state";
 import {
   saveDraft,
   syncDraft,
@@ -17,7 +17,7 @@ import { tiptapRefresh } from "@/hooks/flomo/query-keys";
 
 export function CardHeader() {
   const { activeTabId, getTabEditable, setTabEditable, getInitialContent } =
-    useAppState();
+    useEditorState();
 
   const handleClose = useCallback(() => {
     if (activeTabId) {

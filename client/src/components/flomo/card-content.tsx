@@ -1,8 +1,8 @@
-import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useEditorState } from "@/hooks/use-editor-state";
 import { SimpleEditor } from "../tiptap-editor/simple-editor";
 
 export function CardContent() {
-  const { activeTabId } = useAppState();
+  const { activeTabId } = useEditorState();
 
   if (!activeTabId) return null;
 

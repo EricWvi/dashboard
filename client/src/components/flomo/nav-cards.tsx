@@ -42,11 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
-import {
-  useCardsInFolder,
-  useUpdateCard,
-  useDeleteCard,
-} from "@/hooks/flomo/use-cards";
+import { useCardsInFolder, useUpdateCard, useDeleteCard } from "@/hooks/flomo/use-cards";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card, type Folder } from "@/lib/flomo/model";
 import {
@@ -56,6 +52,7 @@ import {
 import { EmojiPicker } from "./emoji-picker";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
 import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 interface NavCardsProps {
   currentFolderId: string;
@@ -66,7 +63,8 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
   const { language } = useUserContextV2();
 
   const { data: cards } = useCardsInFolder(currentFolderId);
-  const { isArchiveMode, openTab } = useAppState();
+  const { isArchiveMode } = useAppState();
+  const { openTab } = useEditorState();
 
   const updateCardMutation = useUpdateCard();
   const changeEmoji = (card: Card, emoji: string) => {
@@ -103,7 +101,6 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
     // Simply open tab with null instance
     // Content will be loaded from IndexedDB by EditorProvider
     openTab({
-      cardId: card.id,
       draftId: card.draft,
       title: card.title,
       editable: false,

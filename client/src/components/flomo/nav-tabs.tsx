@@ -28,11 +28,13 @@ import { useUserContextV2 } from "@/user-provider";
 import { getSyncManager } from "@/lib/flomo/sync-manager";
 import { UserLangEnum } from "@/lib/model";
 import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 export function NavTabs() {
   const { isMobile } = useSidebar();
   const { user } = useUserContextV2();
-  const { openTabs, enterArchiveMode, setActiveTab } = useAppState();
+  const { enterArchiveMode } = useAppState();
+  const { openTabs, setActiveTab } = useEditorState();
 
   const pushLocalDataToServer = () => {
     const manager = getSyncManager();
@@ -86,7 +88,7 @@ export function NavTabs() {
                 <DropdownMenuGroup>
                   {openTabs.map((tab) => (
                     <DropdownMenuItem
-                      key={tab.cardId}
+                      key={tab.draftId}
                       onClick={() => setActiveTab(tab.draftId)}
                     >
                       {tab.editable ? <PenLine /> : <Eye />}

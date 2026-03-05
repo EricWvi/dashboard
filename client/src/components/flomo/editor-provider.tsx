@@ -1,4 +1,4 @@
-import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useEditorState } from "@/hooks/use-editor-state";
 import { Editor, EditorContext } from "@tiptap/react";
 import { useSimpleEditor } from "@/components/tiptap-editor/simple-editor";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -80,7 +80,7 @@ const EditorState = ({
     saveInstance,
     instanceMap,
     setInitialContent,
-  } = useAppState();
+  } = useEditorState();
 
   const [loadingDraftId, setLoadingDraftId] = useState<string | null>(null);
   const hasEditableTabsRef = useRef(false);
