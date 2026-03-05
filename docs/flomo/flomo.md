@@ -36,10 +36,11 @@ client/src/
 ├── hooks/
 │   ├── flomo/                      # Flomo-specific React hooks
 │   │   ├── query-keys.ts           # React Query cache keys
-│   │   ├── use-app-state.ts        # Zustand store
+│   │   ├── use-app-state.ts        # Zustand store (navigation state only)
 │   │   ├── use-cards.ts            # Card CRUD operations hook
 │   │   ├── use-folders.ts          # Folder CRUD operations hook
 │   │   └── use-tiptapv2.ts         # TipTap document operations hook
+│   ├── use-editor-state.ts         # Zustand store (editor tab & instance state)
 │   ├── use-mobile.ts               # Mobile/desktop detection hook
 │   ├── use-throttled-callback.ts   # Performance optimization hook
 │   └── ...                         # Other shared hooks
@@ -314,9 +315,11 @@ Previously this UI lived inside `SimpleEditor`. It is now a standalone component
 The toolbar provides:
 
 - Formatting actions (desktop toolbar + mobile toolbar with view switcher)
-- **Save** — calls `saveDraft` and optionally invokes `onClose`
-- **Discard** — reverts to `getInitialContent` and calls `syncDraft` with the original content
+- **Save** — calls `onSave(editor)` and optionally invokes `onClose`
+- **Discard** — calls `onDrop(editor)` to revert to the original content without a server round-trip
 - Keyboard shortcut `Mod+S` to save
+
+The history functions (`listHistory`, `getHistory`, `restoreHistory`) are now context-free callbacks — callers bind the document `id` themselves before passing them in.
 
 ### `SimpleEditor` component (`simple-editor.tsx`)
 
@@ -400,7 +403,7 @@ Both dialogs support IME composition (CJK input) via `onCompositionStart`/`onCom
 
 File: `client/src/hooks/flomo/use-app-state.ts`
 
-A global Zustand store that covers navigation state, open editor tabs, and the editor instance cache.
+A Zustand store that covers **navigation state only**.
 
 ```typescript
 interface AppState {
@@ -411,7 +414,25 @@ interface AppState {
   isArchiveMode: boolean;
   enterArchiveMode: () => void;
   exitArchiveMode: () => void;
+}
+```
 
+`currentFolderId` is initialised to `RootFolderId` (the virtual root). `isArchiveMode` controls whether the sidebar and content area show archived or regular cards/folders.
+
+### `useEditorState` (Zustand store)
+
+File: `client/src/hooks/use-editor-state.ts`
+
+Editor tab management and editor instance cache.
+
+```typescript
+export interface EditorTab {
+  draftId: string; // UUID of the TiptapV2 document
+  title: string;
+  editable: boolean;
+}
+
+interface TabState {
   // Editor tabs
   openTabs: EditorTab[];
   activeTabId: string | null; // draftId of focused tab
@@ -419,7 +440,8 @@ interface AppState {
   closeTab: (draftId: string) => void; // remove tab
   setActiveTab: (draftId: string) => void; // switch focus
   getTabById: (draftId: string) => EditorTab | undefined; // get tab by draftId
-  setTabReadMode: (draftId: string, readMode: boolean) => void; // toggle read/edit mode
+  getTabEditable: (draftId: string) => boolean; // get read/edit mode for a tab
+  setTabEditable: (draftId: string, editable: boolean) => void; // toggle read/edit mode
 
   instanceMap: Record<string, EditorState | null>; // Map of draftId to editor instance
   getCurrentInstance: () => EditorState | null; // get editor instance for a tab
@@ -436,11 +458,9 @@ interface AppState {
 }
 ```
 
-`currentFolderId` is initialised to `RootFolderId` (the virtual root). `isArchiveMode` controls whether the sidebar and content area show archived or regular cards/folders.
-
 `instanceMap` is the key to fast tab switching: when the user leaves a tab, its live `EditorState` (including cursor position, selection, undo history) is serialised into the map. When returning to that tab, the state is restored synchronously with `editor.view.updateState()`. A `null` entry means the tab must reload from IndexedDB.
 
-`initialContentMap` stores the JSON content as it was when a draft was first loaded into the editor, enabling the **Discard** action to revert cleanly without a round-trip to the server.
+`initialContentMap` stores the JSON content as it was when a draft was first loaded into the editor, enabling the **Discard** action to revert cleanly.
 
 Closing a tab removes its entries from both `instanceMap` and `initialContentMap` to avoid memory leaks.
 

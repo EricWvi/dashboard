@@ -7,11 +7,12 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CardPane } from "@/components/flomo/card-pane";
 import { ArchiveFrame } from "@/components/flomo/archive-decoration";
 import { useAppState } from "@/hooks/flomo/use-app-state";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 export default function Flomo() {
   const [isInitializing, setIsInitializing] = useState(true);
   const syncManagerRef = useRef<SyncManager | null>(null);
-  const invalidateTabInstance = useAppState(
+  const invalidateTabInstance = useEditorState(
     (state) => state.invalidateTabInstance,
   );
 
