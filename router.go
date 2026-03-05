@@ -11,7 +11,9 @@ import (
 	"github.com/EricWvi/dashboard/handler/collection"
 	"github.com/EricWvi/dashboard/handler/echo"
 	"github.com/EricWvi/dashboard/handler/entry"
+	"github.com/EricWvi/dashboard/handler/dashboard"
 	"github.com/EricWvi/dashboard/handler/flomo"
+	"github.com/EricWvi/dashboard/handler/journal"
 	"github.com/EricWvi/dashboard/handler/media"
 	"github.com/EricWvi/dashboard/handler/tiptap"
 	"github.com/EricWvi/dashboard/handler/todo"
@@ -111,6 +113,10 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	back.POST("/entry", entry.DefaultHandler)
 	back.GET("/flomo", flomo.DefaultHandler)
 	back.POST("/flomo", flomo.DefaultHandler)
+	back.GET("/dashboard", dashboard.DefaultHandler)
+	back.POST("/dashboard", dashboard.DefaultHandler)
+	back.GET("/journal", journal.DefaultHandler)
+	back.POST("/journal", journal.DefaultHandler)
 
 	// Handle 404 for all unmatched routes
 	g.NoRoute(func(c *gin.Context) {
