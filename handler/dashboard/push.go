@@ -16,7 +16,7 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 
 	var wg sync.WaitGroup
 	var pushErr error
-	errChan := make(chan error, 10)
+	errChan := make(chan error, 9)
 
 	if len(req.Tag) > 0 {
 		wg.Add(1)
