@@ -5,6 +5,7 @@ export interface EditorTab {
   draftId: string;
   title: string;
   editable: boolean;
+  cardId?: string;
 }
 
 interface TabState {
