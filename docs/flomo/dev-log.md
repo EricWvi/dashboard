@@ -1,5 +1,24 @@
 # Flomo Development Log
 
+## 2026-03-06: Card bookmark feature and card-header redesign
+
+Implemented card bookmark (star) functionality and redesigned the card-header right-side buttons.
+
+**Files changed:**
+- `client/src/hooks/use-editor-state.ts` — Added optional `cardId` field to `EditorTab` interface so the card-header can look up the active card's data.
+- `client/src/components/flomo/card-dialogs.tsx` — **New file.** Extracted `RenameCardDialog`, `MoveCardDialog`, `DeleteCardDialog`, and shared i18n text from `nav-cards.tsx` for reuse by both `nav-cards` and `card-header`.
+- `client/src/components/flomo/nav-cards.tsx` — Added bookmark/unbookmark (`Star`/`StarOff`) menu item to the card context menu. Passes `cardId` when opening editor tabs. Imports dialog components from `card-dialogs.tsx`.
+- `client/src/components/flomo/card-header.tsx` — Removed the `PenLine` SVG edit trigger button. Added three buttons to the header bar's right side when not editing:
+  - **Star button**: Toggles `isBookmarked` via `useUpdateCard`. Uses `framer-motion` `AnimatePresence` for a scale+opacity transition between filled and outline star icons.
+  - **Edit button**: Green-themed (`#30D07A` brand color) with different shades for light/dark themes and normal/hover/active states.
+  - **More button**: `Ellipsis` icon in a square ghost button, opens a dropdown with Rename, Move, Archive/Restore, and Delete — same as `nav-cards` menu minus bookmark.
+
+**Design notes:**
+- Bookmark animation uses `AnimatePresence mode="wait"` with `initial={false}` to skip the entrance animation on first render. Toggling scales from 0.5→1 with 200ms easeOut.
+- Edit button uses explicit hex colors (`bg-[#30D07A]` / `dark:bg-[#28b86c]`) with progressive darkening on hover and active states for both light and dark themes.
+- The More menu conditionally shows Archive or Restore based on `card.isArchived`, matching the `nav-cards` behaviour.
+- Card data is fetched via `useCard(cardId)` where `cardId` comes from the active `EditorTab`. If no card is loaded yet, the More button and dialogs are hidden.
+
 ## 2026-03-04: Sidebar transition animations for folder navigation
 
 Added smooth transition animations to `NavFolders`, `NavCards`, and `NavPath` to eliminate jarring visual collapses when navigating between folders.

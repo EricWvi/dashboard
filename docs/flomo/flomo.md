@@ -23,7 +23,8 @@ client/src/
 │   │   ├── sidebar.tsx             # AppSidebar: root sidebar component
 │   │   ├── emoji-picker.tsx        # Emoji Picker for card/folder icon
 │   │   ├── card-content.tsx        # Main content area for the selected folder
-│   │   ├── card-header.tsx         # Header with breadcrumb folder-path navigation
+│   │   ├── card-header.tsx         # Header with bookmark, edit, and more actions
+│   │   ├── card-dialogs.tsx        # Shared card dialog components (Rename, Move, Delete)
 │   │   ├── card-pane.tsx           #
 │   │   ├── editor-provider.tsx     #
 │   │   ├── nav-folders.tsx         # Sidebar section: subfolders of current folder
@@ -354,7 +355,17 @@ The tree content is wrapped in a `motion.div` whose height is tracked via a call
 
 ### CardHeader (`card-header.tsx`)
 
-Sticky header inside the content pane. Guards on `activeTabId` — returns `null` when no tab is open. Shows the sidebar trigger, a separator, and `<EditorToolbar />` so all formatting actions are accessible from the top of the viewport.
+Sticky header inside the content pane. Guards on `activeTabId` — returns `null` when no tab is open. Shows the sidebar trigger and a separator on the left. On the right side (when not editing):
+
+| Button   | Icon / Label           | Behaviour                                                                                                                                                     |
+| -------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Star     | `StarOutlineIcon` / `StarFilledIcon` | Toggles `isBookmarked` (0 ↔ 1) via `useUpdateCard`. Uses `framer-motion` `AnimatePresence` for a scale+opacity animation on toggle. Filled star is yellow. |
+| Edit     | Text label ("编辑"/"Edit") | Green-themed button (`#30D07A` brand color) with light/dark theme variants. Enters edit mode (`setTabEditable`).                                            |
+| More     | `Ellipsis`             | Opens a dropdown menu with Rename, Move, Archive/Restore, Delete — same as `NavCards` sidebar menu minus the bookmark item.                                  |
+
+When editing, the right side shows `<EditorToolbar />` instead, providing formatting actions and save/discard controls.
+
+The card data is fetched via `useCard(cardId)` where `cardId` is stored on the `EditorTab` and set when opening a card from `NavCards`.
 
 ### NavFolders (`nav-folders.tsx`)
 
@@ -374,17 +385,20 @@ Dropdown menus set `onCloseAutoFocus={(e) => e.preventDefault()}` to prevent the
 
 Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes actions. Like `NavFolders`, the section uses `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId` for a 300 ms easeOut fade-in on folder change.
 
-| Dialog  | Component          | Behaviour                                                                                                                      |
-| ------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| Rename  | `RenameCardDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                                                                |
-| Move    | `MoveCardDialog`   | Breadcrumb + folder-list navigator. Calls `useUpdateCard` to update `folderId`.                                                |
-| Archive | fire directly      | Sets `isArchived = 1` via `useUpdateCard`. Archived cards are hidden from normal listing.                                      |
-| Restore | fire directly      | Async; checks whether the parent folder still exists. If it has been deleted, the card is restored to the root folder instead. |
-| Delete  | `DeleteCardDialog` | Confirmation dialog. Calls `useDeleteCard`.                                                                                    |
+| Action   | Component          | Behaviour                                                                                                                      |
+| -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Bookmark | fire directly      | Toggles `isBookmarked` (0 ↔ 1) via `useUpdateCard`. Shows `Star`/`StarOff` icon based on current state.                       |
+| Rename   | `RenameCardDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                                                                |
+| Move     | `MoveCardDialog`   | Breadcrumb + folder-list navigator. Calls `useUpdateCard` to update `folderId`.                                                |
+| Archive  | fire directly      | Sets `isArchived = 1` via `useUpdateCard`. Archived cards are hidden from normal listing.                                      |
+| Restore  | fire directly      | Async; checks whether the parent folder still exists. If it has been deleted, the card is restored to the root folder instead. |
+| Delete   | `DeleteCardDialog` | Confirmation dialog. Calls `useDeleteCard`.                                                                                    |
+
+Dialog components (`RenameCardDialog`, `MoveCardDialog`, `DeleteCardDialog`) are imported from `card-dialogs.tsx` and shared with `CardHeader`.
 
 Dropdown menus set `onCloseAutoFocus={(e) => e.preventDefault()}` to prevent focus stealing after a menu action.
 
-Clicking a card calls `openCard`, which opens an editor tab without passing content — content loading is fully delegated to `TiptapProvider` (either from the `instanceMap` cache or from IndexedDB).
+Clicking a card calls `openCard`, which opens an editor tab (with `cardId` set) without passing content — content loading is fully delegated to `TiptapProvider` (either from the `instanceMap` cache or from IndexedDB).
 
 The Move dialogs for both folders and cards share the same UX pattern: a horizontally scrollable breadcrumb trail (auto-scrolls to the rightmost segment) and a scrollable folder list fetched on-the-fly via `flomoDatabase.getFoldersInParent`.
 

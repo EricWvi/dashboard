@@ -23,6 +23,7 @@ import { tiptapRefresh } from "@/hooks/flomo/query-keys";
 import { useCard, useUpdateCard } from "@/hooks/flomo/use-cards";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card } from "@/lib/flomo/model";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -369,10 +370,10 @@ function StarFilledIcon({ className }: { className?: string }) {
 }
 
 const moreMenuI18n = {
-  "zh-CN": {
+  [UserLangEnum.ZHCN]: {
     restore: "恢复",
   },
-  "en-US": {
+  [UserLangEnum.ENUS]: {
     restore: "Restore",
   },
 };
