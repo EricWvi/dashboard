@@ -13,17 +13,17 @@ type TodoV2 struct {
 }
 
 type TodoV2Field struct {
-	Title        string     `gorm:"type:varchar(1024);not null" json:"title"`
-	Completed    *bool      `gorm:"default:false" json:"completed"`
-	CollectionId uuid.UUID  `gorm:"column:collection_id;type:uuid;not null" json:"collectionId"`
-	Difficulty   int        `gorm:"default:-1" json:"difficulty"`
-	Order        int        `gorm:"column:d_order;default:1" json:"order"`
-	Link         *string    `gorm:"type:varchar(1024)" json:"link"`
-	Draft        uuid.UUID  `gorm:"type:uuid;not null" json:"draft"`
-	Schedule     *int64     `gorm:"type:bigint" json:"schedule"`
-	Done         *bool      `gorm:"default:false" json:"done"`
-	Count        int        `gorm:"column:d_count;default:0" json:"count"`
-	Kanban       uuid.UUID  `gorm:"type:uuid;not null" json:"kanban"`
+	Title        string    `gorm:"type:varchar(1024);not null" json:"title"`
+	Completed    bool      `gorm:"default:false" json:"completed"`
+	CollectionId uuid.UUID `gorm:"column:collection_id;type:uuid;not null" json:"collectionId"`
+	Difficulty   int       `gorm:"default:-1" json:"difficulty"`
+	Order        int       `gorm:"column:d_order;default:1" json:"order"`
+	Link         string    `gorm:"type:varchar(1024)" json:"link"`
+	Draft        uuid.UUID `gorm:"type:uuid;not null" json:"draft"`
+	Schedule     int64     `gorm:"type:bigint" json:"schedule"`
+	Done         bool      `gorm:"default:false" json:"done"`
+	Count        int       `gorm:"column:d_count;default:0" json:"count"`
+	Kanban       uuid.UUID `gorm:"type:uuid;not null" json:"kanban"`
 }
 
 const (

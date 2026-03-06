@@ -16,7 +16,35 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 
 	var wg sync.WaitGroup
 	var pushErr error
-	errChan := make(chan error, 9)
+	errChan := make(chan error, 10)
+
+	if len(req.User) > 0 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range req.User {
+				existing := &model.UserV2{}
+				where := model.WhereMap{}
+				where.Eq(model.Id, userId)
+				err := existing.Get(db, where)
+
+				if err != nil {
+					errChan <- err
+					return
+				}
+
+				if existing.UpdatedAt >= req.User[i].UpdatedAt {
+					continue
+				}
+
+				existing.UserV2View = req.User[i]
+				if err := existing.SyncFromClient(db, where); err != nil {
+					errChan <- err
+					return
+				}
+			}
+		}()
+	}
 
 	if len(req.Tag) > 0 {
 		wg.Add(1)
@@ -320,6 +348,7 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 }
 
 type PushRequest struct {
+	User       []model.UserV2View   `json:"users"`
 	Tag        []model.TagV2        `json:"tags"`
 	Blog       []model.BlogV2       `json:"blogs"`
 	Bookmark   []model.BookmarkV2   `json:"bookmarks"`
