@@ -110,5 +110,5 @@ func CreateUserV2(db *gorm.DB, email string) (uint, error) {
 
 func (u *UserV2) SyncFromClient(db *gorm.DB, where map[string]any) error {
 	syncDb := OmitMetaFields(db)
-	return syncDb.Where(where).UpdateColumns(u).Error
+	return syncDb.Omit(UserV2_RssToken, UserV2_EmailToken, UserV2_EmailFeed).Where(where).UpdateColumns(u).Error
 }
