@@ -1,4 +1,4 @@
-import { triggerRefresh } from "@/hooks/flomo/query-keys";
+import { tiptapRefresh, triggerRefresh } from "@/hooks/flomo/query-keys";
 import { DexieFlomoDatabase } from "./dexie";
 import { SqliteFlomoDatabase } from "./sqlite";
 import {
@@ -78,9 +78,12 @@ export interface IFlomoDatabase {
 
 export class RefreshDecorator implements IFlomoDatabase {
   private baseDb: IFlomoDatabase;
-  private onTableChange: (table: string) => void;
+  private onTableChange: (table: string, id?: string) => void;
 
-  constructor(baseDb: IFlomoDatabase, onTableChange: (table: string) => void) {
+  constructor(
+    baseDb: IFlomoDatabase,
+    onTableChange: (table: string, id?: string) => void,
+  ) {
     this.baseDb = baseDb;
     this.onTableChange = onTableChange;
   }
@@ -202,7 +205,7 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async putTiptap(tiptap: TiptapV2): Promise<void> {
     await this.baseDb.putTiptap(tiptap);
-    this.onTableChange("tiptaps");
+    this.onTableChange("tiptap", tiptap.id);
   }
 
   async putTiptaps(tiptaps: TiptapV2[]): Promise<void> {
@@ -222,7 +225,7 @@ export class RefreshDecorator implements IFlomoDatabase {
     updates: Partial<TiptapV2Field>,
   ): Promise<void> {
     await this.baseDb.updateTiptap(id, updates);
-    this.onTableChange("tiptaps");
+    this.onTableChange("tiptap", id);
   }
 
   async deleteTiptap(id: string): Promise<void> {
@@ -250,7 +253,7 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async restoreTiptapHistory(id: string, ts: number): Promise<void> {
     await this.baseDb.restoreTiptapHistory(id, ts);
-    this.onTableChange("tiptaps");
+    this.onTableChange("tiptap", id);
   }
 
   // Sync
@@ -298,5 +301,10 @@ function createBaseDatabase(): IFlomoDatabase {
 // Export singleton instance
 export const flomoDatabase: IFlomoDatabase = new RefreshDecorator(
   createBaseDatabase(),
-  (table) => triggerRefresh(table),
+  (table, id?: string) => {
+    if (table === "tiptap") {
+      tiptapRefresh(id!);
+    }
+    triggerRefresh(table);
+  },
 );

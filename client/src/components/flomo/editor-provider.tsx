@@ -1,22 +1,20 @@
 import { useEditorState } from "@/hooks/use-editor-state";
 import { Editor, EditorContext } from "@tiptap/react";
 import { useSimpleEditor } from "@/components/tiptap-editor/simple-editor";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { debounce, type DebouncedFunc } from "lodash";
 import { syncDraft, getContent } from "@/hooks/flomo/use-tiptapv2";
 import { EditorState as ProseMirrorState } from "prosemirror-state";
 
+// since we will call flush on tab switch, we can use a debounced function that accpets `id`,
+// and it will not cause problems that newer calls with different id will override the previous ones
+const debouncedSync = debounce((id: string, editorInstance: Editor) => {
+  const content = editorInstance.getJSON();
+  syncDraft({ id, content });
+}, 500);
+
 export function TiptapProvider({ children }: { children: React.ReactNode }) {
   const draftIdRef = useRef<string | null>(null);
-
-  const debouncedSync = useMemo(
-    () =>
-      debounce((id: string, editorInstance: Editor) => {
-        const content = editorInstance.getJSON();
-        syncDraft({ id, content });
-      }, 500),
-    [],
-  );
 
   const editor = useSimpleEditor(({ editor }) => {
     if (draftIdRef.current) {
@@ -99,7 +97,7 @@ const EditorState = ({
         plugins: editor.state.plugins,
       });
       editor.view.updateState(newState);
-      editor.setEditable(getTabEditable(draftId));
+      editor.setEditable(getTabEditable(draftId), false);
       setInitialContent(draftId, contentJSON);
     } finally {
       setLoadingDraftId(null);
@@ -134,7 +132,7 @@ const EditorState = ({
       // Use cached EditorState, but ensure it's applied after the current render cycle
       setTimeout(() => {
         editor.view.updateState(instance);
-        editor.setEditable(getTabEditable(activeTabId));
+        editor.setEditable(getTabEditable(activeTabId), false);
       }, 0);
     } else {
       // No cached instance - load from IndexedDB
@@ -158,7 +156,7 @@ const EditorState = ({
   useEffect(() => {
     if (activeTabId && draftIdRef.current === activeTabId) {
       if (editor.isEditable !== getTabEditable(activeTabId)) {
-        editor.setEditable(getTabEditable(activeTabId));
+        editor.setEditable(getTabEditable(activeTabId), false);
       }
     }
     hasEditableTabsRef.current = openTabs.some((tab) => tab.editable);

@@ -35,15 +35,64 @@ const TABLE_MAP: Record<string, readonly unknown[]> = {
   tiptaps: keys.tiptaps.all,
 };
 
-const notifyUI = debounce((table: string) => {
+// Create independent debounced functions for each table to avoid cancellation
+const invalidateUser = debounce(() => {
   queryClient.invalidateQueries({
-    queryKey: TABLE_MAP[table],
-    exact: false, // Crucial: ensures sub-keys are caught
+    queryKey: TABLE_MAP.user,
+    exact: false,
   });
 }, 100);
 
-export const triggerRefresh = (table: string) => notifyUI(table);
-
-export const tiptapRefresh = debounce((id: string) => {
-  syncEvents.emit(id);
+const invalidateCards = debounce(() => {
+  queryClient.invalidateQueries({
+    queryKey: TABLE_MAP.cards,
+    exact: false,
+  });
 }, 100);
+
+const invalidateFolders = debounce(() => {
+  queryClient.invalidateQueries({
+    queryKey: TABLE_MAP.folders,
+    exact: false,
+  });
+}, 100);
+
+const invalidateTiptaps = debounce(() => {
+  queryClient.invalidateQueries({
+    queryKey: TABLE_MAP.tiptaps,
+    exact: false,
+  });
+}, 100);
+
+export const triggerRefresh = (table: string) => {
+  switch (table) {
+    case "user":
+      invalidateUser();
+      break;
+    case "cards":
+      invalidateCards();
+      break;
+    case "folders":
+      invalidateFolders();
+      break;
+    case "tiptaps":
+      invalidateTiptaps();
+      break;
+  }
+};
+
+const tiptapDebounceMap = new Map<string, ReturnType<typeof debounce>>();
+
+export const tiptapRefresh = (id: string) => {
+  if (!tiptapDebounceMap.has(id)) {
+    tiptapDebounceMap.set(
+      id,
+      debounce((tiptapId: string) => {
+        syncEvents.emit(tiptapId);
+      }, 100),
+    );
+  }
+
+  const debounced = tiptapDebounceMap.get(id)!;
+  debounced(id);
+};

@@ -73,7 +73,6 @@ export function CardHeader() {
           id: activeTabId,
           content: e.getJSON() as Record<string, unknown>,
         });
-        tiptapRefresh(activeTabId);
       }
     },
     [activeTabId],
@@ -93,7 +92,6 @@ export function CardHeader() {
     async (ts: number) => {
       if (activeTabId) {
         await restoreHistory(activeTabId, ts);
-        tiptapRefresh(activeTabId);
       }
     },
     [activeTabId],
