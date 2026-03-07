@@ -44,7 +44,7 @@ import {
   MoveCardDialog,
   DeleteCardDialog,
 } from "./card-dialogs";
-import { isTouchDevice } from "@/lib/utils";
+import { cn, isTouchDevice } from "@/lib/utils";
 
 interface NavCardsProps {
   currentFolderId: string;
@@ -56,7 +56,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
 
   const { data: cards } = useCardsInFolder(currentFolderId);
   const { setCardIdForDraft } = useAppState();
-  const { openTab, closeTab } = useEditorState();
+  const { activeTabId, openTab, closeTab } = useEditorState();
 
   const updateCardMutation = useUpdateCard();
   const changeEmoji = (card: Card, emoji: string) => {
@@ -149,7 +149,12 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
                   <SidebarMenuItem key={card.id} className="cursor-pointer">
                     <SidebarMenuButton
                       asChild
-                      className="gap-0"
+                      className={cn(
+                        "gap-0",
+                        activeTabId === card.draft
+                          ? "bg-tab-highlight hover:bg-tab-highlight/30 dark:hover:bg-tab-highlight/70 shadow-sm"
+                          : "",
+                      )}
                       onClick={() => openCard(card)}
                     >
                       <div>

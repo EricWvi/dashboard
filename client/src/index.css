@@ -43,6 +43,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --color-emoji-accent: var(--emoji-accent);
+  --color-tab-highlight: var(--tab-highlight);
 }
 
 :root {
@@ -87,6 +88,7 @@
   --mark-icon-stroke: #a78bfa;
   --emoji-accent: oklch(0.92 0 0);
   --archive-frame: rgb(246, 230, 205);
+  --tab-highlight: oklch(1 0 0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -131,6 +133,7 @@
     --mark-icon-stroke: #3b82f6;
     --emoji-accent: oklch(0.35 0 0);
     --archive-frame: rgb(61, 37, 6);
+    --tab-highlight: oklch(0.32 0 0);
   }
 }
 

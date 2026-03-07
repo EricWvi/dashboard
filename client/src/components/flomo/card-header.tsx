@@ -201,16 +201,14 @@ export function CardHeader() {
               </Button>
 
               {/* More button */}
-              {card && (
-                <MoreMenu
-                  card={card}
-                  onRename={() => setRenameDialogOpen(true)}
-                  onMove={() => setMoveDialogOpen(true)}
-                  onArchive={archiveCard}
-                  onRestore={restoreCard}
-                  onDelete={() => setDeleteDialogOpen(true)}
-                />
-              )}
+              <MoreMenu
+                card={card}
+                onRename={() => setRenameDialogOpen(true)}
+                onMove={() => setMoveDialogOpen(true)}
+                onArchive={archiveCard}
+                onRestore={restoreCard}
+                onDelete={() => setDeleteDialogOpen(true)}
+              />
             </div>
           )}
         </div>
@@ -282,7 +280,7 @@ function MoreMenu({
   onRestore,
   onDelete,
 }: {
-  card: Card;
+  card: Card | undefined;
   onRename: () => void;
   onMove: () => void;
   onArchive: () => void;
@@ -311,7 +309,7 @@ function MoreMenu({
           <TextCursorInput className="text-muted-foreground" />
           <span>{i18nText[language].rename}</span>
         </DropdownMenuItem>
-        {card.isArchived === 0 && (
+        {card?.isArchived === 0 && (
           <>
             <DropdownMenuItem onClick={onMove}>
               <FolderInput className="text-muted-foreground" />
@@ -320,7 +318,7 @@ function MoreMenu({
             <DropdownMenuSeparator />
           </>
         )}
-        {card.isArchived === 1 ? (
+        {card?.isArchived === 1 ? (
           <DropdownMenuItem onClick={onRestore}>
             <ArchiveRestore className="text-muted-foreground" />
             <span>{i18nText[language].restore}</span>

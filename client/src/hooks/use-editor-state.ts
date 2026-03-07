@@ -54,15 +54,16 @@ export const useEditorState = create<TabState>((set, get) => ({
       delete newInitialContentMap[draftId];
 
       const isActiveClosed = state.activeTabId === draftId;
+      const newActiveTabId = isActiveClosed
+        ? newTabs.length > 0
+          ? newTabs[newTabs.length - 1].draftId // Focus last tab if active closed
+          : null
+        : state.activeTabId;
       return {
         openTabs: newTabs,
         instanceMap: newInstanceMap,
         initialContentMap: newInitialContentMap,
-        activeTabId: isActiveClosed
-          ? newTabs.length > 0
-            ? newTabs[newTabs.length - 1].draftId // Focus last tab if active closed
-            : null
-          : state.activeTabId,
+        activeTabId: newActiveTabId,
       };
     }),
   setActiveTab: (draftId: string) => set(() => ({ activeTabId: draftId })),

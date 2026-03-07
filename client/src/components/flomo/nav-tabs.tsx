@@ -1,9 +1,11 @@
 import {
   Archive,
+  Check,
   ChevronsUpDown,
   CloudUpload,
   Eye,
   PenLine,
+  X,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,12 +29,13 @@ import { getSyncManager } from "@/lib/flomo/sync-manager";
 import { UserLangEnum } from "@/lib/model";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useEditorState } from "@/hooks/use-editor-state";
+import { cn, isTouchDevice } from "@/lib/utils";
 
 export function NavTabs() {
   const { isMobile } = useSidebar();
   const { user } = useUserContextV2();
   const { enterArchiveMode } = useAppState();
-  const { openTabs, setActiveTab } = useEditorState();
+  const { openTabs, setActiveTab, activeTabId, closeTab } = useEditorState();
 
   const pushLocalDataToServer = () => {
     const manager = getSyncManager();
@@ -87,10 +90,51 @@ export function NavTabs() {
                   {openTabs.map((tab) => (
                     <DropdownMenuItem
                       key={tab.draftId}
-                      onClick={() => setActiveTab(tab.draftId)}
+                      className={cn(
+                        isTouchDevice && tab.draftId === activeTabId
+                          ? "bg-accent"
+                          : "",
+                      )}
+                      onClick={(e) => {
+                        setActiveTab(tab.draftId);
+                        e.preventDefault();
+                      }}
                     >
-                      {tab.editable ? <PenLine /> : <Eye />}
+                      <div className="group">
+                        {tab.editable ? (
+                          <PenLine />
+                        ) : (
+                          <div
+                            onClick={(e) => {
+                              if (!isTouchDevice) {
+                                closeTab(tab.draftId);
+                                e.stopPropagation();
+                              }
+                              e.preventDefault();
+                            }}
+                          >
+                            <Eye className="group-hover:hidden" />
+                            <X className="hidden group-hover:block" />
+                          </div>
+                        )}
+                      </div>
                       {tab.title}
+                      {isTouchDevice
+                        ? !tab.editable && (
+                            <div
+                              className="ml-auto"
+                              onClick={(e) => {
+                                closeTab(tab.draftId);
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
+                            >
+                              <X />
+                            </div>
+                          )
+                        : tab.draftId === activeTabId && (
+                            <Check className="ml-auto" />
+                          )}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuGroup>
