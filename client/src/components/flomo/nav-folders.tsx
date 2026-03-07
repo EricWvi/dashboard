@@ -37,6 +37,7 @@ import {
   ArchiveRestore,
   FolderInput,
   MoreHorizontal,
+  Sparkles,
   Star,
   StarOff,
   TextCursorInput,
@@ -167,6 +168,9 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                         </EmojiPicker>
 
                         <span>{folder.title}</span>
+                        {folder.isBookmarked === 1 && (
+                          <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
+                        )}
                       </div>
                     </SidebarMenuButton>
                     <DropdownMenu>

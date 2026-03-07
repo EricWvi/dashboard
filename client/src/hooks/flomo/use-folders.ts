@@ -110,3 +110,17 @@ export function useDeleteFolder() {
     },
   });
 }
+
+/**
+ * Hook to fetch bookmarked folders
+ */
+export function useBookmarkedFolders() {
+  return useQuery({
+    queryKey: keys.folders.bookmarked(),
+    queryFn: async () => {
+      return flomoDatabase.getBookmarkedFolders();
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}

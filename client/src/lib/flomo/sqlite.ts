@@ -55,6 +55,14 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
     return invoke("flomo_get_archived_cards");
   }
 
+  async getBookmarkedCards(): Promise<Card[]> {
+    return invoke("flomo_get_bookmarked_cards");
+  }
+
+  async getRecentCards(limit: number): Promise<Card[]> {
+    return invoke("flomo_get_recent_cards", { limit });
+  }
+
   // Folders
   async getFolder(id: string): Promise<Folder | undefined> {
     return (
@@ -99,6 +107,10 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
 
   async getArchivedFolders(): Promise<Folder[]> {
     return invoke("flomo_get_archived_folders");
+  }
+
+  async getBookmarkedFolders(): Promise<Folder[]> {
+    return invoke("flomo_get_bookmarked_folders");
   }
 
   // Tiptaps

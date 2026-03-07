@@ -339,7 +339,7 @@ export function EditorToolbar({
   if (!editor) return null;
 
   return (
-    <Toolbar>
+    <Toolbar className="!relative">
       {mobileView === "main" ? (
         <MainToolbarContent
           editor={editor}

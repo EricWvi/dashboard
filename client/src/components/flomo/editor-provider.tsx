@@ -120,13 +120,15 @@ const EditorState = ({
 
   // Handle tab switching
   useEffect(() => {
-    if (!activeTabId || draftIdRef.current === activeTabId) return;
+    if (draftIdRef.current === activeTabId) return;
 
     if (draftIdRef.current && draftIdRef.current !== activeTabId) {
       saveInstance(draftIdRef.current, editor.state);
     }
     draftIdRef.current = activeTabId;
     debouncedSync.flush(); // Immediately sync on tab switch to ensure latest content is saved
+    if (!activeTabId) return;
+
     const instance = getCurrentInstance();
     if (instance) {
       // Use cached EditorState, but ensure it's applied after the current render cycle

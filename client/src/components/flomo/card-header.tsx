@@ -167,7 +167,7 @@ export function CardHeader() {
             <>
               <Separator
                 orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
+                className="data-[orientation=vertical]:h-4"
               />
               <EditorToolbar
                 onClose={handleClose}

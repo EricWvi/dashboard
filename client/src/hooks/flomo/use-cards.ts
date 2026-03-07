@@ -82,3 +82,31 @@ export function useDeleteCard() {
     },
   });
 }
+
+/**
+ * Hook to fetch bookmarked cards
+ */
+export function useBookmarkedCards() {
+  return useQuery({
+    queryKey: keys.cards.bookmarked(),
+    queryFn: async () => {
+      return flomoDatabase.getBookmarkedCards();
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+/**
+ * Hook to fetch recently updated cards
+ */
+export function useRecentCards(limit: number) {
+  return useQuery({
+    queryKey: keys.cards.recent(limit),
+    queryFn: async () => {
+      return flomoDatabase.getRecentCards(limit);
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}

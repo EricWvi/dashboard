@@ -32,6 +32,8 @@ export interface IFlomoDatabase {
   softDeleteCard(id: string): Promise<void>;
   markCardSynced(id: string, updatedAt: number): Promise<void>;
   getArchivedCards(): Promise<Card[]>;
+  getBookmarkedCards(): Promise<Card[]>;
+  getRecentCards(limit: number): Promise<Card[]>;
 
   // Folders
   getFolder(id: string): Promise<Folder | undefined>;
@@ -44,6 +46,7 @@ export interface IFlomoDatabase {
   softDeleteFolder(id: string): Promise<void>;
   markFolderSynced(id: string, updatedAt: number): Promise<void>;
   getArchivedFolders(): Promise<Folder[]>;
+  getBookmarkedFolders(): Promise<Folder[]>;
 
   // Tiptaps
   getTiptap(id: string): Promise<TiptapV2 | undefined>;
@@ -146,6 +149,14 @@ export class RefreshDecorator implements IFlomoDatabase {
     return this.baseDb.getArchivedCards();
   }
 
+  async getBookmarkedCards(): Promise<Card[]> {
+    return this.baseDb.getBookmarkedCards();
+  }
+
+  async getRecentCards(limit: number): Promise<Card[]> {
+    return this.baseDb.getRecentCards(limit);
+  }
+
   // Folders
   async getFolder(id: string): Promise<Folder | undefined> {
     return this.baseDb.getFolder(id);
@@ -192,6 +203,10 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async getArchivedFolders(): Promise<Folder[]> {
     return this.baseDb.getArchivedFolders();
+  }
+
+  async getBookmarkedFolders(): Promise<Folder[]> {
+    return this.baseDb.getBookmarkedFolders();
   }
 
   // Tiptaps

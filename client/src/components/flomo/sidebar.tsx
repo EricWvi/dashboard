@@ -12,8 +12,10 @@ import { useAppState } from "@/hooks/flomo/use-app-state";
 import { FlomoLogo, FlomoText } from "./icons";
 import { Search } from "lucide-react";
 import { NavPath } from "./nav-path";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 export function AppSidebar() {
+  const { hideTabs } = useEditorState();
   const { currentFolderId } = useAppState();
   if (currentFolderId === undefined) {
     return null;
@@ -32,7 +34,10 @@ export function AppSidebar() {
             </div>
           </div>
 
-          <div className="hover:bg-emoji-accent cursor-pointer rounded-md p-2">
+          <div
+            className="hover:bg-emoji-accent cursor-pointer rounded-md p-2"
+            onClick={() => hideTabs()}
+          >
             <Search className="size-4 stroke-[2.5]" />
           </div>
         </div>

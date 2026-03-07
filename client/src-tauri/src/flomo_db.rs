@@ -465,6 +465,58 @@ impl FlomoDb {
         rows.collect()
     }
 
+    pub fn get_bookmarked_cards(&self) -> SqliteResult<Vec<Card>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_bookmarked = 1 AND is_deleted = 0",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let payload_str: String = row.get(4)?;
+            let is_deleted: i64 = row.get(10)?;
+            Ok(Card {
+                id: row.get(0)?,
+                folder_id: row.get(1)?,
+                title: row.get(2)?,
+                draft: row.get(3)?,
+                payload: parse_json_or_empty(&payload_str),
+                raw_text: row.get(5)?,
+                is_bookmarked: row.get(6)?,
+                is_archived: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(11)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    pub fn get_recent_cards(&self, limit: i64) -> SqliteResult<Vec<Card>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_deleted = 0 ORDER BY updated_at DESC LIMIT ?1",
+        )?;
+        let rows = stmt.query_map(params![limit], |row| {
+            let payload_str: String = row.get(4)?;
+            let is_deleted: i64 = row.get(10)?;
+            Ok(Card {
+                id: row.get(0)?,
+                folder_id: row.get(1)?,
+                title: row.get(2)?,
+                draft: row.get(3)?,
+                payload: parse_json_or_empty(&payload_str),
+                raw_text: row.get(5)?,
+                is_bookmarked: row.get(6)?,
+                is_archived: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(11)?,
+            })
+        })?;
+        rows.collect()
+    }
+
     // --- Folders ---
 
     pub fn get_folder(&self, id: &str) -> SqliteResult<Option<Folder>> {
@@ -654,6 +706,30 @@ impl FlomoDb {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_archived = 1 AND is_deleted = 0",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let payload_str: String = row.get(3)?;
+            let is_deleted: i64 = row.get(8)?;
+            Ok(Folder {
+                id: row.get(0)?,
+                parent_id: row.get(1)?,
+                title: row.get(2)?,
+                payload: parse_json_or_empty(&payload_str),
+                is_bookmarked: row.get(4)?,
+                is_archived: row.get(5)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(9)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    pub fn get_bookmarked_folders(&self) -> SqliteResult<Vec<Folder>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_bookmarked = 1 AND is_deleted = 0",
         )?;
         let rows = stmt.query_map([], |row| {
             let payload_str: String = row.get(3)?;
@@ -1229,6 +1305,16 @@ pub mod commands {
         get_db()?.get_archived_cards().map_err(|e| e.to_string())
     }
 
+    #[tauri::command]
+    pub fn flomo_get_bookmarked_cards() -> Result<Vec<Card>, String> {
+        get_db()?.get_bookmarked_cards().map_err(|e| e.to_string())
+    }
+
+    #[tauri::command]
+    pub fn flomo_get_recent_cards(limit: i64) -> Result<Vec<Card>, String> {
+        get_db()?.get_recent_cards(limit).map_err(|e| e.to_string())
+    }
+
     // Folders
     #[tauri::command]
     pub fn flomo_get_folder(id: String) -> Result<Option<Folder>, String> {
@@ -1278,6 +1364,11 @@ pub mod commands {
     #[tauri::command]
     pub fn flomo_get_archived_folders() -> Result<Vec<Folder>, String> {
         get_db()?.get_archived_folders().map_err(|e| e.to_string())
+    }
+
+    #[tauri::command]
+    pub fn flomo_get_bookmarked_folders() -> Result<Vec<Folder>, String> {
+        get_db()?.get_bookmarked_folders().map_err(|e| e.to_string())
     }
 
     // Tiptaps

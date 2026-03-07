@@ -13,6 +13,7 @@ interface TabState {
   openTab: (tab: EditorTab) => void; // add or focus existing tab
   closeTab: (draftId: string) => void; // remove tab
   setActiveTab: (draftId: string) => void; // switch focus
+  hideTabs: () => void; // set activeTabId to null to hide all tabs
   getTabById: (draftId: string) => EditorTab | undefined; // get tab by draftId
   getTabEditable: (draftId: string) => boolean; // get read/edit mode for a tab
   setTabEditable: (draftId: string, editable: boolean) => void; // toggle read/edit mode
@@ -67,6 +68,7 @@ export const useEditorState = create<TabState>((set, get) => ({
       };
     }),
   setActiveTab: (draftId: string) => set(() => ({ activeTabId: draftId })),
+  hideTabs: () => set(() => ({ activeTabId: null })),
   getTabById: (draftId: string) => {
     const { openTabs } = get();
     return openTabs.find((t) => t.draftId === draftId);

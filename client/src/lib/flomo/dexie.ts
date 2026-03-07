@@ -133,6 +133,23 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
       .toArray();
   }
 
+  async getBookmarkedCards(): Promise<Card[]> {
+    return this.db.cards
+      .where("isBookmarked")
+      .equals(1)
+      .and((card) => !card.isDeleted && card.isArchived === 0)
+      .toArray();
+  }
+
+  async getRecentCards(limit: number): Promise<Card[]> {
+    return this.db.cards
+      .orderBy("updatedAt")
+      .reverse()
+      .filter((card) => !card.isDeleted && card.isArchived === 0)
+      .limit(limit)
+      .toArray();
+  }
+
   // Folders
   async getFolder(id: string): Promise<Folder | undefined> {
     return this.db.folders.get(id);
@@ -207,6 +224,14 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
       .where("isArchived")
       .equals(1)
       .and((folder) => !folder.isDeleted)
+      .toArray();
+  }
+
+  async getBookmarkedFolders(): Promise<Folder[]> {
+    return this.db.folders
+      .where("isBookmarked")
+      .equals(1)
+      .and((folder) => !folder.isDeleted && folder.isArchived === 0)
       .toArray();
   }
 
