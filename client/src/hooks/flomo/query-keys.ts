@@ -11,9 +11,8 @@ const keys = {
     inFolder: (folderId: string) =>
       [...keys.cards.all, "list", { folderId }] as const,
     detail: (id: string) => [...keys.cards.all, "detail", id] as const,
-    bookmarked: [...(["cards"] as const), "bookmarked"] as const,
-    recent: (limit: number) =>
-      [...(["cards"] as const), "recent", { limit }] as const,
+    bookmarked: ["cards", "bookmarked"] as const,
+    recent: (limit: number) => ["cards", "recent", { limit }] as const,
   },
   folders: {
     all: ["folders"] as const,
@@ -22,7 +21,7 @@ const keys = {
       [...keys.folders.all, "list", parentId] as const,
     path: (folderId: string) =>
       [...keys.folders.all, "path", folderId] as const,
-    bookmarked: [...(["folders"] as const), "bookmarked"] as const,
+    bookmarked: ["folders", "bookmarked"] as const,
   },
   tiptaps: {
     all: ["tiptaps"] as const,

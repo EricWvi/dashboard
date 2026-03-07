@@ -142,12 +142,12 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
   }
 
   async getRecentCards(limit: number): Promise<Card[]> {
-    const cards = await this.db.cards
-      .where("isArchived")
-      .equals(0)
-      .and((card) => !card.isDeleted)
-      .sortBy("updatedAt");
-    return cards.reverse().slice(0, limit);
+    return this.db.cards
+      .orderBy("updatedAt")
+      .reverse()
+      .filter((card) => !card.isDeleted && card.isArchived === 0)
+      .limit(limit)
+      .toArray();
   }
 
   // Folders
