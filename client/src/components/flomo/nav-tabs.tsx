@@ -1,9 +1,7 @@
 import {
   Archive,
-  BadgeCheck,
   ChevronsUpDown,
   CloudUpload,
-  CreditCard,
   Eye,
   PenLine,
 } from "lucide-react";
@@ -100,14 +98,6 @@ export function NavTabs() {
             )}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => enterArchiveMode()}>
                 <Archive />
                 {i18nText[user.language].archived}

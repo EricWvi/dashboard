@@ -34,8 +34,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Archive,
+  ArchiveRestore,
   FolderInput,
   MoreHorizontal,
+  Star,
+  StarOff,
   TextCursorInput,
   Trash2,
 } from "lucide-react";
@@ -56,6 +59,7 @@ import {
 } from "@/lib/flomo/animations";
 import { Fragment } from "react";
 import { EmojiPicker } from "./emoji-picker";
+import { isTouchDevice } from "@/lib/utils";
 
 interface NavFoldersProps {
   currentFolderId: string;
@@ -65,7 +69,7 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
   const { language } = useUserContextV2();
   const { isMobile } = useSidebar();
   const { data: folders } = useFoldersInParent(currentFolderId);
-  const { isArchiveMode, setCurrentFolderId } = useAppState();
+  const { setCurrentFolderId } = useAppState();
 
   const updateFolderMutation = useUpdateFolder();
   const changeEmoji = (folder: Folder, emoji: string) => {
@@ -78,6 +82,18 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     return updateFolderMutation.mutateAsync({
       id: folderId,
       data: { isArchived: 1 },
+    });
+  };
+  const bookmarkFolder = (folderId: string) => {
+    return updateFolderMutation.mutateAsync({
+      id: folderId,
+      data: { isBookmarked: 1 },
+    });
+  };
+  const unbookmarkFolder = (folderId: string) => {
+    return updateFolderMutation.mutateAsync({
+      id: folderId,
+      data: { isBookmarked: 0 },
     });
   };
   const restoreFolder = async (folderId: string) => {
@@ -117,68 +133,6 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     title: string;
   } | null>(null);
 
-  if (isArchiveMode) {
-    return (
-      <SidebarGroup>
-        <SidebarGroupLabel>{i18nText[language].folders}</SidebarGroupLabel>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentFolderId}
-            variants={folderTransitionVariants}
-            initial="initial"
-            animate="animate"
-            transition={folderTransition}
-          >
-            <SidebarMenu>
-              {folders
-                ?.sort((a, b) => a.title.localeCompare(b.title))
-                .map((folder) => (
-                  <SidebarMenuItem key={folder.id} className="cursor-pointer">
-                    <SidebarMenuButton
-                      asChild
-                      className="gap-0"
-                      onClick={() => setCurrentFolderId(folder.id)}
-                    >
-                      <div>
-                        <span className="mr-1 rounded-sm px-1 text-base">
-                          {folder.payload.emoji || "📂"}
-                        </span>
-
-                        <span>{folder.title}</span>
-                      </div>
-                    </SidebarMenuButton>
-                    {folder.isArchived === 1 && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <SidebarMenuAction showOnHover>
-                            <MoreHorizontal />
-                            <span className="sr-only">More</span>
-                          </SidebarMenuAction>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          className="w-48"
-                          side={isMobile ? "bottom" : "right"}
-                          align={isMobile ? "end" : "start"}
-                          onCloseAutoFocus={(e) => e.preventDefault()}
-                        >
-                          <DropdownMenuItem
-                            onClick={() => restoreFolder(folder.id)}
-                          >
-                            <TextCursorInput className="text-muted-foreground" />
-                            <span>{i18nText[language].restore}</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
-          </motion.div>
-        </AnimatePresence>
-      </SidebarGroup>
-    );
-  }
-
   return (
     <>
       <SidebarGroup>
@@ -217,7 +171,9 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                     </SidebarMenuButton>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction showOnHover>
+                        <SidebarMenuAction
+                          showOnHover={isTouchDevice ? false : true}
+                        >
                           <MoreHorizontal />
                           <span className="sr-only">More</span>
                         </SidebarMenuAction>
@@ -229,6 +185,26 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                         onCloseAutoFocus={(e) => e.preventDefault()}
                       >
                         <DropdownMenuItem
+                          onClick={() =>
+                            folder.isBookmarked === 1
+                              ? unbookmarkFolder(folder.id)
+                              : bookmarkFolder(folder.id)
+                          }
+                        >
+                          {folder.isBookmarked === 1 ? (
+                            <>
+                              <StarOff className="text-muted-foreground" />
+                              <span>{i18nText[language].unbookmark}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Star className="text-muted-foreground" />
+                              <span>{i18nText[language].bookmark}</span>
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        {folder.isArchived === 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuItem
                           onClick={() => {
                             setRenamingFolder(folder);
                             setRenameDialogOpen(true);
@@ -237,23 +213,36 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
                           <TextCursorInput className="text-muted-foreground" />
                           <span>{i18nText[language].rename}</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMovingFolder(folder);
-                            setMoveDialogOpen(true);
-                          }}
-                        >
-                          <FolderInput className="text-muted-foreground" />
-                          <span>{i18nText[language].move}</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                          onClick={() => archiveFolder(folder.id)}
-                        >
-                          <Archive className="text-yellow-700 dark:text-yellow-600" />
-                          <span>{i18nText[language].archive}</span>
-                        </DropdownMenuItem>
+                        {folder.isArchived === 0 && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setMovingFolder(folder);
+                                setMoveDialogOpen(true);
+                              }}
+                            >
+                              <FolderInput className="text-muted-foreground" />
+                              <span>{i18nText[language].move}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        {folder.isArchived === 0 ? (
+                          <DropdownMenuItem
+                            className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+                            onClick={() => archiveFolder(folder.id)}
+                          >
+                            <Archive className="text-yellow-700 dark:text-yellow-600" />
+                            <span>{i18nText[language].archive}</span>
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => restoreFolder(folder.id)}
+                          >
+                            <ArchiveRestore className="text-muted-foreground" />
+                            <span>{i18nText[language].restore}</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onClick={() => {
@@ -569,6 +558,8 @@ const i18nText = {
     archive: "归档",
     delete: "删除",
     restore: "恢复",
+    bookmark: "收藏",
+    unbookmark: "取消收藏",
     renameFolder: "重命名文件夹",
     folderNamePlaceholder: "输入文件夹名称",
     cancel: "取消",
@@ -587,6 +578,8 @@ const i18nText = {
     archive: "Archive",
     delete: "Delete",
     restore: "Restore",
+    bookmark: "Bookmark",
+    unbookmark: "Unbookmark",
     renameFolder: "Rename Folder",
     folderNamePlaceholder: "Enter folder name...",
     cancel: "Cancel",

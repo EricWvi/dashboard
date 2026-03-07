@@ -23,6 +23,7 @@ export function useCardsInFolder(folderId: string) {
  */
 export function useCard(id: string) {
   return useQuery({
+    enabled: !!id,
     queryKey: keys.cards.detail(id),
     queryFn: async () => {
       return flomoDatabase.getCard(id);

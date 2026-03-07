@@ -87,7 +87,7 @@ export function NavPath({ currentFolderId }: NavPathProps) {
     ];
 
     return (
-      <SidebarGroup>
+      <SidebarGroup className="pb-0">
         <SidebarMenu>
           <motion.div
             animate={{ height: measuredHeight }}
@@ -120,7 +120,7 @@ export function NavPath({ currentFolderId }: NavPathProps) {
   ];
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="pb-0">
       <SidebarMenu>
         <motion.div
           animate={{ height: measuredHeight }}

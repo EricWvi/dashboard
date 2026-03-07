@@ -10,6 +10,8 @@ export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+export const isTouchDevice = window.matchMedia("(hover: none)").matches;
+
 export function formatMediaUrl(url: string): string {
   if (url.startsWith("/api/m/")) {
     return url;
