@@ -1,12 +1,12 @@
 {
-    "requestId": "77180d54-39e4-4515-a23b-f82bb20392e7",
+    "requestId": "69d68eb4-2afc-445a-9f2e-02a8e865cec7",
     "code": 200,
     "message": {
-        "serverVersion": 123,
+        "serverVersion": 177,
         "users": [
             {
-                "updatedAt": 1771461289001,
-                "serverVersion": 38,
+                "updatedAt": 1771461289003,
+                "serverVersion": 125,
                 "avatar": "/api/m/b48702d0-f2e2-42ea-b5f0-78b5c58021a1",
                 "email": "test@onlyquant.top",
                 "username": "george",
@@ -14,58 +14,6 @@
             }
         ],
         "cards": [
-            {
-                "id": "213c6f0f-4475-4501-a199-7b37a50a7313",
-                "createdAt": 1771816324910,
-                "updatedAt": 1771832374378,
-                "serverVersion": 56,
-                "isDeleted": false,
-                "creatorId": 2,
-                "folderId": "00000000-0000-0000-0000-000000000000",
-                "title": "哈哈3",
-                "draft": "03e056bc-5f6b-4b9d-a29f-873c52bbf42f",
-                "payload": {
-                    "emoji": "🤧"
-                },
-                "rawText": "",
-                "reviewCount": 0,
-                "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
-                "id": "1cface2f-ccaa-4a4a-85af-05d34e12c988",
-                "createdAt": 1771836868607,
-                "updatedAt": 1771840965700,
-                "serverVersion": 93,
-                "isDeleted": false,
-                "creatorId": 2,
-                "folderId": "f95f0bf1-ace1-48df-b72f-4ff0cb883580",
-                "title": "to-archive card12",
-                "draft": "a52aaf4c-3730-4716-a705-33f0728a90ab",
-                "payload": {},
-                "rawText": "",
-                "reviewCount": 0,
-                "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
-                "id": "30ad622d-4c03-43bd-a67e-eeeb441137f3",
-                "createdAt": 1771658879842,
-                "updatedAt": 1772876503840,
-                "serverVersion": 115,
-                "isDeleted": false,
-                "creatorId": 2,
-                "folderId": "00000000-0000-0000-0000-000000000000",
-                "title": "second card",
-                "draft": "af374c3e-637b-4ef9-8d99-9143f5f0e46b",
-                "payload": {
-                    "emoji": "😜"
-                },
-                "rawText": "",
-                "reviewCount": 0,
-                "isBookmarked": 1,
-                "isArchived": 0
-            },
             {
                 "id": "67660de4-3ad2-44d8-8260-30e3e98ecb5c",
                 "createdAt": 1771604456816,
@@ -85,17 +33,69 @@
                 "isArchived": 1
             },
             {
-                "id": "aeadedcb-f522-4537-8eeb-db8d9fe46040",
-                "createdAt": 1772550625304,
-                "updatedAt": 1772876008052,
-                "serverVersion": 121,
+                "id": "1cface2f-ccaa-4a4a-85af-05d34e12c988",
+                "createdAt": 1771836868607,
+                "updatedAt": 1772959331471,
+                "serverVersion": 163,
+                "isDeleted": false,
+                "creatorId": 2,
+                "folderId": "f95f0bf1-ace1-48df-b72f-4ff0cb883580",
+                "title": "to-archive card123",
+                "draft": "a52aaf4c-3730-4716-a705-33f0728a90ab",
+                "payload": {},
+                "rawText": "7852185",
+                "reviewCount": 0,
+                "isBookmarked": 1,
+                "isArchived": 0
+            },
+            {
+                "id": "30ad622d-4c03-43bd-a67e-eeeb441137f3",
+                "createdAt": 1771658879842,
+                "updatedAt": 1772959313411,
+                "serverVersion": 168,
                 "isDeleted": false,
                 "creatorId": 2,
                 "folderId": "00000000-0000-0000-0000-000000000000",
-                "title": "现在开始Header",
+                "title": "second card",
+                "draft": "af374c3e-637b-4ef9-8d99-9143f5f0e46b",
+                "payload": {
+                    "emoji": "😜"
+                },
+                "rawText": "second card wwwwq q w 123 345 678 90",
+                "reviewCount": 0,
+                "isBookmarked": 1,
+                "isArchived": 0
+            },
+            {
+                "id": "213c6f0f-4475-4501-a199-7b37a50a7313",
+                "createdAt": 1771816324910,
+                "updatedAt": 1772963238206,
+                "serverVersion": 175,
+                "isDeleted": false,
+                "creatorId": 2,
+                "folderId": "00000000-0000-0000-0000-000000000000",
+                "title": "haha3",
+                "draft": "03e056bc-5f6b-4b9d-a29f-873c52bbf42f",
+                "payload": {
+                    "emoji": "🤧"
+                },
+                "rawText": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l 从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
+                "reviewCount": 0,
+                "isBookmarked": 0,
+                "isArchived": 0
+            },
+            {
+                "id": "aeadedcb-f522-4537-8eeb-db8d9fe46040",
+                "createdAt": 1772550625304,
+                "updatedAt": 1772963495723,
+                "serverVersion": 177,
+                "isDeleted": false,
+                "creatorId": 2,
+                "folderId": "00000000-0000-0000-0000-000000000000",
+                "title": "A Paper Header",
                 "draft": "05f3a596-f600-4e6f-becb-d0e9b098f3d9",
                 "payload": {},
-                "rawText": "",
+                "rawText": "My LLM coding workflow going into 2026 AI coding assistants became game-changers this year, but harnessing them effectively takes skill and structure. These tools dramatically increased what LLMs can do for real-world coding, and many developers (myself included) embraced them. At Anthropic, for example, engineers adopted Claude Code so heavily that today ~90% of the code for Claude Code is written by Claude Code itself. Yet, using LLMs for programming is not a push-button magic experience — it’s “difficult and unintuitive” and getting great results requires learning new patterns. Critical thinking remains key. Over a year of projects, I’ve converged on a workflow similar to what many experienced devs are discovering: treat the LLM as a powerful pair programmer that requires clear direction, context and oversight rather than autonomous judgment. In this article, I’ll share how I plan, code, and collaborate with AI going into 2026, distilling tips and best practices from my experience and the community’s collective learning. It’s a more disciplined “AI-assisted engineering” approach — leveraging AI aggressively while staying proudly accountable for the software produced. Start with a clear plan (specs before code) Don’t just throw wishes at the LLM — begin by defining the problem and planning a solution. One common mistake is diving straight into code generation with a vague prompt. In my workflow, and in many others’, the first step is brainstorming a detailed specification with the AI, then outlining a step-by-step plan, before writing any actual code. For a new project, I’ll describe the idea and ask the LLM to iteratively ask me questions until we’ve fleshed out requirements and edge cases. By the end, we compile this into a comprehensive spec.md — containing requirements, architecture decisions, data models, and even a testing strategy. This spec forms the foundation for development. Next, I feed the spec into a reasoning-capable model and prompt it to generate a project plan: break the implementation into logical, bite-sized tasks or milestones. The AI essentially helps me do a mini “design doc” or project plan. I often iterate on this plan — editing and asking the AI to critique or refine it — until it’s coherent and complete. Only then do I proceed to coding. This upfront investment might feel slow, but it pays off enormously. As Les Orchard put it, it’s like doing a “waterfall in 15 minutes” — a rapid structured planning phase that makes the subsequent coding much smoother. Having a clear spec and plan means when we unleash the codegen, both the human and the LLM know exactly what we’re building and why. In short, planning first forces you and the AI onto the same page and prevents wasted cycles. It’s a step many people are tempted to skip, but experienced LLM developers now treat a robust spec/plan as the cornerstone of the workflow. Break work into small, iterative chunks Scope management is everything — feed the LLM manageable tasks, not the whole codebase at once. A crucial lesson I’ve learned is to avoid asking the AI for large, monolithic outputs. Instead, we break the project into iterative steps or tickets and tackle them one by one. This mirrors good software engineering practice, but it’s even more important with AI in the loop. LLMs do best when given focused prompts: implement one function, fix one bug, add one feature at a time. For example, after planning, I will prompt the codegen model: “Okay, let’s implement Step 1 from the plan”. We code that, test it, then move to Step 2, and so on. Each chunk is small enough that the AI can handle it within context and you can understand the code it produces. This approach guards against the model going off the rails. If you ask for too much in one go, it’s likely to get confused or produce a “jumbled mess” that’s hard to untangle. Developers report that when they tried to have an LLM generate huge swaths of an app, they ended up with inconsistency and duplication — “like 10 devs worked on it without talking to each other,” one said. I’ve felt that pain; the fix is to stop, back up, and split the problem into smaller pieces. Each iteration, we carry forward the context of what’s been built and incrementally add to it. This also fits nicely with a test-driven development (TDD) approach — we can write or generate tests for each piece as we go (more on testing soon). Several coding-agent tools now explicitly support this chunked workflow. For instance, I often generate a structured “prompt plan” file that contains a sequence of prompts for each task, so that tools like Cursor can execute them one by one. The key point is to avoid huge leaps. By iterating in small loops, we greatly reduce the chance of catastrophic errors and we can course-correct quickly. LLMs excel at quick, contained tasks — use that to your advantage. Provide extensive context and guidance LLMs are only as good as the context you provide — show them the relevant code, docs, and constraints. When working on a codebase, I make sure to feed the AI all the information it needs to perform well. That includes the code it should modify or refer to, the project’s technical constraints, and any known pitfalls or preferred approaches. Modern tools help with this: for example, Anthropic’s Claude can import an entire GitHub repo into its context in “Projects” mode, and IDE assistants like Cursor or Copilot auto-include open files in the prompt. But I often go further — I will either use an MCP like Context7 or manually copy important pieces of the codebase or API docs into the conversation if I suspect the model doesn’t have them. Expert LLM users emphasize this “context packing” step. For example, doing a “brain dump” of everything the model should know before coding, including: high-level goals and invariants, examples of good solutions, and warnings about approaches to avoid. If I’m asking an AI to implement a tricky solution, I might tell it which naive solutions are too slow, or provide a reference implementation from elsewhere. If I’m using a niche library or a brand-new API, I’ll paste in the official docs or README so the AI isn’t flying blind. All of this upfront context dramatically improves the quality of its output, because the model isn’t guessing — it has the facts and constraints in front of it.",
                 "reviewCount": 0,
                 "isBookmarked": 0,
                 "isArchived": 0
@@ -118,21 +118,6 @@
                 "isArchived": 0
             },
             {
-                "id": "7df82c7f-f0b9-42b6-861f-677b500f97e9",
-                "createdAt": 1771606208886,
-                "updatedAt": 1771754491948,
-                "serverVersion": 6,
-                "isDeleted": false,
-                "creatorId": 2,
-                "parentId": "00000000-0000-0000-0000-000000000000",
-                "title": "first folder (renamed)",
-                "payload": {
-                    "emoji": "😘"
-                },
-                "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
                 "id": "88ae12dd-ab1c-49ad-82ff-6a97cf3f229e",
                 "createdAt": 1771658971803,
                 "updatedAt": 1771658971803,
@@ -142,21 +127,6 @@
                 "parentId": "acea5b1f-d95d-4e9b-bf70-1b2715378c9a",
                 "title": "very",
                 "payload": {},
-                "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
-                "id": "93c72dcb-03d4-4bb6-b1e0-fea514c0572f",
-                "createdAt": 1771658866429,
-                "updatedAt": 1771754593227,
-                "serverVersion": 13,
-                "isDeleted": false,
-                "creatorId": 2,
-                "parentId": "00000000-0000-0000-0000-000000000000",
-                "title": "BB",
-                "payload": {
-                    "emoji": "🤖"
-                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -215,32 +185,6 @@
                 "isArchived": 0
             },
             {
-                "id": "169f3228-f101-4379-aa32-a5df55707df5",
-                "createdAt": 1771817911301,
-                "updatedAt": 1771818239497,
-                "serverVersion": 36,
-                "isDeleted": false,
-                "creatorId": 2,
-                "parentId": "00000000-0000-0000-0000-000000000000",
-                "title": "test zero id 0",
-                "payload": {},
-                "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
-                "id": "9c28ddf8-371c-42ec-9f93-761ed5222c35",
-                "createdAt": 1771816427076,
-                "updatedAt": 1771818284617,
-                "serverVersion": 37,
-                "isDeleted": false,
-                "creatorId": 2,
-                "parentId": "00000000-0000-0000-0000-000000000000",
-                "title": "test two我 devices",
-                "payload": {},
-                "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
                 "id": "f7e82828-7093-423c-8258-354677e5352b",
                 "createdAt": 1771737362924,
                 "updatedAt": 1771832659006,
@@ -264,21 +208,6 @@
                 "title": "to-archive folder",
                 "payload": {},
                 "isBookmarked": 0,
-                "isArchived": 0
-            },
-            {
-                "id": "11b56eec-51df-4aea-907f-371d6890091c",
-                "createdAt": 1771830880484,
-                "updatedAt": 1772857516545,
-                "serverVersion": 114,
-                "isDeleted": false,
-                "creatorId": 2,
-                "parentId": "00000000-0000-0000-0000-000000000000",
-                "title": "1ww",
-                "payload": {
-                    "emoji": "😍"
-                },
-                "isBookmarked": 1,
                 "isArchived": 0
             },
             {
@@ -306,6 +235,77 @@
                 "payload": {},
                 "isBookmarked": 1,
                 "isArchived": 1
+            },
+            {
+                "id": "11b56eec-51df-4aea-907f-371d6890091c",
+                "createdAt": 1771830880484,
+                "updatedAt": 1772938301352,
+                "serverVersion": 161,
+                "isDeleted": false,
+                "creatorId": 2,
+                "parentId": "00000000-0000-0000-0000-000000000000",
+                "title": "1ww1",
+                "payload": {
+                    "emoji": "😍"
+                },
+                "isBookmarked": 1,
+                "isArchived": 0
+            },
+            {
+                "id": "169f3228-f101-4379-aa32-a5df55707df5",
+                "createdAt": 1771817911301,
+                "updatedAt": 1772901626727,
+                "serverVersion": 164,
+                "isDeleted": false,
+                "creatorId": 2,
+                "parentId": "00000000-0000-0000-0000-000000000000",
+                "title": "test zero id 0",
+                "payload": {},
+                "isBookmarked": 1,
+                "isArchived": 0
+            },
+            {
+                "id": "7df82c7f-f0b9-42b6-861f-677b500f97e9",
+                "createdAt": 1771606208886,
+                "updatedAt": 1772962496149,
+                "serverVersion": 167,
+                "isDeleted": false,
+                "creatorId": 2,
+                "parentId": "00000000-0000-0000-0000-000000000000",
+                "title": "first folder (renamed)",
+                "payload": {
+                    "emoji": "😘"
+                },
+                "isBookmarked": 1,
+                "isArchived": 0
+            },
+            {
+                "id": "93c72dcb-03d4-4bb6-b1e0-fea514c0572f",
+                "createdAt": 1771658866429,
+                "updatedAt": 1772901618511,
+                "serverVersion": 169,
+                "isDeleted": false,
+                "creatorId": 2,
+                "parentId": "00000000-0000-0000-0000-000000000000",
+                "title": "BB very longlonglonglonglong",
+                "payload": {
+                    "emoji": "🤖"
+                },
+                "isBookmarked": 0,
+                "isArchived": 0
+            },
+            {
+                "id": "9c28ddf8-371c-42ec-9f93-761ed5222c35",
+                "createdAt": 1771816427076,
+                "updatedAt": 1772963229580,
+                "serverVersion": 174,
+                "isDeleted": false,
+                "creatorId": 2,
+                "parentId": "00000000-0000-0000-0000-000000000000",
+                "title": "test two devices",
+                "payload": {},
+                "isBookmarked": 1,
+                "isArchived": 0
             }
         ],
         "tiptaps": [
@@ -329,338 +329,6 @@
                     ]
                 },
                 "history": []
-            },
-            {
-                "id": "a52aaf4c-3730-4716-a705-33f0728a90ab",
-                "createdAt": 1771836868590,
-                "updatedAt": 1771836868590,
-                "serverVersion": 61,
-                "isDeleted": false,
-                "creatorId": 2,
-                "site": 3,
-                "content": {
-                    "type": "doc",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "textAlign": null
-                            }
-                        }
-                    ]
-                },
-                "history": []
-            },
-            {
-                "id": "03e056bc-5f6b-4b9d-a29f-873c52bbf42f",
-                "createdAt": 1771816324887,
-                "updatedAt": 1772875907597,
-                "serverVersion": 116,
-                "isDeleted": false,
-                "creatorId": 2,
-                "site": 3,
-                "content": {
-                    "type": "doc",
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "textAlign": null
-                            },
-                            "content": [
-                                {
-                                    "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l",
-                                    "type": "text"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "image",
-                            "attrs": {
-                                "alt": "testimg",
-                                "src": "/api/m/91012bab-23f5-4399-8602-db5cc38b0e91",
-                                "title": "testimg",
-                                "width": null,
-                                "height": null
-                            }
-                        },
-                        {
-                            "type": "image",
-                            "attrs": {
-                                "alt": "381753070041_.pic",
-                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                "title": "381753070041_.pic",
-                                "width": null,
-                                "height": null
-                            }
-                        },
-                        {
-                            "type": "video",
-                            "attrs": {
-                                "src": "/api/m/eac842b5-801f-4b14-96ec-0abac73029e1",
-                                "loop": false,
-                                "muted": false,
-                                "width": "100%",
-                                "height": "auto",
-                                "poster": null,
-                                "autoplay": false,
-                                "controls": true
-                            }
-                        },
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "textAlign": null
-                            },
-                            "content": [
-                                {
-                                    "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
-                                    "type": "text"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "image",
-                            "attrs": {
-                                "alt": "381753070041_.pic",
-                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                "title": "381753070041_.pic",
-                                "width": null,
-                                "height": null
-                            }
-                        },
-                        {
-                            "type": "image",
-                            "attrs": {
-                                "alt": "381753070041_.pic",
-                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                "title": "381753070041_.pic",
-                                "width": null,
-                                "height": null
-                            }
-                        },
-                        {
-                            "type": "image",
-                            "attrs": {
-                                "alt": "381753070041_.pic",
-                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                "title": "381753070041_.pic",
-                                "width": null,
-                                "height": null
-                            }
-                        },
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "textAlign": null
-                            }
-                        }
-                    ]
-                },
-                "history": [
-                    {
-                        "time": 1771816324888,
-                        "content": {
-                            "type": "doc",
-                            "content": [
-                                {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "textAlign": null
-                                    },
-                                    "content": [
-                                        {
-                                            "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l",
-                                            "type": "text"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "image",
-                                    "attrs": {
-                                        "alt": "testimg",
-                                        "src": "/api/m/91012bab-23f5-4399-8602-db5cc38b0e91",
-                                        "title": "testimg",
-                                        "width": null,
-                                        "height": null
-                                    }
-                                },
-                                {
-                                    "type": "image",
-                                    "attrs": {
-                                        "alt": "381753070041_.pic",
-                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                        "title": "381753070041_.pic",
-                                        "width": null,
-                                        "height": null
-                                    }
-                                },
-                                {
-                                    "type": "video",
-                                    "attrs": {
-                                        "src": "/api/m/eac842b5-801f-4b14-96ec-0abac73029e1",
-                                        "loop": false,
-                                        "muted": false,
-                                        "width": "100%",
-                                        "height": "auto",
-                                        "poster": null,
-                                        "autoplay": false,
-                                        "controls": true
-                                    }
-                                },
-                                {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "textAlign": null
-                                    },
-                                    "content": [
-                                        {
-                                            "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
-                                            "type": "text"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "image",
-                                    "attrs": {
-                                        "alt": "381753070041_.pic",
-                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                        "title": "381753070041_.pic",
-                                        "width": null,
-                                        "height": null
-                                    }
-                                },
-                                {
-                                    "type": "image",
-                                    "attrs": {
-                                        "alt": "381753070041_.pic",
-                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                        "title": "381753070041_.pic",
-                                        "width": null,
-                                        "height": null
-                                    }
-                                },
-                                {
-                                    "type": "image",
-                                    "attrs": {
-                                        "alt": "381753070041_.pic",
-                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
-                                        "title": "381753070041_.pic",
-                                        "width": null,
-                                        "height": null
-                                    }
-                                },
-                                {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "textAlign": null
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            },
-            {
-                "id": "05f3a596-f600-4e6f-becb-d0e9b098f3d9",
-                "createdAt": 1772550625286,
-                "updatedAt": 1772876592323,
-                "serverVersion": 119,
-                "isDeleted": false,
-                "creatorId": 2,
-                "site": 3,
-                "content": {
-                    "type": "doc",
-                    "content": [
-                        {
-                            "type": "heading",
-                            "attrs": {
-                                "level": 1,
-                                "textAlign": null
-                            },
-                            "content": [
-                                {
-                                    "text": "现在开始Header",
-                                    "type": "text"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "paragraph",
-                            "attrs": {
-                                "textAlign": null
-                            },
-                            "content": [
-                                {
-                                    "text": "7890",
-                                    "type": "text"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "history": [
-                    {
-                        "time": 1772668846774,
-                        "content": {
-                            "type": "doc",
-                            "content": [
-                                {
-                                    "type": "heading",
-                                    "attrs": {
-                                        "level": 1,
-                                        "textAlign": null
-                                    },
-                                    "content": [
-                                        {
-                                            "text": "现在开始Header",
-                                            "type": "text"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "textAlign": null
-                                    },
-                                    "content": [
-                                        {
-                                            "text": "789",
-                                            "type": "text"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "time": 1772550625286,
-                        "content": {
-                            "type": "doc",
-                            "content": [
-                                {
-                                    "type": "heading",
-                                    "attrs": {
-                                        "level": 1,
-                                        "textAlign": null
-                                    },
-                                    "content": [
-                                        {
-                                            "text": "现在开始Header",
-                                            "type": "text"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "paragraph",
-                                    "attrs": {
-                                        "textAlign": null
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
             },
             {
                 "id": "76d41503-23c6-4061-a2bc-9927c45c118c",
@@ -817,10 +485,395 @@
                 ]
             },
             {
-                "id": "af374c3e-637b-4ef9-8d99-9143f5f0e46b",
-                "createdAt": 1771658879826,
-                "updatedAt": 1772876595010,
-                "serverVersion": 123,
+                "id": "03e056bc-5f6b-4b9d-a29f-873c52bbf42f",
+                "createdAt": 1771816324887,
+                "updatedAt": 1772959316586,
+                "serverVersion": 162,
+                "isDeleted": false,
+                "creatorId": 2,
+                "site": 3,
+                "content": {
+                    "type": "doc",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "image",
+                            "attrs": {
+                                "alt": "testimg",
+                                "src": "/api/m/91012bab-23f5-4399-8602-db5cc38b0e91",
+                                "title": "testimg",
+                                "width": null,
+                                "height": null
+                            }
+                        },
+                        {
+                            "type": "image",
+                            "attrs": {
+                                "alt": "381753070041_.pic",
+                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                "title": "381753070041_.pic",
+                                "width": null,
+                                "height": null
+                            }
+                        },
+                        {
+                            "type": "video",
+                            "attrs": {
+                                "src": "/api/m/eac842b5-801f-4b14-96ec-0abac73029e1",
+                                "loop": false,
+                                "muted": false,
+                                "width": "100%",
+                                "height": "auto",
+                                "poster": null,
+                                "autoplay": false,
+                                "controls": true
+                            }
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "image",
+                            "attrs": {
+                                "alt": "381753070041_.pic",
+                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                "title": "381753070041_.pic",
+                                "width": null,
+                                "height": null
+                            }
+                        },
+                        {
+                            "type": "image",
+                            "attrs": {
+                                "alt": "381753070041_.pic",
+                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                "title": "381753070041_.pic",
+                                "width": null,
+                                "height": null
+                            }
+                        },
+                        {
+                            "type": "image",
+                            "attrs": {
+                                "alt": "381753070041_.pic",
+                                "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                "title": "381753070041_.pic",
+                                "width": null,
+                                "height": null
+                            }
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            }
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            }
+                        }
+                    ]
+                },
+                "history": [
+                    {
+                        "time": 1772959316586,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "testimg",
+                                        "src": "/api/m/91012bab-23f5-4399-8602-db5cc38b0e91",
+                                        "title": "testimg",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "video",
+                                    "attrs": {
+                                        "src": "/api/m/eac842b5-801f-4b14-96ec-0abac73029e1",
+                                        "loop": false,
+                                        "muted": false,
+                                        "width": "100%",
+                                        "height": "auto",
+                                        "poster": null,
+                                        "autoplay": false,
+                                        "controls": true
+                                    }
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    }
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1771816324888,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "testimg",
+                                        "src": "/api/m/91012bab-23f5-4399-8602-db5cc38b0e91",
+                                        "title": "testimg",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "video",
+                                    "attrs": {
+                                        "src": "/api/m/eac842b5-801f-4b14-96ec-0abac73029e1",
+                                        "loop": false,
+                                        "muted": false,
+                                        "width": "100%",
+                                        "height": "auto",
+                                        "poster": null,
+                                        "autoplay": false,
+                                        "controls": true
+                                    }
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "image",
+                                    "attrs": {
+                                        "alt": "381753070041_.pic",
+                                        "src": "/api/m/43a45c76-fed4-4964-accf-873dfed9250c",
+                                        "title": "381753070041_.pic",
+                                        "width": null,
+                                        "height": null
+                                    }
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "a52aaf4c-3730-4716-a705-33f0728a90ab",
+                "createdAt": 1771836868590,
+                "updatedAt": 1772959331417,
+                "serverVersion": 170,
+                "isDeleted": false,
+                "creatorId": 2,
+                "site": 3,
+                "content": {
+                    "type": "doc",
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "7852185",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "history": [
+                    {
+                        "time": 1772959331417,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "7852185",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1771836868590,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "05f3a596-f600-4e6f-becb-d0e9b098f3d9",
+                "createdAt": 1772550625286,
+                "updatedAt": 1772963495675,
+                "serverVersion": 176,
                 "isDeleted": false,
                 "creatorId": 2,
                 "site": 3,
@@ -830,7 +883,454 @@
                         {
                             "type": "heading",
                             "attrs": {
+                                "level": 1,
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "My LLM coding workflow going into 2026",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "AI coding assistants became game-changers this year, but harnessing them effectively takes skill and structure. These tools dramatically increased what LLMs can do for real-world coding, and many developers (myself included) embraced them.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "At Anthropic, for example, engineers adopted Claude Code so heavily that today ~90% of the code for Claude Code is written by Claude Code itself. Yet, using LLMs for programming is not a push-button magic experience — it’s “difficult and unintuitive” and getting great results requires learning new patterns. Critical thinking remains key. Over a year of projects, I’ve converged on a workflow similar to what many experienced devs are discovering: treat the LLM as a powerful pair programmer that requires clear direction, context and oversight rather than autonomous judgment.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "In this article, I’ll share how I plan, code, and collaborate with AI going into 2026, distilling tips and best practices from my experience and the community’s collective learning. It’s a more disciplined “AI-assisted engineering” approach — leveraging AI aggressively while staying proudly accountable for the software produced.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "heading",
+                            "attrs": {
                                 "level": 2,
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Start with a clear plan (specs before code)",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Don’t just throw wishes at the LLM — begin by defining the problem and planning a solution.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "One common mistake is diving straight into code generation with a vague prompt. In my workflow, and in many others’, the first step is brainstorming a detailed specification with the AI, then outlining a step-by-step plan, before writing any actual code. For a new project, I’ll describe the idea and ask the LLM to iteratively ask me questions until we’ve fleshed out requirements and edge cases. By the end, we compile this into a comprehensive ",
+                                    "type": "text"
+                                },
+                                {
+                                    "text": "spec.md",
+                                    "type": "text",
+                                    "marks": [
+                                        {
+                                            "type": "link",
+                                            "attrs": {
+                                                "rel": "noopener noreferrer nofollow",
+                                                "href": "http://spec.md",
+                                                "class": null,
+                                                "target": "_blank"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "text": " — containing requirements, architecture decisions, data models, and even a testing strategy. This spec forms the foundation for development.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Next, I feed the spec into a reasoning-capable model and prompt it to generate a project plan: break the implementation into logical, bite-sized tasks or milestones. The AI essentially helps me do a mini “design doc” or project plan. I often iterate on this plan — editing and asking the AI to critique or refine it — until it’s coherent and complete. Only then do I proceed to coding. This upfront investment might feel slow, but it pays off enormously. As Les Orchard put it, it’s like doing a “waterfall in 15 minutes” — a rapid structured planning phase that makes the subsequent coding much smoother.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Having a clear spec and plan means when we unleash the codegen, both the human and the LLM know exactly what we’re building and why. In short, planning first forces you and the AI onto the same page and prevents wasted cycles. It’s a step many people are tempted to skip, but experienced LLM developers now treat a robust spec/plan as the cornerstone of the workflow.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "heading",
+                            "attrs": {
+                                "level": 2,
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Break work into small, iterative chunks",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Scope management is everything — feed the LLM manageable tasks, not the whole codebase at once.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "A crucial lesson I’ve learned is to avoid asking the AI for large, monolithic outputs. Instead, we break the project into iterative steps or tickets and tackle them one by one. This mirrors good software engineering practice, but it’s even more important with AI in the loop. LLMs do best when given focused prompts: implement one function, fix one bug, add one feature at a time. For example, after planning, I will prompt the codegen model: “Okay, let’s implement Step 1 from the plan”. We code that, test it, then move to Step 2, and so on. Each chunk is small enough that the AI can handle it within context and you can understand the code it produces.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "This approach guards against the model going off the rails. If you ask for too much in one go, it’s likely to get confused or produce a “jumbled mess” that’s hard to untangle. Developers report that when they tried to have an LLM generate huge swaths of an app, they ended up with inconsistency and duplication — “like 10 devs worked on it without talking to each other,” one said. I’ve felt that pain; the fix is to stop, back up, and split the problem into smaller pieces. Each iteration, we carry forward the context of what’s been built and incrementally add to it. This also fits nicely with a test-driven development (TDD) approach — we can write or generate tests for each piece as we go (more on testing soon).",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Several coding-agent tools now explicitly support this chunked workflow. For instance, I often generate a structured “prompt plan” file that contains a sequence of prompts for each task, so that tools like Cursor can execute them one by one. The key point is to avoid huge leaps. By iterating in small loops, we greatly reduce the chance of catastrophic errors and we can course-correct quickly. LLMs excel at quick, contained tasks — use that to your advantage.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "heading",
+                            "attrs": {
+                                "level": 2,
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Provide extensive context and guidance",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "LLMs are only as good as the context you provide — show them the relevant code, docs, and constraints.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "When working on a codebase, I make sure to feed the AI all the information it needs to perform well. That includes the code it should modify or refer to, the project’s technical constraints, and any known pitfalls or preferred approaches. Modern tools help with this: for example, Anthropic’s Claude can import an entire GitHub repo into its context in “Projects” mode, and IDE assistants like Cursor or Copilot auto-include open files in the prompt. But I often go further — I will either use an MCP like Context7 or manually copy important pieces of the codebase or API docs into the conversation if I suspect the model doesn’t have them.",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "Expert LLM users emphasize this “context packing” step. For example, doing a “brain dump” of everything the model should know before coding, including: high-level goals and invariants, examples of good solutions, and warnings about approaches to avoid. If I’m asking an AI to implement a tricky solution, I might tell it which naive solutions are too slow, or provide a reference implementation from elsewhere. If I’m using a niche library or a brand-new API, I’ll paste in the official docs or README so the AI isn’t flying blind. All of this upfront context dramatically improves the quality of its output, because the model isn’t guessing — it has the facts and constraints in front of it.",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "history": [
+                    {
+                        "time": 1772959319574,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "现在开始Header",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "7890",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772903099976,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "现在开始Header",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "7890",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772903072803,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "现在开始Header",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "7890",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772902763560,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "现在开始Header",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "7890",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772668846774,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "现在开始Header",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "789",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772550625286,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "现在开始Header",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "id": "af374c3e-637b-4ef9-8d99-9143f5f0e46b",
+                "createdAt": 1771658879826,
+                "updatedAt": 1772959313300,
+                "serverVersion": 173,
+                "isDeleted": false,
+                "creatorId": 2,
+                "site": 3,
+                "content": {
+                    "type": "doc",
+                    "content": [
+                        {
+                            "type": "heading",
+                            "attrs": {
+                                "level": 1,
                                 "textAlign": null
                             },
                             "content": [
@@ -887,10 +1387,346 @@
                                     "type": "text"
                                 }
                             ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            },
+                            "content": [
+                                {
+                                    "text": "90",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "paragraph",
+                            "attrs": {
+                                "textAlign": null
+                            }
                         }
                     ]
                 },
                 "history": [
+                    {
+                        "time": 1772959313300,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "second card",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "wwwwq q w ",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "123",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "345",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "678",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "90",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772940308811,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 1,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "second card",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "wwwwq q w ",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "123",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "345",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "678",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "90",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772893841253,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 2,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "second card",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "wwwwq q w ",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "123",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "345",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "678",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "90",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "time": 1772893706468,
+                        "content": {
+                            "type": "doc",
+                            "content": [
+                                {
+                                    "type": "heading",
+                                    "attrs": {
+                                        "level": 2,
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "second card",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "wwwwq q w ",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "123",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "345",
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "attrs": {
+                                        "textAlign": null
+                                    },
+                                    "content": [
+                                        {
+                                            "text": "6789",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
                     {
                         "time": 1772851999082,
                         "content": {

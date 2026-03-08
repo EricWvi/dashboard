@@ -9,8 +9,11 @@ import { CardPane } from "@/components/flomo/card-pane";
 import { ArchiveFrame } from "@/components/flomo/archive-decoration";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useEditorState } from "@/hooks/use-editor-state";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Flomo() {
+  const isMobile = useIsMobile();
   const [isInitializing, setIsInitializing] = useState(true);
   const syncManagerRef = useRef<SyncManager | null>(null);
   const invalidateTabInstance = useEditorState(
@@ -68,7 +71,7 @@ export default function Flomo() {
     <div className="h-full">
       <SidebarProvider className="h-full">
         <AppSidebar />
-        <SidebarInset className="overflow-hidden">
+        <SidebarInset className={cn("overflow-hidden", isMobile && "pt-7")}>
           <TiptapProvider>
           <CardPane />
           </TiptapProvider>

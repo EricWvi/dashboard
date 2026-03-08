@@ -10,7 +10,7 @@ import React from "react";
 export const ArchiveFrame = React.memo(() => (
   <div className="pointer-events-none fixed inset-0 z-50" aria-hidden="true">
     <div
-      className="absolute inset-2 rounded-xl"
+      className="absolute top-7 right-2 bottom-2 left-2 rounded-xl sm:top-2"
       style={{ boxShadow: "0 0 0 9999px var(--archive-frame)" }}
     />
   </div>

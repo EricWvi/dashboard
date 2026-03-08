@@ -32,7 +32,7 @@ import { useEditorState } from "@/hooks/use-editor-state";
 import { cn, isTouchDevice } from "@/lib/utils";
 
 export function NavTabs() {
-  const { isMobile } = useSidebar();
+  const { isMobile, toggleSidebar } = useSidebar();
   const { user } = useUserContextV2();
   const { enterArchiveMode } = useAppState();
   const { openTabs, setActiveTab, activeTabId, closeTab } = useEditorState();
@@ -97,7 +97,11 @@ export function NavTabs() {
                       )}
                       onClick={(e) => {
                         setActiveTab(tab.draftId);
-                        e.preventDefault();
+                        if (!isMobile) {
+                          e.preventDefault();
+                        } else {
+                          toggleSidebar();
+                        }
                       }}
                     >
                       <div className="group">

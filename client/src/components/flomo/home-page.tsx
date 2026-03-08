@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
@@ -8,10 +8,34 @@ import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useEditorState } from "@/hooks/use-editor-state";
 import type { Card } from "@/lib/flomo/model";
 import type { UserLang } from "@/lib/model";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { FlomoLogo, FlomoText } from "./icons";
+import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const RECENT_CARDS_LIMIT = 8;
 
+const AppHeader = () => {
+  const { toggleSidebar } = useSidebar();
+  return (
+    <div className="flex h-16 w-full items-center pr-6 pl-4">
+      <div className="flex items-center" onClick={() => toggleSidebar()}>
+        <div className="size-12 rounded-lg">
+          <FlomoLogo />
+        </div>
+        <div className="fill-foreground h-6">
+          <FlomoText />
+        </div>
+      </div>
+      <Button role="icon" className="ml-auto">
+        <Plus />
+      </Button>
+    </div>
+  );
+};
+
 export function FlomoHome() {
+  const isMobile = useIsMobile();
   const { language } = useUserContextV2();
   const { data: bookmarkedCards } = useBookmarkedCards();
   const { data: bookmarkedFolders } = useBookmarkedFolders();
@@ -39,8 +63,9 @@ export function FlomoHome() {
   const hasRecent = recentCards && recentCards.length > 0;
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
-      <div className="mx-auto w-full max-w-3xl px-6 pt-12 pb-8">
+    <div className="flex h-full flex-col items-center">
+      {isMobile && <AppHeader />}
+      <div className="flex min-h-0 w-full max-w-5xl flex-1 flex-col justify-center px-6 pt-4 sm:pt-40">
         {/* Search */}
         <div className="flex justify-center">
           <div className="relative w-full max-w-md">
@@ -53,81 +78,86 @@ export function FlomoHome() {
           </div>
         </div>
 
-        {/* Quick Access */}
-        {hasBookmarks && (
-          <section className="mt-8">
-            <h2 className="text-foreground mb-3 text-lg font-semibold">
-              {i18nText[language].quickAccess}
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {bookmarkedFolders?.map((folder) => (
-                <button
-                  key={folder.id}
-                  className="bg-muted/50 hover:bg-muted flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors"
-                  onClick={() => openFolder(folder.id)}
-                >
-                  <span className="shrink-0 text-base">
-                    {folder.payload.emoji || "📂"}
-                  </span>
-                  <span className="text-foreground truncate text-sm font-medium">
-                    {folder.title}
-                  </span>
-                </button>
-              ))}
-              {bookmarkedCards?.map((card) => (
-                <button
-                  key={card.id}
-                  className="bg-muted/50 hover:bg-muted flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors"
-                  onClick={() => openCard(card)}
-                >
-                  <span className="shrink-0 text-base">
-                    {card.payload.emoji || "📄"}
-                  </span>
-                  <span className="text-foreground truncate text-sm font-medium">
-                    {card.title}
-                    <span className="text-muted-foreground text-xs">.tt</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Recently Updated */}
-        {hasRecent && (
-          <section className="mt-8">
-            <h2 className="text-foreground mb-3 text-lg font-semibold">
-              {i18nText[language].recentlyUpdated}
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {recentCards?.map((card) => (
-                <button
-                  key={card.id}
-                  className="bg-muted/50 hover:bg-muted flex flex-col items-start gap-1 rounded-lg border px-3 pt-2.5 pb-3 text-left transition-colors"
-                  onClick={() => openCard(card)}
-                >
-                  <div>
+        <div className="mt-8 flex flex-1 flex-col gap-8 overflow-y-auto pb-10">
+          {/* Quick Access */}
+          {hasBookmarks && (
+            <section>
+              <h2 className="text-foreground mb-3 text-lg font-semibold">
+                {i18nText[language].quickAccess}
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 xl:gap-5">
+                {bookmarkedFolders?.map((folder) => (
+                  <button
+                    key={folder.id}
+                    className="bg-muted/50 hover:bg-muted flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors"
+                    onClick={() => openFolder(folder.id)}
+                  >
+                    <span className="shrink-0 text-base">
+                      {folder.payload.emoji || "📂"}
+                    </span>
+                    <span className="text-foreground truncate text-sm font-medium">
+                      {folder.title}
+                    </span>
+                  </button>
+                ))}
+                {bookmarkedCards?.map((card) => (
+                  <button
+                    key={card.id}
+                    className="bg-muted/50 hover:bg-muted flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors"
+                    onClick={() => openCard(card)}
+                  >
                     <span className="shrink-0 text-base">
                       {card.payload.emoji || "📄"}
                     </span>
-                    <span className="text-foreground text-sm leading-snug font-medium">
+                    <span className="text-foreground truncate text-sm font-medium">
                       {card.title}
+                      <span className="text-muted-foreground text-xs">.tt</span>
                     </span>
-                  </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
-                  <span className="text-muted-foreground text-xs">
-                    {formatRelativeTime(card.updatedAt, language)}
-                  </span>
-                  {card.rawText && (
-                    <p className="text-muted-foreground mt-1 line-clamp-3 text-xs leading-relaxed">
-                      {card.rawText}
-                    </p>
-                  )}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+          {/* Recently Updated */}
+          {hasRecent && (
+            <section>
+              <h2 className="text-foreground mb-3 text-lg font-semibold">
+                {i18nText[language].recentlyUpdated}
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {recentCards?.map((card) => (
+                  <button
+                    key={card.id}
+                    className="bg-muted/50 hover:bg-muted flex cursor-pointer flex-col items-start gap-1 rounded-lg border px-3 pt-2.5 pb-3 text-left transition-colors"
+                    onClick={() => openCard(card)}
+                  >
+                    <div className="flex w-full min-w-0 items-center gap-2">
+                      <span className="shrink-0 text-base">
+                        {card.payload.emoji || "📄"}
+                      </span>
+                      <span className="text-foreground truncate text-sm font-medium">
+                        {card.title}
+                        <span className="text-muted-foreground text-xs">
+                          .tt
+                        </span>
+                      </span>
+                    </div>
+
+                    <span className="text-muted-foreground text-xs">
+                      {formatRelativeTime(card.updatedAt, language)}
+                    </span>
+                    {card.rawText && (
+                      <p className="text-muted-foreground mt-1 line-clamp-3 text-xs leading-tight">
+                        {card.rawText}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

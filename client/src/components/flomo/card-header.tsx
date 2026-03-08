@@ -60,11 +60,21 @@ export function CardHeader() {
 
   const updateCardMutation = useUpdateCard();
 
-  const handleClose = useCallback(() => {
-    if (activeTabId) {
-      setTabEditable(activeTabId, false);
-    }
-  }, [activeTabId, setTabEditable]);
+  const handleClose = useCallback(
+    (e: Editor, changed: boolean) => {
+      if (activeTabId) {
+        setTabEditable(activeTabId, false);
+        if (changed) {
+          const str = e.getText();
+          updateCardMutation.mutate({
+            id: cardId,
+            data: { rawText: str.trim().replace(/\s+/g, " ") },
+          });
+        }
+      }
+    },
+    [activeTabId, cardId, setTabEditable],
+  );
 
   const handleSave = useCallback(
     async (e: Editor) => {

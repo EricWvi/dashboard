@@ -7,6 +7,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { FlomoLogo, FlomoText } from "./icons";
@@ -15,6 +16,7 @@ import { NavPath } from "./nav-path";
 import { useEditorState } from "@/hooks/use-editor-state";
 
 export function AppSidebar() {
+  const { isMobile, toggleSidebar } = useSidebar();
   const { hideTabs } = useEditorState();
   const { currentFolderId } = useAppState();
   if (currentFolderId === undefined) {
@@ -25,7 +27,13 @@ export function AppSidebar() {
     <Sidebar variant="inset">
       <SidebarHeader>
         <div className="flex items-center justify-between px-1">
-          <div className="flex items-center">
+          <div
+            className="flex items-center"
+            onClick={() => {
+              hideTabs();
+              if (isMobile) toggleSidebar();
+            }}
+          >
             <div className="size-8 rounded-lg">
               <FlomoLogo />
             </div>
@@ -36,7 +44,10 @@ export function AppSidebar() {
 
           <div
             className="hover:bg-emoji-accent cursor-pointer rounded-md p-2"
-            onClick={() => hideTabs()}
+            onClick={() => {
+              hideTabs();
+              if (isMobile) toggleSidebar();
+            }}
           >
             <Search className="size-4 stroke-[2.5]" />
           </div>

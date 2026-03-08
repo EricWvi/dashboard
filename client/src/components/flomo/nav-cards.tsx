@@ -52,7 +52,7 @@ interface NavCardsProps {
 }
 
 export function NavCards({ currentFolderId }: NavCardsProps) {
-  const { isMobile } = useSidebar();
+  const { isMobile, toggleSidebar } = useSidebar();
   const { language } = useUserContextV2();
 
   const { data: cards } = useCardsInFolder(currentFolderId);
@@ -156,7 +156,10 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
                           ? "bg-tab-highlight hover:bg-tab-highlight/30 dark:hover:bg-tab-highlight/70 shadow-sm"
                           : "",
                       )}
-                      onClick={() => openCard(card)}
+                      onClick={() => {
+                        openCard(card);
+                        if (isMobile) toggleSidebar();
+                      }}
                     >
                       <div>
                         <EmojiPicker
