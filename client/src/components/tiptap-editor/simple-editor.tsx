@@ -27,7 +27,7 @@ import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/ho
 import { EmojiExtension } from "@/components/tiptap-node/emoji-node";
 import { VideoExtension } from "@/components/tiptap-node/video-node";
 import { DiffExtension } from "@/components/tiptap-node/diff-node";
-import { TOCExtension } from "@/components/tiptap-node/toc-node";
+import { TOCExtensionV2 } from "@/components/tiptap-node/toc-node";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -260,7 +260,7 @@ export const useSimpleEditor = (
     },
     extensions: [
       ...extensionSetup,
-      TOCExtension.configure({
+      TOCExtensionV2.configure({
         levels: [2, 3, 4],
         scrollBehavior: "smooth",
       }),

@@ -9,7 +9,30 @@ import { useCurrentEditor, Editor } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
 import type { TOCItem } from "./toc-extension";
 import { getScrollBehavior, getTOCItems } from "./toc-extension";
+import {
+  getScrollBehaviorV2,
+  getTOCItemsV2,
+  tocV2PluginKey,
+} from "./toc-extension-v2";
 import "./toc.scss";
+
+// ---------------------------------------------------------------------------
+// Auto-detect which TOC extension version the editor is using.
+// V2 is preferred; V1 is the fallback for backward compatibility.
+// ---------------------------------------------------------------------------
+function isV2Active(editor: Editor): boolean {
+  return tocV2PluginKey.getState(editor.state) !== undefined;
+}
+
+function getItems(editor: Editor): TOCItem[] {
+  return isV2Active(editor) ? getTOCItemsV2(editor) : getTOCItems(editor);
+}
+
+function getBehavior(editor: Editor): ScrollBehavior {
+  return isV2Active(editor)
+    ? getScrollBehaviorV2(editor)
+    : getScrollBehavior(editor);
+}
 
 const DEFAULT_TOC_CLASS =
   "tiptap-toc scrollbar-hide fixed top-[20vh] right-[1rem] z-[1000] w-[250px] max-h-[60vh] overflow-y-auto overflow-x-hidden hidden xl:block";
@@ -34,7 +57,7 @@ export const TableOfContents: React.FC<TOCProps> = ({
   const editor = propEditor || currentEditor;
 
   const scrollBehavior = useMemo(
-    () => (editor ? getScrollBehavior(editor) : "smooth"),
+    () => (editor ? getBehavior(editor) : "smooth"),
     [editor],
   );
   const [items, setItems] = useState<TOCItem[]>([]);
@@ -68,7 +91,7 @@ export const TableOfContents: React.FC<TOCProps> = ({
 
     const readItems = () => {
       if (cancelled) return;
-      const newItems = getTOCItems(editor);
+      const newItems = getItems(editor);
       if (newItems.length > 0) {
         setItems(newItems);
       } else if (retryCount < MAX_RETRIES) {
@@ -82,7 +105,7 @@ export const TableOfContents: React.FC<TOCProps> = ({
 
     const handleUpdate = () => {
       if (cancelled) return;
-      const newItems = getTOCItems(editor);
+      const newItems = getItems(editor);
       setItems(newItems);
     };
 
