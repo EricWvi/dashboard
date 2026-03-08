@@ -1,12 +1,7 @@
+/* Position/layout is controlled by Tailwind classes via the className prop.
+   Default: fixed (dashboard). Flomo card pane overrides to absolute. */
 .tiptap-toc {
-  position: fixed;
-  top: 20vh;
-  right: 1rem;
-  width: 250px;
-  max-height: 60vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  z-index: 1000;
+  /* No position rules here; see DEFAULT_TOC_CLASS in toc.tsx */
 }
 
 .tiptap-toc-item {
@@ -102,12 +97,7 @@
   }
 }
 
-/* Responsive design */
-@media (max-width: 1024px) {
-  .tiptap-toc {
-    display: none;
-  }
-}
+/* Responsive visibility is controlled by Tailwind (hidden xl:block) */
 
 /* Scrollbar styling */
 .tiptap-toc-list::-webkit-scrollbar {

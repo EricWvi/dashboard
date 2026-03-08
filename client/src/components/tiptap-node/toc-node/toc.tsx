@@ -5,21 +5,41 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { useEditor } from "@tiptap/react";
+import { useCurrentEditor, Editor } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
 import type { TOCItem } from "./toc-extension";
 import { getScrollBehavior, getTOCItems } from "./toc-extension";
 import "./toc.scss";
 
+const DEFAULT_TOC_CLASS =
+  "tiptap-toc scrollbar-hide fixed top-[20vh] right-[1rem] z-[1000] w-[250px] max-h-[60vh] overflow-y-auto overflow-x-hidden hidden xl:block";
+
 interface TOCProps {
-  editor: ReturnType<typeof useEditor>;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
+  editor?: Editor | null;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
+  scrollContainerId?: string;
+  dependency?: any;
+  /** Override the default fixed-position class. Use this for non-fullscreen layouts. */
+  className?: string;
 }
 
-export const TableOfContents: React.FC<TOCProps> = ({ editor, scrollRef }) => {
-  const scrollBehavior = useMemo(() => getScrollBehavior(editor), [editor]);
+export const TableOfContents: React.FC<TOCProps> = ({
+  editor: propEditor,
+  scrollRef,
+  scrollContainerId,
+  dependency,
+  className,
+}) => {
+  const { editor: currentEditor } = useCurrentEditor() || {};
+  const editor = propEditor || currentEditor;
+
+  const scrollBehavior = useMemo(
+    () => (editor ? getScrollBehavior(editor) : "smooth"),
+    [editor],
+  );
   const [items, setItems] = useState<TOCItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
+  const activeIdRef = useRef(activeId);
   const [isHovered, setIsHovered] = useState(false);
   const isHoveredRef = useRef(isHovered);
   const tocRef = useRef<HTMLDivElement>(null);
@@ -27,130 +47,180 @@ export const TableOfContents: React.FC<TOCProps> = ({ editor, scrollRef }) => {
   useEffect(() => {
     isHoveredRef.current = isHovered;
   }, [isHovered]);
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
 
-  // Function to update TOC items from ProseMirror state
-  const updateTOCFromState = useCallback(() => {
-    if (!editor) return;
-    const newItems = getTOCItems(editor);
-    setItems(newItems);
-  }, [editor]);
-
+  // ---- Item Loading ----
+  // Read TOC items from plugin state. Retries on dependency change to handle
+  // async content loads (IndexedDB) where the editor state isn't ready yet.
   useEffect(() => {
     if (!editor) return;
 
-    // Initial update
-    updateTOCFromState();
+    // Reset on dependency change so stale items don't linger
+    setItems([]);
+    setActiveId("");
 
-    // Listen to editor updates (transactions)
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout>;
+    let retryCount = 0;
+    const MAX_RETRIES = 20; // up to 2 seconds
+
+    const readItems = () => {
+      if (cancelled) return;
+      const newItems = getTOCItems(editor);
+      if (newItems.length > 0) {
+        setItems(newItems);
+      } else if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        retryTimer = setTimeout(readItems, 100);
+      }
+    };
+
+    // Initial read after a microtask so updateState has been applied
+    retryTimer = setTimeout(readItems, 50);
+
     const handleUpdate = () => {
-      updateTOCFromState();
+      if (cancelled) return;
+      const newItems = getTOCItems(editor);
+      setItems(newItems);
     };
 
     editor.on("transaction", handleUpdate);
+    editor.on("update", handleUpdate);
 
     return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
       editor.off("transaction", handleUpdate);
+      editor.off("update", handleUpdate);
     };
-  }, [editor, updateTOCFromState]);
+  }, [editor, dependency]);
 
-  const updateActiveHeading = () => {
-    const container = scrollRef.current;
-    if (container) {
-      const headings = document.querySelectorAll("[data-toc-id]");
-      const visibleHeadings = Array.from(headings).filter((heading) => {
-        const rect = heading.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        return rect.top <= containerRect.top + container.clientHeight * 0.2;
-      });
-      if (visibleHeadings.length > 0) {
-        const lastVisible = visibleHeadings[visibleHeadings.length - 1];
-        const tocId = lastVisible.getAttribute("data-toc-id");
-        if (tocId) {
-          setActiveId(tocId);
-          document
-            .getElementById(`toc-item-${tocId}`)
-            ?.scrollIntoView({ behavior: scrollBehavior, block: "center" });
+  const getScrollContainer = useCallback(() => {
+    if (scrollRef?.current) return scrollRef.current;
+    if (scrollContainerId)
+      return document.getElementById(scrollContainerId) as HTMLElement | null;
+    return null;
+  }, [scrollRef, scrollContainerId]);
+
+  // ---- Active Heading Tracking (scroll-event based) ----
+  const updateActiveHeading = useCallback(() => {
+    const container = getScrollContainer();
+    if (!container) return;
+
+    // Scope heading query to within the scroll container
+    const headings = container.querySelectorAll(
+      ".simple-editor-content [data-toc-id]",
+    );
+    const containerRect = container.getBoundingClientRect();
+    const threshold = containerRect.top + container.clientHeight * 0.2;
+
+    const visibleHeadings = Array.from(headings).filter((heading) => {
+      const rect = heading.getBoundingClientRect();
+      return rect.top <= threshold;
+    });
+
+    if (visibleHeadings.length > 0) {
+      const lastVisible = visibleHeadings[visibleHeadings.length - 1];
+      const tocId = lastVisible.getAttribute("data-toc-id");
+      if (tocId && tocId !== activeIdRef.current) {
+        setActiveId(tocId);
+        // Scroll the TOC sidebar itself to keep active item visible
+        const tocItem = document.getElementById(`toc-item-${tocId}`);
+        if (tocItem && tocRef.current) {
+          const tocRect = tocRef.current.getBoundingClientRect();
+          const itemRect = tocItem.getBoundingClientRect();
+          const offsetTop =
+            itemRect.top -
+            tocRect.top +
+            tocRef.current.scrollTop -
+            tocRef.current.clientHeight / 2;
+          tocRef.current.scrollTo({
+            top: Math.max(0, offsetTop),
+            behavior: scrollBehavior,
+          });
         }
-      } else {
+      }
+    } else {
+      if (activeIdRef.current !== "") {
         setActiveId("");
-        tocRef.current?.scrollTo({
-          top: 0,
-          behavior: scrollBehavior,
-        });
+        tocRef.current?.scrollTo({ top: 0, behavior: scrollBehavior });
       }
     }
-  };
+  }, [getScrollContainer, scrollBehavior]);
 
+  // Listen to scroll events on the container (much more responsive than polling)
   useEffect(() => {
-    if (!items.length || !scrollRef.current) return;
+    const container = getScrollContainer();
+    if (!container || !items.length) return;
 
-    const interval = setInterval(() => {
-      if (!isHoveredRef.current) {
-        updateActiveHeading();
-      }
-    }, 500);
+    let rafId: number;
+    const handleScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (!isHoveredRef.current) {
+          updateActiveHeading();
+        }
+      });
+    };
 
-    return () => clearInterval(interval);
-  }, [items]);
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    // Run once on mount / items change to set initial active heading
+    handleScroll();
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [items, getScrollContainer, updateActiveHeading]);
 
   const scrollToHeading = (item: TOCItem) => {
     if (!editor) return;
 
-    const element = document.querySelector<HTMLElement>(
+    const container = getScrollContainer();
+    if (!container) return;
+
+    const element = container.querySelector<HTMLElement>(
       `[data-toc-id="${item.id}"]`,
     );
     if (!element) return;
 
-    const container = scrollRef.current;
-    if (container) {
-      // Calculate element position relative to container
-      const rect = element.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      const offset = rect.top - containerRect.top;
+    const rect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const offset = rect.top - containerRect.top;
+    const targetY =
+      container.scrollTop + offset - container.clientHeight * 0.2 + 10;
 
-      // Target scrollTop = element position - 20% of container height
-      // add small offset to handle toc active item highlight issue, i.e. 10
-      const targetY =
-        container.scrollTop + offset - container.clientHeight * 0.2 + 10;
+    container.scrollTo({ top: targetY, behavior: scrollBehavior });
 
-      container.scrollTo({
-        top: targetY,
-        behavior: scrollBehavior,
-      });
-
-      // Place cursor at the end of the heading
-      setTimeout(() => {
-        const { tr } = editor.state;
-        const headingNode = tr.doc.nodeAt(item.pos);
-        if (headingNode) {
-          const endPos = item.pos + headingNode.nodeSize - 1;
-          const resolvedPos = tr.doc.resolve(
-            Math.min(endPos, tr.doc.content.size),
-          );
-          const selection = TextSelection.create(tr.doc, resolvedPos.pos);
-
-          editor.view.dispatch(tr.setSelection(selection));
+    setTimeout(() => {
+      const { tr } = editor.state;
+      const headingNode = tr.doc.nodeAt(item.pos);
+      if (headingNode) {
+        const endPos = item.pos + headingNode.nodeSize - 1;
+        const resolvedPos = tr.doc.resolve(
+          Math.min(endPos, tr.doc.content.size),
+        );
+        const selection = TextSelection.create(tr.doc, resolvedPos.pos);
+        editor.view.dispatch(tr.setSelection(selection));
+        if (editor.isEditable) {
           editor.view.focus();
         }
-      }, 300);
-    }
+      }
+    }, 300);
   };
 
   const getItemOpacity = (item: TOCItem) => {
     if (isHovered) return 1;
-
-    if (!activeId) return 0;
-
-    // If this is the active item, full opacity
+    // When no heading has scrolled past the threshold yet, show all items
+    if (!activeId) return 0.6;
     if (item.id === activeId) return 1;
 
-    // Check if this item is a parent of the active item
     const activeItem = items.find((i) => i.id === activeId);
     if (!activeItem) return 0;
 
-    // If this item is a parent (lower level number) and comes before the active item
     if (item.level < activeItem.level && item.pos < activeItem.pos) {
-      // Check if there's no other heading of the same or lower level between this and active
       const itemsBetween = items.filter(
         (i) =>
           i.pos > item.pos && i.pos < activeItem.pos && i.level <= item.level,
@@ -161,12 +231,12 @@ export const TableOfContents: React.FC<TOCProps> = ({ editor, scrollRef }) => {
     return 0;
   };
 
-  if (!items.length) return null;
+  if (!items.length || !editor) return null;
 
   return (
     <div
       ref={tocRef}
-      className="tiptap-toc scrollbar-hide"
+      className={className ?? DEFAULT_TOC_CLASS}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

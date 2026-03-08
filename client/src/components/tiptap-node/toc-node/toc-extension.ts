@@ -16,6 +16,33 @@ export interface TOCOptions {
 
 export const tocPluginKey = new PluginKey("tableOfContents");
 
+function buildTOCState(doc: any, levels: number[]) {
+  const items: TOCItem[] = [];
+  const decorations: Decoration[] = [];
+  let headingCount = 1;
+
+  doc.descendants((node: any, pos: number) => {
+    if (node.type.name === "heading" && levels.includes(node.attrs.level)) {
+      const id = `heading-${headingCount}`;
+      headingCount++;
+      const text = node.textContent;
+      const level = node.attrs.level;
+
+      items.push({ id, level, text, pos });
+      decorations.push(
+        Decoration.node(pos, pos + node.nodeSize, {
+          "data-toc-id": id,
+        }),
+      );
+    }
+  });
+
+  return {
+    items,
+    decorations: DecorationSet.create(doc, decorations),
+  };
+}
+
 export const TOCExtension = Extension.create<TOCOptions>({
   name: "tableOfContents",
 
@@ -39,48 +66,11 @@ export const TOCExtension = Extension.create<TOCOptions>({
       new Plugin({
         key: tocPluginKey,
         state: {
-          init() {
-            return {
-              items: [] as TOCItem[],
-              decorations: DecorationSet.empty,
-            };
+          init(_, state) {
+            return buildTOCState(state.doc, levels);
           },
           apply(tr, _oldState) {
-            const { doc } = tr;
-            const items: TOCItem[] = [];
-            const decorations: Decoration[] = [];
-            let headingCount = 1;
-
-            doc.descendants((node, pos) => {
-              if (
-                node.type.name === "heading" &&
-                levels.includes(node.attrs.level)
-              ) {
-                const id = `heading-${headingCount}`;
-                headingCount++;
-                const text = node.textContent;
-                const level = node.attrs.level;
-
-                items.push({
-                  id,
-                  level,
-                  text,
-                  pos,
-                });
-
-                // Add data-toc-id attribute to heading nodes for scrolling
-                decorations.push(
-                  Decoration.node(pos, pos + node.nodeSize, {
-                    "data-toc-id": id,
-                  }),
-                );
-              }
-            });
-
-            return {
-              items,
-              decorations: DecorationSet.create(doc, decorations),
-            };
+            return buildTOCState(tr.doc, levels);
           },
         },
         props: {
