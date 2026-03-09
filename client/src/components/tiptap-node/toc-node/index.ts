@@ -1,7 +1,2 @@
-export {
-  TOCExtension,
-  type TOCItem,
-  type TOCOptions,
-  getTOCItems,
-} from "./toc-extension";
+export { TOCExtension, type TOCItem, getTOCItems } from "./toc-extension.ts";
 export { TableOfContents } from "./toc.tsx";

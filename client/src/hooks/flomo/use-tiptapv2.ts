@@ -1,6 +1,4 @@
 import { flomoDatabase } from "@/lib/flomo/db-interface";
-import keys from "./query-keys";
-import { useQuery } from "@tanstack/react-query";
 
 const defaultContent = [
   {

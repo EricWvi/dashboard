@@ -30,6 +30,10 @@ interface TabState {
     content: Record<string, unknown>,
   ) => void; // set initial content for a tab (used when opening a card)
   getInitialContent: (draftId: string) => Record<string, unknown> | null; // get initial content for a tab
+
+  scrollPositionMap: Record<string, number>; // Map of draftId to scroll position
+  saveScrollPosition: (draftId: string, scrollTop: number) => void;
+  getScrollPosition: (draftId: string) => number;
 }
 
 export const useEditorState = create<TabState>((set, get) => ({
@@ -53,6 +57,8 @@ export const useEditorState = create<TabState>((set, get) => ({
       delete newInstanceMap[draftId];
       const newInitialContentMap = { ...state.initialContentMap };
       delete newInitialContentMap[draftId];
+      const newScrollPositionMap = { ...state.scrollPositionMap };
+      delete newScrollPositionMap[draftId];
 
       const isActiveClosed = state.activeTabId === draftId;
       const newActiveTabId = isActiveClosed
@@ -64,6 +70,7 @@ export const useEditorState = create<TabState>((set, get) => ({
         openTabs: newTabs,
         instanceMap: newInstanceMap,
         initialContentMap: newInitialContentMap,
+        scrollPositionMap: newScrollPositionMap,
         activeTabId: newActiveTabId,
       };
     }),
@@ -116,5 +123,14 @@ export const useEditorState = create<TabState>((set, get) => ({
   getInitialContent: (draftId: string) => {
     const { initialContentMap } = get();
     return initialContentMap[draftId] || null;
+  },
+
+  scrollPositionMap: {},
+  saveScrollPosition: (draftId: string, scrollTop: number) =>
+    set((state) => ({
+      scrollPositionMap: { ...state.scrollPositionMap, [draftId]: scrollTop },
+    })),
+  getScrollPosition: (draftId: string) => {
+    return get().scrollPositionMap[draftId] ?? 0;
   },
 }));

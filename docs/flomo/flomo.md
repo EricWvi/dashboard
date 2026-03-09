@@ -17,6 +17,7 @@ Flomo implements a zettelkasten-inspired note-taking approach where:
 client/src/
 ├── flomo-main.tsx                  # Flomo app entry point
 ├── FlomoApp.tsx                    # Main app component
+├── editor-provider.tsx             # TiptapProvider: shared editor context and auto-save logic
 ├── components/
 │   ├── flomo/                      # Flomo-specific components
 │   │   ├── icons.tsx               # Custom icons
@@ -25,8 +26,8 @@ client/src/
 │   │   ├── card-content.tsx        # Main content area for the selected folder
 │   │   ├── card-header.tsx         # Header with bookmark, edit, and more actions
 │   │   ├── card-dialogs.tsx        # Shared card dialog components (Rename, Move, Delete)
-│   │   ├── card-pane.tsx           #
-│   │   ├── editor-provider.tsx     #
+│   │   ├── card-pane.tsx           # Content pane: shows FlomoHome or active card editor
+│   │   ├── home-page.tsx           # FlomoHome: start page with bookmarks and recent cards
 │   │   ├── nav-folders.tsx         # Sidebar section: subfolders of current folder
 │   │   ├── nav-cards.tsx           # Sidebar section: cards in current folder
 │   │   ├── nav-adds.tsx            # Sidebar section: add-card / add-folder actions
@@ -50,6 +51,7 @@ client/src/
 │   │   ├── animations.ts           # Shared framer-motion variants for sidebar transitions
 │   │   ├── db-interface.ts         # Database interface abstraction
 │   │   ├── dexie.ts                # IndexedDB implementation (Dexie.js)
+│   │   ├── sqlite.ts               # SQLite/Tauri implementation (Android)
 │   │   ├── model.ts                # TypeScript types and models
 │   │   └── sync-manager.ts         # Synchronization logic manager
 │   ├── model.ts                    # Shared models, such as MetaField and TiptapV2
@@ -73,7 +75,7 @@ client/
 - **Rich Text**: Full TipTap editor with formatting, links, etc.
 - **Search**: Full-text search across card titles and content (`rawText`)
 - **Archive Mode**: Cards and folders can be archived (`isArchived = 1`) to remove them from normal view without deleting. Toggle between normal and archive views via `isArchiveMode` in app state. The components and corresponding styles are designed to support both modes seamlessly.
-- **Bookmarks**: Cards and folders support a bookmark flag (`isBookmarked`) for quick-access marking.
+- **Bookmarks**: Cards and folders support a bookmark flag (`isBookmarked`) for quick-access marking. Bookmarked items display a `Sparkles` icon next to their title in the sidebar. The **homepage** (`FlomoHome`) surfaces bookmarked folders and cards in a dedicated "Quick Access" grid.
 
 ### Offline-First Benefits
 
@@ -290,12 +292,13 @@ The TipTap editor follows a **single shared instance** model. One `Editor` objec
 
 ### `TiptapProvider` (`editor-provider.tsx`)
 
-The root of the editor subsystem. Rendered by `CardPane` as a wrapper around `CardHeader` and `CardContent`.
+The root of the editor subsystem. Defined in `src/editor-provider.tsx` (shared, not Flomo-specific). Rendered in `Flomo.tsx` wrapping the entire `CardPane`.
 
 Responsibilities:
 
 - Creates the single `Editor` instance via `useSimpleEditor` (configured with all extensions).
 - Exposes the editor to descendants via `EditorContext.Provider` (from `@tiptap/react`).
+- Accepts a `persistence` prop — `{ syncDraft, getContent }` — that callers inject. This makes `TiptapProvider` decoupled from the flomo-specific persistence layer.
 - Wires up a **debounced auto-save** (500 ms, via `syncDraft`) that fires on every editor update.
 
 The `EditorState` sub-component (rendered inside `TiptapProvider`, returns `null`) owns all side-effects:
@@ -303,6 +306,7 @@ The `EditorState` sub-component (rendered inside `TiptapProvider`, returns `null
 | Effect             | Trigger                                              | Action                                                                                                               |
 | ------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Tab switch         | `activeTabId` changes                                | Flush debounce; save current `EditorState` to `instanceMap`; restore cached state for new tab or load from IndexedDB |
+| Home navigation    | `activeTabId` becomes `null`                         | Flush debounce; save current state; stop — no new content to load                                                    |
 | Cache invalidation | `instanceMap` entry for `activeTabId` becomes `null` | Reload draft content from IndexedDB                                                                                  |
 
 ### `useSimpleEditor` hook (`simple-editor.tsx`)
@@ -330,6 +334,15 @@ Renders the contenteditable area for the active tab. Reads the editor from `Edit
 
 ## UI Components
 
+### CardPane (`card-pane.tsx`)
+
+The right-hand content area inside `SidebarInset`. Acts as a router between two views:
+
+- When `activeTabId === null` (no open tab): renders `<FlomoHome />`.
+- When a tab is active: renders `<CardHeader />` followed by `<CardContent />`.
+
+The sidebar's search button calls `hideTabs()` to show `FlomoHome`.
+
 ### AppSidebar (`sidebar.tsx`)
 
 The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Composed of:
@@ -342,6 +355,17 @@ The root sidebar component rendered inside `SidebarProvider` in `Flomo.tsx`. Com
 | Content – lower | `NavCards`   | Lists cards in the current folder, sorted newest-first. Each card has a context menu with Rename, Move, and Delete actions. Content fades in on folder change.                                                |
 | Footer          | `NavAdds`    | Add-card and add-folder action buttons that open dialogs.                                                                                                                                                     |
 | Footer          | `NavTabs`    | Dropdown showing open editor tabs. Each entry displays an eye (`Eye`) or pen (`PenLine`) icon to indicate read/edit mode, and clicking it switches the active tab.                                            |
+
+### `FlomoHome` (`home-page.tsx`)
+
+The start page shown inside `CardPane` when no editor tab is active (`activeTabId === null`). Divided into two sections:
+
+| Section          | Content                                                                                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Quick Access     | Grid of bookmarked folders and cards. Clicking a folder calls `setCurrentFolderId`; clicking a card opens it in a new tab.                                 |
+| Recently Updated | Grid of the 8 most recently updated cards (ordered by `updatedAt` DESC), each showing emoji, title, relative timestamp, and a 3-line preview of `rawText`. |
+
+A search input is rendered at the top (currently read-only).
 
 ### CardContent (`card-content.tsx`)
 
@@ -369,7 +393,7 @@ The card data is fetched via `useCard(cardId)` where `cardId` is stored in the `
 
 ### NavFolders (`nav-folders.tsx`)
 
-Each folder entry shows an emoji (defaulting to 📂) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes actions backed by dedicated dialogs. The entire section is wrapped in `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId`, giving a 300 ms easeOut opacity fade-in whenever the active folder changes.
+Each folder entry shows an emoji (defaulting to 📂) that opens an `EmojiPicker` on click. A `Sparkles` icon is displayed next to the title when `isBookmarked === 1`. A `MoreHorizontal` context menu exposes actions backed by dedicated dialogs. The entire section is wrapped in `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId`, giving a 300 ms easeOut opacity fade-in whenever the active folder changes.
 
 | Action  | Component            | Behaviour                                                                                                                                  |
 | ------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -383,7 +407,7 @@ Dropdown menus set `onCloseAutoFocus={(e) => e.preventDefault()}` to prevent the
 
 ### NavCards (`nav-cards.tsx`)
 
-Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `MoreHorizontal` context menu exposes actions. Like `NavFolders`, the section uses `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId` for a 300 ms easeOut fade-in on folder change.
+Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `Sparkles` icon is displayed next to the title when `isBookmarked === 1`. A `MoreHorizontal` context menu exposes actions. Like `NavFolders`, the section uses `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId` for a 300 ms easeOut fade-in on folder change.
 
 | Action   | Component          | Behaviour                                                                                                                      |
 | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -469,6 +493,10 @@ interface TabState {
     content: Record<string, unknown>,
   ) => void; // set initial content for a tab (used when opening a card)
   getInitialContent: (draftId: string) => Record<string, unknown> | null; // get initial content for a tab
+
+  scrollPositionMap: Record<string, number>; // Map of draftId to scroll position
+  saveScrollPosition: (draftId: string, scrollTop: number) => void;
+  getScrollPosition: (draftId: string) => number;
 }
 ```
 
@@ -476,7 +504,9 @@ interface TabState {
 
 `initialContentMap` stores the JSON content as it was when a draft was first loaded into the editor, enabling the **Discard** action to revert cleanly.
 
-Closing a tab removes its entries from both `instanceMap` and `initialContentMap` to avoid memory leaks.
+`scrollPositionMap` persists the scroll offset of the content container for each open tab. Position is saved when the user scrolls and restored when switching back to that tab, so the reading position is not lost across tab switches.
+
+Closing a tab removes its entries from `instanceMap`, `initialContentMap`, and `scrollPositionMap` to avoid memory leaks.
 
 ## Development
 

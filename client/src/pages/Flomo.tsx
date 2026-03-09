@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { SyncManager, getSyncManager } from "@/lib/flomo/sync-manager";
 import { syncEvents } from "@/lib/sync-events";
 import { AppSidebar } from "@/components/flomo/sidebar";
-import { TiptapProvider } from "@/components/flomo/editor-provider";
+import { TiptapProvider } from "@/editor-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CardPane } from "@/components/flomo/card-pane";
 import { ArchiveFrame } from "@/components/flomo/archive-decoration";
@@ -11,6 +11,7 @@ import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useEditorState } from "@/hooks/use-editor-state";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { syncDraft, getContent } from "@/hooks/flomo/use-tiptapv2";
 
 export default function Flomo() {
   const isMobile = useIsMobile();
@@ -72,8 +73,8 @@ export default function Flomo() {
       <SidebarProvider className="h-full">
         <AppSidebar />
         <SidebarInset className={cn("overflow-hidden", isMobile && "pt-7")}>
-          <TiptapProvider>
-          <CardPane />
+          <TiptapProvider persistence={{ syncDraft, getContent }}>
+            <CardPane />
           </TiptapProvider>
         </SidebarInset>
       </SidebarProvider>

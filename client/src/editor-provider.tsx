@@ -1,20 +1,43 @@
 import { useEditorState } from "@/hooks/use-editor-state";
 import { Editor, EditorContext } from "@tiptap/react";
 import { useSimpleEditor } from "@/components/tiptap-editor/simple-editor";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { debounce, type DebouncedFunc } from "lodash";
-import { syncDraft, getContent } from "@/hooks/flomo/use-tiptapv2";
 import { EditorState as ProseMirrorState } from "prosemirror-state";
+import type { TiptapV2 } from "@/lib/model";
 
-// since we will call flush on tab switch, we can use a debounced function that accpets `id`,
-// and it will not cause problems that newer calls with different id will override the previous ones
-const debouncedSync = debounce((id: string, editorInstance: Editor) => {
-  const content = editorInstance.getJSON();
-  syncDraft({ id, content });
-}, 500);
+export interface TiptapPersistence {
+  syncDraft: (params: {
+    id: string;
+    content: Record<string, unknown>;
+  }) => Promise<void>;
+  getContent: (id: string) => Promise<TiptapV2 | undefined>;
+}
 
-export function TiptapProvider({ children }: { children: React.ReactNode }) {
+interface TiptapProviderProps {
+  children: React.ReactNode;
+  persistence: TiptapPersistence;
+}
+
+export function TiptapProvider({ children, persistence }: TiptapProviderProps) {
   const draftIdRef = useRef<string | null>(null);
+
+  const debouncedSync = useMemo(
+    () =>
+      // since we will call flush on tab switch, we can use a debounced function that accpets `id`,
+      // and it will not cause problems that newer calls with different id will override the previous ones
+      debounce((id: string, editorInstance: Editor) => {
+        const content = editorInstance.getJSON();
+        persistence.syncDraft({ id, content });
+      }, 500),
+    [persistence],
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSync.cancel();
+    };
+  }, [debouncedSync]);
 
   const editor = useSimpleEditor(({ editor }) => {
     if (draftIdRef.current) {
@@ -29,6 +52,7 @@ export function TiptapProvider({ children }: { children: React.ReactNode }) {
         draftIdRef={draftIdRef}
         editor={editor}
         debouncedSync={debouncedSync}
+        persistence={persistence}
       />
       <EditorContext.Provider value={{ editor }}>
         {children}
@@ -65,10 +89,12 @@ const EditorState = ({
   draftIdRef,
   editor,
   debouncedSync,
+  persistence,
 }: {
   draftIdRef: React.RefObject<string | null>;
   editor: Editor;
   debouncedSync: DebouncedFunc<(id: string, editorInstance: Editor) => void>;
+  persistence: TiptapPersistence;
 }) => {
   const {
     activeTabId,
@@ -78,17 +104,29 @@ const EditorState = ({
     saveInstance,
     instanceMap,
     setInitialContent,
+    saveScrollPosition,
+    getScrollPosition,
   } = useEditorState();
 
   const [loadingDraftId, setLoadingDraftId] = useState<string | null>(null);
   const hasEditableTabsRef = useRef(false);
+
+  const getScrollContainer = () =>
+    document.getElementById("only-tt-scroll-container");
+
+  const restoreScrollPosition = (tabId: string) => {
+    requestAnimationFrame(() => {
+      const el = getScrollContainer();
+      if (el) el.scrollTop = getScrollPosition(tabId);
+    });
+  };
 
   // Load draft content from IndexedDB
   const loadDraftContent = async (draftId: string) => {
     if (loadingDraftId === draftId) return; // Prevent duplicate loads
     setLoadingDraftId(draftId);
     try {
-      const draft = await getContent(draftId);
+      const draft = await persistence.getContent(draftId);
       const contentJSON = draft ? draft.content : { type: "doc", content: [] };
       const doc = editor.schema.nodeFromJSON(contentJSON);
       const newState = ProseMirrorState.create({
@@ -97,6 +135,8 @@ const EditorState = ({
         plugins: editor.state.plugins,
       });
       editor.view.updateState(newState);
+      // trigger a empty transaction to ensure decorations are updated based on the new state (e.g. for TOC)
+      editor.view.dispatch(editor.state.tr);
       editor.setEditable(getTabEditable(draftId), false);
       setInitialContent(draftId, contentJSON);
     } finally {
@@ -123,6 +163,8 @@ const EditorState = ({
     if (draftIdRef.current === activeTabId) return;
 
     if (draftIdRef.current && draftIdRef.current !== activeTabId) {
+      const el = getScrollContainer();
+      if (el) saveScrollPosition(draftIdRef.current, el.scrollTop);
       saveInstance(draftIdRef.current, editor.state);
     }
     draftIdRef.current = activeTabId;
@@ -135,10 +177,13 @@ const EditorState = ({
       setTimeout(() => {
         editor.view.updateState(instance);
         editor.setEditable(getTabEditable(activeTabId), false);
+        restoreScrollPosition(activeTabId);
       }, 0);
     } else {
       // No cached instance - load from IndexedDB
-      loadDraftContent(activeTabId!);
+      loadDraftContent(activeTabId!).then(() => {
+        restoreScrollPosition(activeTabId);
+      });
     }
   }, [activeTabId]);
 
