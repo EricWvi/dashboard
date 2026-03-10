@@ -17,6 +17,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [features]
 default = []
 flomo = []
+dashboard = []
+journal = []
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -30,6 +32,8 @@ tauri-plugin-log = "2"
 tauri-plugin-deep-link = "2"
 rusqlite = { version = "0.31", features = ["bundled"] }
 uuid = { version = "1", features = ["v4"] }
+reqwest = { version = "0.12", features = ["blocking"] }
+tokio = { version = "1", features = ["fs"] }
 
 [dev-dependencies]
 tempfile = "3"

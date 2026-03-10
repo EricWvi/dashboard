@@ -3,7 +3,7 @@ import { Editor, EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
-import { Image } from "@tiptap/extension-image";
+import { CachedImage } from "@/components/tiptap-node/image-node/cached-image-extension";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
@@ -394,7 +394,7 @@ export const extensionSetup = [
   TaskList,
   TaskItem.configure({ nested: true }),
   Highlight.configure({ multicolor: true }),
-  Image,
+  CachedImage,
   Typography,
   Superscript,
   Subscript,

@@ -27,5 +27,8 @@ func Serve(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "presigned url not found"})
 		return
 	}
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "*")
 	c.Redirect(http.StatusFound, presignedURL)
 }

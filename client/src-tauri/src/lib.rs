@@ -1,4 +1,5 @@
 mod flomo_db;
+mod media_cache;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,8 +16,12 @@ pub fn run() {
       }
       #[cfg(feature = "flomo")]
       flomo_db::commands::init_db(app.handle())?;
+      media_cache::init_media_cache(app.handle())?;
       Ok(())
     });
+
+  // Register the onlyquant:// custom protocol for media caching
+  builder = media_cache::register_protocol(builder);
 
   #[cfg(feature = "flomo")]
   {
