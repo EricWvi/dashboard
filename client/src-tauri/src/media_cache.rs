@@ -107,12 +107,6 @@ impl DownloadingTasks {
         set.insert(uuid.to_string())
     }
 
-    /// Check if a uuid is currently being downloaded.
-    pub fn contains(&self, uuid: &str) -> bool {
-        let set = self.inner.lock().unwrap();
-        set.contains(uuid)
-    }
-
     /// Remove a uuid from the downloading set.
     pub fn remove(&self, uuid: &str) {
         let mut set = self.inner.lock().unwrap();
@@ -140,10 +134,74 @@ fn build_cors_response(
 
 fn build_error_response(status: u16, msg: &str) -> tauri::http::Response<Vec<u8>> {
     build_cors_response(
-        tauri::http::StatusCode::from_u16(status).unwrap_or(tauri::http::StatusCode::INTERNAL_SERVER_ERROR),
+        tauri::http::StatusCode::from_u16(status)
+            .unwrap_or(tauri::http::StatusCode::INTERNAL_SERVER_ERROR),
         "text/plain",
         msg.as_bytes().to_vec(),
     )
+}
+
+/// Synchronously download a file, save it to disk atomically, and write its
+/// content type to the DB. Returns an error string on failure.
+fn sync_download_and_save(
+    uuid: &str,
+    file_path: &PathBuf,
+    db: &MediaCacheDb,
+) -> Result<(), String> {
+    let download_url = format!("{}/api/m/{}", backend_url(), uuid);
+    let client = reqwest::blocking::Client::builder()
+        .redirect(reqwest::redirect::Policy::limited(10))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let response = client
+        .get(&download_url)
+        .send()
+        .map_err(|e| format!("Failed to download: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Remote server returned {}", response.status()));
+    }
+
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream")
+        .to_string();
+
+    let bytes = response
+        .bytes()
+        .map_err(|e| format!("Failed to read response body: {}", e))?;
+
+    // Atomic write: tmp file → rename
+    if let Some(parent) = file_path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create cache dirs: {}", e))?;
+    }
+    let mut tmp_name = file_path.file_name().unwrap().to_os_string();
+    tmp_name.push(".tmp");
+    let tmp_path = file_path.with_file_name(tmp_name);
+    std::fs::write(&tmp_path, &bytes)
+        .map_err(|e| format!("Failed to write tmp file: {}", e))?;
+    std::fs::rename(&tmp_path, file_path)
+        .map_err(|e| format!("Failed to rename tmp file: {}", e))?;
+
+    // Persist content type
+    db.set_content_type(uuid, &content_type)
+        .map_err(|e| format!("Failed to write content type: {}", e))?;
+
+    Ok(())
+}
+
+/// Spin-wait for a file to appear on disk (200ms × 10 = 2s max).
+fn wait_for_file_on_disk(file_path: &PathBuf) {
+    for _ in 0..10 {
+        if file_path.exists() {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
 }
 
 /// Handle a request for `onlyquant://localhost/api/m/{uuid}`
@@ -172,144 +230,23 @@ pub fn handle_media_request(
 
     let file_path = cache_file_path(objects_dir, &uuid);
 
-    // --- First check: lockless disk read ---
-    if file_path.exists() {
-        return return_cached_file(&file_path, &uuid, db);
-    }
-
-    // --- Enter lock zone ---
-    {
-        // Second check under conceptual lock (DownloadingTasks uses internal Mutex)
-        // Re-check disk (another thread may have just finished writing)
-        if file_path.exists() {
-            return return_cached_file(&file_path, &uuid, db);
-        }
-
-        // Check if someone else is downloading this uuid
-        if tasks.contains(&uuid) {
-            // Spin wait: 200ms intervals, max 10 times
-            for _ in 0..10 {
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                if file_path.exists() {
-                    return return_cached_file(&file_path, &uuid, db);
-                }
-                if !tasks.contains(&uuid) {
-                    // Download finished but file doesn't exist - re-check
-                    if file_path.exists() {
-                        return return_cached_file(&file_path, &uuid, db);
-                    }
-                    break;
-                }
+    // 1. If not cached, download to disk first
+    if !file_path.exists() {
+        if tasks.try_insert(&uuid) {
+            // We own the download slot — download, save, write DB synchronously
+            if let Err(e) = sync_download_and_save(&uuid, &file_path, db) {
+                tasks.remove(&uuid);
+                return build_error_response(502, &e);
             }
-            // After spin wait, if file still doesn't exist, fall through to download
-            if file_path.exists() {
-                return return_cached_file(&file_path, &uuid, db);
-            }
-        }
-
-        // Claim the download slot - if another thread claimed it between our check
-        // and now, spin wait instead
-        if !tasks.try_insert(&uuid) {
-            for _ in 0..10 {
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                if file_path.exists() {
-                    return return_cached_file(&file_path, &uuid, db);
-                }
-                if !tasks.contains(&uuid) {
-                    if file_path.exists() {
-                        return return_cached_file(&file_path, &uuid, db);
-                    }
-                    break;
-                }
-            }
-            if file_path.exists() {
-                return return_cached_file(&file_path, &uuid, db);
-            }
-            // Still not available, proceed to download ourselves
-            tasks.try_insert(&uuid);
+            tasks.remove(&uuid);
+        } else {
+            // Another thread is downloading — wait for it to finish
+            wait_for_file_on_disk(&file_path);
         }
     }
 
-    // --- Execute synchronous download (outside lock) ---
-    let download_url = format!("{}/api/m/{}", backend_url(), uuid);
-    let client = reqwest::blocking::Client::builder()
-        .redirect(reqwest::redirect::Policy::limited(10))
-        .build();
-
-    let client = match client {
-        Ok(c) => c,
-        Err(e) => {
-            tasks.remove(&uuid);
-            return build_error_response(502, &format!("Failed to create HTTP client: {}", e));
-        }
-    };
-
-    let response = client.get(&download_url).send();
-
-    let response = match response {
-        Ok(r) => r,
-        Err(e) => {
-            tasks.remove(&uuid);
-            return build_error_response(502, &format!("Failed to download: {}", e));
-        }
-    };
-
-    if !response.status().is_success() {
-        tasks.remove(&uuid);
-        return build_error_response(
-            response.status().as_u16(),
-            &format!("Remote server returned {}", response.status()),
-        );
-    }
-
-    let content_type = response
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream")
-        .to_string();
-
-    let bytes = match response.bytes() {
-        Ok(b) => b.to_vec(),
-        Err(e) => {
-            tasks.remove(&uuid);
-            return build_error_response(502, &format!("Failed to read response body: {}", e));
-        }
-    };
-
-    // Build the response to return immediately to the frontend
-    let resp = build_cors_response(
-        tauri::http::StatusCode::OK,
-        &content_type,
-        bytes.clone(),
-    );
-
-    // --- Async task: save to disk and DB, then remove from tasks ---
-    let objects_dir_clone = objects_dir.clone();
-    let uuid_clone = uuid.clone();
-    let content_type_clone = content_type.clone();
-    // We need a reference to the db and tasks that's 'static.
-    // Since db and tasks are managed via OnceLock<>, we can access them statically.
-    std::thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build();
-        if let Ok(rt) = rt {
-            rt.block_on(async {
-                save_to_disk_atomic(&objects_dir_clone, &uuid_clone, &bytes).await;
-            });
-        }
-        // Write content_type to DB
-        if let Some(db) = get_cache_db() {
-            let _ = db.set_content_type(&uuid_clone, &content_type_clone);
-        }
-        // Remove from downloading tasks
-        if let Some(tasks) = get_downloading_tasks() {
-            tasks.remove(&uuid_clone);
-        }
-    });
-
-    resp
+    // 2. Always serve from disk
+    return_cached_file(&file_path, &uuid, db)
 }
 
 fn return_cached_file(
@@ -330,25 +267,7 @@ fn return_cached_file(
     }
 }
 
-async fn save_to_disk_atomic(objects_dir: &PathBuf, uuid: &str, data: &[u8]) {
-    let final_path = cache_file_path(objects_dir, uuid);
-
-    // Ensure parent directories exist
-    if let Some(parent) = final_path.parent() {
-        let _ = tokio::fs::create_dir_all(parent).await;
-    }
-
-    // Append .tmp suffix (not replacing extension) to create temp path
-    let mut tmp_name = final_path.file_name().unwrap().to_os_string();
-    tmp_name.push(".tmp");
-    let tmp_path = final_path.with_file_name(tmp_name);
-    if tokio::fs::write(&tmp_path, data).await.is_ok() {
-        // rename is atomic, guaranteeing file is either absent or complete
-        let _ = tokio::fs::rename(&tmp_path, &final_path).await;
-    }
-}
-
-// --- Global state accessors (used by async thread) ---
+// --- Global state accessors ---
 
 use std::sync::OnceLock;
 
@@ -468,13 +387,12 @@ mod tests {
     fn test_downloading_tasks() {
         let tasks = DownloadingTasks::new();
 
-        assert!(!tasks.contains("uuid1"));
         assert!(tasks.try_insert("uuid1"));
-        assert!(tasks.contains("uuid1"));
         // Second insert returns false (already present)
         assert!(!tasks.try_insert("uuid1"));
         tasks.remove("uuid1");
-        assert!(!tasks.contains("uuid1"));
+        // After removal, can insert again
+        assert!(tasks.try_insert("uuid1"));
     }
 
     #[test]

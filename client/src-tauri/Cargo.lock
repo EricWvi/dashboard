@@ -101,7 +101,6 @@ dependencies = [
  "tauri-plugin-deep-link",
  "tauri-plugin-log",
  "tempfile",
- "tokio",
  "uuid",
 ]
 
