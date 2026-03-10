@@ -202,8 +202,27 @@ pub fn handle_media_request(
             }
         }
 
-        // Claim the download slot
-        tasks.try_insert(&uuid);
+        // Claim the download slot - if another thread claimed it between our check
+        // and now, spin wait instead
+        if !tasks.try_insert(&uuid) {
+            for _ in 0..10 {
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                if file_path.exists() {
+                    return return_cached_file(&file_path, &uuid, db);
+                }
+                if !tasks.contains(&uuid) {
+                    if file_path.exists() {
+                        return return_cached_file(&file_path, &uuid, db);
+                    }
+                    break;
+                }
+            }
+            if file_path.exists() {
+                return return_cached_file(&file_path, &uuid, db);
+            }
+            // Still not available, proceed to download ourselves
+            tasks.try_insert(&uuid);
+        }
     }
 
     // --- Execute synchronous download (outside lock) ---
@@ -314,7 +333,10 @@ async fn save_to_disk_atomic(objects_dir: &PathBuf, uuid: &str, data: &[u8]) {
         let _ = tokio::fs::create_dir_all(parent).await;
     }
 
-    let tmp_path = final_path.with_extension("tmp");
+    // Append .tmp suffix (not replacing extension) to create temp path
+    let mut tmp_name = final_path.file_name().unwrap().to_os_string();
+    tmp_name.push(".tmp");
+    let tmp_path = final_path.with_file_name(tmp_name);
     if tokio::fs::write(&tmp_path, data).await.is_ok() {
         // rename is atomic, guaranteeing file is either absent or complete
         let _ = tokio::fs::rename(&tmp_path, &final_path).await;
