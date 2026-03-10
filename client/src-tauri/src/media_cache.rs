@@ -165,6 +165,11 @@ pub fn handle_media_request(
         }
     };
 
+    // Validate uuid contains only safe characters (alphanumeric and hyphens)
+    if !uuid.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return build_error_response(400, "Invalid uuid format");
+    }
+
     let file_path = cache_file_path(objects_dir, &uuid);
 
     // --- First check: lockless disk read ---
