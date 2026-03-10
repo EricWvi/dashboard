@@ -32,6 +32,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 
 	// Basic Middlewares.
 	g.Use(gin.Recovery())
+	g.Use(middleware.CORSMiddleware())
 	g.Use(mw...)
 	g.Use(gzip.Gzip(gzip.DefaultCompression))
 
