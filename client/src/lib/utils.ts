@@ -12,10 +12,6 @@ export function isTauri(): boolean {
 
 export const isTouchDevice = window.matchMedia("(hover: none)").matches;
 
-export function flomoBaseUrl(): string {
-  return isTauri() ? "https://flomo.io" : "";
-}
-
 export function formatMediaUrl(url: string): string {
   if (url.startsWith("/api/m/")) {
     return url;

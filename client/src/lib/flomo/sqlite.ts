@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { IFlomoDatabase } from "./db-interface";
-import type { Card, CardField, Folder, FolderField } from "./model";
+import type { Card, CardField, FlomoData, Folder, FolderField } from "./model";
 import type { SyncMeta, TiptapV2, TiptapV2Field, User } from "@/lib/model";
 
 // SQLite implementation via Tauri commands
@@ -86,10 +86,7 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
     await invoke("flomo_put_folders", { folders });
   }
 
-  async updateFolder(
-    id: string,
-    updates: Partial<FolderField>,
-  ): Promise<void> {
+  async updateFolder(id: string, updates: Partial<FolderField>): Promise<void> {
     await invoke("flomo_update_folder", { id, updates });
   }
 
@@ -174,19 +171,11 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
   }
 
   // Sync
-  async getPendingChanges(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }> {
+  async getPendingChanges(): Promise<FlomoData> {
     return invoke("flomo_get_pending_changes");
   }
 
-  async getLocalDataForSync(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }> {
+  async getLocalDataForSync(): Promise<FlomoData> {
     return invoke("flomo_get_local_data_for_sync");
   }
 

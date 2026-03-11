@@ -1,4 +1,4 @@
-import type { MetaField } from "@/lib/model";
+import type { MetaField, TiptapV2 } from "@/lib/model";
 
 export const RootFolderId = "00000000-0000-0000-0000-000000000000";
 export const ArchiveFolderId = "archive-folder-id";
@@ -35,3 +35,9 @@ export interface FolderField {
 }
 
 export interface Folder extends MetaField, FolderField {}
+
+export interface FlomoData {
+  cards: Card[];
+  folders: Folder[];
+  tiptaps: TiptapV2[];
+}

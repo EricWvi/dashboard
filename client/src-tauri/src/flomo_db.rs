@@ -190,6 +190,37 @@ pub struct PendingChanges {
     pub tiptaps: Vec<TiptapV2>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FlomoData {
+    pub cards: Vec<Card>,
+    pub folders: Vec<Folder>,
+    pub tiptaps: Vec<TiptapV2>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BackendWrapper<T> {
+    pub request_id: String,
+    pub code: i32,
+    pub message: serde_json::Value,
+    #[serde(skip)]
+    _marker: std::marker::PhantomData<T>,
+}
+
+impl<T: for<'de> serde::Deserialize<'de>> BackendWrapper<T> {
+    pub fn into_result(self) -> Result<T, String> {
+        if self.code == 200 {
+            serde_json::from_value(self.message).map_err(|e| e.to_string())
+        } else {
+            Err(self
+                .message
+                .as_str()
+                .unwrap_or("Unknown error")
+                .to_string())
+        }
+    }
+}
+
 // --- Constants ---
 const SYNC_STATUS_SYNCED: i64 = 1;
 const SYNC_STATUS_PENDING: i64 = 2;
@@ -1510,6 +1541,68 @@ pub mod commands {
     #[tauri::command]
     pub fn flomo_clear_all_data() -> Result<(), String> {
         get_db()?.clear_all_data().map_err(|e| e.to_string())
+    }
+
+    // --- Sync API commands ---
+
+    use crate::media_cache::backend_url;
+
+    #[tauri::command]
+    pub fn flomo_full_sync() -> Result<serde_json::Value, String> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/api/flomo?Action=FullSync", backend_url());
+
+        let response = client
+            .get(&url)
+            .send()
+            .map_err(|e| format!("Failed to send full sync request: {}", e))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Full sync failed with status: {}", response.status()));
+        }
+
+        response
+            .json::<serde_json::Value>()
+            .map_err(|e| format!("Failed to parse full sync response: {}", e))
+    }
+
+    #[tauri::command]
+    pub fn flomo_push(data: FlomoData) -> Result<serde_json::Value, String> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/api/flomo?Action=Push", backend_url());
+
+        let response = client
+            .post(&url)
+            .json(&data)
+            .send()
+            .map_err(|e| format!("Failed to send push request: {}", e))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Push failed with status: {}", response.status()));
+        }
+
+        response
+            .json::<serde_json::Value>()
+            .map_err(|e| format!("Failed to parse push response: {}", e))
+    }
+
+    #[tauri::command]
+    pub fn flomo_pull(version: i64) -> Result<serde_json::Value, String> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/api/flomo?Action=Pull&since={}", backend_url(), version);
+
+        let response = client
+            .get(&url)
+            .send()
+            .map_err(|e| format!("Failed to send pull request: {}", e))?;
+
+        if !response.status().is_success() {
+            return Err(format!("Pull failed with status: {}", response.status()));
+        }
+
+        response
+            .json::<serde_json::Value>()
+            .map_err(|e| format!("Failed to parse pull response: {}", e))
     }
 }
 

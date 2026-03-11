@@ -69,6 +69,9 @@ pub fn run() {
       flomo_db::commands::flomo_set_sync_meta,
       flomo_db::commands::flomo_get_last_server_version,
       flomo_db::commands::flomo_clear_all_data,
+      flomo_db::commands::flomo_full_sync,
+      flomo_db::commands::flomo_push,
+      flomo_db::commands::flomo_pull,
     ]);
   }
 

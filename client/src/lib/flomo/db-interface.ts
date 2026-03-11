@@ -4,6 +4,7 @@ import { SqliteFlomoDatabase } from "./sqlite";
 import {
   type Card,
   type CardField,
+  type FlomoData,
   type Folder,
   type FolderField,
 } from "./model";
@@ -63,16 +64,8 @@ export interface IFlomoDatabase {
   restoreTiptapHistory(id: string, ts: number): Promise<void>;
 
   // Sync
-  getPendingChanges(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }>;
-  getLocalDataForSync(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }>;
+  getPendingChanges(): Promise<FlomoData>;
+  getLocalDataForSync(): Promise<FlomoData>;
   getSyncMeta(key: string): Promise<SyncMeta | undefined>;
   setSyncMeta(key: string, value: number | string): Promise<void>;
   getLastServerVersion(): Promise<number>;
@@ -272,19 +265,11 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 
   // Sync
-  async getPendingChanges(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }> {
+  async getPendingChanges(): Promise<FlomoData> {
     return this.baseDb.getPendingChanges();
   }
 
-  async getLocalDataForSync(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }> {
+  async getLocalDataForSync(): Promise<FlomoData> {
     return this.baseDb.getLocalDataForSync();
   }
 

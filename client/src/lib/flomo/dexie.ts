@@ -5,6 +5,7 @@ import {
   SchemaVersion,
   type Card,
   type CardField,
+  type FlomoData,
   type Folder,
   type FolderField,
 } from "./model";
@@ -343,11 +344,7 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
   }
 
   // Sync
-  async getPendingChanges(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }> {
+  async getPendingChanges(): Promise<FlomoData> {
     const [cards, folders, tiptaps] = await Promise.all([
       this.db.cards.where("syncStatus").equals(SyncStatus.Pending).toArray(),
       this.db.folders.where("syncStatus").equals(SyncStatus.Pending).toArray(),
@@ -356,11 +353,7 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
     return { cards, folders, tiptaps };
   }
 
-  async getLocalDataForSync(): Promise<{
-    cards: Card[];
-    folders: Folder[];
-    tiptaps: TiptapV2[];
-  }> {
+  async getLocalDataForSync(): Promise<FlomoData> {
     const [cards, folders, tiptaps] = await Promise.all([
       this.db.cards.toArray(),
       this.db.folders.toArray(),

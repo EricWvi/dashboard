@@ -1,30 +1,22 @@
 import { SchemaVersion, type Card, type Folder } from "./model";
-import { type TiptapV2, SyncStatus, type User } from "@/lib/model";
-import { getRequest, postRequest } from "@/lib/queryClient";
+import { type TiptapV2, SyncStatus } from "@/lib/model";
 import { flomoDatabase, type IFlomoDatabase } from "./db-interface";
+import { syncClient, type ISyncClient } from "./sync-client";
 import { syncEvents } from "@/lib/sync-events";
-import { flomoBaseUrl } from "@/lib/utils";
-
-// API response types
-interface FlomoSyncResponse {
-  serverVersion: number;
-  users: Omit<User, "key" | "syncStatus">[];
-  cards: Omit<Card, "syncStatus">[];
-  folders: Omit<Folder, "syncStatus">[];
-  tiptaps: Omit<TiptapV2, "syncStatus">[];
-}
 
 /**
  * SyncManager handles bidirectional synchronization between local database and server
  */
 export class SyncManager {
   private db: IFlomoDatabase;
+  private client: ISyncClient;
   private isSyncing = false;
   private intervalMs: number = 3000;
   private syncTimeout: NodeJS.Timeout | undefined = undefined;
 
-  constructor(db: IFlomoDatabase) {
+  constructor(db: IFlomoDatabase, client: ISyncClient) {
     this.db = db;
+    this.client = client;
   }
 
   async needFullSync(): Promise<boolean> {
@@ -56,9 +48,7 @@ export class SyncManager {
       console.log("Starting full sync...");
 
       // Fetch all data from server
-      const response = await getRequest(`${flomoBaseUrl()}/api/flomo?Action=FullSync`);
-      const data = await response.json();
-      const serverData = data.message as FlomoSyncResponse;
+      const serverData = await this.client.FullSync();
 
       // Clear existing data
       await this.db.clearAllData();
@@ -114,7 +104,7 @@ export class SyncManager {
       }
 
       // Send to server
-      const response = await postRequest(`${flomoBaseUrl()}/api/flomo?Action=Push`, allData);
+      const response = await this.client.Push(allData);
 
       if (response.ok) {
         console.log(
@@ -145,7 +135,7 @@ export class SyncManager {
       }
 
       // Send to server
-      const response = await postRequest(`${flomoBaseUrl()}/api/flomo?Action=Push`, pending);
+      const response = await this.client.Push(pending);
 
       if (response.ok) {
         // Mark as synced locally
@@ -185,11 +175,7 @@ export class SyncManager {
       const lastVersion = await this.db.getLastServerVersion();
 
       // Fetch changes since last version
-      const response = await getRequest(
-        `${flomoBaseUrl()}/api/flomo?Action=Pull&since=${lastVersion}`,
-      );
-      const data = await response.json();
-      const serverData = data.message as FlomoSyncResponse;
+      const serverData = await this.client.Pull(lastVersion);
 
       if (
         serverData.users.length === 0 &&
@@ -365,7 +351,7 @@ let syncManager: SyncManager | null = null;
 
 export function getSyncManager() {
   if (!syncManager) {
-    syncManager = new SyncManager(flomoDatabase);
+    syncManager = new SyncManager(flomoDatabase, syncClient);
   }
   return syncManager;
 }
