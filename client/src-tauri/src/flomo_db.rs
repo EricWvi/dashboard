@@ -1,6 +1,7 @@
-use rusqlite::{params, Connection, Result as SqliteResult};
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::{params, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // --- Migration ---
@@ -230,31 +231,54 @@ const USER_KEY: &str = "current_user";
 // --- Database ---
 
 pub struct FlomoDb {
-    conn: Mutex<Connection>,
+    pool: Pool<SqliteConnectionManager>,
 }
 
 impl FlomoDb {
     pub fn new(path: &str) -> SqliteResult<Self> {
-        let conn = Connection::open(path)?;
-        let db = FlomoDb {
-            conn: Mutex::new(conn),
-        };
+        let manager = SqliteConnectionManager::file(path).with_init(|conn| {
+            conn.pragma_update(None, "journal_mode", "WAL")?;
+            conn.pragma_update(None, "busy_timeout", "5000")?;
+            conn.pragma_update(None, "synchronous", "NORMAL")?;
+            Ok(())
+        });
+        let pool = Pool::builder()
+            .max_size(8)
+            .build(manager)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        let db = FlomoDb { pool };
         db.run_migrations()?;
         Ok(db)
     }
 
     #[cfg(test)]
     pub fn new_in_memory() -> SqliteResult<Self> {
-        let conn = Connection::open_in_memory()?;
-        let db = FlomoDb {
-            conn: Mutex::new(conn),
-        };
+        let manager = SqliteConnectionManager::memory().with_init(|conn| {
+            conn.pragma_update(None, "journal_mode", "WAL")?;
+            conn.pragma_update(None, "synchronous", "NORMAL")?;
+            Ok(())
+        });
+        // max_size=1: in-memory databases are per-connection; a single connection
+        // ensures all operations share the same in-memory database.
+        let pool = Pool::builder()
+            .max_size(1)
+            .build(manager)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        let db = FlomoDb { pool };
         db.run_migrations()?;
         Ok(db)
     }
 
+    fn conn(
+        &self,
+    ) -> SqliteResult<r2d2::PooledConnection<SqliteConnectionManager>> {
+        self.pool
+            .get()
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+    }
+
     fn run_migrations(&self) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
 
         // Ensure the migration tracking table exists
         conn.execute_batch(
@@ -296,7 +320,7 @@ impl FlomoDb {
     // --- User ---
 
     pub fn get_user(&self) -> SqliteResult<Option<User>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT key, username, email, avatar, language, updated_at, sync_status FROM user WHERE key = ?1",
         )?;
@@ -318,7 +342,7 @@ impl FlomoDb {
     }
 
     pub fn put_user(&self, user: &User) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute(
             "INSERT OR REPLACE INTO user (key, username, email, avatar, language, updated_at, sync_status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![USER_KEY, user.username, user.email, user.avatar, user.language, user.updated_at, user.sync_status],
@@ -329,7 +353,7 @@ impl FlomoDb {
     // --- Cards ---
 
     pub fn get_card(&self, id: &str) -> SqliteResult<Option<Card>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE id = ?1",
         )?;
@@ -358,7 +382,7 @@ impl FlomoDb {
     }
 
     pub fn get_cards_in_folder(&self, folder_id: &str) -> SqliteResult<Vec<Card>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         if folder_id == ARCHIVE_FOLDER_ID {
             let mut stmt = conn.prepare(
                 "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_archived = 1 AND is_deleted = 0",
@@ -411,7 +435,7 @@ impl FlomoDb {
     pub fn add_card(&self, card: &CardField) -> SqliteResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let now = current_time_ms();
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let payload_str = serde_json::to_string(&card.payload).unwrap_or_default();
         conn.execute(
             "INSERT INTO cards (id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 0, ?11)",
@@ -421,7 +445,7 @@ impl FlomoDb {
     }
 
     pub fn put_card(&self, card: &Card) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let payload_str = serde_json::to_string(&card.payload).unwrap_or_default();
         let is_deleted_int: i64 = if card.is_deleted { 1 } else { 0 };
         conn.execute(
@@ -432,7 +456,7 @@ impl FlomoDb {
     }
 
     pub fn put_cards(&self, cards: &[Card]) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let tx = conn.unchecked_transaction()?;
         for card in cards {
             let payload_str = serde_json::to_string(&card.payload).unwrap_or_default();
@@ -447,7 +471,7 @@ impl FlomoDb {
     }
 
     pub fn update_card(&self, id: &str, updates: &serde_json::Value) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
 
         // Build dynamic SET clause from the updates JSON object
@@ -495,13 +519,13 @@ impl FlomoDb {
     }
 
     pub fn delete_card(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute("DELETE FROM cards WHERE id = ?1", params![id])?;
         Ok(())
     }
 
     pub fn soft_delete_card(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
         conn.execute(
             "UPDATE cards SET is_deleted = 1, updated_at = ?1, sync_status = ?2 WHERE id = ?3",
@@ -511,7 +535,7 @@ impl FlomoDb {
     }
 
     pub fn mark_card_synced(&self, id: &str, updated_at: i64) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute(
             "UPDATE cards SET sync_status = ?1 WHERE id = ?2 AND updated_at = ?3",
             params![SYNC_STATUS_SYNCED, id, updated_at],
@@ -520,7 +544,7 @@ impl FlomoDb {
     }
 
     pub fn get_archived_cards(&self) -> SqliteResult<Vec<Card>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_archived = 1 AND is_deleted = 0",
         )?;
@@ -546,7 +570,7 @@ impl FlomoDb {
     }
 
     pub fn get_bookmarked_cards(&self) -> SqliteResult<Vec<Card>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_bookmarked = 1 AND is_deleted = 0",
         )?;
@@ -572,7 +596,7 @@ impl FlomoDb {
     }
 
     pub fn get_recent_cards(&self, limit: i64) -> SqliteResult<Vec<Card>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_deleted = 0 ORDER BY updated_at DESC LIMIT ?1",
         )?;
@@ -600,7 +624,7 @@ impl FlomoDb {
     // --- Folders ---
 
     pub fn get_folder(&self, id: &str) -> SqliteResult<Option<Folder>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE id = ?1",
         )?;
@@ -627,7 +651,7 @@ impl FlomoDb {
     }
 
     pub fn get_folders_in_parent(&self, parent_id: &str) -> SqliteResult<Vec<Folder>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         if parent_id == ARCHIVE_FOLDER_ID {
             let mut stmt = conn.prepare(
                 "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_archived = 1 AND is_deleted = 0",
@@ -676,7 +700,7 @@ impl FlomoDb {
     pub fn add_folder(&self, folder: &FolderField) -> SqliteResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let now = current_time_ms();
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let payload_str = serde_json::to_string(&folder.payload).unwrap_or_default();
         conn.execute(
             "INSERT INTO folders (id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, ?9)",
@@ -686,7 +710,7 @@ impl FlomoDb {
     }
 
     pub fn put_folder(&self, folder: &Folder) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let payload_str = serde_json::to_string(&folder.payload).unwrap_or_default();
         let is_deleted_int: i64 = if folder.is_deleted { 1 } else { 0 };
         conn.execute(
@@ -697,7 +721,7 @@ impl FlomoDb {
     }
 
     pub fn put_folders(&self, folders: &[Folder]) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let tx = conn.unchecked_transaction()?;
         for folder in folders {
             let payload_str = serde_json::to_string(&folder.payload).unwrap_or_default();
@@ -712,7 +736,7 @@ impl FlomoDb {
     }
 
     pub fn update_folder(&self, id: &str, updates: &serde_json::Value) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
 
         let obj = updates.as_object().unwrap_or(&serde_json::Map::new()).clone();
@@ -758,13 +782,13 @@ impl FlomoDb {
     }
 
     pub fn delete_folder(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute("DELETE FROM folders WHERE id = ?1", params![id])?;
         Ok(())
     }
 
     pub fn soft_delete_folder(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
         conn.execute(
             "UPDATE folders SET is_deleted = 1, updated_at = ?1, sync_status = ?2 WHERE id = ?3",
@@ -774,7 +798,7 @@ impl FlomoDb {
     }
 
     pub fn mark_folder_synced(&self, id: &str, updated_at: i64) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute(
             "UPDATE folders SET sync_status = ?1 WHERE id = ?2 AND updated_at = ?3",
             params![SYNC_STATUS_SYNCED, id, updated_at],
@@ -783,7 +807,7 @@ impl FlomoDb {
     }
 
     pub fn get_archived_folders(&self) -> SqliteResult<Vec<Folder>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_archived = 1 AND is_deleted = 0",
         )?;
@@ -807,7 +831,7 @@ impl FlomoDb {
     }
 
     pub fn get_bookmarked_folders(&self) -> SqliteResult<Vec<Folder>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_bookmarked = 1 AND is_deleted = 0",
         )?;
@@ -833,7 +857,7 @@ impl FlomoDb {
     // --- Tiptaps ---
 
     pub fn get_tiptap(&self, id: &str) -> SqliteResult<Option<TiptapV2>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare(
             "SELECT id, content, history, created_at, updated_at, is_deleted, sync_status FROM tiptaps WHERE id = ?1",
         )?;
@@ -860,7 +884,7 @@ impl FlomoDb {
     pub fn add_tiptap(&self, tiptap: &TiptapV2Field) -> SqliteResult<String> {
         let id = uuid::Uuid::new_v4().to_string();
         let now = current_time_ms();
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let content_str = serde_json::to_string(&tiptap.content).unwrap_or_default();
         let history_str = serde_json::to_string(&tiptap.history).unwrap_or_default();
         conn.execute(
@@ -871,7 +895,7 @@ impl FlomoDb {
     }
 
     pub fn put_tiptap(&self, tiptap: &TiptapV2) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let content_str = serde_json::to_string(&tiptap.content).unwrap_or_default();
         let history_str = serde_json::to_string(&tiptap.history).unwrap_or_default();
         let is_deleted_int: i64 = if tiptap.is_deleted { 1 } else { 0 };
@@ -883,7 +907,7 @@ impl FlomoDb {
     }
 
     pub fn put_tiptaps(&self, tiptaps: &[TiptapV2]) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let tx = conn.unchecked_transaction()?;
         for tiptap in tiptaps {
             let content_str = serde_json::to_string(&tiptap.content).unwrap_or_default();
@@ -899,7 +923,7 @@ impl FlomoDb {
     }
 
     pub fn sync_tiptap(&self, id: &str, content: &serde_json::Value) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
         let content_str = serde_json::to_string(content).unwrap_or_default();
         conn.execute(
@@ -910,7 +934,7 @@ impl FlomoDb {
     }
 
     pub fn update_tiptap(&self, id: &str, updates: &serde_json::Value) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
 
         let obj = updates.as_object().unwrap_or(&serde_json::Map::new()).clone();
@@ -956,13 +980,13 @@ impl FlomoDb {
     }
 
     pub fn delete_tiptap(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute("DELETE FROM tiptaps WHERE id = ?1", params![id])?;
         Ok(())
     }
 
     pub fn soft_delete_tiptap(&self, id: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
         conn.execute(
             "UPDATE tiptaps SET is_deleted = 1, updated_at = ?1, sync_status = ?2 WHERE id = ?3",
@@ -972,7 +996,7 @@ impl FlomoDb {
     }
 
     pub fn mark_tiptap_synced(&self, id: &str, updated_at: i64) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute(
             "UPDATE tiptaps SET sync_status = ?1 WHERE id = ?2 AND updated_at = ?3",
             params![SYNC_STATUS_SYNCED, id, updated_at],
@@ -981,7 +1005,7 @@ impl FlomoDb {
     }
 
     pub fn list_tiptap_history(&self, id: &str) -> SqliteResult<Vec<i64>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare("SELECT history FROM tiptaps WHERE id = ?1")?;
         let mut rows = stmt.query_map(params![id], |row| {
             let history_str: String = row.get(0)?;
@@ -1003,7 +1027,7 @@ impl FlomoDb {
         id: &str,
         ts: i64,
     ) -> SqliteResult<serde_json::Value> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare("SELECT history FROM tiptaps WHERE id = ?1")?;
         let mut rows = stmt.query_map(params![id], |row| {
             let history_str: String = row.get(0)?;
@@ -1024,7 +1048,7 @@ impl FlomoDb {
     }
 
     pub fn restore_tiptap_history(&self, id: &str, ts: i64) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let now = current_time_ms();
         let mut stmt = conn.prepare("SELECT history FROM tiptaps WHERE id = ?1")?;
         let mut rows = stmt.query_map(params![id], |row| {
@@ -1056,7 +1080,7 @@ impl FlomoDb {
     // --- Sync ---
 
     pub fn get_pending_changes(&self) -> SqliteResult<PendingChanges> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
 
         let cards = {
             let mut stmt = conn.prepare(
@@ -1135,7 +1159,7 @@ impl FlomoDb {
     }
 
     pub fn get_local_data_for_sync(&self) -> SqliteResult<PendingChanges> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
 
         let cards = {
             let mut stmt = conn.prepare(
@@ -1214,7 +1238,7 @@ impl FlomoDb {
     }
 
     pub fn get_sync_meta(&self, key: &str) -> SqliteResult<Option<SyncMeta>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt = conn.prepare("SELECT key, value FROM sync_meta WHERE key = ?1")?;
         let mut rows = stmt.query_map(params![key], |row| {
             let value_str: String = row.get(1)?;
@@ -1230,7 +1254,7 @@ impl FlomoDb {
     }
 
     pub fn set_sync_meta(&self, key: &str, value: &serde_json::Value) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let value_str = serde_json::to_string(value).unwrap_or_default();
         conn.execute(
             "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?1, ?2)",
@@ -1255,7 +1279,7 @@ impl FlomoDb {
     }
 
     pub fn clear_all_data(&self) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute_batch(
             "
             DELETE FROM user;

@@ -1,4 +1,6 @@
-use rusqlite::{params, Connection, Result as SqliteResult};
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::{params, Result as SqliteResult};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -24,31 +26,54 @@ pub fn backend_url() -> String {
 // --- MediaCacheDb ---
 
 pub struct MediaCacheDb {
-    conn: Mutex<Connection>,
+    pool: Pool<SqliteConnectionManager>,
 }
 
 impl MediaCacheDb {
     pub fn new(path: &str) -> SqliteResult<Self> {
-        let conn = Connection::open(path)?;
-        let db = MediaCacheDb {
-            conn: Mutex::new(conn),
-        };
+        let manager = SqliteConnectionManager::file(path).with_init(|conn| {
+            conn.pragma_update(None, "journal_mode", "WAL")?;
+            conn.pragma_update(None, "busy_timeout", "5000")?;
+            conn.pragma_update(None, "synchronous", "NORMAL")?;
+            Ok(())
+        });
+        let pool = Pool::builder()
+            .max_size(8)
+            .build(manager)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        let db = MediaCacheDb { pool };
         db.run_migrations()?;
         Ok(db)
     }
 
     #[cfg(test)]
     pub fn new_in_memory() -> SqliteResult<Self> {
-        let conn = Connection::open_in_memory()?;
-        let db = MediaCacheDb {
-            conn: Mutex::new(conn),
-        };
+        let manager = SqliteConnectionManager::memory().with_init(|conn| {
+            conn.pragma_update(None, "journal_mode", "WAL")?;
+            conn.pragma_update(None, "synchronous", "NORMAL")?;
+            Ok(())
+        });
+        // max_size=1: in-memory databases are per-connection; a single connection
+        // ensures all operations share the same in-memory database.
+        let pool = Pool::builder()
+            .max_size(1)
+            .build(manager)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
+        let db = MediaCacheDb { pool };
         db.run_migrations()?;
         Ok(db)
     }
 
+    fn conn(
+        &self,
+    ) -> SqliteResult<r2d2::PooledConnection<SqliteConnectionManager>> {
+        self.pool
+            .get()
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+    }
+
     fn run_migrations(&self) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS media_cache (
                 uuid TEXT PRIMARY KEY,
@@ -59,7 +84,7 @@ impl MediaCacheDb {
     }
 
     pub fn get_content_type(&self, uuid: &str) -> SqliteResult<Option<String>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         let mut stmt =
             conn.prepare("SELECT content_type FROM media_cache WHERE uuid = ?1")?;
         let mut rows = stmt.query_map(params![uuid], |row| row.get::<_, String>(0))?;
@@ -70,7 +95,7 @@ impl MediaCacheDb {
     }
 
     pub fn set_content_type(&self, uuid: &str, content_type: &str) -> SqliteResult<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn()?;
         conn.execute(
             "INSERT OR REPLACE INTO media_cache (uuid, content_type) VALUES (?1, ?2)",
             params![uuid, content_type],
@@ -276,13 +301,18 @@ static DOWNLOADING_TASKS: OnceLock<DownloadingTasks> = OnceLock::new();
 static OBJECTS_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
+    let external_dir = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| e.to_string())?;
+
+    let objects_dir = external_dir.join("objects");
+    std::fs::create_dir_all(&objects_dir).map_err(|e| e.to_string())?;
+
     let app_data_dir = app
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-
-    let objects_dir = app_data_dir.join("objects");
-    std::fs::create_dir_all(&objects_dir).map_err(|e| e.to_string())?;
 
     let db_path = app_data_dir.join("media_cache.db");
     let db =
