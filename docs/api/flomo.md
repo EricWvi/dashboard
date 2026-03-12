@@ -292,6 +292,99 @@ Uploads local changes (creates and updates) to the server. Server performs upser
 
 **Performance:** This endpoint uses concurrent goroutines to process each entity type in parallel, significantly improving throughput for large batches.
 
+### Search Folder
+
+Searches for folders by title using case-insensitive partial matching.
+
+**Endpoint:** `GET /api/flomo?Action=SearchFolder&q=search_term`
+
+**Parameters:**
+
+- `q` (string, required): Search query string
+
+**Response:**
+
+```json
+{
+  "requestId": "uuid-string",
+  "code": 200,
+  "message": {
+    "ids": [
+      "660e8400-e29b-41d4-a716-446655440000",
+      "670e8400-e29b-41d4-a716-446655440001"
+    ]
+  }
+}
+```
+
+**Notes:**
+
+- Uses SQL `ILIKE` for case-insensitive partial matching
+- Only returns IDs of non-deleted folders for the authenticated user
+- Search matches any folder title containing the query string
+
+### Search Card
+
+Searches for cards by title using case-insensitive partial matching.
+
+**Endpoint:** `GET /api/flomo?Action=SearchCard&q=search_term`
+
+**Parameters:**
+
+- `q` (string, required): Search query string
+
+**Response:**
+
+```json
+{
+  "requestId": "uuid-string",
+  "code": 200,
+  "message": {
+    "ids": [
+      "550e8400-e29b-41d4-a716-446655440000",
+      "560e8400-e29b-41d4-a716-446655440001"
+    ]
+  }
+}
+```
+
+**Notes:**
+
+- Uses SQL `ILIKE` for case-insensitive partial matching
+- Only returns IDs of non-deleted cards for the authenticated user
+- Search matches any card title containing the query string
+
+### Search Content
+
+Searches for cards by content (raw_text) using case-insensitive partial matching.
+
+**Endpoint:** `GET /api/flomo?Action=SearchContent&q=search_term`
+
+**Parameters:**
+
+- `q` (string, required): Search query string
+
+**Response:**
+
+```json
+{
+  "requestId": "uuid-string",
+  "code": 200,
+  "message": {
+    "ids": [
+      "550e8400-e29b-41d4-a716-446655440000",
+      "560e8400-e29b-41d4-a716-446655440001"
+    ]
+  }
+}
+```
+
+**Notes:**
+
+- Uses SQL `ILIKE` for case-insensitive partial matching
+- Only returns IDs of non-deleted cards for the authenticated user
+- Search matches any card content (raw_text) containing the query string
+
 ## Error Responses
 
 All endpoints may return error responses in the following format:

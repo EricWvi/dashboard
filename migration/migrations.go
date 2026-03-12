@@ -26,12 +26,6 @@ func GetAllMigrations() []MigrationStep {
 			Down:    RemoveUserV2Table,
 		},
 		{
-			Version: "v2.9.0",
-			Name:    "Add is_bookmarked and is_archived columns to card and folder tables",
-			Up:      AddIsBookmarkedAndIsArchivedColumns,
-			Down:    RemoveIsBookmarkedAndIsArchivedColumns,
-		},
-		{
 			Version: "v2.10.0",
 			Name:    "Migrate to local-first v2 models",
 			Up:      MigrateToLocalFirstV2Models,
@@ -231,31 +225,6 @@ func RollbackToLocalFirstV2Models(db *gorm.DB) error {
 	`).Error
 }
 
-// ------------------- v2.9.0 -------------------
-func AddIsBookmarkedAndIsArchivedColumns(db *gorm.DB) error {
-	return db.Exec(`
-		ALTER TABLE public.d_card
-		ADD COLUMN is_bookmarked SMALLINT DEFAULT 0,
-		ADD COLUMN is_archived SMALLINT DEFAULT 0;
-
-		ALTER TABLE public.d_folder
-		ADD COLUMN is_bookmarked SMALLINT DEFAULT 0,
-		ADD COLUMN is_archived SMALLINT DEFAULT 0;
-	`).Error
-}
-
-func RemoveIsBookmarkedAndIsArchivedColumns(db *gorm.DB) error {
-	return db.Exec(`
-		ALTER TABLE public.d_card
-		DROP COLUMN IF EXISTS is_bookmarked,
-		DROP COLUMN IF EXISTS is_archived;
-
-		ALTER TABLE public.d_folder
-		DROP COLUMN IF EXISTS is_bookmarked,
-		DROP COLUMN IF EXISTS is_archived;
-	`).Error
-}
-
 // ------------------- v2.8.0 -------------------
 func AddUserV2Table(db *gorm.DB) error {
 	return db.Exec(`
@@ -295,6 +264,8 @@ func AddCardFolderTables(db *gorm.DB) error {
 			draft UUID NOT NULL,
 			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
 			raw_text text DEFAULT ''::text NOT NULL,
+			is_bookmarked SMALLINT DEFAULT 0,
+			is_archived SMALLINT DEFAULT 0,
 			review_count int4 DEFAULT 0 NOT NULL,
 			created_at BIGINT NOT NULL,
 			updated_at BIGINT NOT NULL,
@@ -302,6 +273,8 @@ func AddCardFolderTables(db *gorm.DB) error {
 			is_deleted BOOLEAN DEFAULT FALSE
 		);
 		CREATE INDEX idx_card_creator_server_version ON public.d_card USING btree (creator_id, server_version);
+		CREATE INDEX idx_card_raw_text_trgm ON public.d_card USING gin (raw_text gin_trgm_ops);
+		CREATE INDEX idx_card_title_trgm ON public.d_card USING gin (title gin_trgm_ops);
 
 		CREATE TABLE public.d_folder (
 			id UUID PRIMARY KEY,
@@ -309,12 +282,15 @@ func AddCardFolderTables(db *gorm.DB) error {
 			parent_id UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL,
 			title varchar(1024) NOT NULL,
 			payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+			is_bookmarked SMALLINT DEFAULT 0,
+			is_archived SMALLINT DEFAULT 0,
 			created_at BIGINT NOT NULL,
 			updated_at BIGINT NOT NULL,
 			server_version BIGINT NOT NULL,
 			is_deleted BOOLEAN DEFAULT FALSE
 		);
 		CREATE INDEX idx_folder_creator_server_version ON public.d_folder USING btree (creator_id, server_version);
+		CREATE INDEX idx_folder_title_trgm ON public.d_folder USING gin (title gin_trgm_ops);
 
 		CREATE TABLE public.d_tiptap_v2 (
 			id UUID PRIMARY KEY,

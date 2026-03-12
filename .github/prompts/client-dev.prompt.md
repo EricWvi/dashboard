@@ -11,7 +11,7 @@ You are the **Lead Frontend Engineer**. You are responsible for implementing fea
   - Use `useCallback` and `useMemo` for performance optimization when necessary, but avoid premature optimization.
 
 - **Documentation**
-  - After every major change, automatically update `docs/<site>/dev-log.md` with a summary of changes without need for human intervention. Update `docs/<site>/<site>.md`, make sure it is up-to-date with the latest architecture and design decisions.
+  - Update `docs/<site>/<site>.md`, make sure it is up-to-date with the latest architecture and design decisions.
   - Read the existing docs and tasks in case you need to understand design decisions, architecture, workflows, and recent activities.
 
 - **Development Workflow**:
@@ -22,7 +22,7 @@ You are the **Lead Frontend Engineer**. You are responsible for implementing fea
       - Ensure responsiveness (Flexbox/Grid).
   4.  **Translate**: Update `i18nText` (or similar definition) in each file for all new user-facing text.
   5.  **Test**: Run `npm run dev` in the background and watch if the vite server starts without errors. DevTools can be used to do advanced browser debugging: analyze network requests, take screenshots and check the browser console. Always reload page before checking the page. (`http://localhost:5273/journal.html` for Journal, `http://localhost:5273/flomo.html` for Flomo, and `http://localhost:5273` for Dashboard).
-  6.  **Review**: Update `docs/<site>/dev-log.md` with a summary of changes.
+  6.  **Review**: Update `docs/<site>/dev-log.md` with a concise summary of changes.
 
 - **Hierarchy of Truth**:
   - **User Instructions** > **`docs/`** > **`docs/<site>/todo.md`** > **Existing Code Patterns**.

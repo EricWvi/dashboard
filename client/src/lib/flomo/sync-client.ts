@@ -21,17 +21,20 @@ interface BackendWrapper<T> {
 
 function unwrapBackend<T>(raw: BackendWrapper<T>): T {
   if (raw.code !== 200) {
-    throw new Error(typeof raw.message === "string" ? raw.message : "Unknown error");
+    throw new Error(
+      typeof raw.message === "string" ? raw.message : "Unknown error",
+    );
   }
   return raw.message as T;
 }
 
 export interface ISyncClient {
   FullSync(): Promise<FlomoSyncResponse>;
-  Push(
-    data: FlomoData,
-  ): Promise<{ ok: boolean; statusText: string }>;
+  Push(data: FlomoData): Promise<{ ok: boolean; statusText: string }>;
   Pull(version: number): Promise<FlomoSyncResponse>;
+  SearchCard(keyword: string): Promise<string[]>;
+  SearchFolder(keyword: string): Promise<string[]>;
+  SearchContent(keyword: string): Promise<string[]>;
 }
 
 export class WebSyncClient implements ISyncClient {
@@ -41,14 +44,17 @@ export class WebSyncClient implements ISyncClient {
     return unwrapBackend(data);
   }
 
-  async Push(
-    data: FlomoData,
-  ): Promise<{ ok: boolean; statusText: string }> {
+  async Push(data: FlomoData): Promise<{ ok: boolean; statusText: string }> {
     const response = await postRequest(`/api/flomo?Action=Push`, data);
     const raw: BackendWrapper<unknown> = await response.json();
     return {
       ok: raw.code === 200,
-      statusText: raw.code === 200 ? "OK" : (typeof raw.message === "string" ? raw.message : "Unknown error"),
+      statusText:
+        raw.code === 200
+          ? "OK"
+          : typeof raw.message === "string"
+            ? raw.message
+            : "Unknown error",
     };
   }
 
@@ -59,27 +65,81 @@ export class WebSyncClient implements ISyncClient {
     const data: BackendWrapper<FlomoSyncResponse> = await response.json();
     return unwrapBackend(data);
   }
+
+  async SearchCard(keyword: string): Promise<string[]> {
+    const response = await getRequest(
+      `/api/flomo?Action=SearchCard&q=${encodeURIComponent(keyword)}`,
+    );
+    const data: BackendWrapper<{ ids: string[] }> = await response.json();
+    return unwrapBackend(data).ids;
+  }
+
+  async SearchFolder(keyword: string): Promise<string[]> {
+    const response = await getRequest(
+      `/api/flomo?Action=SearchFolder&q=${encodeURIComponent(keyword)}`,
+    );
+    const data: BackendWrapper<{ ids: string[] }> = await response.json();
+    return unwrapBackend(data).ids;
+  }
+
+  async SearchContent(keyword: string): Promise<string[]> {
+    const response = await getRequest(
+      `/api/flomo?Action=SearchContent&q=${encodeURIComponent(keyword)}`,
+    );
+    const data: BackendWrapper<{ ids: string[] }> = await response.json();
+    return unwrapBackend(data).ids;
+  }
 }
 
 export class TauriSyncClient implements ISyncClient {
   async FullSync(): Promise<FlomoSyncResponse> {
-    const raw: BackendWrapper<FlomoSyncResponse> = await invoke("flomo_full_sync");
+    const raw: BackendWrapper<FlomoSyncResponse> =
+      await invoke("flomo_full_sync");
     return unwrapBackend(raw);
   }
 
-  async Push(
-    data: FlomoData,
-  ): Promise<{ ok: boolean; statusText: string }> {
+  async Push(data: FlomoData): Promise<{ ok: boolean; statusText: string }> {
     const raw: BackendWrapper<unknown> = await invoke("flomo_push", { data });
     return {
       ok: raw.code === 200,
-      statusText: raw.code === 200 ? "OK" : (typeof raw.message === "string" ? raw.message : "Unknown error"),
+      statusText:
+        raw.code === 200
+          ? "OK"
+          : typeof raw.message === "string"
+            ? raw.message
+            : "Unknown error",
     };
   }
 
   async Pull(version: number): Promise<FlomoSyncResponse> {
-    const raw: BackendWrapper<FlomoSyncResponse> = await invoke("flomo_pull", { version });
+    const raw: BackendWrapper<FlomoSyncResponse> = await invoke("flomo_pull", {
+      version,
+    });
     return unwrapBackend(raw);
+  }
+
+  async SearchCard(keyword: string): Promise<string[]> {
+    const raw: BackendWrapper<{ ids: string[] }> = await invoke(
+      "flomo_search_card",
+      { keyword },
+    );
+    return unwrapBackend(raw).ids;
+  }
+
+  async SearchFolder(keyword: string): Promise<string[]> {
+    const raw: BackendWrapper<{ ids: string[] }> = await invoke(
+      "flomo_search_folder",
+      { keyword },
+    );
+    return unwrapBackend(raw).ids;
+  }
+
+  async SearchContent(keyword: string): Promise<string[]> {
+    const raw: BackendWrapper<{ ids: string[] }> = await invoke(
+      "flomo_search_content",
+      { keyword },
+    );
+    return unwrapBackend(raw).ids;
   }
 }
 

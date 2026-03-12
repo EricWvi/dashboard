@@ -27,6 +27,7 @@ fn migrations() -> Vec<MigrationStep> {
                 sync_status INTEGER NOT NULL
             );
 
+
             CREATE TABLE IF NOT EXISTS cards (
                 id TEXT PRIMARY KEY,
                 folder_id TEXT NOT NULL,
@@ -47,6 +48,43 @@ fn migrations() -> Vec<MigrationStep> {
             CREATE INDEX IF NOT EXISTS idx_cards_is_bookmarked ON cards(is_bookmarked);
             CREATE INDEX IF NOT EXISTS idx_cards_updated_at ON cards(updated_at);
 
+            CREATE VIRTUAL TABLE cards_title_search USING fts5(
+                id UNINDEXED,
+                title,
+                tokenize='trigram'
+            );
+
+            CREATE TRIGGER cards_ai AFTER INSERT ON cards BEGIN
+            INSERT INTO cards_title_search(id, title) VALUES (new.id, new.title);
+            END;
+
+            CREATE TRIGGER cards_ad AFTER DELETE ON cards BEGIN
+            DELETE FROM cards_title_search WHERE id = old.id;
+            END;
+
+            CREATE TRIGGER cards_au AFTER UPDATE OF title ON cards BEGIN
+            UPDATE cards_title_search SET title = new.title WHERE id = old.id;
+            END;
+
+            CREATE VIRTUAL TABLE cards_raw_text_search USING fts5(
+                id UNINDEXED,
+                raw_text,
+                tokenize='trigram'
+            );
+
+            CREATE TRIGGER cards_text_ai AFTER INSERT ON cards BEGIN
+            INSERT INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
+            END;
+
+            CREATE TRIGGER cards_text_ad AFTER DELETE ON cards BEGIN
+            DELETE FROM cards_raw_text_search WHERE id = old.id;
+            END;
+
+            CREATE TRIGGER cards_text_au AFTER UPDATE OF raw_text ON cards BEGIN
+            UPDATE cards_raw_text_search SET raw_text = new.raw_text WHERE id = old.id;
+            END;
+
+
             CREATE TABLE IF NOT EXISTS folders (
                 id TEXT PRIMARY KEY,
                 parent_id TEXT NOT NULL,
@@ -64,6 +102,25 @@ fn migrations() -> Vec<MigrationStep> {
             CREATE INDEX IF NOT EXISTS idx_folders_is_archived ON folders(is_archived);
             CREATE INDEX IF NOT EXISTS idx_folders_is_bookmarked ON folders(is_bookmarked);
             CREATE INDEX IF NOT EXISTS idx_folders_updated_at ON folders(updated_at);
+
+            CREATE VIRTUAL TABLE folders_title_search USING fts5(
+                id UNINDEXED,
+                title,
+                tokenize='trigram'
+            );
+
+            CREATE TRIGGER folders_ai AFTER INSERT ON folders BEGIN
+            INSERT INTO folders_title_search(id, title) VALUES (new.id, new.title);
+            END;
+
+            CREATE TRIGGER folders_ad AFTER DELETE ON folders BEGIN
+            DELETE FROM folders_title_search WHERE id = old.id;
+            END;
+
+            CREATE TRIGGER folders_au AFTER UPDATE OF title ON folders BEGIN
+            UPDATE folders_title_search SET title = new.title WHERE id = old.id;
+            END;
+
 
             CREATE TABLE IF NOT EXISTS tiptaps (
                 id TEXT PRIMARY KEY,
@@ -621,6 +678,78 @@ impl FlomoDb {
         rows.collect()
     }
 
+    pub fn search_card(&self, query: &str) -> SqliteResult<Vec<Card>> {
+        let conn = self.conn()?;
+        let pattern = format!("%{}%", query);
+        let (sql, params) = if query.len() < 3 {
+            (
+                "SELECT c.id, c.folder_id, c.title, c.draft, c.payload, c.raw_text, c.is_bookmarked, c.is_archived, c.created_at, c.updated_at, c.is_deleted, c.sync_status FROM cards c WHERE c.title LIKE ?1 AND c.is_deleted = 0",
+                params![pattern],
+            )
+        } else {
+            (
+                "SELECT c.id, c.folder_id, c.title, c.draft, c.payload, c.raw_text, c.is_bookmarked, c.is_archived, c.created_at, c.updated_at, c.is_deleted, c.sync_status FROM cards c JOIN cards_title_search ct ON c.id = ct.id WHERE cards_title_search MATCH ?1 AND c.is_deleted = 0",
+                params![query],
+            )
+        };
+        let mut stmt = conn.prepare(sql)?;
+        let rows = stmt.query_map(params, |row| {
+            let payload_str: String = row.get(4)?;
+            let is_deleted: i64 = row.get(10)?;
+            Ok(Card {
+                id: row.get(0)?,
+                folder_id: row.get(1)?,
+                title: row.get(2)?,
+                draft: row.get(3)?,
+                payload: parse_json_or_empty(&payload_str),
+                raw_text: row.get(5)?,
+                is_bookmarked: row.get(6)?,
+                is_archived: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(11)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    pub fn search_content(&self, query: &str) -> SqliteResult<Vec<Card>> {
+        let conn = self.conn()?;
+        let pattern = format!("%{}%", query);
+        let (sql, params) = if query.len() < 3 {
+            (
+                "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE raw_text LIKE ?1 AND is_deleted = 0",
+                params![pattern],
+            )
+        } else {
+            (
+                "SELECT c.id, c.folder_id, c.title, c.draft, c.payload, c.raw_text, c.is_bookmarked, c.is_archived, c.created_at, c.updated_at, c.is_deleted, c.sync_status FROM cards c JOIN cards_raw_text_search cr ON c.id = cr.id WHERE cards_raw_text_search MATCH ?1 AND c.is_deleted = 0",
+                params![query],
+            )
+        };
+        let mut stmt = conn.prepare(sql)?;
+        let rows = stmt.query_map(params, |row| {
+            let payload_str: String = row.get(4)?;
+            let is_deleted: i64 = row.get(10)?;
+            Ok(Card {
+                id: row.get(0)?,
+                folder_id: row.get(1)?,
+                title: row.get(2)?,
+                draft: row.get(3)?,
+                payload: parse_json_or_empty(&payload_str),
+                raw_text: row.get(5)?,
+                is_bookmarked: row.get(6)?,
+                is_archived: row.get(7)?,
+                created_at: row.get(8)?,
+                updated_at: row.get(9)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(11)?,
+            })
+        })?;
+        rows.collect()
+    }
+
     // --- Folders ---
 
     pub fn get_folder(&self, id: &str) -> SqliteResult<Option<Folder>> {
@@ -836,6 +965,40 @@ impl FlomoDb {
             "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_bookmarked = 1 AND is_deleted = 0",
         )?;
         let rows = stmt.query_map([], |row| {
+            let payload_str: String = row.get(3)?;
+            let is_deleted: i64 = row.get(8)?;
+            Ok(Folder {
+                id: row.get(0)?,
+                parent_id: row.get(1)?,
+                title: row.get(2)?,
+                payload: parse_json_or_empty(&payload_str),
+                is_bookmarked: row.get(4)?,
+                is_archived: row.get(5)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(9)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<Folder>> {
+        let conn = self.conn()?;
+        let pattern = format!("%{}%", query);
+        let (sql, params) = if query.len() < 3 {
+            (
+                "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE title LIKE ?1 AND is_deleted = 0",
+                params![pattern],
+            )
+        } else {
+            (
+                "SELECT f.id, f.parent_id, f.title, f.payload, f.is_bookmarked, f.is_archived, f.created_at, f.updated_at, f.is_deleted, f.sync_status FROM folders f JOIN folders_title_search ft ON f.id = ft.id WHERE folders_title_search MATCH ?1 AND f.is_deleted = 0",
+                params![query],
+            )
+        };
+        let mut stmt = conn.prepare(sql)?;
+        let rows = stmt.query_map(params, |row| {
             let payload_str: String = row.get(3)?;
             let is_deleted: i64 = row.get(8)?;
             Ok(Folder {
@@ -1627,6 +1790,23 @@ pub mod commands {
         response
             .json::<serde_json::Value>()
             .map_err(|e| format!("Failed to parse pull response: {}", e))
+    }
+
+    // --- Search ---
+
+    #[tauri::command]
+    pub fn flomo_search_card(query: String) -> Result<Vec<Card>, String> {
+        get_db()?.search_card(&query).map_err(|e| e.to_string())
+    }
+
+    #[tauri::command]
+    pub fn flomo_search_folder(query: String) -> Result<Vec<Folder>, String> {
+        get_db()?.search_folder(&query).map_err(|e| e.to_string())
+    }
+
+    #[tauri::command]
+    pub fn flomo_search_content(query: String) -> Result<Vec<Card>, String> {
+        get_db()?.search_content(&query).map_err(|e| e.to_string())
     }
 }
 

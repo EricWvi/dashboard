@@ -72,6 +72,9 @@ pub fn run() {
       flomo_db::commands::flomo_full_sync,
       flomo_db::commands::flomo_push,
       flomo_db::commands::flomo_pull,
+      flomo_db::commands::flomo_search_card,
+      flomo_db::commands::flomo_search_folder,
+      flomo_db::commands::flomo_search_content,
     ]);
   }
 

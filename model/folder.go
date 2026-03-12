@@ -101,3 +101,19 @@ func (f *Folder) Delete(db *gorm.DB, where map[string]any) error {
 func (f *Folder) MarkDeleted(db *gorm.DB, where map[string]any) error {
 	return db.Model(f).Where(where).Update(IsDeleted, true).Error
 }
+
+func SearchFolderIds(db *gorm.DB, creatorId uint, query string) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	whereExpr := WhereExpr{}
+	whereExpr.Eq(CreatorId, creatorId)
+	whereExpr.Eq(IsDeleted, false)
+	whereExpr.ILIKE(Folder_Title, "%"+query+"%")
+	for i := range whereExpr {
+		db = db.Where(whereExpr[i])
+	}
+
+	if err := db.Model(&Folder{}).Pluck(Id, &ids).Error; err != nil {
+		return nil, err
+	}
+	return ids, nil
+}

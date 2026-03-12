@@ -107,3 +107,35 @@ func (c *Card) Delete(db *gorm.DB, where map[string]any) error {
 func (c *Card) MarkDeleted(db *gorm.DB, where map[string]any) error {
 	return db.Model(c).Where(where).Update(IsDeleted, true).Error
 }
+
+func SearchCardIdsByTitle(db *gorm.DB, creatorId uint, query string) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	whereExpr := WhereExpr{}
+	whereExpr.Eq(CreatorId, creatorId)
+	whereExpr.Eq(IsDeleted, false)
+	whereExpr.ILIKE(Card_Title, "%"+query+"%")
+	for i := range whereExpr {
+		db = db.Where(whereExpr[i])
+	}
+
+	if err := db.Model(&Card{}).Pluck(Id, &ids).Error; err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
+func SearchCardIdsByContent(db *gorm.DB, creatorId uint, query string) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	whereExpr := WhereExpr{}
+	whereExpr.Eq(CreatorId, creatorId)
+	whereExpr.Eq(IsDeleted, false)
+	whereExpr.ILIKE(Card_RawText, "%"+query+"%")
+	for i := range whereExpr {
+		db = db.Where(whereExpr[i])
+	}
+
+	if err := db.Model(&Card{}).Pluck(Id, &ids).Error; err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
