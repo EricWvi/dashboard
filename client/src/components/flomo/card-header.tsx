@@ -288,7 +288,7 @@ function MoreMenu({
   onRestore,
   onDelete,
 }: {
-  card: Card | undefined;
+  card: Omit<Card, "rawText"> | undefined;
   onRename: () => void;
   onMove: () => void;
   onArchive: () => void;

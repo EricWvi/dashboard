@@ -99,7 +99,7 @@ export function RenameCardDialog({
 interface MoveCardDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  card: Card | null;
+  card: Omit<Card, "rawText"> | null;
 }
 
 export function MoveCardDialog({ open, setOpen, card }: MoveCardDialogProps) {

@@ -15,11 +15,15 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
   }
 
   // Cards
-  async getCard(id: string): Promise<Card | undefined> {
-    return (await invoke<Card | null>("flomo_get_card", { id })) ?? undefined;
+  async getCard(id: string): Promise<Omit<Card, "rawText"> | undefined> {
+    return (await invoke("flomo_get_card", { id })) ?? undefined;
   }
 
-  async getCardsInFolder(folderId: string): Promise<Card[]> {
+  async getFullCard(id: string): Promise<Card | undefined> {
+    return (await invoke("flomo_get_full_card", { id })) ?? undefined;
+  }
+
+  async getCardsInFolder(folderId: string): Promise<Omit<Card, "rawText">[]> {
     return invoke("flomo_get_cards_in_folder", { folderId });
   }
 
@@ -51,11 +55,7 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
     await invoke("flomo_mark_card_synced", { id, updatedAt });
   }
 
-  async getArchivedCards(): Promise<Card[]> {
-    return invoke("flomo_get_archived_cards");
-  }
-
-  async getBookmarkedCards(): Promise<Card[]> {
+  async getBookmarkedCards(): Promise<Omit<Card, "rawText">[]> {
     return invoke("flomo_get_bookmarked_cards");
   }
 
@@ -100,10 +100,6 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
 
   async markFolderSynced(id: string, updatedAt: number): Promise<void> {
     await invoke("flomo_mark_folder_synced", { id, updatedAt });
-  }
-
-  async getArchivedFolders(): Promise<Folder[]> {
-    return invoke("flomo_get_archived_folders");
   }
 
   async getBookmarkedFolders(): Promise<Folder[]> {

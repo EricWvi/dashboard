@@ -58,11 +58,15 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
   }
 
   // Cards
-  async getCard(id: string): Promise<Card | undefined> {
+  async getCard(id: string): Promise<Omit<Card, "rawText"> | undefined> {
     return this.db.cards.get(id);
   }
 
-  async getCardsInFolder(folderId: string): Promise<Card[]> {
+  async getFullCard(id: string): Promise<Card | undefined> {
+    return this.db.cards.get(id);
+  }
+
+  async getCardsInFolder(folderId: string): Promise<Omit<Card, "rawText">[]> {
     if (folderId === ArchiveFolderId) {
       return this.db.cards
         .where("isArchived")
@@ -126,15 +130,7 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
       .modify({ syncStatus: SyncStatus.Synced });
   }
 
-  async getArchivedCards(): Promise<Card[]> {
-    return this.db.cards
-      .where("isArchived")
-      .equals(1)
-      .and((card) => !card.isDeleted)
-      .toArray();
-  }
-
-  async getBookmarkedCards(): Promise<Card[]> {
+  async getBookmarkedCards(): Promise<Omit<Card, "rawText">[]> {
     return this.db.cards
       .where("isBookmarked")
       .equals(1)
@@ -218,14 +214,6 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
       .equals(id)
       .and((folder) => folder.updatedAt === updatedAt)
       .modify({ syncStatus: SyncStatus.Synced });
-  }
-
-  async getArchivedFolders(): Promise<Folder[]> {
-    return this.db.folders
-      .where("isArchived")
-      .equals(1)
-      .and((folder) => !folder.isDeleted)
-      .toArray();
   }
 
   async getBookmarkedFolders(): Promise<Folder[]> {

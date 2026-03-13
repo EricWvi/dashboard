@@ -43,7 +43,7 @@ export function FlomoHome() {
   const { setCurrentFolderId, setCardIdForDraft } = useAppState();
   const { openTab } = useEditorState();
 
-  const openCard = (card: Card) => {
+  const openCard = (card: Omit<Card, "rawText">) => {
     openTab({
       draftId: card.draft,
       title: card.title,

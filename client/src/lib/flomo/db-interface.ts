@@ -23,8 +23,9 @@ export interface IFlomoDatabase {
   putUser(user: Omit<User, "key">): Promise<void>;
 
   // Cards
-  getCard(id: string): Promise<Card | undefined>;
-  getCardsInFolder(folderId: string): Promise<Card[]>;
+  getCard(id: string): Promise<Omit<Card, "rawText"> | undefined>;
+  getFullCard(id: string): Promise<Card | undefined>;
+  getCardsInFolder(folderId: string): Promise<Omit<Card, "rawText">[]>;
   addCard(card: CardField): Promise<string>;
   putCard(card: Card): Promise<void>;
   putCards(cards: Card[]): Promise<void>;
@@ -32,8 +33,7 @@ export interface IFlomoDatabase {
   deleteCard(id: string): Promise<void>;
   softDeleteCard(id: string): Promise<void>;
   markCardSynced(id: string, updatedAt: number): Promise<void>;
-  getArchivedCards(): Promise<Card[]>;
-  getBookmarkedCards(): Promise<Card[]>;
+  getBookmarkedCards(): Promise<Omit<Card, "rawText">[]>;
   getRecentCards(limit: number): Promise<Card[]>;
 
   // Folders
@@ -46,7 +46,6 @@ export interface IFlomoDatabase {
   deleteFolder(id: string): Promise<void>;
   softDeleteFolder(id: string): Promise<void>;
   markFolderSynced(id: string, updatedAt: number): Promise<void>;
-  getArchivedFolders(): Promise<Folder[]>;
   getBookmarkedFolders(): Promise<Folder[]>;
 
   // Tiptaps
@@ -95,11 +94,15 @@ export class RefreshDecorator implements IFlomoDatabase {
   }
 
   // Cards
-  async getCard(id: string): Promise<Card | undefined> {
+  async getCard(id: string): Promise<Omit<Card, "rawText"> | undefined> {
     return this.baseDb.getCard(id);
   }
 
-  async getCardsInFolder(folderId: string): Promise<Card[]> {
+  async getFullCard(id: string): Promise<Card | undefined> {
+    return this.baseDb.getFullCard(id);
+  }
+
+  async getCardsInFolder(folderId: string): Promise<Omit<Card, "rawText">[]> {
     return this.baseDb.getCardsInFolder(folderId);
   }
 
@@ -138,11 +141,7 @@ export class RefreshDecorator implements IFlomoDatabase {
     return this.baseDb.markCardSynced(id, updatedAt);
   }
 
-  async getArchivedCards(): Promise<Card[]> {
-    return this.baseDb.getArchivedCards();
-  }
-
-  async getBookmarkedCards(): Promise<Card[]> {
+  async getBookmarkedCards(): Promise<Omit<Card, "rawText">[]> {
     return this.baseDb.getBookmarkedCards();
   }
 
@@ -192,10 +191,6 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async markFolderSynced(id: string, updatedAt: number): Promise<void> {
     return this.baseDb.markFolderSynced(id, updatedAt);
-  }
-
-  async getArchivedFolders(): Promise<Folder[]> {
-    return this.baseDb.getArchivedFolders();
   }
 
   async getBookmarkedFolders(): Promise<Folder[]> {

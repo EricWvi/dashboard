@@ -412,6 +412,35 @@ impl FlomoDb {
     pub fn get_card(&self, id: &str) -> SqliteResult<Option<Card>> {
         let conn = self.conn()?;
         let mut stmt = conn.prepare(
+            "SELECT id, folder_id, title, draft, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE id = ?1",
+        )?;
+        let mut rows = stmt.query_map(params![id], |row| {
+            let payload_str: String = row.get(4)?;
+            let is_deleted: i64 = row.get(9)?;
+            Ok(Card {
+                id: row.get(0)?,
+                folder_id: row.get(1)?,
+                title: row.get(2)?,
+                draft: row.get(3)?,
+                payload: parse_json_or_empty(&payload_str),
+                raw_text: "".to_string(),
+                is_bookmarked: row.get(5)?,
+                is_archived: row.get(6)?,
+                created_at: row.get(7)?,
+                updated_at: row.get(8)?,
+                is_deleted: is_deleted != 0,
+                sync_status: row.get(10)?,
+            })
+        })?;
+        match rows.next() {
+            Some(card) => Ok(Some(card?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn get_full_card(&self, id: &str) -> SqliteResult<Option<Card>> {
+        let conn = self.conn()?;
+        let mut stmt = conn.prepare(
             "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE id = ?1",
         )?;
         let mut rows = stmt.query_map(params![id], |row| {
@@ -442,47 +471,47 @@ impl FlomoDb {
         let conn = self.conn()?;
         if folder_id == ARCHIVE_FOLDER_ID {
             let mut stmt = conn.prepare(
-                "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_archived = 1 AND is_deleted = 0",
+                "SELECT id, folder_id, title, draft, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_archived = 1 AND is_deleted = 0",
             )?;
             let rows = stmt.query_map([], |row| {
                 let payload_str: String = row.get(4)?;
-                let is_deleted: i64 = row.get(10)?;
+                let is_deleted: i64 = row.get(9)?;
                 Ok(Card {
                     id: row.get(0)?,
                     folder_id: row.get(1)?,
                     title: row.get(2)?,
                     draft: row.get(3)?,
                     payload: parse_json_or_empty(&payload_str),
-                    raw_text: row.get(5)?,
-                    is_bookmarked: row.get(6)?,
-                    is_archived: row.get(7)?,
-                    created_at: row.get(8)?,
-                    updated_at: row.get(9)?,
+                    raw_text: "".to_string(),
+                    is_bookmarked: row.get(5)?,
+                    is_archived: row.get(6)?,
+                    created_at: row.get(7)?,
+                    updated_at: row.get(8)?,
                     is_deleted: is_deleted != 0,
-                    sync_status: row.get(11)?,
+                    sync_status: row.get(10)?,
                 })
             })?;
             rows.collect()
         } else {
             let mut stmt = conn.prepare(
-                "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE folder_id = ?1 AND is_deleted = 0 AND is_archived = 0",
+                "SELECT id, folder_id, title, draft, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE folder_id = ?1 AND is_deleted = 0 AND is_archived = 0",
             )?;
             let rows = stmt.query_map(params![folder_id], |row| {
                 let payload_str: String = row.get(4)?;
-                let is_deleted: i64 = row.get(10)?;
+                let is_deleted: i64 = row.get(9)?;
                 Ok(Card {
                     id: row.get(0)?,
                     folder_id: row.get(1)?,
                     title: row.get(2)?,
                     draft: row.get(3)?,
                     payload: parse_json_or_empty(&payload_str),
-                    raw_text: row.get(5)?,
-                    is_bookmarked: row.get(6)?,
-                    is_archived: row.get(7)?,
-                    created_at: row.get(8)?,
-                    updated_at: row.get(9)?,
+                    raw_text: "".to_string(),
+                    is_bookmarked: row.get(5)?,
+                    is_archived: row.get(6)?,
+                    created_at: row.get(7)?,
+                    updated_at: row.get(8)?,
                     is_deleted: is_deleted != 0,
-                    sync_status: row.get(11)?,
+                    sync_status: row.get(10)?,
                 })
             })?;
             rows.collect()
@@ -600,53 +629,27 @@ impl FlomoDb {
         Ok(())
     }
 
-    pub fn get_archived_cards(&self) -> SqliteResult<Vec<Card>> {
-        let conn = self.conn()?;
-        let mut stmt = conn.prepare(
-            "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_archived = 1 AND is_deleted = 0",
-        )?;
-        let rows = stmt.query_map([], |row| {
-            let payload_str: String = row.get(4)?;
-            let is_deleted: i64 = row.get(10)?;
-            Ok(Card {
-                id: row.get(0)?,
-                folder_id: row.get(1)?,
-                title: row.get(2)?,
-                draft: row.get(3)?,
-                payload: parse_json_or_empty(&payload_str),
-                raw_text: row.get(5)?,
-                is_bookmarked: row.get(6)?,
-                is_archived: row.get(7)?,
-                created_at: row.get(8)?,
-                updated_at: row.get(9)?,
-                is_deleted: is_deleted != 0,
-                sync_status: row.get(11)?,
-            })
-        })?;
-        rows.collect()
-    }
-
     pub fn get_bookmarked_cards(&self) -> SqliteResult<Vec<Card>> {
         let conn = self.conn()?;
         let mut stmt = conn.prepare(
-            "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_bookmarked = 1 AND is_deleted = 0",
+            "SELECT id, folder_id, title, draft, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE is_bookmarked = 1 AND is_deleted = 0",
         )?;
         let rows = stmt.query_map([], |row| {
             let payload_str: String = row.get(4)?;
-            let is_deleted: i64 = row.get(10)?;
+            let is_deleted: i64 = row.get(9)?;
             Ok(Card {
                 id: row.get(0)?,
                 folder_id: row.get(1)?,
                 title: row.get(2)?,
                 draft: row.get(3)?,
                 payload: parse_json_or_empty(&payload_str),
-                raw_text: row.get(5)?,
-                is_bookmarked: row.get(6)?,
-                is_archived: row.get(7)?,
-                created_at: row.get(8)?,
-                updated_at: row.get(9)?,
+                raw_text: "".to_string(),
+                is_bookmarked: row.get(5)?,
+                is_archived: row.get(6)?,
+                created_at: row.get(7)?,
+                updated_at: row.get(8)?,
                 is_deleted: is_deleted != 0,
-                sync_status: row.get(11)?,
+                sync_status: row.get(10)?,
             })
         })?;
         rows.collect()
@@ -678,74 +681,44 @@ impl FlomoDb {
         rows.collect()
     }
 
-    pub fn search_card(&self, query: &str) -> SqliteResult<Vec<Card>> {
+    pub fn search_card(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
         let pattern = format!("%{}%", query);
         let (sql, params) = if query.len() < 3 {
             (
-                "SELECT c.id, c.folder_id, c.title, c.draft, c.payload, c.raw_text, c.is_bookmarked, c.is_archived, c.created_at, c.updated_at, c.is_deleted, c.sync_status FROM cards c WHERE c.title LIKE ?1 AND c.is_deleted = 0",
+                "SELECT c.id FROM cards c WHERE c.title LIKE ?1 AND c.is_deleted = 0",
                 params![pattern],
             )
         } else {
             (
-                "SELECT c.id, c.folder_id, c.title, c.draft, c.payload, c.raw_text, c.is_bookmarked, c.is_archived, c.created_at, c.updated_at, c.is_deleted, c.sync_status FROM cards c JOIN cards_title_search ct ON c.id = ct.id WHERE cards_title_search MATCH ?1 AND c.is_deleted = 0",
+                "SELECT c.id FROM cards c JOIN cards_title_search ct ON c.id = ct.id WHERE cards_title_search MATCH ?1 AND c.is_deleted = 0",
                 params![query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
         let rows = stmt.query_map(params, |row| {
-            let payload_str: String = row.get(4)?;
-            let is_deleted: i64 = row.get(10)?;
-            Ok(Card {
-                id: row.get(0)?,
-                folder_id: row.get(1)?,
-                title: row.get(2)?,
-                draft: row.get(3)?,
-                payload: parse_json_or_empty(&payload_str),
-                raw_text: row.get(5)?,
-                is_bookmarked: row.get(6)?,
-                is_archived: row.get(7)?,
-                created_at: row.get(8)?,
-                updated_at: row.get(9)?,
-                is_deleted: is_deleted != 0,
-                sync_status: row.get(11)?,
-            })
+            Ok(row.get(0)?)
         })?;
         rows.collect()
     }
 
-    pub fn search_content(&self, query: &str) -> SqliteResult<Vec<Card>> {
+    pub fn search_content(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
         let pattern = format!("%{}%", query);
         let (sql, params) = if query.len() < 3 {
             (
-                "SELECT id, folder_id, title, draft, payload, raw_text, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM cards WHERE raw_text LIKE ?1 AND is_deleted = 0",
+                "SELECT id FROM cards WHERE raw_text LIKE ?1 AND is_deleted = 0",
                 params![pattern],
             )
         } else {
             (
-                "SELECT c.id, c.folder_id, c.title, c.draft, c.payload, c.raw_text, c.is_bookmarked, c.is_archived, c.created_at, c.updated_at, c.is_deleted, c.sync_status FROM cards c JOIN cards_raw_text_search cr ON c.id = cr.id WHERE cards_raw_text_search MATCH ?1 AND c.is_deleted = 0",
+                "SELECT c.id FROM cards c JOIN cards_raw_text_search cr ON c.id = cr.id WHERE cards_raw_text_search MATCH ?1 AND c.is_deleted = 0",
                 params![query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
         let rows = stmt.query_map(params, |row| {
-            let payload_str: String = row.get(4)?;
-            let is_deleted: i64 = row.get(10)?;
-            Ok(Card {
-                id: row.get(0)?,
-                folder_id: row.get(1)?,
-                title: row.get(2)?,
-                draft: row.get(3)?,
-                payload: parse_json_or_empty(&payload_str),
-                raw_text: row.get(5)?,
-                is_bookmarked: row.get(6)?,
-                is_archived: row.get(7)?,
-                created_at: row.get(8)?,
-                updated_at: row.get(9)?,
-                is_deleted: is_deleted != 0,
-                sync_status: row.get(11)?,
-            })
+            Ok(row.get(0)?)
         })?;
         rows.collect()
     }
@@ -935,30 +908,6 @@ impl FlomoDb {
         Ok(())
     }
 
-    pub fn get_archived_folders(&self) -> SqliteResult<Vec<Folder>> {
-        let conn = self.conn()?;
-        let mut stmt = conn.prepare(
-            "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE is_archived = 1 AND is_deleted = 0",
-        )?;
-        let rows = stmt.query_map([], |row| {
-            let payload_str: String = row.get(3)?;
-            let is_deleted: i64 = row.get(8)?;
-            Ok(Folder {
-                id: row.get(0)?,
-                parent_id: row.get(1)?,
-                title: row.get(2)?,
-                payload: parse_json_or_empty(&payload_str),
-                is_bookmarked: row.get(4)?,
-                is_archived: row.get(5)?,
-                created_at: row.get(6)?,
-                updated_at: row.get(7)?,
-                is_deleted: is_deleted != 0,
-                sync_status: row.get(9)?,
-            })
-        })?;
-        rows.collect()
-    }
-
     pub fn get_bookmarked_folders(&self) -> SqliteResult<Vec<Folder>> {
         let conn = self.conn()?;
         let mut stmt = conn.prepare(
@@ -983,36 +932,23 @@ impl FlomoDb {
         rows.collect()
     }
 
-    pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<Folder>> {
+    pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
         let pattern = format!("%{}%", query);
         let (sql, params) = if query.len() < 3 {
             (
-                "SELECT id, parent_id, title, payload, is_bookmarked, is_archived, created_at, updated_at, is_deleted, sync_status FROM folders WHERE title LIKE ?1 AND is_deleted = 0",
+                "SELECT id FROM folders WHERE title LIKE ?1 AND is_deleted = 0",
                 params![pattern],
             )
         } else {
             (
-                "SELECT f.id, f.parent_id, f.title, f.payload, f.is_bookmarked, f.is_archived, f.created_at, f.updated_at, f.is_deleted, f.sync_status FROM folders f JOIN folders_title_search ft ON f.id = ft.id WHERE folders_title_search MATCH ?1 AND f.is_deleted = 0",
+                "SELECT f.id FROM folders f JOIN folders_title_search ft ON f.id = ft.id WHERE folders_title_search MATCH ?1 AND f.is_deleted = 0",
                 params![query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
         let rows = stmt.query_map(params, |row| {
-            let payload_str: String = row.get(3)?;
-            let is_deleted: i64 = row.get(8)?;
-            Ok(Folder {
-                id: row.get(0)?,
-                parent_id: row.get(1)?,
-                title: row.get(2)?,
-                payload: parse_json_or_empty(&payload_str),
-                is_bookmarked: row.get(4)?,
-                is_archived: row.get(5)?,
-                created_at: row.get(6)?,
-                updated_at: row.get(7)?,
-                is_deleted: is_deleted != 0,
-                sync_status: row.get(9)?,
-            })
+            Ok(row.get(0)?)
         })?;
         rows.collect()
     }
@@ -1528,6 +1464,11 @@ pub mod commands {
     }
 
     #[tauri::command]
+    pub fn flomo_get_full_card(id: String) -> Result<Option<Card>, String> {
+        get_db()?.get_full_card(&id).map_err(|e| e.to_string())
+    }
+
+    #[tauri::command]
     pub fn flomo_get_cards_in_folder(folder_id: String) -> Result<Vec<Card>, String> {
         get_db()?.get_cards_in_folder(&folder_id).map_err(|e| e.to_string())
     }
@@ -1565,11 +1506,6 @@ pub mod commands {
     #[tauri::command]
     pub fn flomo_mark_card_synced(id: String, updated_at: i64) -> Result<(), String> {
         get_db()?.mark_card_synced(&id, updated_at).map_err(|e| e.to_string())
-    }
-
-    #[tauri::command]
-    pub fn flomo_get_archived_cards() -> Result<Vec<Card>, String> {
-        get_db()?.get_archived_cards().map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1626,11 +1562,6 @@ pub mod commands {
     #[tauri::command]
     pub fn flomo_mark_folder_synced(id: String, updated_at: i64) -> Result<(), String> {
         get_db()?.mark_folder_synced(&id, updated_at).map_err(|e| e.to_string())
-    }
-
-    #[tauri::command]
-    pub fn flomo_get_archived_folders() -> Result<Vec<Folder>, String> {
-        get_db()?.get_archived_folders().map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1795,17 +1726,17 @@ pub mod commands {
     // --- Search ---
 
     #[tauri::command]
-    pub fn flomo_search_card(query: String) -> Result<Vec<Card>, String> {
+    pub fn flomo_search_card(query: String) -> Result<Vec<String>, String> {
         get_db()?.search_card(&query).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
-    pub fn flomo_search_folder(query: String) -> Result<Vec<Folder>, String> {
+    pub fn flomo_search_folder(query: String) -> Result<Vec<String>, String> {
         get_db()?.search_folder(&query).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
-    pub fn flomo_search_content(query: String) -> Result<Vec<Card>, String> {
+    pub fn flomo_search_content(query: String) -> Result<Vec<String>, String> {
         get_db()?.search_content(&query).map_err(|e| e.to_string())
     }
 }
@@ -1882,7 +1813,6 @@ mod tests {
         let card = db.get_card(&id).unwrap().unwrap();
         assert_eq!(card.title, "Test Card");
         assert_eq!(card.folder_id, "folder-1");
-        assert_eq!(card.raw_text, "Hello world");
         assert_eq!(card.sync_status, SYNC_STATUS_PENDING);
         assert!(!card.is_deleted);
         assert!(card.created_at > 0);
@@ -2131,60 +2061,6 @@ mod tests {
         assert_eq!(card.sync_status, SYNC_STATUS_PENDING);
     }
 
-    #[test]
-    fn test_get_archived_cards() {
-        let db = make_db();
-        let cards = vec![
-            Card {
-                id: "c1".to_string(),
-                folder_id: "f1".to_string(),
-                title: "Normal".to_string(),
-                draft: "d1".to_string(),
-                payload: serde_json::json!({}),
-                raw_text: "t1".to_string(),
-                is_bookmarked: 0,
-                is_archived: 0,
-                created_at: 1000,
-                updated_at: 1000,
-                is_deleted: false,
-                sync_status: SYNC_STATUS_SYNCED,
-            },
-            Card {
-                id: "c2".to_string(),
-                folder_id: "f1".to_string(),
-                title: "Archived".to_string(),
-                draft: "d2".to_string(),
-                payload: serde_json::json!({}),
-                raw_text: "t2".to_string(),
-                is_bookmarked: 0,
-                is_archived: 1,
-                created_at: 1000,
-                updated_at: 1000,
-                is_deleted: false,
-                sync_status: SYNC_STATUS_SYNCED,
-            },
-            Card {
-                id: "c3".to_string(),
-                folder_id: "f1".to_string(),
-                title: "Archived Deleted".to_string(),
-                draft: "d3".to_string(),
-                payload: serde_json::json!({}),
-                raw_text: "t3".to_string(),
-                is_bookmarked: 0,
-                is_archived: 1,
-                created_at: 1000,
-                updated_at: 1000,
-                is_deleted: true,
-                sync_status: SYNC_STATUS_SYNCED,
-            },
-        ];
-        db.put_cards(&cards).unwrap();
-
-        let archived = db.get_archived_cards().unwrap();
-        assert_eq!(archived.len(), 1);
-        assert_eq!(archived[0].title, "Archived");
-    }
-
     // --- Folder tests ---
 
     #[test]
@@ -2401,42 +2277,6 @@ mod tests {
         db.mark_folder_synced(&id, folder.updated_at).unwrap();
         let folder = db.get_folder(&id).unwrap().unwrap();
         assert_eq!(folder.sync_status, SYNC_STATUS_SYNCED);
-    }
-
-    #[test]
-    fn test_get_archived_folders() {
-        let db = make_db();
-        let folders = vec![
-            Folder {
-                id: "f1".to_string(),
-                parent_id: "root".to_string(),
-                title: "Normal".to_string(),
-                payload: serde_json::json!({}),
-                is_bookmarked: 0,
-                is_archived: 0,
-                created_at: 1000,
-                updated_at: 1000,
-                is_deleted: false,
-                sync_status: SYNC_STATUS_SYNCED,
-            },
-            Folder {
-                id: "f2".to_string(),
-                parent_id: "root".to_string(),
-                title: "Archived".to_string(),
-                payload: serde_json::json!({}),
-                is_bookmarked: 0,
-                is_archived: 1,
-                created_at: 1000,
-                updated_at: 1000,
-                is_deleted: false,
-                sync_status: SYNC_STATUS_SYNCED,
-            },
-        ];
-        db.put_folders(&folders).unwrap();
-
-        let archived = db.get_archived_folders().unwrap();
-        assert_eq!(archived.len(), 1);
-        assert_eq!(archived[0].title, "Archived");
     }
 
     // --- Tiptap tests ---

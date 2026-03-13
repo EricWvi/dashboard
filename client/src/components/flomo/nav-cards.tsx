@@ -60,7 +60,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
   const { activeTabId, openTab, closeTab } = useEditorState();
 
   const updateCardMutation = useUpdateCard();
-  const changeEmoji = (card: Card, emoji: string) => {
+  const changeEmoji = (card: Omit<Card, "rawText">, emoji: string) => {
     return updateCardMutation.mutateAsync({
       id: card.id,
       data: { payload: { ...card.payload, emoji } },
@@ -102,7 +102,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
       data: { isArchived: 0 },
     });
   };
-  const openCard = (card: Card) => {
+  const openCard = (card: Omit<Card, "rawText">) => {
     // Simply open tab with null instance
     // Content will be loaded from IndexedDB by EditorProvider
     openTab({
@@ -122,7 +122,9 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
 
   // Move dialog state
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  const [movingCard, setMovingCard] = useState<Card | null>(null);
+  const [movingCard, setMovingCard] = useState<Omit<Card, "rawText"> | null>(
+    null,
+  );
 
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
