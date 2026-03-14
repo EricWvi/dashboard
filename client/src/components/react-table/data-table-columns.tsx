@@ -58,6 +58,8 @@ import WatchReview from "@/components/dashboard/journey/watch-review";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDraft } from "@/hooks/use-draft";
+import { ReadOnlyTiptap } from "../tiptap-templates/simple/simple-editor";
 
 export const ratings = [
   {
@@ -191,7 +193,7 @@ const i18nText = {
   },
 };
 
-function ContentRender({ id }: { id: string }) {
+function ContentRender({ id }: { id: number }) {
   const isMobile = useIsMobile();
   const { data: draft, isFetching } = useDraft(id); // TODO
   const [showLoading, setShowLoading] = useState(true);

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPng } from "html-to-image";
 import { useEntry, type EntryMeta } from "@/hooks/use-entries";
 import { MapPin } from "lucide-react";
+import { useDraft } from "@/hooks/use-draft";
 
 function download(dataUrl: string, filename: string) {
   const link = document.createElement("a");
@@ -14,7 +15,7 @@ function download(dataUrl: string, filename: string) {
   link.click();
 }
 
-function ContentHTML({ id }: { id: string }) {
+function ContentHTML({ id }: { id: number }) {
   const { data: draft, isFetching } = useDraft(id); // TODO
 
   if (isFetching) return null;
@@ -117,7 +118,7 @@ export default function ShareCard({
           </div>
 
           <div className="mt-8 text-base text-gray-900">
-            <ContentHTML id={meta.draft} removeCache={false} />
+            <ContentHTML id={meta.draft} />
           </div>
         </div>
 
