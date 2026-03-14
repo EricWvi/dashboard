@@ -3,7 +3,7 @@ name: Android Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -54,6 +54,10 @@ jobs:
           sed -i "s/\"version\": \"0.1.0\"/\"version\": \"$CLEAN_VERSION\"/g" ./src-tauri/tauri.conf.json
           npm run tauri android init -- --ci || true
 
+      - name: Inject Android XML Patches
+        working-directory: ./client
+        run: node src-tauri/scripts/apply-android-xml.js
+
       - name: Build Android APK (ARM64)
         working-directory: ./client
         run: npm run tauri android build -- --target aarch64
@@ -75,7 +79,7 @@ jobs:
             --ks-key-alias release-key \
             --out client/src-tauri/gen/android/app/build/outputs/apk/universal/release/${{ matrix.app_type }}-release.apk \
             client/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
-          
+
           # Verify the signature
           $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose \
             client/src-tauri/gen/android/app/build/outputs/apk/universal/release/${{ matrix.app_type }}-release.apk
