@@ -19,21 +19,34 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ericwvi/tauri-android-builder:latest
+      options: --user root
       env:
+        ANDROID_HOME: /opt/android-sdk
         NDK_HOME: /opt/android-sdk/ndk/27.2.12479018
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Cache Cargo & NPM
+      - name: Cache Node modules
+        uses: actions/cache@v5
+        with:
+          path: client/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache Cargo & Rust
         uses: actions/cache@v5
         with:
           path: |
-            ~/.cargo/registry
+            /usr/local/cargo/registry/index
+            /usr/local/cargo/registry/cache
+            /usr/local/cargo/git/db
             client/src-tauri/target
-            client/node_modules
-          key: ${{ runner.os }}-build-${{ hashFiles('client/package-lock.json') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('client/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Install dependencies
         working-directory: ./client
