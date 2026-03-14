@@ -1,6 +1,7 @@
 import React from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import "./video-node.scss";
+import { formatMediaUrl } from "@/lib/utils";
 
 interface VideoAttrs {
   src: string;
@@ -27,7 +28,7 @@ export const VideoComponent: React.FC<NodeViewProps> = ({ node, selected }) => {
     >
       <div className="video-wrapper">
         <video
-          src={src}
+          src={formatMediaUrl(src)}
           width={width}
           height={height}
           controls={controls}

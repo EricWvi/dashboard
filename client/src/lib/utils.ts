@@ -1,4 +1,5 @@
 import { UserLangEnum, type I18nText, type UserLang } from "@/hooks/use-user";
+import { invoke } from "@tauri-apps/api/core";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -12,11 +13,32 @@ export function isTauri(): boolean {
 
 export const isTouchDevice = window.matchMedia("(hover: none)").matches;
 
-export function formatMediaUrl(url: string): string {
-  if (url.startsWith("/api/m/")) {
-    return url;
+let tauriMediaServerBaseUrl = "";
+
+export async function initTauriMediaServerBaseUrl(): Promise<void> {
+  if (!isTauri() || tauriMediaServerBaseUrl) {
+    return;
   }
-  return `/api/m/${url}`;
+
+  try {
+    const port = await invoke<number>("get_local_media_server_port");
+    tauriMediaServerBaseUrl = `http://localhost:${port}`;
+  } catch (err) {
+    console.error("Failed to get local media server port", err);
+  }
+}
+
+export function formatMediaUrl(url: string): string {
+  let formattedUrl;
+  if (url.startsWith("/api/m/")) {
+    formattedUrl = url;
+  } else {
+    formattedUrl = `/api/m/${url}`;
+  }
+  if (isTauri() && tauriMediaServerBaseUrl) {
+    formattedUrl = `${tauriMediaServerBaseUrl}${formattedUrl}`;
+  }
+  return formattedUrl;
 }
 
 export function dateString(

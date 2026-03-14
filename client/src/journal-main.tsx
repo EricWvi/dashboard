@@ -3,11 +3,18 @@ import { createRoot } from "react-dom/client";
 import "./index-journal.css";
 import App from "./JournalApp.tsx";
 import { CloseActionProvider } from "./close-action-provider";
+import { initTauriMediaServerBaseUrl } from "@/lib/utils";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <CloseActionProvider>
-      <App />
-    </CloseActionProvider>
-  </StrictMode>,
-);
+async function bootstrap() {
+  await initTauriMediaServerBaseUrl();
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <CloseActionProvider>
+        <App />
+      </CloseActionProvider>
+    </StrictMode>,
+  );
+}
+
+void bootstrap();

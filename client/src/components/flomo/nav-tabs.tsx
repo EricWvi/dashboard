@@ -29,7 +29,7 @@ import { getSyncManager } from "@/lib/flomo/sync-manager";
 import { UserLangEnum } from "@/lib/model";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useEditorState } from "@/hooks/use-editor-state";
-import { cn, isTouchDevice } from "@/lib/utils";
+import { cn, formatMediaUrl, isTouchDevice } from "@/lib/utils";
 
 export function NavTabs() {
   const { isMobile, toggleSidebar } = useSidebar();
@@ -54,7 +54,10 @@ export function NavTabs() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.username} />
+                <AvatarImage
+                  src={formatMediaUrl(user.avatar)}
+                  alt={user.username}
+                />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -74,7 +77,10 @@ export function NavTabs() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.username} />
+                  <AvatarImage
+                    src={formatMediaUrl(user.avatar)}
+                    alt={user.username}
+                  />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">

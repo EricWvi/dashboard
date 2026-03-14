@@ -1,9 +1,19 @@
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Result as SqliteResult};
+use axum::{
+    extract::{Path, Request, State},
+    http::{header, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+};
 use std::collections::HashSet;
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
+use tauri::Manager;
+use tower::ServiceExt;
+use tower_http::{cors::CorsLayer, services::ServeFile};
 
 // --- Backend URL via conditional compilation ---
 
@@ -141,29 +151,19 @@ impl DownloadingTasks {
 
 // --- Protocol handler ---
 
-/// Build an HTTP response with CORS headers
-fn build_cors_response(
-    status: tauri::http::StatusCode,
-    content_type: &str,
-    body: Vec<u8>,
-) -> tauri::http::Response<Vec<u8>> {
-    tauri::http::Response::builder()
-        .status(status)
-        .header("Access-Control-Allow-Origin", "*")
-        .header("Access-Control-Allow-Methods", "GET, OPTIONS")
-        .header("Access-Control-Allow-Headers", "*")
-        .header("Content-Type", content_type)
-        .body(body)
-        .unwrap()
+#[derive(Clone)]
+struct MediaServerState {
+    objects_dir: PathBuf,
+    db: Arc<MediaCacheDb>,
+    tasks: Arc<DownloadingTasks>,
 }
 
-fn build_error_response(status: u16, msg: &str) -> tauri::http::Response<Vec<u8>> {
-    build_cors_response(
-        tauri::http::StatusCode::from_u16(status)
-            .unwrap_or(tauri::http::StatusCode::INTERNAL_SERVER_ERROR),
-        "text/plain",
-        msg.as_bytes().to_vec(),
-    )
+fn sanitize_content_type(content_type: &str) -> String {
+    if tauri::http::header::HeaderValue::from_str(content_type).is_ok() {
+        content_type.to_string()
+    } else {
+        "application/octet-stream".to_string()
+    }
 }
 
 /// Synchronously download a file, save it to disk atomically, and write its
@@ -192,8 +192,8 @@ fn sync_download_and_save(
         .headers()
         .get("content-type")
         .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream")
-        .to_string();
+        .map(sanitize_content_type)
+        .unwrap_or_else(|| "application/octet-stream".to_string());
 
     let bytes = response
         .bytes()
@@ -229,81 +229,117 @@ fn wait_for_file_on_disk(file_path: &PathBuf) {
     }
 }
 
-/// Handle a request for `onlyquant://localhost/api/m/{uuid}`
-/// This uses the synchronous `register_uri_scheme_protocol` approach.
-pub fn handle_media_request(
-    objects_dir: &PathBuf,
-    db: &MediaCacheDb,
-    tasks: &DownloadingTasks,
-    request: &tauri::http::Request<Vec<u8>>,
-) -> tauri::http::Response<Vec<u8>> {
-    let uri = request.uri();
-    let path = uri.path();
-
-    // Extract uuid from /api/m/{uuid}
-    let uuid = match path.strip_prefix("/api/m/") {
-        Some(u) if u.len() >= 4 => u.to_string(),
-        _ => {
-            return build_error_response(400, "Invalid path, expected /api/m/{uuid}");
-        }
-    };
+async fn handle_media_request(
+    Path(uuid): Path<String>,
+    State(state): State<MediaServerState>,
+    request: Request,
+) -> Response {
+    if uuid.len() < 4 {
+        return (StatusCode::BAD_REQUEST, "Invalid path, expected /api/m/{uuid}")
+            .into_response();
+    }
 
     // Validate uuid contains only safe characters (alphanumeric and hyphens)
     if !uuid.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
-        return build_error_response(400, "Invalid uuid format");
+        return (StatusCode::BAD_REQUEST, "Invalid uuid format").into_response();
     }
 
-    let file_path = cache_file_path(objects_dir, &uuid);
+    let file_path = cache_file_path(&state.objects_dir, &uuid);
 
     // 1. If not cached, download to disk first
     if !file_path.exists() {
-        if tasks.try_insert(&uuid) {
+        if state.tasks.try_insert(&uuid) {
             // We own the download slot — download, save, write DB synchronously
-            if let Err(e) = sync_download_and_save(&uuid, &file_path, db) {
-                tasks.remove(&uuid);
-                return build_error_response(502, &e);
+            if let Err(e) = sync_download_and_save(&uuid, &file_path, &state.db) {
+                state.tasks.remove(&uuid);
+                return (StatusCode::BAD_GATEWAY, e).into_response();
             }
-            tasks.remove(&uuid);
+            state.tasks.remove(&uuid);
         } else {
             // Another thread is downloading — wait for it to finish
             wait_for_file_on_disk(&file_path);
         }
     }
 
-    // 2. Always serve from disk
-    return_cached_file(&file_path, &uuid, db)
-}
+    if !file_path.exists() {
+        return (StatusCode::NOT_FOUND, "Media not found").into_response();
+    }
 
-fn return_cached_file(
-    file_path: &PathBuf,
-    uuid: &str,
-    db: &MediaCacheDb,
-) -> tauri::http::Response<Vec<u8>> {
-    match std::fs::read(file_path) {
-        Ok(data) => {
-            let content_type = db
-                .get_content_type(uuid)
-                .ok()
-                .flatten()
-                .unwrap_or_else(|| "application/octet-stream".to_string());
-            build_cors_response(tauri::http::StatusCode::OK, &content_type, data)
+    let content_type = state
+        .db
+        .get_content_type(&uuid)
+        .ok()
+        .flatten()
+        .map(|ct| sanitize_content_type(&ct))
+        .unwrap_or_else(|| "application/octet-stream".to_string());
+
+    match ServeFile::new(file_path).oneshot(request).await {
+        Ok(mut response) => {
+            if let Ok(header_value) = HeaderValue::from_str(&content_type) {
+                response
+                    .headers_mut()
+                    .insert(header::CONTENT_TYPE, header_value);
+            }
+            response.into_response()
         }
-        Err(e) => build_error_response(500, &format!("Failed to read cached file: {}", e)),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("ServeFile failed: {}", e))
+            .into_response(),
     }
 }
 
+fn start_local_media_server(
+    objects_dir: PathBuf,
+    db: Arc<MediaCacheDb>,
+    tasks: Arc<DownloadingTasks>,
+) -> Result<u16, String> {
+    let state = MediaServerState {
+        objects_dir,
+        db,
+        tasks,
+    };
+
+    let app = Router::new()
+        .route("/api/m/:uuid", get(handle_media_request))
+        .layer(CorsLayer::permissive())
+        .with_state(state);
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0")
+        .map_err(|e| format!("Failed to bind media server: {}", e))?;
+    listener
+        .set_nonblocking(true)
+        .map_err(|e| format!("Failed to set listener nonblocking: {}", e))?;
+    let port = listener
+        .local_addr()
+        .map_err(|e| format!("Failed to read local addr: {}", e))?
+        .port();
+
+    tauri::async_runtime::spawn(async move {
+        let listener = match tokio::net::TcpListener::from_std(listener) {
+            Ok(listener) => listener,
+            Err(e) => {
+                eprintln!("media_cache: failed to create async listener: {}", e);
+                return;
+            }
+        };
+
+        if let Err(e) = axum::serve(listener, app).await {
+            eprintln!("media_cache: local media server exited with error: {}", e);
+        }
+    });
+
+    Ok(port)
+}
+
 // --- Global state accessors ---
-
-use std::sync::OnceLock;
-
-static CACHE_DB: OnceLock<MediaCacheDb> = OnceLock::new();
-static DOWNLOADING_TASKS: OnceLock<DownloadingTasks> = OnceLock::new();
+static CACHE_DB: OnceLock<Arc<MediaCacheDb>> = OnceLock::new();
+static DOWNLOADING_TASKS: OnceLock<Arc<DownloadingTasks>> = OnceLock::new();
 static OBJECTS_DIR: OnceLock<PathBuf> = OnceLock::new();
+static MEDIA_SERVER_PORT: OnceLock<u16> = OnceLock::new();
 
 pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
     let external_dir = app
         .path()
-        .app_local_data_dir()
+        .document_dir()
         .map_err(|e| e.to_string())?;
 
     let objects_dir = external_dir.join("objects");
@@ -315,62 +351,35 @@ pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let db_path = app_data_dir.join("media_cache.db");
-    let db =
-        MediaCacheDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+    let db = Arc::new(
+        MediaCacheDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?,
+    );
+    let tasks = Arc::new(DownloadingTasks::new());
+
+    let port = start_local_media_server(objects_dir.clone(), db.clone(), tasks.clone())?;
 
     CACHE_DB
         .set(db)
         .map_err(|_| "MediaCacheDb already initialized".to_string())?;
     DOWNLOADING_TASKS
-        .set(DownloadingTasks::new())
+        .set(tasks)
         .map_err(|_| "DownloadingTasks already initialized".to_string())?;
     OBJECTS_DIR
         .set(objects_dir)
         .map_err(|_| "ObjectsDir already initialized".to_string())?;
+    MEDIA_SERVER_PORT
+        .set(port)
+        .map_err(|_| "Media server port already initialized".to_string())?;
 
     Ok(())
 }
 
-pub fn get_cache_db() -> Option<&'static MediaCacheDb> {
-    CACHE_DB.get()
-}
-
-pub fn get_downloading_tasks() -> Option<&'static DownloadingTasks> {
-    DOWNLOADING_TASKS.get()
-}
-
-pub fn get_objects_dir() -> Option<&'static PathBuf> {
-    OBJECTS_DIR.get()
-}
-
-use tauri::Manager;
-
-/// Register the `onlyquant` URI scheme protocol on the Tauri builder.
-pub fn register_protocol<R: tauri::Runtime>(
-    builder: tauri::Builder<R>,
-) -> tauri::Builder<R> {
-    builder.register_uri_scheme_protocol("onlyquant", |_ctx, request| {
-        let objects_dir = match get_objects_dir() {
-            Some(d) => d,
-            None => {
-                return build_error_response(500, "Media cache not initialized");
-            }
-        };
-        let db = match get_cache_db() {
-            Some(d) => d,
-            None => {
-                return build_error_response(500, "Media cache DB not initialized");
-            }
-        };
-        let tasks = match get_downloading_tasks() {
-            Some(t) => t,
-            None => {
-                return build_error_response(500, "Downloading tasks not initialized");
-            }
-        };
-
-        handle_media_request(objects_dir, db, tasks, &request)
-    })
+#[tauri::command]
+pub fn get_local_media_server_port() -> Result<u16, String> {
+    MEDIA_SERVER_PORT
+        .get()
+        .copied()
+        .ok_or_else(|| "Media server is not initialized".to_string())
 }
 
 // --- Tests ---
@@ -433,21 +442,8 @@ mod tests {
     }
 
     #[test]
-    fn test_build_cors_response() {
-        let resp = build_cors_response(
-            tauri::http::StatusCode::OK,
-            "image/png",
-            vec![1, 2, 3],
-        );
-        assert_eq!(resp.status(), 200);
-        assert_eq!(
-            resp.headers().get("Access-Control-Allow-Origin").unwrap(),
-            "*"
-        );
-        assert_eq!(
-            resp.headers().get("Content-Type").unwrap(),
-            "image/png"
-        );
-        assert_eq!(resp.body(), &vec![1, 2, 3]);
+    fn test_sanitize_content_type_invalid_value() {
+        let invalid = "video/mp4\nX-Bad: yes";
+        assert_eq!(sanitize_content_type(invalid), "application/octet-stream");
     }
 }

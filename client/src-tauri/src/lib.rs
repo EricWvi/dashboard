@@ -20,12 +20,10 @@ pub fn run() {
       Ok(())
     });
 
-  // Register the onlyquant:// custom protocol for media caching
-  builder = media_cache::register_protocol(builder);
-
   #[cfg(feature = "flomo")]
   {
     builder = builder.invoke_handler(tauri::generate_handler![
+      media_cache::get_local_media_server_port,
       flomo_db::commands::flomo_get_user,
       flomo_db::commands::flomo_put_user,
       flomo_db::commands::flomo_get_card,
@@ -75,6 +73,14 @@ pub fn run() {
       flomo_db::commands::flomo_search_folder,
       flomo_db::commands::flomo_search_content,
     ]);
+  }
+
+  #[cfg(not(feature = "flomo"))]
+  {
+    builder =
+      builder.invoke_handler(tauri::generate_handler![
+        media_cache::get_local_media_server_port,
+      ]);
   }
 
   builder

@@ -35,6 +35,10 @@ r2d2 = "0.8"
 r2d2_sqlite = "0.24"
 uuid = { version = "1", features = ["v4"] }
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls", "json"] }
+tokio = { version = "1", features = ["full"] }
+axum = "0.7"
+tower = "0.5"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
 
 [dev-dependencies]
 tempfile = "3"
