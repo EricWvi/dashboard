@@ -24,10 +24,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cache Cargo & NPM
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -50,7 +50,7 @@ jobs:
         run: npm run tauri android build -- --target aarch64 --debug
 
       - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: android-debug-apk-${{ github.event.inputs.app_type }}
           path: client/src-tauri/gen/android/app/build/outputs/apk/*/debug/*.apk
