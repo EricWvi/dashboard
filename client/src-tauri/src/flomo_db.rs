@@ -297,6 +297,10 @@ impl FlomoDb {
             conn.pragma_update(None, "journal_mode", "WAL")?;
             conn.pragma_update(None, "busy_timeout", "5000")?;
             conn.pragma_update(None, "synchronous", "NORMAL")?;
+            #[cfg(debug_assertions)]
+            conn.trace(Some(|sql| {
+                println!("[flomo_db][sql] {}", sql);
+            }));
             Ok(())
         });
         let pool = Pool::builder()
@@ -313,6 +317,10 @@ impl FlomoDb {
         let manager = SqliteConnectionManager::memory().with_init(|conn| {
             conn.pragma_update(None, "journal_mode", "WAL")?;
             conn.pragma_update(None, "synchronous", "NORMAL")?;
+            #[cfg(debug_assertions)]
+            conn.trace(Some(|sql| {
+                println!("[flomo_db][sql] {}", sql);
+            }));
             Ok(())
         });
         // max_size=1: in-memory databases are per-connection; a single connection
@@ -1670,6 +1678,9 @@ pub mod commands {
         let client = reqwest::blocking::Client::new();
         let url = format!("{}/api/flomo?Action=FullSync", backend_url());
 
+        #[cfg(debug_assertions)]
+        println!("[flomo_db][request] GET {}", url);
+
         let response = client
             .get(&url)
             .send()
@@ -1688,6 +1699,9 @@ pub mod commands {
     pub fn flomo_push(data: FlomoData) -> Result<serde_json::Value, String> {
         let client = reqwest::blocking::Client::new();
         let url = format!("{}/api/flomo?Action=Push", backend_url());
+
+        #[cfg(debug_assertions)]
+        println!("[flomo_db][request] POST {}", url);
 
         let response = client
             .post(&url)
@@ -1708,6 +1722,9 @@ pub mod commands {
     pub fn flomo_pull(version: i64) -> Result<serde_json::Value, String> {
         let client = reqwest::blocking::Client::new();
         let url = format!("{}/api/flomo?Action=Pull&since={}", backend_url(), version);
+
+        #[cfg(debug_assertions)]
+        println!("[flomo_db][request] GET {}", url);
 
         let response = client
             .get(&url)
