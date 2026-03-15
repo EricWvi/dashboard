@@ -3,10 +3,10 @@ import { createRoot } from "react-dom/client";
 import "./index-journal.css";
 import App from "./JournalApp.tsx";
 import { CloseActionProvider } from "./close-action-provider";
-import { initTauriMediaServerBaseUrl } from "@/lib/utils";
+import { initMediaServerBaseUrl } from "@/lib/utils";
 
 async function bootstrap() {
-  await initTauriMediaServerBaseUrl();
+  await initMediaServerBaseUrl();
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

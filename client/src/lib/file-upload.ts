@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { mediaServerBaseUrl } from "./utils";
 
 const compressOptions = {
   maxWidthOrHeight: 1920,
@@ -25,7 +26,7 @@ export const fileUpload = async ({
   const formData = new FormData();
   formData.append("photos", compressed, files[0].name);
 
-  xhr.open("POST", "/api/upload");
+  xhr.open("POST", mediaServerBaseUrl + "/api/upload");
 
   xhr.upload.onprogress = (event) => {
     if (event.lengthComputable) {

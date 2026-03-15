@@ -13,16 +13,16 @@ export function isTauri(): boolean {
 
 export const isTouchDevice = window.matchMedia("(hover: none)").matches;
 
-let tauriMediaServerBaseUrl = "";
+export let mediaServerBaseUrl = "";
 
-export async function initTauriMediaServerBaseUrl(): Promise<void> {
-  if (!isTauri() || tauriMediaServerBaseUrl) {
+export async function initMediaServerBaseUrl(): Promise<void> {
+  if (!isTauri() || mediaServerBaseUrl) {
     return;
   }
 
   try {
     const port = await invoke<number>("get_local_media_server_port");
-    tauriMediaServerBaseUrl = `http://localhost:${port}`;
+    mediaServerBaseUrl = `http://localhost:${port}`;
   } catch (err) {
     console.error("Failed to get local media server port", err);
   }
@@ -35,8 +35,8 @@ export function formatMediaUrl(url: string): string {
   } else {
     formattedUrl = `/api/m/${url}`;
   }
-  if (isTauri() && tauriMediaServerBaseUrl) {
-    formattedUrl = `${tauriMediaServerBaseUrl}${formattedUrl}`;
+  if (isTauri() && mediaServerBaseUrl) {
+    formattedUrl = `${mediaServerBaseUrl}${formattedUrl}`;
   }
   return formattedUrl;
 }

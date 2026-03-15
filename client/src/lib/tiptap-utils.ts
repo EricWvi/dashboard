@@ -2,7 +2,7 @@ import type { Node as TiptapNode } from "@tiptap/pm/model";
 import { NodeSelection } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import imageCompression from "browser-image-compression";
-import { formatMediaUrl } from "@/lib/utils";
+import { mediaServerBaseUrl } from "@/lib/utils";
 
 const compressOptions = {
   maxWidthOrHeight: 1920,
@@ -295,7 +295,7 @@ export const handleImageUpload = async (
     const formData = new FormData();
     formData.append("photos", compressed, file.name);
 
-    xhr.open("POST", "/api/upload");
+    xhr.open("POST", mediaServerBaseUrl + "/api/upload");
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -306,7 +306,7 @@ export const handleImageUpload = async (
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(formatMediaUrl(JSON.parse(xhr.responseText).photos[0]));
+        resolve(JSON.parse(xhr.responseText).photos[0]);
       } else {
         reject(new Error("Upload failed"));
       }
@@ -357,7 +357,7 @@ export const handleVideoUpload = async (
     const formData = new FormData();
     formData.append("photos", file, file.name);
 
-    xhr.open("POST", "/api/upload");
+    xhr.open("POST", mediaServerBaseUrl + "/api/upload");
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -368,7 +368,7 @@ export const handleVideoUpload = async (
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(formatMediaUrl(JSON.parse(xhr.responseText).photos[0]));
+        resolve(JSON.parse(xhr.responseText).photos[0]);
       } else {
         reject(new Error("Upload failed"));
       }

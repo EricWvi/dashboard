@@ -2,15 +2,17 @@ use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Result as SqliteResult};
 use axum::{
-    extract::{Path, Request, State},
+    extract::{Multipart, Path, Request, State},
     http::{header, HeaderValue, StatusCode},
+    Json,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
+use std::time::Duration;
 use tauri::Manager;
 use tower::ServiceExt;
 use tower_http::{cors::CorsLayer, services::ServeFile};
@@ -84,11 +86,17 @@ impl MediaCacheDb {
 
     fn run_migrations(&self) -> SqliteResult<()> {
         let conn = self.conn()?;
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS media_cache (
+        conn.execute_batch("
+            CREATE TABLE IF NOT EXISTS media_cache (
                 uuid TEXT PRIMARY KEY,
                 content_type TEXT NOT NULL
-            );",
+            );
+            
+            CREATE TABLE IF NOT EXISTS media_job (
+                uuid TEXT PRIMARY KEY,
+                content_type TEXT NOT NULL
+            );
+            ",
         )?;
         Ok(())
     }
@@ -111,6 +119,37 @@ impl MediaCacheDb {
             params![uuid, content_type],
         )?;
         Ok(())
+    }
+
+    pub fn upsert_media_job(&self, uuid: &str, content_type: &str) -> SqliteResult<()> {
+        let conn = self.conn()?;
+        conn.execute(
+            "INSERT OR REPLACE INTO media_job (uuid, content_type) VALUES (?1, ?2)",
+            params![uuid, content_type],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_media_job(&self, uuid: &str) -> SqliteResult<()> {
+        let conn = self.conn()?;
+        conn.execute("DELETE FROM media_job WHERE uuid = ?1", params![uuid])?;
+        Ok(())
+    }
+
+    pub fn list_media_jobs(&self) -> SqliteResult<Vec<(String, String)>> {
+        let conn = self.conn()?;
+        let mut stmt = conn.prepare("SELECT uuid, content_type FROM media_job")?;
+        let rows = stmt.query_map([], |row| {
+            let uuid: String = row.get(0)?;
+            let content_type: String = row.get(1)?;
+            Ok((uuid, content_type))
+        })?;
+
+        let mut result = Vec::new();
+        for row in rows {
+            result.push(row?);
+        }
+        Ok(result)
     }
 }
 
@@ -166,6 +205,130 @@ fn sanitize_content_type(content_type: &str) -> String {
     }
 }
 
+fn write_bytes_atomically(file_path: &PathBuf, bytes: &[u8]) -> Result<(), String> {
+    if let Some(parent) = file_path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create cache dirs: {}", e))?;
+    }
+    let mut tmp_name = file_path
+        .file_name()
+        .ok_or_else(|| "Invalid file path".to_string())?
+        .to_os_string();
+    tmp_name.push(".tmp");
+    let tmp_path = file_path.with_file_name(tmp_name);
+
+    std::fs::write(&tmp_path, bytes)
+        .map_err(|e| format!("Failed to write tmp file: {}", e))?;
+    std::fs::rename(&tmp_path, file_path)
+        .map_err(|e| format!("Failed to rename tmp file: {}", e))?;
+    Ok(())
+}
+
+fn upload_file_to_backend(
+    uuid: &str,
+    file_path: &PathBuf,
+    _content_type: &str,
+) -> Result<(), String> {
+    let upload_url = format!("{}/api/upload", backend_url());
+    let client = reqwest::blocking::Client::builder()
+        .redirect(reqwest::redirect::Policy::limited(10))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let bytes = std::fs::read(file_path)
+        .map_err(|e| format!("Failed to read cached file for upload: {}", e))?;
+
+    let file_name = file_path
+        .file_name()
+        .map(|v| v.to_string_lossy().to_string())
+        .unwrap_or_else(|| "upload.bin".to_string());
+
+    let part = reqwest::blocking::multipart::Part::bytes(bytes).file_name(file_name);
+
+    let form = reqwest::blocking::multipart::Form::new()
+        .text("uuid", uuid.to_string())
+        .part("photos", part);
+
+    let response = client
+        .post(&upload_url)
+        .multipart(form)
+        .send()
+        .map_err(|e| format!("Failed to upload media: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Remote upload returned {}", response.status()));
+    }
+
+    Ok(())
+}
+
+fn spawn_upload_media_job(
+    uuid: String,
+    file_path: PathBuf,
+    content_type: String,
+    db: Arc<MediaCacheDb>,
+    max_attempts: usize,
+    sleep_between_attempts: Duration,
+) {
+    std::thread::spawn(move || {
+        for attempt in 0..max_attempts {
+            match upload_file_to_backend(&uuid, &file_path, &content_type) {
+                Ok(_) => {
+                    if let Err(e) = db.delete_media_job(&uuid) {
+                        eprintln!(
+                            "media_cache: uploaded {}, but failed to delete media_job: {}",
+                            uuid, e
+                        );
+                    }
+                    return;
+                }
+                Err(e) => {
+                    eprintln!(
+                        "media_cache: upload attempt {}/{} for {} failed: {}",
+                        attempt + 1,
+                        max_attempts,
+                        uuid,
+                        e
+                    );
+                    if attempt + 1 < max_attempts {
+                        std::thread::sleep(sleep_between_attempts);
+                    }
+                }
+            }
+        }
+    });
+}
+
+fn replay_media_jobs_once(objects_dir: &PathBuf, db: Arc<MediaCacheDb>) {
+    let jobs = match db.list_media_jobs() {
+        Ok(jobs) => jobs,
+        Err(e) => {
+            eprintln!("media_cache: failed to list media_job entries: {}", e);
+            return;
+        }
+    };
+
+    for (uuid, content_type) in jobs {
+        let file_path = cache_file_path(objects_dir, &uuid);
+        if !file_path.exists() {
+            eprintln!(
+                "media_cache: skip replay for {} because cached file is missing",
+                uuid
+            );
+            continue;
+        }
+
+        spawn_upload_media_job(
+            uuid,
+            file_path,
+            content_type,
+            db.clone(),
+            1,
+            Duration::from_secs(0),
+        );
+    }
+}
+
 /// Synchronously download a file, save it to disk atomically, and write its
 /// content type to the DB. Returns an error string on failure.
 fn sync_download_and_save(
@@ -199,24 +362,103 @@ fn sync_download_and_save(
         .bytes()
         .map_err(|e| format!("Failed to read response body: {}", e))?;
 
-    // Atomic write: tmp file → rename
-    if let Some(parent) = file_path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create cache dirs: {}", e))?;
-    }
-    let mut tmp_name = file_path.file_name().unwrap().to_os_string();
-    tmp_name.push(".tmp");
-    let tmp_path = file_path.with_file_name(tmp_name);
-    std::fs::write(&tmp_path, &bytes)
-        .map_err(|e| format!("Failed to write tmp file: {}", e))?;
-    std::fs::rename(&tmp_path, file_path)
-        .map_err(|e| format!("Failed to rename tmp file: {}", e))?;
+    write_bytes_atomically(file_path, &bytes)?;
 
     // Persist content type
     db.set_content_type(uuid, &content_type)
         .map_err(|e| format!("Failed to write content type: {}", e))?;
 
     Ok(())
+}
+
+async fn handle_upload_request(
+    State(state): State<MediaServerState>,
+    mut multipart: Multipart,
+) -> Response {
+    let mut uploaded_ids = Vec::new();
+
+    loop {
+        let next_field = match multipart.next_field().await {
+            Ok(field) => field,
+            Err(e) => {
+                return (StatusCode::BAD_REQUEST, format!("Invalid multipart form: {}", e))
+                    .into_response()
+            }
+        };
+
+        let Some(field) = next_field else {
+            break;
+        };
+
+        if field.name() != Some("photos") {
+            continue;
+        }
+
+        let content_type = field
+            .content_type()
+            .map(sanitize_content_type)
+            .unwrap_or_else(|| "application/octet-stream".to_string());
+
+        let bytes = match field.bytes().await {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return (StatusCode::BAD_REQUEST, format!("Failed to read upload bytes: {}", e))
+                    .into_response()
+            }
+        };
+
+        let uuid = uuid::Uuid::new_v4().to_string();
+        let file_path = cache_file_path(&state.objects_dir, &uuid);
+
+        if !state.tasks.try_insert(&uuid) {
+            return (
+                StatusCode::CONFLICT,
+                "Upload is already in progress for this uuid",
+            )
+                .into_response();
+        }
+
+        if let Err(e) = write_bytes_atomically(&file_path, &bytes) {
+            state.tasks.remove(&uuid);
+            return (StatusCode::INTERNAL_SERVER_ERROR, e).into_response();
+        }
+
+        if let Err(e) = state.db.set_content_type(&uuid, &content_type) {
+            state.tasks.remove(&uuid);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to write media_cache entry: {}", e),
+            )
+                .into_response();
+        }
+
+        if let Err(e) = state.db.upsert_media_job(&uuid, &content_type) {
+            state.tasks.remove(&uuid);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to write media_job entry: {}", e),
+            )
+                .into_response();
+        }
+
+        spawn_upload_media_job(
+            uuid.clone(),
+            file_path,
+            content_type,
+            state.db.clone(),
+            3,
+            Duration::from_secs(5),
+        );
+        state.tasks.remove(&uuid);
+
+        uploaded_ids.push(uuid);
+    }
+
+    if uploaded_ids.is_empty() {
+        return (StatusCode::BAD_REQUEST, "No files found in form data").into_response();
+    }
+
+    (StatusCode::OK, Json(serde_json::json!({ "photos": uploaded_ids }))).into_response()
 }
 
 /// Spin-wait for a file to appear on disk (200ms × 10 = 2s max).
@@ -300,6 +542,7 @@ fn start_local_media_server(
 
     let app = Router::new()
         .route("/api/m/:uuid", get(handle_media_request))
+        .route("/api/upload", post(handle_upload_request))
         .layer(CorsLayer::permissive())
         .with_state(state);
 
@@ -355,6 +598,8 @@ pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
         MediaCacheDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?,
     );
     let tasks = Arc::new(DownloadingTasks::new());
+
+    replay_media_jobs_once(&objects_dir, db.clone());
 
     let port = start_local_media_server(objects_dir.clone(), db.clone(), tasks.clone())?;
 

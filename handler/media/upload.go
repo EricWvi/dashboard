@@ -6,6 +6,7 @@ import (
 	"github.com/EricWvi/dashboard/middleware"
 	"github.com/EricWvi/dashboard/model"
 	"github.com/EricWvi/dashboard/service"
+	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,6 +23,7 @@ func Upload(c *gin.Context) {
 		c.JSON(400, gin.H{"message": "No files found in form data"})
 		return
 	}
+	uuids := form.Value["uuid"]
 
 	client, err := service.InitMinIOService()
 	if err != nil {
@@ -30,7 +32,7 @@ func Upload(c *gin.Context) {
 	}
 
 	var fileIds []string
-	for _, file := range files {
+	for idx, file := range files {
 		fileKey, err := client.UploadMultipartFile(c, file)
 		if err != nil {
 			c.JSON(500, gin.H{"message": "Failed to save " + file.Filename + ": " + err.Error()})
@@ -46,6 +48,16 @@ func Upload(c *gin.Context) {
 			Key:          fileKey,
 			PresignedURL: presignedUrl,
 		}
+
+		if idx < len(uuids) && uuids[idx] != "" {
+			parsed, parseErr := uuid.Parse(uuids[idx])
+			if parseErr != nil {
+				c.JSON(400, gin.H{"message": "Invalid uuid: " + uuids[idx]})
+				return
+			}
+			m.Link = parsed
+		}
+
 		err = m.Create(config.ContextDB(log.MediaCtx))
 		if err != nil {
 			c.JSON(500, gin.H{"message": err.Error()})
