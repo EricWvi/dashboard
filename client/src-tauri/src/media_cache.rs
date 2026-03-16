@@ -99,17 +99,6 @@ impl MediaCacheDb {
             );
             ",
         )?;
-        let has_file_name: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM pragma_table_info('media_job') WHERE name = 'file_name'",
-            [],
-            |row| row.get(0),
-        )?;
-        if has_file_name == 0 {
-            conn.execute(
-                "ALTER TABLE media_job ADD COLUMN file_name TEXT NOT NULL DEFAULT 'upload.bin'",
-                [],
-            )?;
-        }
         Ok(())
     }
 
@@ -245,6 +234,7 @@ fn write_bytes_atomically(file_path: &PathBuf, bytes: &[u8]) -> Result<(), Strin
 fn upload_file_to_backend(
     uuid: &str,
     file_path: &PathBuf,
+    content_type: &str,
     file_name: &str,
 ) -> Result<(), String> {
     let upload_url = format!("{}/api/upload", backend_url());
@@ -256,8 +246,10 @@ fn upload_file_to_backend(
     let bytes = std::fs::read(file_path)
         .map_err(|e| format!("Failed to read cached file for upload: {}", e))?;
 
-    let part =
-        reqwest::blocking::multipart::Part::bytes(bytes).file_name(file_name.to_string());
+    let part = reqwest::blocking::multipart::Part::bytes(bytes)
+        .file_name(file_name.to_string())
+        .mime_str(content_type)
+        .map_err(|e| format!("Invalid content type for upload part: {}", e))?;
 
     let form = reqwest::blocking::multipart::Form::new()
         .text("uuid", uuid.to_string())
@@ -279,6 +271,7 @@ fn upload_file_to_backend(
 fn spawn_upload_media_job(
     uuid: String,
     file_path: PathBuf,
+    content_type: String,
     file_name: String,
     db: Arc<MediaCacheDb>,
     max_attempts: usize,
@@ -286,7 +279,7 @@ fn spawn_upload_media_job(
 ) {
     std::thread::spawn(move || {
         for attempt in 0..max_attempts {
-            match upload_file_to_backend(&uuid, &file_path, &file_name) {
+            match upload_file_to_backend(&uuid, &file_path, &content_type, &file_name) {
                 Ok(_) => {
                     if let Err(e) = db.delete_media_job(&uuid) {
                         eprintln!(
@@ -322,7 +315,7 @@ fn replay_media_jobs_once(objects_dir: &PathBuf, db: Arc<MediaCacheDb>) {
         }
     };
 
-    for (uuid, _, file_name) in jobs {
+    for (uuid, content_type, file_name) in jobs {
         let file_path = cache_file_path(objects_dir, &uuid);
         if !file_path.exists() {
             eprintln!(
@@ -335,6 +328,7 @@ fn replay_media_jobs_once(objects_dir: &PathBuf, db: Arc<MediaCacheDb>) {
         spawn_upload_media_job(
             uuid,
             file_path,
+            content_type,
             file_name,
             db.clone(),
             1,
@@ -451,6 +445,7 @@ async fn handle_upload_request(
         spawn_upload_media_job(
             uuid.clone(),
             file_path,
+            content_type,
             file_name,
             state.db.clone(),
             3,
