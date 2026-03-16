@@ -94,10 +94,22 @@ impl MediaCacheDb {
             
             CREATE TABLE IF NOT EXISTS media_job (
                 uuid TEXT PRIMARY KEY,
-                content_type TEXT NOT NULL
+                content_type TEXT NOT NULL,
+                file_name TEXT NOT NULL
             );
             ",
         )?;
+        let has_file_name: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('media_job') WHERE name = 'file_name'",
+            [],
+            |row| row.get(0),
+        )?;
+        if has_file_name == 0 {
+            conn.execute(
+                "ALTER TABLE media_job ADD COLUMN file_name TEXT NOT NULL DEFAULT 'upload.bin'",
+                [],
+            )?;
+        }
         Ok(())
     }
 
@@ -121,11 +133,16 @@ impl MediaCacheDb {
         Ok(())
     }
 
-    pub fn upsert_media_job(&self, uuid: &str, content_type: &str) -> SqliteResult<()> {
+    pub fn upsert_media_job(
+        &self,
+        uuid: &str,
+        content_type: &str,
+        file_name: &str,
+    ) -> SqliteResult<()> {
         let conn = self.conn()?;
         conn.execute(
-            "INSERT OR REPLACE INTO media_job (uuid, content_type) VALUES (?1, ?2)",
-            params![uuid, content_type],
+            "INSERT OR REPLACE INTO media_job (uuid, content_type, file_name) VALUES (?1, ?2, ?3)",
+            params![uuid, content_type, file_name],
         )?;
         Ok(())
     }
@@ -136,13 +153,14 @@ impl MediaCacheDb {
         Ok(())
     }
 
-    pub fn list_media_jobs(&self) -> SqliteResult<Vec<(String, String)>> {
+    pub fn list_media_jobs(&self) -> SqliteResult<Vec<(String, String, String)>> {
         let conn = self.conn()?;
-        let mut stmt = conn.prepare("SELECT uuid, content_type FROM media_job")?;
+        let mut stmt = conn.prepare("SELECT uuid, content_type, file_name FROM media_job")?;
         let rows = stmt.query_map([], |row| {
             let uuid: String = row.get(0)?;
             let content_type: String = row.get(1)?;
-            Ok((uuid, content_type))
+            let file_name: String = row.get(2)?;
+            Ok((uuid, content_type, file_name))
         })?;
 
         let mut result = Vec::new();
@@ -227,7 +245,7 @@ fn write_bytes_atomically(file_path: &PathBuf, bytes: &[u8]) -> Result<(), Strin
 fn upload_file_to_backend(
     uuid: &str,
     file_path: &PathBuf,
-    _content_type: &str,
+    file_name: &str,
 ) -> Result<(), String> {
     let upload_url = format!("{}/api/upload", backend_url());
     let client = reqwest::blocking::Client::builder()
@@ -238,12 +256,8 @@ fn upload_file_to_backend(
     let bytes = std::fs::read(file_path)
         .map_err(|e| format!("Failed to read cached file for upload: {}", e))?;
 
-    let file_name = file_path
-        .file_name()
-        .map(|v| v.to_string_lossy().to_string())
-        .unwrap_or_else(|| "upload.bin".to_string());
-
-    let part = reqwest::blocking::multipart::Part::bytes(bytes).file_name(file_name);
+    let part =
+        reqwest::blocking::multipart::Part::bytes(bytes).file_name(file_name.to_string());
 
     let form = reqwest::blocking::multipart::Form::new()
         .text("uuid", uuid.to_string())
@@ -265,14 +279,14 @@ fn upload_file_to_backend(
 fn spawn_upload_media_job(
     uuid: String,
     file_path: PathBuf,
-    content_type: String,
+    file_name: String,
     db: Arc<MediaCacheDb>,
     max_attempts: usize,
     sleep_between_attempts: Duration,
 ) {
     std::thread::spawn(move || {
         for attempt in 0..max_attempts {
-            match upload_file_to_backend(&uuid, &file_path, &content_type) {
+            match upload_file_to_backend(&uuid, &file_path, &file_name) {
                 Ok(_) => {
                     if let Err(e) = db.delete_media_job(&uuid) {
                         eprintln!(
@@ -308,7 +322,7 @@ fn replay_media_jobs_once(objects_dir: &PathBuf, db: Arc<MediaCacheDb>) {
         }
     };
 
-    for (uuid, content_type) in jobs {
+    for (uuid, _, file_name) in jobs {
         let file_path = cache_file_path(objects_dir, &uuid);
         if !file_path.exists() {
             eprintln!(
@@ -321,7 +335,7 @@ fn replay_media_jobs_once(objects_dir: &PathBuf, db: Arc<MediaCacheDb>) {
         spawn_upload_media_job(
             uuid,
             file_path,
-            content_type,
+            file_name,
             db.clone(),
             1,
             Duration::from_secs(0),
@@ -398,6 +412,10 @@ async fn handle_upload_request(
             .content_type()
             .map(sanitize_content_type)
             .unwrap_or_else(|| "application/octet-stream".to_string());
+        let file_name = field
+            .file_name()
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "upload.bin".to_string());
 
         let bytes = match field.bytes().await {
             Ok(bytes) => bytes,
@@ -410,21 +428,11 @@ async fn handle_upload_request(
         let uuid = uuid::Uuid::new_v4().to_string();
         let file_path = cache_file_path(&state.objects_dir, &uuid);
 
-        if !state.tasks.try_insert(&uuid) {
-            return (
-                StatusCode::CONFLICT,
-                "Upload is already in progress for this uuid",
-            )
-                .into_response();
-        }
-
         if let Err(e) = write_bytes_atomically(&file_path, &bytes) {
-            state.tasks.remove(&uuid);
             return (StatusCode::INTERNAL_SERVER_ERROR, e).into_response();
         }
 
         if let Err(e) = state.db.set_content_type(&uuid, &content_type) {
-            state.tasks.remove(&uuid);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to write media_cache entry: {}", e),
@@ -432,8 +440,7 @@ async fn handle_upload_request(
                 .into_response();
         }
 
-        if let Err(e) = state.db.upsert_media_job(&uuid, &content_type) {
-            state.tasks.remove(&uuid);
+        if let Err(e) = state.db.upsert_media_job(&uuid, &content_type, &file_name) {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to write media_job entry: {}", e),
@@ -444,12 +451,11 @@ async fn handle_upload_request(
         spawn_upload_media_job(
             uuid.clone(),
             file_path,
-            content_type,
+            file_name,
             state.db.clone(),
             3,
             Duration::from_secs(5),
         );
-        state.tasks.remove(&uuid);
 
         uploaded_ids.push(uuid);
     }
@@ -664,6 +670,17 @@ mod tests {
         assert_eq!(
             db.get_content_type("test-uuid").unwrap(),
             Some("image/jpeg".to_string())
+        );
+
+        db.upsert_media_job("test-uuid", "image/jpeg", "photo.png")
+            .unwrap();
+        assert_eq!(
+            db.list_media_jobs().unwrap(),
+            vec![(
+                "test-uuid".to_string(),
+                "image/jpeg".to_string(),
+                "photo.png".to_string(),
+            )]
         );
     }
 
