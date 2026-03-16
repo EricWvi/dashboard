@@ -77,7 +77,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-editor/simple-editor.scss";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { Eraser, Save } from "lucide-react";
 import { toast } from "sonner";
 import { UserLangEnum } from "@/lib/model";
@@ -361,15 +361,11 @@ export function EditorToolbar({
 
 export function SimpleEditor() {
   const { editor } = useTiptapEditor();
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!editor) return null;
 
   return (
-    <div
-      ref={scrollRef}
-      className="dashboard-editor h-full w-full overflow-auto"
-    >
+    <div className="dashboard-editor h-full w-full overflow-auto">
       <div className="simple-editor-wrapper">
         <EditorContent
           editor={editor}

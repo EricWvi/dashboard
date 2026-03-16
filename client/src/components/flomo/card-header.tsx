@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { tiptapRefresh } from "@/hooks/flomo/query-keys";
 import { useCard, useUpdateCard } from "@/hooks/flomo/use-cards";
@@ -59,6 +59,73 @@ export function CardHeader() {
   const { data: card } = useCard(cardId);
 
   const updateCardMutation = useUpdateCard();
+
+  const [showTitle, setShowTitle] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  // Track whether exit animation should play (false when switching cards)
+  const [shouldAnimateExit, setShouldAnimateExit] = useState(true);
+  const lastCardIdRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (
+      lastCardIdRef.current !== undefined &&
+      lastCardIdRef.current !== cardId
+    ) {
+      // Detect card switch - disable exit animation temporarily
+      setShouldAnimateExit(false);
+      setTimeout(() => {
+        setShouldAnimateExit(true);
+      }, 300);
+    } else {
+      // Same card or first load, enable exit animation
+      setShouldAnimateExit(true);
+    }
+    lastCardIdRef.current = cardId;
+  }, [cardId]);
+
+  useEffect(() => {
+    // Small delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      const sentinel = document.querySelector("#card-header-sentinel");
+      const scrollContainer = document.querySelector(
+        "#only-tt-scroll-container",
+      );
+      if (!sentinel || !scrollContainer) return;
+
+      // Clean up previous observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            // isIntersecting is false when sentinel has scrolled out of view
+            if (!entry.isIntersecting) {
+              setShowTitle(true);
+            } else {
+              setShowTitle(false);
+            }
+          });
+        },
+        {
+          root: scrollContainer,
+          rootMargin: "90px 0px 0px 0px",
+          threshold: 0,
+        },
+      );
+
+      observer.observe(sentinel);
+      observerRef.current = observer;
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [activeTabId]);
 
   const handleClose = useCallback(
     (e: Editor, changed: boolean) => {
@@ -189,35 +256,61 @@ export function CardHeader() {
               />
             </>
           ) : (
-            <div className="ml-auto flex items-center gap-2">
-              {/* Star / Bookmark button */}
-              <BookmarkButton
-                isBookmarked={card?.isBookmarked === 1}
-                onClick={toggleBookmark}
-              />
-
-              {/* Edit button */}
-              <Button
-                className={cn(
-                  "text-background h-8 rounded-sm px-3 text-sm font-medium",
-                  "bg-[#30D07A] hover:bg-[#28b86c] active:bg-[#22a05e]",
-                  "dark:bg-[#28b86c] dark:hover:bg-[#22a05e] dark:active:bg-[#1c8a50]",
+            <>
+              {/* Animated Card Title - shows on scroll */}
+              <AnimatePresence mode="wait" initial={false}>
+                {showTitle && card?.title && (
+                  <motion.div
+                    key={cardId}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      shouldAnimateExit ? { opacity: 0, y: -10 } : undefined
+                    }
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="flex min-w-0 items-center"
+                  >
+                    <Separator
+                      orientation="vertical"
+                      className="data-[orientation=vertical]:h-4"
+                    />
+                    <span className="text-foreground truncate px-2 text-sm font-medium">
+                      {card.title}
+                    </span>
+                  </motion.div>
                 )}
-                onClick={() => setTabEditable(activeTabId, true)}
-              >
-                {i18nText[language].edit}
-              </Button>
+              </AnimatePresence>
 
-              {/* More button */}
-              <MoreMenu
-                card={card}
-                onRename={() => setRenameDialogOpen(true)}
-                onMove={() => setMoveDialogOpen(true)}
-                onArchive={archiveCard}
-                onRestore={restoreCard}
-                onDelete={() => setDeleteDialogOpen(true)}
-              />
-            </div>
+              <div className="ml-auto flex items-center gap-2">
+                {/* Star / Bookmark button */}
+                <BookmarkButton
+                  isBookmarked={card?.isBookmarked === 1}
+                  onClick={toggleBookmark}
+                />
+
+                {/* Edit button */}
+                <Button
+                  className={cn(
+                    "text-background h-8 rounded-sm px-3 text-sm font-medium",
+                    "bg-[#30D07A] hover:bg-[#28b86c] active:bg-[#22a05e]",
+                    "dark:bg-[#28b86c] dark:hover:bg-[#22a05e] dark:active:bg-[#1c8a50]",
+                  )}
+                  onClick={() => setTabEditable(activeTabId, true)}
+                >
+                  {i18nText[language].edit}
+                </Button>
+
+                {/* More button */}
+                <MoreMenu
+                  card={card}
+                  onRename={() => setRenameDialogOpen(true)}
+                  onMove={() => setMoveDialogOpen(true)}
+                  onArchive={archiveCard}
+                  onRestore={restoreCard}
+                  onDelete={() => setDeleteDialogOpen(true)}
+                />
+              </div>
+            </>
           )}
         </div>
       </header>
