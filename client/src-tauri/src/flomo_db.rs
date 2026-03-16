@@ -270,7 +270,11 @@ impl<T: for<'de> serde::Deserialize<'de>> BackendWrapper<T> {
         if self.code == 200 {
             serde_json::from_value(self.message).map_err(|e| e.to_string())
         } else {
-            Err(self.message.as_str().unwrap_or("Unknown error").to_string())
+            Err(self
+                .message
+                .as_str()
+                .unwrap_or("Unknown error")
+                .to_string())
         }
     }
 }
@@ -330,7 +334,9 @@ impl FlomoDb {
         Ok(db)
     }
 
-    fn conn(&self) -> SqliteResult<r2d2::PooledConnection<SqliteConnectionManager>> {
+    fn conn(
+        &self,
+    ) -> SqliteResult<r2d2::PooledConnection<SqliteConnectionManager>> {
         self.pool
             .get()
             .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
@@ -563,10 +569,7 @@ impl FlomoDb {
         let now = current_time_ms();
 
         // Build dynamic SET clause from the updates JSON object
-        let obj = updates
-            .as_object()
-            .unwrap_or(&serde_json::Map::new())
-            .clone();
+        let obj = updates.as_object().unwrap_or(&serde_json::Map::new()).clone();
         if obj.is_empty() {
             // Just update timestamp and sync status
             conn.execute(
@@ -604,8 +607,7 @@ impl FlomoDb {
         let sql = format!("UPDATE cards SET {} WHERE id = ?", set_parts.join(", "));
         values.push(Box::new(id.to_string()));
 
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            values.iter().map(|v| v.as_ref()).collect();
+        let params_refs: Vec<&dyn rusqlite::types::ToSql> = values.iter().map(|v| v.as_ref()).collect();
         conn.execute(&sql, params_refs.as_slice())?;
         Ok(())
     }
@@ -702,7 +704,9 @@ impl FlomoDb {
             )
         };
         let mut stmt = conn.prepare(sql)?;
-        let rows = stmt.query_map(params, |row| Ok(row.get(0)?))?;
+        let rows = stmt.query_map(params, |row| {
+            Ok(row.get(0)?)
+        })?;
         rows.collect()
     }
 
@@ -721,7 +725,9 @@ impl FlomoDb {
             )
         };
         let mut stmt = conn.prepare(sql)?;
-        let rows = stmt.query_map(params, |row| Ok(row.get(0)?))?;
+        let rows = stmt.query_map(params, |row| {
+            Ok(row.get(0)?)
+        })?;
         rows.collect()
     }
 
@@ -843,10 +849,7 @@ impl FlomoDb {
         let conn = self.conn()?;
         let now = current_time_ms();
 
-        let obj = updates
-            .as_object()
-            .unwrap_or(&serde_json::Map::new())
-            .clone();
+        let obj = updates.as_object().unwrap_or(&serde_json::Map::new()).clone();
         if obj.is_empty() {
             conn.execute(
                 "UPDATE folders SET updated_at = ?1, sync_status = ?2 WHERE id = ?3",
@@ -883,8 +886,7 @@ impl FlomoDb {
         let sql = format!("UPDATE folders SET {} WHERE id = ?", set_parts.join(", "));
         values.push(Box::new(id.to_string()));
 
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            values.iter().map(|v| v.as_ref()).collect();
+        let params_refs: Vec<&dyn rusqlite::types::ToSql> = values.iter().map(|v| v.as_ref()).collect();
         conn.execute(&sql, params_refs.as_slice())?;
         Ok(())
     }
@@ -953,7 +955,9 @@ impl FlomoDb {
             )
         };
         let mut stmt = conn.prepare(sql)?;
-        let rows = stmt.query_map(params, |row| Ok(row.get(0)?))?;
+        let rows = stmt.query_map(params, |row| {
+            Ok(row.get(0)?)
+        })?;
         rows.collect()
     }
 
@@ -1040,10 +1044,7 @@ impl FlomoDb {
         let conn = self.conn()?;
         let now = current_time_ms();
 
-        let obj = updates
-            .as_object()
-            .unwrap_or(&serde_json::Map::new())
-            .clone();
+        let obj = updates.as_object().unwrap_or(&serde_json::Map::new()).clone();
         if obj.is_empty() {
             conn.execute(
                 "UPDATE tiptaps SET updated_at = ?1, sync_status = ?2 WHERE id = ?3",
@@ -1080,8 +1081,7 @@ impl FlomoDb {
         let sql = format!("UPDATE tiptaps SET {} WHERE id = ?", set_parts.join(", "));
         values.push(Box::new(id.to_string()));
 
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            values.iter().map(|v| v.as_ref()).collect();
+        let params_refs: Vec<&dyn rusqlite::types::ToSql> = values.iter().map(|v| v.as_ref()).collect();
         conn.execute(&sql, params_refs.as_slice())?;
         Ok(())
     }
@@ -1129,7 +1129,11 @@ impl FlomoDb {
         }
     }
 
-    pub fn get_tiptap_history(&self, id: &str, ts: i64) -> SqliteResult<serde_json::Value> {
+    pub fn get_tiptap_history(
+        &self,
+        id: &str,
+        ts: i64,
+    ) -> SqliteResult<serde_json::Value> {
         let conn = self.conn()?;
         let mut stmt = conn.prepare("SELECT history FROM tiptaps WHERE id = ?1")?;
         let mut rows = stmt.query_map(params![id], |row| {
@@ -1165,7 +1169,8 @@ impl FlomoDb {
                     serde_json::from_str(&history_str).unwrap_or_default();
                 match history.iter().find(|e| e.time == ts) {
                     Some(entry) => {
-                        let content_str = serde_json::to_string(&entry.content).unwrap_or_default();
+                        let content_str =
+                            serde_json::to_string(&entry.content).unwrap_or_default();
                         conn.execute(
                             "UPDATE tiptaps SET content = ?1, updated_at = ?2, sync_status = ?3 WHERE id = ?4",
                             params![content_str, now, SYNC_STATUS_PENDING, id],
@@ -1346,8 +1351,7 @@ impl FlomoDb {
             let value_str: String = row.get(1)?;
             Ok(SyncMeta {
                 key: row.get(0)?,
-                value: serde_json::from_str(&value_str)
-                    .unwrap_or(serde_json::Value::String(value_str)),
+                value: serde_json::from_str(&value_str).unwrap_or(serde_json::Value::String(value_str)),
             })
         })?;
         match rows.next() {
@@ -1435,12 +1439,14 @@ pub mod commands {
     static DB: OnceLock<FlomoDb> = OnceLock::new();
 
     pub fn init_db(app: &AppHandle) -> Result<(), String> {
-        let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let app_data_dir = app
+            .path()
+            .app_data_dir()
+            .map_err(|e| e.to_string())?;
         std::fs::create_dir_all(&app_data_dir).map_err(|e| e.to_string())?;
         let db_path = app_data_dir.join("flomo.db");
         let db = FlomoDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?;
-        DB.set(db)
-            .map_err(|_| "DB already initialized".to_string())?;
+        DB.set(db).map_err(|_| "DB already initialized".to_string())?;
         Ok(())
     }
 
@@ -1472,9 +1478,7 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_get_cards_in_folder(folder_id: String) -> Result<Vec<Card>, String> {
-        get_db()?
-            .get_cards_in_folder(&folder_id)
-            .map_err(|e| e.to_string())
+        get_db()?.get_cards_in_folder(&folder_id).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1494,9 +1498,7 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_update_card(id: String, updates: serde_json::Value) -> Result<(), String> {
-        get_db()?
-            .update_card(&id, &updates)
-            .map_err(|e| e.to_string())
+        get_db()?.update_card(&id, &updates).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1511,9 +1513,7 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_mark_card_synced(id: String, updated_at: i64) -> Result<(), String> {
-        get_db()?
-            .mark_card_synced(&id, updated_at)
-            .map_err(|e| e.to_string())
+        get_db()?.mark_card_synced(&id, updated_at).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1534,9 +1534,7 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_get_folders_in_parent(parent_id: String) -> Result<Vec<Folder>, String> {
-        get_db()?
-            .get_folders_in_parent(&parent_id)
-            .map_err(|e| e.to_string())
+        get_db()?.get_folders_in_parent(&parent_id).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1556,9 +1554,7 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_update_folder(id: String, updates: serde_json::Value) -> Result<(), String> {
-        get_db()?
-            .update_folder(&id, &updates)
-            .map_err(|e| e.to_string())
+        get_db()?.update_folder(&id, &updates).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1573,16 +1569,12 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_mark_folder_synced(id: String, updated_at: i64) -> Result<(), String> {
-        get_db()?
-            .mark_folder_synced(&id, updated_at)
-            .map_err(|e| e.to_string())
+        get_db()?.mark_folder_synced(&id, updated_at).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
     pub fn flomo_get_bookmarked_folders() -> Result<Vec<Folder>, String> {
-        get_db()?
-            .get_bookmarked_folders()
-            .map_err(|e| e.to_string())
+        get_db()?.get_bookmarked_folders().map_err(|e| e.to_string())
     }
 
     // Tiptaps
@@ -1608,16 +1600,12 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_sync_tiptap(id: String, content: serde_json::Value) -> Result<(), String> {
-        get_db()?
-            .sync_tiptap(&id, &content)
-            .map_err(|e| e.to_string())
+        get_db()?.sync_tiptap(&id, &content).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
     pub fn flomo_update_tiptap(id: String, updates: serde_json::Value) -> Result<(), String> {
-        get_db()?
-            .update_tiptap(&id, &updates)
-            .map_err(|e| e.to_string())
+        get_db()?.update_tiptap(&id, &updates).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1632,30 +1620,22 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_mark_tiptap_synced(id: String, updated_at: i64) -> Result<(), String> {
-        get_db()?
-            .mark_tiptap_synced(&id, updated_at)
-            .map_err(|e| e.to_string())
+        get_db()?.mark_tiptap_synced(&id, updated_at).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
     pub fn flomo_list_tiptap_history(id: String) -> Result<Vec<i64>, String> {
-        get_db()?
-            .list_tiptap_history(&id)
-            .map_err(|e| e.to_string())
+        get_db()?.list_tiptap_history(&id).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
     pub fn flomo_get_tiptap_history(id: String, ts: i64) -> Result<serde_json::Value, String> {
-        get_db()?
-            .get_tiptap_history(&id, ts)
-            .map_err(|e| e.to_string())
+        get_db()?.get_tiptap_history(&id, ts).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
     pub fn flomo_restore_tiptap_history(id: String, ts: i64) -> Result<(), String> {
-        get_db()?
-            .restore_tiptap_history(&id, ts)
-            .map_err(|e| e.to_string())
+        get_db()?.restore_tiptap_history(&id, ts).map_err(|e| e.to_string())
     }
 
     // Sync
@@ -1666,9 +1646,7 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_get_local_data_for_sync() -> Result<PendingChanges, String> {
-        get_db()?
-            .get_local_data_for_sync()
-            .map_err(|e| e.to_string())
+        get_db()?.get_local_data_for_sync().map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1678,16 +1656,12 @@ pub mod commands {
 
     #[tauri::command]
     pub fn flomo_set_sync_meta(key: String, value: serde_json::Value) -> Result<(), String> {
-        get_db()?
-            .set_sync_meta(&key, &value)
-            .map_err(|e| e.to_string())
+        get_db()?.set_sync_meta(&key, &value).map_err(|e| e.to_string())
     }
 
     #[tauri::command]
     pub fn flomo_get_last_server_version() -> Result<i64, String> {
-        get_db()?
-            .get_last_server_version()
-            .map_err(|e| e.to_string())
+        get_db()?.get_last_server_version().map_err(|e| e.to_string())
     }
 
     #[tauri::command]
@@ -1713,10 +1687,7 @@ pub mod commands {
             .map_err(|e| format!("Failed to send full sync request: {}", e))?;
 
         if !response.status().is_success() {
-            return Err(format!(
-                "Full sync failed with status: {}",
-                response.status()
-            ));
+            return Err(format!("Full sync failed with status: {}", response.status()));
         }
 
         response
@@ -2608,7 +2579,8 @@ mod tests {
 
         assert!(db.get_sync_meta("testKey").unwrap().is_none());
 
-        db.set_sync_meta("testKey", &serde_json::json!(42)).unwrap();
+        db.set_sync_meta("testKey", &serde_json::json!(42))
+            .unwrap();
         let meta = db.get_sync_meta("testKey").unwrap().unwrap();
         assert_eq!(meta.value, serde_json::json!(42));
 
