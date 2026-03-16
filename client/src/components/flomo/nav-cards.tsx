@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Archive,
@@ -46,6 +46,10 @@ import {
   DeleteCardDialog,
 } from "./card-dialogs";
 import { cn, isTouchDevice } from "@/lib/utils";
+import { draggable, dropTargetForElements, monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { attachClosestEdge, extractClosestEdge, type Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { generateKeyBetween } from "fractional-indexing";
 
 interface NavCardsProps {
   currentFolderId: string;
@@ -133,6 +137,63 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
     title: string;
   } | null>(null);
 
+  const sortedCards = cards
+    ?.slice()
+    .sort((a, b) =>
+      (a.payload.sortOrder ?? "").localeCompare(b.payload.sortOrder ?? ""),
+    );
+
+  // Monitor for drag-and-drop reordering
+  useEffect(() => {
+    return monitorForElements({
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0];
+        if (!target || !sortedCards) return;
+
+        const sourceType = source.data.type as string;
+        const targetType = target.data.type as string;
+
+        // Handle card reorder
+        if (sourceType === "card" && targetType === "card") {
+          const sourceId = source.data.id as string;
+          const targetId = target.data.id as string;
+          if (sourceId === targetId) return;
+
+          const edge = extractClosestEdge(target.data);
+          const targetIndex = sortedCards.findIndex((c) => c.id === targetId);
+          if (targetIndex === -1) return;
+
+          const sourceCard = sortedCards.find((c) => c.id === sourceId);
+          if (!sourceCard) return;
+
+          let before: string | null;
+          let after: string | null;
+          if (edge === "top") {
+            before =
+              targetIndex > 0
+                ? sortedCards[targetIndex - 1].payload.sortOrder
+                : null;
+            after = sortedCards[targetIndex].payload.sortOrder;
+          } else {
+            before = sortedCards[targetIndex].payload.sortOrder;
+            after =
+              targetIndex < sortedCards.length - 1
+                ? sortedCards[targetIndex + 1].payload.sortOrder
+                : null;
+          }
+
+          const newSortOrder = generateKeyBetween(before, after);
+          updateCardMutation.mutate({
+            id: sourceId,
+            data: {
+              payload: { ...sourceCard.payload, sortOrder: newSortOrder },
+            },
+          });
+        }
+      },
+    });
+  }, [sortedCards, updateCardMutation]);
+
   return (
     <>
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -146,132 +207,41 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
             transition={folderTransition}
           >
             <SidebarMenu>
-              {cards
-                ?.sort((a, b) => b.createdAt - a.createdAt)
-                .map((card) => (
-                  <SidebarMenuItem key={card.id} className="cursor-pointer">
-                    <SidebarMenuButton
-                      asChild
-                      className={cn(
-                        "gap-0",
-                        activeTabId === card.draft
-                          ? "bg-tab-highlight hover:bg-tab-highlight/30 dark:hover:bg-tab-highlight/70 shadow-sm"
-                          : "",
-                      )}
-                      onClick={() => {
-                        openCard(card);
-                        if (isMobile) toggleSidebar();
-                      }}
-                    >
-                      <div>
-                        <EmojiPicker
-                          onSelectEmoji={(emoji) => {
-                            return changeEmoji(card, emoji);
-                          }}
-                        >
-                          <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
-                            {card.payload.emoji || "📄"}
-                          </span>
-                        </EmojiPicker>
-
-                        <span>{card.title}</span>
-                        {card.isBookmarked === 1 && (
-                          <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
-                        )}
-                      </div>
-                    </SidebarMenuButton>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction
-                          showOnHover={isTouchDevice ? false : true}
-                        >
-                          <MoreHorizontal />
-                          <span className="sr-only">More</span>
-                        </SidebarMenuAction>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-48"
-                        side={isMobile ? "bottom" : "right"}
-                        align={isMobile ? "end" : "start"}
-                        onCloseAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <DropdownMenuItem
-                          onClick={() =>
-                            card.isBookmarked === 1
-                              ? unbookmarkCard(card.id)
-                              : bookmarkCard(card.id)
-                          }
-                        >
-                          {card.isBookmarked === 1 ? (
-                            <>
-                              <StarOff className="text-muted-foreground" />
-                              <span>{i18nText[language].unbookmark}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Star className="text-muted-foreground" />
-                              <span>{i18nText[language].bookmark}</span>
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        {card.isArchived === 0 && <DropdownMenuSeparator />}
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setRenamingCard(card);
-                            setRenameDialogOpen(true);
-                          }}
-                        >
-                          <TextCursorInput className="text-muted-foreground" />
-                          <span>{i18nText[language].rename}</span>
-                        </DropdownMenuItem>
-                        {card.isArchived === 0 && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setMovingCard(card);
-                                setMoveDialogOpen(true);
-                              }}
-                            >
-                              <FolderInput className="text-muted-foreground" />
-                              <span>{i18nText[language].move}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        {card.isArchived === 0 ? (
-                          <DropdownMenuItem
-                            className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                            onClick={() =>
-                              archiveCard(card.id).then(() =>
-                                closeTab(card.draft),
-                              )
-                            }
-                          >
-                            <Archive className="text-yellow-700 dark:text-yellow-600" />
-                            <span>{i18nText[language].archive}</span>
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onClick={() => restoreCard(card.id)}
-                          >
-                            <ArchiveRestore className="text-muted-foreground" />
-                            <span>{i18nText[language].restore}</span>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => {
-                            setDeletingCard(card);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="text-destructive" />
-                          <span>{i18nText[language].delete}</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
-                ))}
+              {sortedCards?.map((card) => (
+                <DraggableCardItem
+                  key={card.id}
+                  card={card}
+                  isMobile={isMobile}
+                  language={language}
+                  isActive={activeTabId === card.draft}
+                  onOpen={() => {
+                    openCard(card);
+                    if (isMobile) toggleSidebar();
+                  }}
+                  onChangeEmoji={(emoji) => changeEmoji(card, emoji)}
+                  onBookmark={() =>
+                    card.isBookmarked === 1
+                      ? unbookmarkCard(card.id)
+                      : bookmarkCard(card.id)
+                  }
+                  onRename={() => {
+                    setRenamingCard(card);
+                    setRenameDialogOpen(true);
+                  }}
+                  onMove={() => {
+                    setMovingCard(card);
+                    setMoveDialogOpen(true);
+                  }}
+                  onArchive={() =>
+                    archiveCard(card.id).then(() => closeTab(card.draft))
+                  }
+                  onRestore={() => restoreCard(card.id)}
+                  onDelete={() => {
+                    setDeletingCard(card);
+                    setDeleteDialogOpen(true);
+                  }}
+                />
+              ))}
             </SidebarMenu>
           </motion.div>
         </AnimatePresence>
@@ -293,6 +263,194 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
         card={deletingCard!}
       />
     </>
+  );
+}
+
+// ─── DraggableCardItem ────────────────────────────────────────────────
+
+interface DraggableCardItemProps {
+  card: Omit<Card, "rawText">;
+  isMobile: boolean;
+  language: string;
+  isActive: boolean;
+  onOpen: () => void;
+  onChangeEmoji: (emoji: string) => Promise<void>;
+  onBookmark: () => void;
+  onRename: () => void;
+  onMove: () => void;
+  onArchive: () => void;
+  onRestore: () => void;
+  onDelete: () => void;
+}
+
+function DraggableCardItem({
+  card,
+  isMobile,
+  language,
+  isActive,
+  onOpen,
+  onChangeEmoji,
+  onBookmark,
+  onRename,
+  onMove,
+  onArchive,
+  onRestore,
+  onDelete,
+}: DraggableCardItemProps) {
+  const itemRef = useRef<HTMLLIElement>(null);
+  const dragHandleRef = useRef<HTMLSpanElement>(null);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const el = itemRef.current;
+    const handle = dragHandleRef.current;
+    if (!el || !handle) return;
+
+    return combine(
+      draggable({
+        element: el,
+        dragHandle: handle,
+        getInitialData: () => ({
+          type: "card",
+          id: card.id,
+          sortOrder: card.payload.sortOrder,
+          payload: card.payload,
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element: el,
+        getData: ({ input, element }) =>
+          attachClosestEdge(
+            {
+              type: "card",
+              id: card.id,
+              sortOrder: card.payload.sortOrder,
+            },
+            { input, element, allowedEdges: ["top", "bottom"] },
+          ),
+        canDrop: ({ source }) =>
+          source.data.type === "card" && source.data.id !== card.id,
+        onDragEnter: ({ self }) =>
+          setClosestEdge(extractClosestEdge(self.data)),
+        onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+      }),
+    );
+  }, [card.id, card.payload.sortOrder, card.payload]);
+
+  return (
+    <SidebarMenuItem
+      ref={itemRef}
+      className={cn(
+        "relative cursor-pointer",
+        isDragging && "opacity-50",
+      )}
+    >
+      {closestEdge === "top" && (
+        <div className="bg-primary pointer-events-none absolute top-0 right-0 left-0 h-0.5" />
+      )}
+      <SidebarMenuButton
+        asChild
+        className={cn(
+          "gap-0",
+          isActive
+            ? "bg-tab-highlight hover:bg-tab-highlight/30 dark:hover:bg-tab-highlight/70 shadow-sm"
+            : "",
+        )}
+        onClick={onOpen}
+      >
+        <div>
+          <EmojiPicker
+            onSelectEmoji={(emoji) => {
+              return onChangeEmoji(emoji);
+            }}
+          >
+            <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
+              {card.payload.emoji || "📄"}
+            </span>
+          </EmojiPicker>
+
+          <span ref={dragHandleRef} className="cursor-grab">
+            {card.title}
+          </span>
+          {card.isBookmarked === 1 && (
+            <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
+          )}
+        </div>
+      </SidebarMenuButton>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction
+            showOnHover={isTouchDevice ? false : true}
+          >
+            <MoreHorizontal />
+            <span className="sr-only">More</span>
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-48"
+          side={isMobile ? "bottom" : "right"}
+          align={isMobile ? "end" : "start"}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <DropdownMenuItem onClick={onBookmark}>
+            {card.isBookmarked === 1 ? (
+              <>
+                <StarOff className="text-muted-foreground" />
+                <span>{i18nText[language].unbookmark}</span>
+              </>
+            ) : (
+              <>
+                <Star className="text-muted-foreground" />
+                <span>{i18nText[language].bookmark}</span>
+              </>
+            )}
+          </DropdownMenuItem>
+          {card.isArchived === 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem onClick={onRename}>
+            <TextCursorInput className="text-muted-foreground" />
+            <span>{i18nText[language].rename}</span>
+          </DropdownMenuItem>
+          {card.isArchived === 0 && (
+            <>
+              <DropdownMenuItem onClick={onMove}>
+                <FolderInput className="text-muted-foreground" />
+                <span>{i18nText[language].move}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {card.isArchived === 0 ? (
+            <DropdownMenuItem
+              className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+              onClick={onArchive}
+            >
+              <Archive className="text-yellow-700 dark:text-yellow-600" />
+              <span>{i18nText[language].archive}</span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={onRestore}>
+              <ArchiveRestore className="text-muted-foreground" />
+              <span>{i18nText[language].restore}</span>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="text-destructive" />
+            <span>{i18nText[language].delete}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {closestEdge === "bottom" && (
+        <div className="bg-primary pointer-events-none absolute right-0 bottom-0 left-0 h-0.5" />
+      )}
+    </SidebarMenuItem>
   );
 }
 

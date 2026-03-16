@@ -62,6 +62,12 @@ export interface IFlomoDatabase {
   getTiptapHistory(id: string, ts: number): Promise<Record<string, unknown>>;
   restoreTiptapHistory(id: string, ts: number): Promise<void>;
 
+  // Order
+  lastOrderInFolder(
+    folderId: string,
+    type: "card" | "folder",
+  ): Promise<string | null>;
+
   // Sync
   getPendingChanges(): Promise<FlomoData>;
   getLocalDataForSync(): Promise<FlomoData>;
@@ -195,6 +201,14 @@ export class RefreshDecorator implements IFlomoDatabase {
 
   async getBookmarkedFolders(): Promise<Folder[]> {
     return this.baseDb.getBookmarkedFolders();
+  }
+
+  // Order
+  async lastOrderInFolder(
+    folderId: string,
+    type: "card" | "folder",
+  ): Promise<string | null> {
+    return this.baseDb.lastOrderInFolder(folderId, type);
   }
 
   // Tiptaps

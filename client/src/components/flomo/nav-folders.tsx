@@ -51,6 +51,7 @@ import {
   useDeleteFolder,
   useFolderPath,
 } from "@/hooks/flomo/use-folders";
+import { useUpdateCard } from "@/hooks/flomo/use-cards";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Folder } from "@/lib/flomo/model";
@@ -60,7 +61,11 @@ import {
 } from "@/lib/flomo/animations";
 import { Fragment } from "react";
 import { EmojiPicker } from "./emoji-picker";
-import { isTouchDevice } from "@/lib/utils";
+import { cn, isTouchDevice } from "@/lib/utils";
+import { draggable, dropTargetForElements, monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { attachClosestEdge, extractClosestEdge, type Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { generateKeyBetween } from "fractional-indexing";
 
 interface NavFoldersProps {
   currentFolderId: string;
@@ -73,6 +78,7 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
   const { setCurrentFolderId } = useAppState();
 
   const updateFolderMutation = useUpdateFolder();
+  const updateCardMutation = useUpdateCard();
   const changeEmoji = (folder: Folder, emoji: string) => {
     return updateFolderMutation.mutateAsync({
       id: folder.id,
@@ -134,6 +140,88 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     title: string;
   } | null>(null);
 
+  const sortedFolders = folders
+    ?.slice()
+    .sort((a, b) =>
+      (a.payload.sortOrder ?? "").localeCompare(b.payload.sortOrder ?? ""),
+    );
+
+  // Monitor for drag-and-drop reordering
+  useEffect(() => {
+    return monitorForElements({
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0];
+        if (!target || !sortedFolders) return;
+
+        const sourceType = source.data.type as string;
+        const targetType = target.data.type as string;
+
+        // Handle folder reorder
+        if (sourceType === "folder" && targetType === "folder") {
+          const sourceId = source.data.id as string;
+          const targetId = target.data.id as string;
+          if (sourceId === targetId) return;
+
+          const edge = extractClosestEdge(target.data);
+          const targetIndex = sortedFolders.findIndex(
+            (f) => f.id === targetId,
+          );
+          if (targetIndex === -1) return;
+
+          const sourceFolder = sortedFolders.find((f) => f.id === sourceId);
+          if (!sourceFolder) return;
+
+          let before: string | null;
+          let after: string | null;
+          if (edge === "top") {
+            before =
+              targetIndex > 0
+                ? sortedFolders[targetIndex - 1].payload.sortOrder
+                : null;
+            after = sortedFolders[targetIndex].payload.sortOrder;
+          } else {
+            before = sortedFolders[targetIndex].payload.sortOrder;
+            after =
+              targetIndex < sortedFolders.length - 1
+                ? sortedFolders[targetIndex + 1].payload.sortOrder
+                : null;
+          }
+
+          const newSortOrder = generateKeyBetween(before, after);
+          updateFolderMutation.mutate({
+            id: sourceId,
+            data: {
+              payload: { ...sourceFolder.payload, sortOrder: newSortOrder },
+            },
+          });
+        }
+
+        // Handle card dropped onto folder (move card into folder)
+        if (sourceType === "card" && targetType === "folder") {
+          const cardId = source.data.id as string;
+          const targetFolderId = target.data.id as string;
+
+          flomoDatabase
+            .lastOrderInFolder(targetFolderId, "card")
+            .then((lastOrder) => {
+              const newSortOrder = generateKeyBetween(lastOrder, null);
+              const cardPayload = source.data.payload as Record<
+                string,
+                unknown
+              >;
+              updateCardMutation.mutate({
+                id: cardId,
+                data: {
+                  folderId: targetFolderId,
+                  payload: { ...cardPayload, sortOrder: newSortOrder },
+                },
+              });
+            });
+        }
+      },
+    });
+  }, [sortedFolders, updateFolderMutation, updateCardMutation]);
+
   return (
     <>
       <SidebarGroup>
@@ -147,120 +235,35 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
             transition={folderTransition}
           >
             <SidebarMenu>
-              {folders
-                ?.sort((a, b) => a.title.localeCompare(b.title))
-                .map((folder) => (
-                  <SidebarMenuItem key={folder.id} className="cursor-pointer">
-                    <SidebarMenuButton
-                      asChild
-                      className="gap-0"
-                      onClick={() => setCurrentFolderId(folder.id)}
-                    >
-                      <div>
-                        <EmojiPicker
-                          onSelectEmoji={(emoji) => {
-                            return changeEmoji(folder, emoji);
-                          }}
-                        >
-                          <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
-                            {folder.payload.emoji || "📂"}
-                          </span>
-                        </EmojiPicker>
-
-                        <span>{folder.title}</span>
-                        {folder.isBookmarked === 1 && (
-                          <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
-                        )}
-                      </div>
-                    </SidebarMenuButton>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction
-                          showOnHover={isTouchDevice ? false : true}
-                        >
-                          <MoreHorizontal />
-                          <span className="sr-only">More</span>
-                        </SidebarMenuAction>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-48"
-                        side={isMobile ? "bottom" : "right"}
-                        align={isMobile ? "end" : "start"}
-                        onCloseAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <DropdownMenuItem
-                          onClick={() =>
-                            folder.isBookmarked === 1
-                              ? unbookmarkFolder(folder.id)
-                              : bookmarkFolder(folder.id)
-                          }
-                        >
-                          {folder.isBookmarked === 1 ? (
-                            <>
-                              <StarOff className="text-muted-foreground" />
-                              <span>{i18nText[language].unbookmark}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Star className="text-muted-foreground" />
-                              <span>{i18nText[language].bookmark}</span>
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        {folder.isArchived === 0 && <DropdownMenuSeparator />}
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setRenamingFolder(folder);
-                            setRenameDialogOpen(true);
-                          }}
-                        >
-                          <TextCursorInput className="text-muted-foreground" />
-                          <span>{i18nText[language].rename}</span>
-                        </DropdownMenuItem>
-                        {folder.isArchived === 0 && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setMovingFolder(folder);
-                                setMoveDialogOpen(true);
-                              }}
-                            >
-                              <FolderInput className="text-muted-foreground" />
-                              <span>{i18nText[language].move}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        {folder.isArchived === 0 ? (
-                          <DropdownMenuItem
-                            className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                            onClick={() => archiveFolder(folder.id)}
-                          >
-                            <Archive className="text-yellow-700 dark:text-yellow-600" />
-                            <span>{i18nText[language].archive}</span>
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onClick={() => restoreFolder(folder.id)}
-                          >
-                            <ArchiveRestore className="text-muted-foreground" />
-                            <span>{i18nText[language].restore}</span>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => {
-                            setDeletingFolder(folder);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="text-destructive" />
-                          <span>{i18nText[language].delete}</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
-                ))}
+              {sortedFolders?.map((folder) => (
+                <DraggableFolderItem
+                  key={folder.id}
+                  folder={folder}
+                  isMobile={isMobile}
+                  language={language}
+                  onNavigate={() => setCurrentFolderId(folder.id)}
+                  onChangeEmoji={(emoji) => changeEmoji(folder, emoji)}
+                  onBookmark={() =>
+                    folder.isBookmarked === 1
+                      ? unbookmarkFolder(folder.id)
+                      : bookmarkFolder(folder.id)
+                  }
+                  onRename={() => {
+                    setRenamingFolder(folder);
+                    setRenameDialogOpen(true);
+                  }}
+                  onMove={() => {
+                    setMovingFolder(folder);
+                    setMoveDialogOpen(true);
+                  }}
+                  onArchive={() => archiveFolder(folder.id)}
+                  onRestore={() => restoreFolder(folder.id)}
+                  onDelete={() => {
+                    setDeletingFolder(folder);
+                    setDeleteDialogOpen(true);
+                  }}
+                />
+              ))}
             </SidebarMenu>
           </motion.div>
         </AnimatePresence>
@@ -282,6 +285,187 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
         folder={deletingFolder!}
       />
     </>
+  );
+}
+
+// ─── DraggableFolderItem ───────────────────────────────────────────────
+
+interface DraggableFolderItemProps {
+  folder: Folder;
+  isMobile: boolean;
+  language: string;
+  onNavigate: () => void;
+  onChangeEmoji: (emoji: string) => Promise<void>;
+  onBookmark: () => void;
+  onRename: () => void;
+  onMove: () => void;
+  onArchive: () => void;
+  onRestore: () => void;
+  onDelete: () => void;
+}
+
+function DraggableFolderItem({
+  folder,
+  isMobile,
+  language,
+  onNavigate,
+  onChangeEmoji,
+  onBookmark,
+  onRename,
+  onMove,
+  onArchive,
+  onRestore,
+  onDelete,
+}: DraggableFolderItemProps) {
+  const itemRef = useRef<HTMLLIElement>(null);
+  const dragHandleRef = useRef<HTMLSpanElement>(null);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const el = itemRef.current;
+    const handle = dragHandleRef.current;
+    if (!el || !handle) return;
+
+    return combine(
+      draggable({
+        element: el,
+        dragHandle: handle,
+        getInitialData: () => ({
+          type: "folder",
+          id: folder.id,
+          sortOrder: folder.payload.sortOrder,
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element: el,
+        getData: ({ input, element }) =>
+          attachClosestEdge(
+            {
+              type: "folder",
+              id: folder.id,
+              sortOrder: folder.payload.sortOrder,
+            },
+            { input, element, allowedEdges: ["top", "bottom"] },
+          ),
+        canDrop: ({ source }) =>
+          source.data.id !== folder.id &&
+          (source.data.type === "folder" || source.data.type === "card"),
+        onDragEnter: ({ self }) =>
+          setClosestEdge(extractClosestEdge(self.data)),
+        onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
+        onDragLeave: () => setClosestEdge(null),
+        onDrop: () => setClosestEdge(null),
+      }),
+    );
+  }, [folder.id, folder.payload.sortOrder]);
+
+  return (
+    <SidebarMenuItem
+      ref={itemRef}
+      className={cn(
+        "relative cursor-pointer",
+        isDragging && "opacity-50",
+      )}
+    >
+      {closestEdge === "top" && (
+        <div className="bg-primary pointer-events-none absolute top-0 right-0 left-0 h-0.5" />
+      )}
+      <SidebarMenuButton
+        asChild
+        className="gap-0"
+        onClick={onNavigate}
+      >
+        <div>
+          <EmojiPicker
+            onSelectEmoji={(emoji) => {
+              return onChangeEmoji(emoji);
+            }}
+          >
+            <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
+              {folder.payload.emoji || "📂"}
+            </span>
+          </EmojiPicker>
+
+          <span ref={dragHandleRef} className="cursor-grab">
+            {folder.title}
+          </span>
+          {folder.isBookmarked === 1 && (
+            <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
+          )}
+        </div>
+      </SidebarMenuButton>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction
+            showOnHover={isTouchDevice ? false : true}
+          >
+            <MoreHorizontal />
+            <span className="sr-only">More</span>
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-48"
+          side={isMobile ? "bottom" : "right"}
+          align={isMobile ? "end" : "start"}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <DropdownMenuItem onClick={onBookmark}>
+            {folder.isBookmarked === 1 ? (
+              <>
+                <StarOff className="text-muted-foreground" />
+                <span>{i18nText[language].unbookmark}</span>
+              </>
+            ) : (
+              <>
+                <Star className="text-muted-foreground" />
+                <span>{i18nText[language].bookmark}</span>
+              </>
+            )}
+          </DropdownMenuItem>
+          {folder.isArchived === 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem onClick={onRename}>
+            <TextCursorInput className="text-muted-foreground" />
+            <span>{i18nText[language].rename}</span>
+          </DropdownMenuItem>
+          {folder.isArchived === 0 && (
+            <>
+              <DropdownMenuItem onClick={onMove}>
+                <FolderInput className="text-muted-foreground" />
+                <span>{i18nText[language].move}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {folder.isArchived === 0 ? (
+            <DropdownMenuItem
+              className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+              onClick={onArchive}
+            >
+              <Archive className="text-yellow-700 dark:text-yellow-600" />
+              <span>{i18nText[language].archive}</span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={onRestore}>
+              <ArchiveRestore className="text-muted-foreground" />
+              <span>{i18nText[language].restore}</span>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="text-destructive" />
+            <span>{i18nText[language].delete}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {closestEdge === "bottom" && (
+        <div className="bg-primary pointer-events-none absolute right-0 bottom-0 left-0 h-0.5" />
+      )}
+    </SidebarMenuItem>
   );
 }
 
@@ -400,10 +584,18 @@ function MoveFolderDialog({ open, setOpen, folder }: MoveFolderDialogProps) {
     }
   }, [path]);
 
-  const moveFolder = () => {
+  const moveFolder = async () => {
+    const lastOrder = await flomoDatabase.lastOrderInFolder(
+      navigateFolderId,
+      "folder",
+    );
+    const newSortOrder = generateKeyBetween(lastOrder, null);
     return updateFolderMutation.mutateAsync({
       id: folder!.id,
-      data: { parentId: navigateFolderId },
+      data: {
+        parentId: navigateFolderId,
+        payload: { ...folder!.payload, sortOrder: newSortOrder },
+      },
     });
   };
 
@@ -466,7 +658,11 @@ function MoveFolderDialog({ open, setOpen, folder }: MoveFolderDialogProps) {
             ) : (
               <div className="flex flex-col">
                 {foldersInParent
-                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .sort((a, b) =>
+                    (a.payload.sortOrder ?? "").localeCompare(
+                      b.payload.sortOrder ?? "",
+                    ),
+                  )
                   .map((f) => (
                     <button
                       key={f.id}
