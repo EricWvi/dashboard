@@ -55,7 +55,7 @@ export function AppSidebar() {
         <NavPath currentFolderId={currentFolderId} />
       </SidebarHeader>
       <SidebarContent
-        className="pb-10"
+        className="scrollbar-hide pb-10"
         style={{
           maskImage: `linear-gradient(
             to bottom,

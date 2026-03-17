@@ -48,6 +48,7 @@ pub fn run() {
       flomo_db::commands::flomo_soft_delete_folder,
       flomo_db::commands::flomo_mark_folder_synced,
       flomo_db::commands::flomo_get_bookmarked_folders,
+      flomo_db::commands::flomo_last_order_in_folder,
       flomo_db::commands::flomo_get_tiptap,
       flomo_db::commands::flomo_add_tiptap,
       flomo_db::commands::flomo_put_tiptap,

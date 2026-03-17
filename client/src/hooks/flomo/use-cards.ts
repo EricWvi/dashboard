@@ -3,6 +3,7 @@ import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { type CardField, type CardPayload } from "@/lib/flomo/model";
 import keys from "./query-keys";
 import { createTiptapWithTitle } from "@/hooks/flomo/use-tiptapv2";
+import { generateKeyBetween } from "fractional-indexing";
 
 /**
  * Hook to fetch cards in a specific folder
@@ -41,11 +42,17 @@ export function useCreateCard() {
     mutationFn: async (data: {
       folderId: string;
       title: string;
-      payload: CardPayload;
+      payload: Omit<CardPayload, "sortOrder">;
     }) => {
+      const lastOrder = await flomoDatabase.lastOrderInFolder(
+        data.folderId,
+        "card",
+      );
+      const sortOrder = generateKeyBetween(lastOrder, null);
       const draftId = await createTiptapWithTitle(data.title);
       return flomoDatabase.addCard({
         ...data,
+        payload: { ...data.payload, sortOrder },
         draft: draftId,
         rawText: "",
         isBookmarked: 0,
