@@ -21,6 +21,7 @@ import { useUpdateCard, useDeleteCard } from "@/hooks/flomo/use-cards";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card, type Folder } from "@/lib/flomo/model";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
+import { generateKeyBetween } from "fractional-indexing";
 
 // ─── RenameCardDialog ────────────────────────────────────────────────
 interface RenameCardDialogProps {
@@ -138,10 +139,18 @@ export function MoveCardDialog({ open, setOpen, card }: MoveCardDialogProps) {
     }
   }, [path]);
 
-  const moveCard = () => {
+  const moveCard = async () => {
+    const lastOrder = await flomoDatabase.lastOrderInFolder(
+      navigateFolderId,
+      "card",
+    );
+    const newSortOrder = generateKeyBetween(lastOrder, null);
     return updateCardMutation.mutateAsync({
       id: card!.id,
-      data: { folderId: navigateFolderId },
+      data: {
+        folderId: navigateFolderId,
+        payload: { ...card!.payload, sortOrder: newSortOrder },
+      },
     });
   };
 
@@ -163,7 +172,7 @@ export function MoveCardDialog({ open, setOpen, card }: MoveCardDialogProps) {
           <Breadcrumb>
             <BreadcrumbList
               ref={scrollRef}
-              className="flex-nowrap overflow-x-auto whitespace-nowrap"
+              className="scrollbar-hide flex-nowrap overflow-x-auto whitespace-nowrap"
             >
               <BreadcrumbItem
                 className="cursor-pointer"
@@ -204,7 +213,9 @@ export function MoveCardDialog({ open, setOpen, card }: MoveCardDialogProps) {
             ) : (
               <div className="flex flex-col">
                 {foldersInParent
-                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .sort((a, b) =>
+                    a.payload.sortOrder < b.payload.sortOrder ? -1 : 1,
+                  )
                   .map((f) => (
                     <button
                       key={f.id}

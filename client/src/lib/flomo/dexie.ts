@@ -224,6 +224,38 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
       .toArray();
   }
 
+  // Order
+  async lastOrderInFolder(
+    folderId: string,
+    type: "card" | "folder",
+  ): Promise<string | null> {
+    if (type === "card") {
+      const cards = await this.db.cards
+        .where("folderId")
+        .equals(folderId)
+        .and((card) => !card.isDeleted && card.isArchived === 0)
+        .toArray();
+      const orders = cards
+        .map((c) => c.payload.sortOrder)
+        .filter(Boolean);
+      if (orders.length === 0) return null;
+      orders.sort();
+      return orders[orders.length - 1];
+    } else {
+      const folders = await this.db.folders
+        .where("parentId")
+        .equals(folderId)
+        .and((folder) => !folder.isDeleted && folder.isArchived === 0)
+        .toArray();
+      const orders = folders
+        .map((f) => f.payload.sortOrder)
+        .filter(Boolean);
+      if (orders.length === 0) return null;
+      orders.sort();
+      return orders[orders.length - 1];
+    }
+  }
+
   // Tiptaps
   async getTiptap(id: string): Promise<TiptapV2 | undefined> {
     return this.db.tiptaps.get(id);

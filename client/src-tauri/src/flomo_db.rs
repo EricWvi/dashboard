@@ -14,10 +14,11 @@ struct MigrationStep {
 }
 
 fn migrations() -> Vec<MigrationStep> {
-    vec![MigrationStep {
-        version: "v0.1.0",
-        name: "Create user+cards+folders+tiptaps+sync_meta+migration",
-        sql: "
+    vec![
+        MigrationStep {
+            version: "v0.1.0",
+            name: "Create user+cards+folders+tiptaps+sync_meta+migration",
+            sql: "
             CREATE TABLE IF NOT EXISTS user (
                 key TEXT PRIMARY KEY,
                 username TEXT NOT NULL,
@@ -64,7 +65,7 @@ fn migrations() -> Vec<MigrationStep> {
             END;
 
             CREATE TRIGGER cards_au AFTER UPDATE OF title ON cards BEGIN
-            UPDATE cards_title_search SET title = new.title WHERE id = old.id;
+            INSERT OR REPLACE INTO cards_title_search(id, title) VALUES (new.id, new.title);
             END;
 
             CREATE VIRTUAL TABLE cards_raw_text_search USING fts5(
@@ -82,7 +83,7 @@ fn migrations() -> Vec<MigrationStep> {
             END;
 
             CREATE TRIGGER cards_text_au AFTER UPDATE OF raw_text ON cards BEGIN
-            UPDATE cards_raw_text_search SET raw_text = new.raw_text WHERE id = old.id;
+            INSERT OR REPLACE INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
             END;
 
 
@@ -119,7 +120,7 @@ fn migrations() -> Vec<MigrationStep> {
             END;
 
             CREATE TRIGGER folders_au AFTER UPDATE OF title ON folders BEGIN
-            UPDATE folders_title_search SET title = new.title WHERE id = old.id;
+            INSERT OR REPLACE INTO folders_title_search(id, title) VALUES (new.id, new.title);
             END;
 
 
@@ -140,7 +141,8 @@ fn migrations() -> Vec<MigrationStep> {
                 value TEXT NOT NULL
             );
         ",
-    }]
+        },
+    ]
 }
 
 // --- Models ---
@@ -692,8 +694,12 @@ impl FlomoDb {
 
     pub fn search_card(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
-        let pattern = format!("%{}%", query);
-        let (sql, params) = if query.len() < 3 {
+        let trimmed_query = query.trim();
+        if trimmed_query.is_empty() {
+            return Ok(vec![]);
+        }
+        let pattern = format!("%{}%", trimmed_query);
+        let (sql, params) = if trimmed_query.chars().count() < 3 {
             (
                 "SELECT c.id FROM cards c WHERE c.title LIKE ?1 AND c.is_deleted = 0",
                 params![pattern],
@@ -701,7 +707,7 @@ impl FlomoDb {
         } else {
             (
                 "SELECT c.id FROM cards c JOIN cards_title_search ct ON c.id = ct.id WHERE cards_title_search MATCH ?1 AND c.is_deleted = 0",
-                params![query],
+                params![trimmed_query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
@@ -713,8 +719,12 @@ impl FlomoDb {
 
     pub fn search_content(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
-        let pattern = format!("%{}%", query);
-        let (sql, params) = if query.len() < 3 {
+        let trimmed_query = query.trim();
+        if trimmed_query.is_empty() {
+            return Ok(vec![]);
+        }
+        let pattern = format!("%{}%", trimmed_query);
+        let (sql, params) = if trimmed_query.chars().count() < 3 {
             (
                 "SELECT id FROM cards WHERE raw_text LIKE ?1 AND is_deleted = 0",
                 params![pattern],
@@ -722,7 +732,7 @@ impl FlomoDb {
         } else {
             (
                 "SELECT c.id FROM cards c JOIN cards_raw_text_search cr ON c.id = cr.id WHERE cards_raw_text_search MATCH ?1 AND c.is_deleted = 0",
-                params![query],
+                params![trimmed_query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
@@ -941,10 +951,33 @@ impl FlomoDb {
         rows.collect()
     }
 
+    pub fn last_order_in_folder(&self, folder_id: &str, item_type: &str) -> SqliteResult<Option<String>> {
+        let conn = self.conn()?;
+        let sql = match item_type {
+            "card" => "SELECT json_extract(payload, '$.sortOrder') FROM cards WHERE folder_id = ?1 AND is_deleted = 0 AND is_archived = 0 AND json_extract(payload, '$.sortOrder') IS NOT NULL ORDER BY json_extract(payload, '$.sortOrder') DESC LIMIT 1",
+            "folder" => "SELECT json_extract(payload, '$.sortOrder') FROM folders WHERE parent_id = ?1 AND is_deleted = 0 AND is_archived = 0 AND json_extract(payload, '$.sortOrder') IS NOT NULL ORDER BY json_extract(payload, '$.sortOrder') DESC LIMIT 1",
+            _ => return Ok(None),
+        };
+        let mut stmt = conn.prepare(sql)?;
+        let result = stmt.query_row(params![folder_id], |row| {
+            let sort_order: Option<String> = row.get(0)?;
+            Ok(sort_order)
+        });
+        match result {
+            Ok(sort_order) => Ok(sort_order),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
-        let pattern = format!("%{}%", query);
-        let (sql, params) = if query.len() < 3 {
+        let trimmed_query = query.trim();
+        if trimmed_query.is_empty() {
+            return Ok(vec![]);
+        }
+        let pattern = format!("%{}%", trimmed_query);
+        let (sql, params) = if trimmed_query.chars().count() < 3 {
             (
                 "SELECT id FROM folders WHERE title LIKE ?1 AND is_deleted = 0",
                 params![pattern],
@@ -952,7 +985,7 @@ impl FlomoDb {
         } else {
             (
                 "SELECT f.id FROM folders f JOIN folders_title_search ft ON f.id = ft.id WHERE folders_title_search MATCH ?1 AND f.is_deleted = 0",
-                params![query],
+                params![trimmed_query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
@@ -1578,6 +1611,12 @@ pub mod commands {
         get_db()?.get_bookmarked_folders().map_err(|e| e.to_string())
     }
 
+    // Order
+    #[tauri::command]
+    pub fn flomo_last_order_in_folder(folder_id: String, item_type: String) -> Result<Option<String>, String> {
+        get_db()?.last_order_in_folder(&folder_id, &item_type).map_err(|e| e.to_string())
+    }
+
     // Tiptaps
     #[tauri::command]
     pub fn flomo_get_tiptap(id: String) -> Result<Option<TiptapV2>, String> {
@@ -2107,6 +2146,30 @@ mod tests {
         assert_eq!(card.sync_status, SYNC_STATUS_PENDING);
     }
 
+    #[test]
+    fn test_card_search_trim_and_multibyte_length() {
+        let db = make_db();
+        let card = Card {
+            id: "card-cn".to_string(),
+            folder_id: "folder-1".to_string(),
+            title: "你好世界".to_string(),
+            draft: "d1".to_string(),
+            payload: serde_json::json!({}),
+            raw_text: "这是正文".to_string(),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_card(&card).unwrap();
+
+        assert!(db.search_card("").unwrap().is_empty());
+        assert!(db.search_card("   ").unwrap().is_empty());
+        assert_eq!(db.search_card("  你好  ").unwrap(), vec!["card-cn".to_string()]);
+    }
+
     // --- Folder tests ---
 
     #[test]
@@ -2325,6 +2388,31 @@ mod tests {
         assert_eq!(folder.sync_status, SYNC_STATUS_SYNCED);
     }
 
+    #[test]
+    fn test_folder_search_trim_and_empty() {
+        let db = make_db();
+        let folder = Folder {
+            id: "folder-cn".to_string(),
+            parent_id: "root".to_string(),
+            title: "你好文件夹".to_string(),
+            payload: serde_json::json!({}),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_folder(&folder).unwrap();
+
+        assert!(db.search_folder("").unwrap().is_empty());
+        assert!(db.search_folder("   ").unwrap().is_empty());
+        assert_eq!(
+            db.search_folder("  你好  ").unwrap(),
+            vec!["folder-cn".to_string()]
+        );
+    }
+
     // --- Tiptap tests ---
 
     #[test]
@@ -2343,6 +2431,108 @@ mod tests {
         assert_eq!(tiptap.content["type"], "doc");
         assert_eq!(tiptap.history.len(), 1);
         assert_eq!(tiptap.sync_status, SYNC_STATUS_PENDING);
+    }
+
+    #[test]
+    fn test_content_search_trim_and_empty() {
+        let db = make_db();
+        let card = Card {
+            id: "content-cn".to_string(),
+            folder_id: "folder-1".to_string(),
+            title: "标题".to_string(),
+            draft: "d1".to_string(),
+            payload: serde_json::json!({}),
+            raw_text: "这是中文内容".to_string(),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_card(&card).unwrap();
+
+        assert!(db.search_content("").unwrap().is_empty());
+        assert!(db.search_content("   ").unwrap().is_empty());
+        assert_eq!(
+            db.search_content("  中文  ").unwrap(),
+            vec!["content-cn".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_search_index_update_triggers_reinsert_rows() {
+        let db = make_db();
+
+        let card = Card {
+            id: "reindex-card".to_string(),
+            folder_id: "folder-1".to_string(),
+            title: "旧标题".to_string(),
+            draft: "d1".to_string(),
+            payload: serde_json::json!({}),
+            raw_text: "旧内容".to_string(),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_card(&card).unwrap();
+
+        let folder = Folder {
+            id: "reindex-folder".to_string(),
+            parent_id: "root".to_string(),
+            title: "旧目录".to_string(),
+            payload: serde_json::json!({}),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_folder(&folder).unwrap();
+
+        {
+            let conn = db.conn().unwrap();
+            conn.execute(
+                "DELETE FROM cards_title_search WHERE id = ?1",
+                params!["reindex-card"],
+            )
+            .unwrap();
+            conn.execute(
+                "DELETE FROM cards_raw_text_search WHERE id = ?1",
+                params!["reindex-card"],
+            )
+            .unwrap();
+            conn.execute(
+                "DELETE FROM folders_title_search WHERE id = ?1",
+                params!["reindex-folder"],
+            )
+            .unwrap();
+        }
+
+        db.update_card(
+            "reindex-card",
+            &serde_json::json!({"title": "新标题", "rawText": "新内容"}),
+        )
+        .unwrap();
+        db.update_folder("reindex-folder", &serde_json::json!({"title": "新目录"}))
+            .unwrap();
+
+        assert_eq!(
+            db.search_card("新标题").unwrap(),
+            vec!["reindex-card".to_string()]
+        );
+        assert_eq!(
+            db.search_content("新内容").unwrap(),
+            vec!["reindex-card".to_string()]
+        );
+        assert_eq!(
+            db.search_folder("新目录").unwrap(),
+            vec!["reindex-folder".to_string()]
+        );
     }
 
     #[test]

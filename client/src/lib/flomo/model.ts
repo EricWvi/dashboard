@@ -8,6 +8,7 @@ export const SchemaVersion = 3;
 // Database models (omitting creator_id, review_count, site)
 export interface CardPayload {
   emoji?: string;
+  sortOrder: string;
 }
 
 export interface CardField {
@@ -24,6 +25,7 @@ export interface Card extends MetaField, CardField {}
 
 export interface FolderPayload {
   emoji?: string;
+  sortOrder: string;
 }
 
 export interface FolderField {

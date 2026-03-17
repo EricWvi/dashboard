@@ -7,6 +7,7 @@ import {
   type FolderPayload,
 } from "@/lib/flomo/model";
 import keys from "./query-keys";
+import { generateKeyBetween } from "fractional-indexing";
 
 /**
  * Hook to fetch folders under a specific parent
@@ -72,10 +73,16 @@ export function useCreateFolder() {
     mutationFn: async (data: {
       parentId: string;
       title: string;
-      payload: FolderPayload;
+      payload: Omit<FolderPayload, "sortOrder">;
     }) => {
+      const lastOrder = await flomoDatabase.lastOrderInFolder(
+        data.parentId,
+        "folder",
+      );
+      const sortOrder = generateKeyBetween(lastOrder, null);
       return flomoDatabase.addFolder({
         ...data,
+        payload: { ...data.payload, sortOrder },
         isBookmarked: 0,
         isArchived: 0,
       });
