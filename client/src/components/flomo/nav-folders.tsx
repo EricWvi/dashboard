@@ -78,6 +78,24 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
   const updateFolderMutation = useUpdateFolder();
   const updateCardMutation = useUpdateCard();
 
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renamingFolder, setRenamingFolder] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
+  // Move dialog state
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [movingFolder, setMovingFolder] = useState<Folder | null>(null);
+
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingFolder, setDeletingFolder] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
   const sortedFolders = folders
     ?.slice()
     .sort((a, b) =>
@@ -161,30 +179,75 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
   }, [sortedFolders, updateFolderMutation, updateCardMutation]);
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{i18nText[language].folders}</SidebarGroupLabel>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentFolderId}
-          variants={folderTransitionVariants}
-          initial="initial"
-          animate="animate"
-          transition={folderTransition}
-        >
-          <SidebarMenu>
-            {sortedFolders?.map((folder) => (
-              <DraggableFolderItem key={folder.id} folder={folder} />
-            ))}
-          </SidebarMenu>
-        </motion.div>
-      </AnimatePresence>
-    </SidebarGroup>
+    <>
+      <SidebarGroup>
+        <SidebarGroupLabel>{i18nText[language].folders}</SidebarGroupLabel>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentFolderId}
+            variants={folderTransitionVariants}
+            initial="initial"
+            animate="animate"
+            transition={folderTransition}
+          >
+            <SidebarMenu>
+              {sortedFolders?.map((folder) => (
+                <DraggableFolderItem
+                  key={folder.id}
+                  folder={folder}
+                  onRename={() => {
+                    setRenamingFolder(folder);
+                    setRenameDialogOpen(true);
+                  }}
+                  onMove={() => {
+                    setMovingFolder(folder);
+                    setMoveDialogOpen(true);
+                  }}
+                  onDelete={() => {
+                    setDeletingFolder(folder);
+                    setDeleteDialogOpen(true);
+                  }}
+                />
+              ))}
+            </SidebarMenu>
+          </motion.div>
+        </AnimatePresence>
+      </SidebarGroup>
+
+      <RenameFolderDialog
+        open={renameDialogOpen}
+        setOpen={setRenameDialogOpen}
+        folder={renamingFolder!}
+      />
+      <MoveFolderDialog
+        open={moveDialogOpen}
+        setOpen={setMoveDialogOpen}
+        folder={movingFolder!}
+      />
+      <DeleteFolderDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        folder={deletingFolder!}
+      />
+    </>
   );
 }
 
 // ─── DraggableFolderItem ───────────────────────────────────────────────
 
-function DraggableFolderItem({ folder }: { folder: Folder }) {
+interface DraggableFolderItemProps {
+  folder: Folder;
+  onRename: () => void;
+  onMove: () => void;
+  onDelete: () => void;
+}
+
+function DraggableFolderItem({
+  folder,
+  onRename,
+  onMove,
+  onDelete,
+}: DraggableFolderItemProps) {
   const { language } = useUserContextV2();
   const { isMobile } = useSidebar();
   const { setCurrentFolderId } = useAppState();
@@ -222,13 +285,6 @@ function DraggableFolderItem({ folder }: { folder: Folder }) {
       data: { isArchived: 0 },
     });
   };
-
-  // Rename dialog state
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  // Move dialog state
-  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
-  // Delete dialog state
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const itemRef = useRef<HTMLLIElement>(null);
   const dragHandleRef = useRef<HTMLSpanElement>(null);
@@ -276,127 +332,109 @@ function DraggableFolderItem({ folder }: { folder: Folder }) {
   }, [folder.id, folder.payload.sortOrder]);
 
   return (
-    <>
-      <SidebarMenuItem
-        ref={itemRef}
-        className={cn(
-          "relative cursor-pointer",
-          isDragging && "opacity-50",
-        )}
+    <SidebarMenuItem
+      ref={itemRef}
+      className={cn(
+        "relative cursor-pointer",
+        isDragging && "opacity-50",
+      )}
+    >
+      {closestEdge === "top" && (
+        <div className="bg-primary pointer-events-none absolute top-0 right-0 left-0 h-0.5" />
+      )}
+      <SidebarMenuButton
+        asChild
+        className="gap-0"
+        onClick={() => setCurrentFolderId(folder.id)}
       >
-        {closestEdge === "top" && (
-          <div className="bg-primary pointer-events-none absolute top-0 right-0 left-0 h-0.5" />
-        )}
-        <SidebarMenuButton
-          asChild
-          className="gap-0"
-          onClick={() => setCurrentFolderId(folder.id)}
-        >
-          <div>
-            <EmojiPicker
-              onSelectEmoji={(emoji) => {
-                return changeEmoji(emoji);
-              }}
-            >
-              <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
-                {folder.payload.emoji || "📂"}
-              </span>
-            </EmojiPicker>
-
-            <span ref={dragHandleRef} className="cursor-grab">
-              {folder.title}
-            </span>
-            {folder.isBookmarked === 1 && (
-              <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
-            )}
-          </div>
-        </SidebarMenuButton>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuAction
-              showOnHover={isTouchDevice ? false : true}
-            >
-              <MoreHorizontal />
-              <span className="sr-only">More</span>
-            </SidebarMenuAction>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-48"
-            side={isMobile ? "bottom" : "right"}
-            align={isMobile ? "end" : "start"}
-            onCloseAutoFocus={(e) => e.preventDefault()}
+        <div>
+          <EmojiPicker
+            onSelectEmoji={(emoji) => {
+              return changeEmoji(emoji);
+            }}
           >
-            <DropdownMenuItem onClick={bookmarkFolder}>
-              {folder.isBookmarked === 1 ? (
-                <>
-                  <StarOff className="text-muted-foreground" />
-                  <span>{i18nText[language].unbookmark}</span>
-                </>
-              ) : (
-                <>
-                  <Star className="text-muted-foreground" />
-                  <span>{i18nText[language].bookmark}</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            {folder.isArchived === 0 && <DropdownMenuSeparator />}
-            <DropdownMenuItem onClick={() => setRenameDialogOpen(true)}>
-              <TextCursorInput className="text-muted-foreground" />
-              <span>{i18nText[language].rename}</span>
-            </DropdownMenuItem>
-            {folder.isArchived === 0 && (
+            <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
+              {folder.payload.emoji || "📂"}
+            </span>
+          </EmojiPicker>
+
+          <span ref={dragHandleRef} className="cursor-grab">
+            {folder.title}
+          </span>
+          {folder.isBookmarked === 1 && (
+            <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
+          )}
+        </div>
+      </SidebarMenuButton>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction
+            showOnHover={isTouchDevice ? false : true}
+          >
+            <MoreHorizontal />
+            <span className="sr-only">More</span>
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-48"
+          side={isMobile ? "bottom" : "right"}
+          align={isMobile ? "end" : "start"}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <DropdownMenuItem onClick={bookmarkFolder}>
+            {folder.isBookmarked === 1 ? (
               <>
-                <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
-                  <FolderInput className="text-muted-foreground" />
-                  <span>{i18nText[language].move}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <StarOff className="text-muted-foreground" />
+                <span>{i18nText[language].unbookmark}</span>
+              </>
+            ) : (
+              <>
+                <Star className="text-muted-foreground" />
+                <span>{i18nText[language].bookmark}</span>
               </>
             )}
-            {folder.isArchived === 0 ? (
-              <DropdownMenuItem
-                className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                onClick={archiveFolder}
-              >
-                <Archive className="text-yellow-700 dark:text-yellow-600" />
-                <span>{i18nText[language].archive}</span>
+          </DropdownMenuItem>
+          {folder.isArchived === 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem onClick={onRename}>
+            <TextCursorInput className="text-muted-foreground" />
+            <span>{i18nText[language].rename}</span>
+          </DropdownMenuItem>
+          {folder.isArchived === 0 && (
+            <>
+              <DropdownMenuItem onClick={onMove}>
+                <FolderInput className="text-muted-foreground" />
+                <span>{i18nText[language].move}</span>
               </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={restoreFolder}>
-                <ArchiveRestore className="text-muted-foreground" />
-                <span>{i18nText[language].restore}</span>
-              </DropdownMenuItem>
-            )}
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {folder.isArchived === 0 ? (
             <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => setDeleteDialogOpen(true)}
+              className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+              onClick={archiveFolder}
             >
-              <Trash2 className="text-destructive" />
-              <span>{i18nText[language].delete}</span>
+              <Archive className="text-yellow-700 dark:text-yellow-600" />
+              <span>{i18nText[language].archive}</span>
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        {closestEdge === "bottom" && (
-          <div className="bg-primary pointer-events-none absolute right-0 bottom-0 left-0 h-0.5" />
-        )}
-      </SidebarMenuItem>
-
-      <RenameFolderDialog
-        open={renameDialogOpen}
-        setOpen={setRenameDialogOpen}
-        folder={folder}
-      />
-      <MoveFolderDialog
-        open={moveDialogOpen}
-        setOpen={setMoveDialogOpen}
-        folder={folder}
-      />
-      <DeleteFolderDialog
-        open={deleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
-        folder={folder}
-      />
-    </>
+          ) : (
+            <DropdownMenuItem onClick={restoreFolder}>
+              <ArchiveRestore className="text-muted-foreground" />
+              <span>{i18nText[language].restore}</span>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="text-destructive" />
+            <span>{i18nText[language].delete}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {closestEdge === "bottom" && (
+        <div className="bg-primary pointer-events-none absolute right-0 bottom-0 left-0 h-0.5" />
+      )}
+    </SidebarMenuItem>
   );
 }
 
