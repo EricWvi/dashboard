@@ -60,7 +60,14 @@ import {
 } from "@/lib/flomo/animations";
 import { Fragment } from "react";
 import { EmojiPicker } from "./emoji-picker";
-import { isTouchDevice } from "@/lib/utils";
+import { cn, isTouchDevice } from "@/lib/utils";
+import {
+  draggable,
+  dropTargetForElements,
+  monitorForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { generateKeyBetween } from "fractional-indexing";
 
 interface NavFoldersProps {
   currentFolderId: string;
@@ -68,53 +75,9 @@ interface NavFoldersProps {
 
 export function NavFolders({ currentFolderId }: NavFoldersProps) {
   const { language } = useUserContextV2();
-  const { isMobile } = useSidebar();
   const { data: folders } = useFoldersInParent(currentFolderId);
-  const { setCurrentFolderId } = useAppState();
 
   const updateFolderMutation = useUpdateFolder();
-  const changeEmoji = (folder: Folder, emoji: string) => {
-    return updateFolderMutation.mutateAsync({
-      id: folder.id,
-      data: { payload: { ...folder.payload, emoji } },
-    });
-  };
-  const archiveFolder = (folderId: string) => {
-    return updateFolderMutation.mutateAsync({
-      id: folderId,
-      data: { isArchived: 1 },
-    });
-  };
-  const bookmarkFolder = (folderId: string) => {
-    return updateFolderMutation.mutateAsync({
-      id: folderId,
-      data: { isBookmarked: 1 },
-    });
-  };
-  const unbookmarkFolder = (folderId: string) => {
-    return updateFolderMutation.mutateAsync({
-      id: folderId,
-      data: { isBookmarked: 0 },
-    });
-  };
-  const restoreFolder = async (folderId: string) => {
-    const folder = await flomoDatabase.getFolder(folderId);
-    if (!folder) {
-      throw new Error("Folder not found");
-    }
-    const parentFolder = flomoDatabase.getFolder(folder.parentId);
-    if (!parentFolder) {
-      // If parent folder doesn't exist (e.g. has been deleted), restore to root
-      return updateFolderMutation.mutateAsync({
-        id: folderId,
-        data: { parentId: RootFolderId, isArchived: 0 },
-      });
-    }
-    return updateFolderMutation.mutateAsync({
-      id: folderId,
-      data: { isArchived: 0 },
-    });
-  };
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -134,6 +97,39 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
     title: string;
   } | null>(null);
 
+  const sortedFolders = folders
+    ?.slice()
+    .sort((a, b) => (a.payload.sortOrder < b.payload.sortOrder ? -1 : 1));
+
+  // Monitor for drag-and-drop reordering
+  useEffect(() => {
+    return monitorForElements({
+      onDrop: ({ source, location }) => {
+        const target = location.current.dropTargets[0];
+        if (!target || !sortedFolders) return;
+
+        const sourceType = source.data.type as string;
+        const targetType = target.data.type as string;
+
+        // Handle folder reorder
+        if (sourceType === "folder" && targetType === "folder-drop-zone") {
+          const sourceId = source.data.id as string;
+          const sourceFolder = sortedFolders.find((f) => f.id === sourceId);
+          if (!sourceFolder) return;
+
+          const newSortOrder = target.data.sortOrder as string;
+          if (newSortOrder === sourceFolder.payload.sortOrder) return;
+          updateFolderMutation.mutate({
+            id: sourceId,
+            data: {
+              payload: { ...sourceFolder.payload, sortOrder: newSortOrder },
+            },
+          });
+        }
+      },
+    });
+  }, [sortedFolders, updateFolderMutation]);
+
   return (
     <>
       <SidebarGroup>
@@ -146,121 +142,42 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
             animate="animate"
             transition={folderTransition}
           >
-            <SidebarMenu>
-              {folders
-                ?.sort((a, b) => a.title.localeCompare(b.title))
-                .map((folder) => (
-                  <SidebarMenuItem key={folder.id} className="cursor-pointer">
-                    <SidebarMenuButton
-                      asChild
-                      className="gap-0"
-                      onClick={() => setCurrentFolderId(folder.id)}
-                    >
-                      <div>
-                        <EmojiPicker
-                          onSelectEmoji={(emoji) => {
-                            return changeEmoji(folder, emoji);
-                          }}
-                        >
-                          <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
-                            {folder.payload.emoji || "📂"}
-                          </span>
-                        </EmojiPicker>
-
-                        <span>{folder.title}</span>
-                        {folder.isBookmarked === 1 && (
-                          <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
-                        )}
-                      </div>
-                    </SidebarMenuButton>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction
-                          showOnHover={isTouchDevice ? false : true}
-                        >
-                          <MoreHorizontal />
-                          <span className="sr-only">More</span>
-                        </SidebarMenuAction>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-48"
-                        side={isMobile ? "bottom" : "right"}
-                        align={isMobile ? "end" : "start"}
-                        onCloseAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <DropdownMenuItem
-                          onClick={() =>
-                            folder.isBookmarked === 1
-                              ? unbookmarkFolder(folder.id)
-                              : bookmarkFolder(folder.id)
-                          }
-                        >
-                          {folder.isBookmarked === 1 ? (
-                            <>
-                              <StarOff className="text-muted-foreground" />
-                              <span>{i18nText[language].unbookmark}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Star className="text-muted-foreground" />
-                              <span>{i18nText[language].bookmark}</span>
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        {folder.isArchived === 0 && <DropdownMenuSeparator />}
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setRenamingFolder(folder);
-                            setRenameDialogOpen(true);
-                          }}
-                        >
-                          <TextCursorInput className="text-muted-foreground" />
-                          <span>{i18nText[language].rename}</span>
-                        </DropdownMenuItem>
-                        {folder.isArchived === 0 && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setMovingFolder(folder);
-                                setMoveDialogOpen(true);
-                              }}
-                            >
-                              <FolderInput className="text-muted-foreground" />
-                              <span>{i18nText[language].move}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        {folder.isArchived === 0 ? (
-                          <DropdownMenuItem
-                            className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
-                            onClick={() => archiveFolder(folder.id)}
-                          >
-                            <Archive className="text-yellow-700 dark:text-yellow-600" />
-                            <span>{i18nText[language].archive}</span>
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onClick={() => restoreFolder(folder.id)}
-                          >
-                            <ArchiveRestore className="text-muted-foreground" />
-                            <span>{i18nText[language].restore}</span>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => {
-                            setDeletingFolder(folder);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="text-destructive" />
-                          <span>{i18nText[language].delete}</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
-                ))}
+            <SidebarMenu className="gap-0">
+              {sortedFolders?.map((folder, index) => (
+                <Fragment key={folder.id}>
+                  {index === 0 && (
+                    <FolderDropZone
+                      prevOrder={null}
+                      nextOrder={folder.payload.sortOrder}
+                      prevId={null}
+                      nextId={folder.id}
+                    />
+                  )}
+                  <DraggableFolderItem
+                    folder={folder}
+                    onRename={() => {
+                      setRenamingFolder(folder);
+                      setRenameDialogOpen(true);
+                    }}
+                    onMove={() => {
+                      setMovingFolder(folder);
+                      setMoveDialogOpen(true);
+                    }}
+                    onDelete={() => {
+                      setDeletingFolder(folder);
+                      setDeleteDialogOpen(true);
+                    }}
+                  />
+                  <FolderDropZone
+                    prevOrder={folder.payload.sortOrder}
+                    nextOrder={
+                      sortedFolders[index + 1]?.payload.sortOrder ?? null
+                    }
+                    prevId={folder.id}
+                    nextId={sortedFolders[index + 1]?.id ?? null}
+                  />
+                </Fragment>
+              ))}
             </SidebarMenu>
           </motion.div>
         </AnimatePresence>
@@ -282,6 +199,226 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
         folder={deletingFolder!}
       />
     </>
+  );
+}
+
+// ─── DraggableFolderItem ───────────────────────────────────────────────
+
+interface DraggableFolderItemProps {
+  folder: Folder;
+  onRename: () => void;
+  onMove: () => void;
+  onDelete: () => void;
+}
+
+function DraggableFolderItem({
+  folder,
+  onRename,
+  onMove,
+  onDelete,
+}: DraggableFolderItemProps) {
+  const { language } = useUserContextV2();
+  const { isMobile } = useSidebar();
+  const { setCurrentFolderId } = useAppState();
+
+  const updateFolderMutation = useUpdateFolder();
+
+  const changeEmoji = (emoji: string) => {
+    return updateFolderMutation.mutateAsync({
+      id: folder.id,
+      data: { payload: { ...folder.payload, emoji } },
+    });
+  };
+  const archiveFolder = () => {
+    return updateFolderMutation.mutateAsync({
+      id: folder.id,
+      data: { isArchived: 1 },
+    });
+  };
+  const bookmarkFolder = () => {
+    return updateFolderMutation.mutateAsync({
+      id: folder.id,
+      data: { isBookmarked: folder.isBookmarked === 1 ? 0 : 1 },
+    });
+  };
+  const restoreFolder = async () => {
+    const parentFolder = await flomoDatabase.getFolder(folder.parentId);
+    if (!parentFolder) {
+      return updateFolderMutation.mutateAsync({
+        id: folder.id,
+        data: { parentId: RootFolderId, isArchived: 0 },
+      });
+    }
+    return updateFolderMutation.mutateAsync({
+      id: folder.id,
+      data: { isArchived: 0 },
+    });
+  };
+
+  const itemRef = useRef<HTMLLIElement>(null);
+  const dragHandleRef = useRef<HTMLSpanElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const el = itemRef.current;
+    const handle = dragHandleRef.current;
+    if (!el || !handle) return;
+
+    return combine(
+      draggable({
+        element: el,
+        dragHandle: handle,
+        getInitialData: () => ({
+          type: "folder",
+          id: folder.id,
+          sortOrder: folder.payload.sortOrder,
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+    );
+  }, [folder.id, folder.payload.sortOrder]);
+
+  return (
+    <SidebarMenuItem
+      ref={itemRef}
+      className={cn("relative cursor-pointer", isDragging && "opacity-50")}
+    >
+      <SidebarMenuButton
+        asChild
+        className="gap-0"
+        onClick={() => setCurrentFolderId(folder.id)}
+      >
+        <div>
+          <EmojiPicker
+            onSelectEmoji={(emoji) => {
+              return changeEmoji(emoji);
+            }}
+          >
+            <span className="hover:bg-emoji-accent mr-1 rounded-sm px-1 text-base">
+              {folder.payload.emoji || "📂"}
+            </span>
+          </EmojiPicker>
+
+          <span ref={dragHandleRef} className="cursor-grab">
+            {folder.title}
+          </span>
+          {folder.isBookmarked === 1 && (
+            <Sparkles className="text-muted-foreground ml-1 -translate-y-[1px]" />
+          )}
+        </div>
+      </SidebarMenuButton>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction showOnHover={isTouchDevice ? false : true}>
+            <MoreHorizontal />
+            <span className="sr-only">More</span>
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-48"
+          side={isMobile ? "bottom" : "right"}
+          align={isMobile ? "end" : "start"}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <DropdownMenuItem onClick={bookmarkFolder}>
+            {folder.isBookmarked === 1 ? (
+              <>
+                <StarOff className="text-muted-foreground" />
+                <span>{i18nText[language].unbookmark}</span>
+              </>
+            ) : (
+              <>
+                <Star className="text-muted-foreground" />
+                <span>{i18nText[language].bookmark}</span>
+              </>
+            )}
+          </DropdownMenuItem>
+          {folder.isArchived === 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem onClick={onRename}>
+            <TextCursorInput className="text-muted-foreground" />
+            <span>{i18nText[language].rename}</span>
+          </DropdownMenuItem>
+          {folder.isArchived === 0 && (
+            <>
+              <DropdownMenuItem onClick={onMove}>
+                <FolderInput className="text-muted-foreground" />
+                <span>{i18nText[language].move}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {folder.isArchived === 0 ? (
+            <DropdownMenuItem
+              className="text-yellow-700 focus:text-yellow-700 dark:text-yellow-600 dark:focus:text-yellow-600"
+              onClick={archiveFolder}
+            >
+              <Archive className="text-yellow-700 dark:text-yellow-600" />
+              <span>{i18nText[language].archive}</span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={restoreFolder}>
+              <ArchiveRestore className="text-muted-foreground" />
+              <span>{i18nText[language].restore}</span>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="text-destructive" />
+            <span>{i18nText[language].delete}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SidebarMenuItem>
+  );
+}
+
+interface FolderDropZoneProps {
+  prevOrder: string | null;
+  nextOrder: string | null;
+  prevId: string | null;
+  nextId: string | null;
+}
+
+function FolderDropZone({
+  prevOrder,
+  nextOrder,
+  prevId,
+  nextId,
+}: FolderDropZoneProps) {
+  const zoneRef = useRef<HTMLLIElement>(null);
+  const [isActive, setIsActive] = useState(false);
+  const sortOrder = generateKeyBetween(prevOrder, nextOrder);
+
+  useEffect(() => {
+    const el = zoneRef.current;
+    if (!el) return;
+
+    return dropTargetForElements({
+      element: el,
+      getData: () => ({
+        type: "folder-drop-zone",
+        sortOrder,
+      }),
+      canDrop: ({ source }) =>
+        source.data.type === "folder" &&
+        source.data.id !== prevId &&
+        source.data.id !== nextId,
+      onDragEnter: () => setIsActive(true),
+      onDrag: () => setIsActive(true),
+      onDragLeave: () => setIsActive(false),
+      onDrop: () => setIsActive(false),
+    });
+  }, [sortOrder, prevId, nextId]);
+
+  return (
+    <li ref={zoneRef} className="relative h-1 list-none">
+      {isActive && (
+        <div className="bg-primary pointer-events-none absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2" />
+      )}
+    </li>
   );
 }
 
@@ -400,10 +537,18 @@ function MoveFolderDialog({ open, setOpen, folder }: MoveFolderDialogProps) {
     }
   }, [path]);
 
-  const moveFolder = () => {
+  const moveFolder = async () => {
+    const lastOrder = await flomoDatabase.lastOrderInFolder(
+      navigateFolderId,
+      "folder",
+    );
+    const newSortOrder = generateKeyBetween(lastOrder, null);
     return updateFolderMutation.mutateAsync({
       id: folder!.id,
-      data: { parentId: navigateFolderId },
+      data: {
+        parentId: navigateFolderId,
+        payload: { ...folder!.payload, sortOrder: newSortOrder },
+      },
     });
   };
 
@@ -425,7 +570,7 @@ function MoveFolderDialog({ open, setOpen, folder }: MoveFolderDialogProps) {
           <Breadcrumb>
             <BreadcrumbList
               ref={scrollRef}
-              className="flex-nowrap overflow-x-auto whitespace-nowrap"
+              className="scrollbar-hide flex-nowrap overflow-x-auto whitespace-nowrap"
             >
               <BreadcrumbItem
                 className="cursor-pointer"
@@ -466,7 +611,9 @@ function MoveFolderDialog({ open, setOpen, folder }: MoveFolderDialogProps) {
             ) : (
               <div className="flex flex-col">
                 {foldersInParent
-                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .sort((a, b) =>
+                    a.payload.sortOrder < b.payload.sortOrder ? -1 : 1,
+                  )
                   .map((f) => (
                     <button
                       key={f.id}

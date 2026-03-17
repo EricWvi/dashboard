@@ -941,6 +941,25 @@ impl FlomoDb {
         rows.collect()
     }
 
+    pub fn last_order_in_folder(&self, folder_id: &str, item_type: &str) -> SqliteResult<Option<String>> {
+        let conn = self.conn()?;
+        let sql = match item_type {
+            "card" => "SELECT json_extract(payload, '$.sortOrder') FROM cards WHERE folder_id = ?1 AND is_deleted = 0 AND is_archived = 0 AND json_extract(payload, '$.sortOrder') IS NOT NULL ORDER BY json_extract(payload, '$.sortOrder') DESC LIMIT 1",
+            "folder" => "SELECT json_extract(payload, '$.sortOrder') FROM folders WHERE parent_id = ?1 AND is_deleted = 0 AND is_archived = 0 AND json_extract(payload, '$.sortOrder') IS NOT NULL ORDER BY json_extract(payload, '$.sortOrder') DESC LIMIT 1",
+            _ => return Ok(None),
+        };
+        let mut stmt = conn.prepare(sql)?;
+        let result = stmt.query_row(params![folder_id], |row| {
+            let sort_order: Option<String> = row.get(0)?;
+            Ok(sort_order)
+        });
+        match result {
+            Ok(sort_order) => Ok(sort_order),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
         let pattern = format!("%{}%", query);
@@ -1576,6 +1595,12 @@ pub mod commands {
     #[tauri::command]
     pub fn flomo_get_bookmarked_folders() -> Result<Vec<Folder>, String> {
         get_db()?.get_bookmarked_folders().map_err(|e| e.to_string())
+    }
+
+    // Order
+    #[tauri::command]
+    pub fn flomo_last_order_in_folder(folder_id: String, item_type: String) -> Result<Option<String>, String> {
+        get_db()?.last_order_in_folder(&folder_id, &item_type).map_err(|e| e.to_string())
     }
 
     // Tiptaps

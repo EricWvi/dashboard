@@ -106,6 +106,14 @@ export class SqliteFlomoDatabase implements IFlomoDatabase {
     return invoke("flomo_get_bookmarked_folders");
   }
 
+  // Order
+  async lastOrderInFolder(
+    folderId: string,
+    type: "card" | "folder",
+  ): Promise<string | null> {
+    return invoke("flomo_last_order_in_folder", { folderId, itemType: type });
+  }
+
   // Tiptaps
   async getTiptap(id: string): Promise<TiptapV2 | undefined> {
     return (
