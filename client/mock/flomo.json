@@ -10,7 +10,7 @@
                 "avatar": "/api/m/b48702d0-f2e2-42ea-b5f0-78b5c58021a1",
                 "email": "test@onlyquant.top",
                 "username": "george",
-                "language": "zh-CN"
+                "language": "en-US"
             }
         ],
         "cards": [
@@ -25,7 +25,8 @@
                 "title": "sub card to archive",
                 "draft": "76d41503-23c6-4061-a2bc-9927c45c118c",
                 "payload": {
-                    "emoji": "😱"
+                    "emoji": "😱",
+                    "sortOrder": "a0"
                 },
                 "rawText": "",
                 "reviewCount": 0,
@@ -42,7 +43,9 @@
                 "folderId": "f95f0bf1-ace1-48df-b72f-4ff0cb883580",
                 "title": "to-archive card123",
                 "draft": "a52aaf4c-3730-4716-a705-33f0728a90ab",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a1"
+                },
                 "rawText": "7852185",
                 "reviewCount": 0,
                 "isBookmarked": 1,
@@ -59,7 +62,8 @@
                 "title": "second card",
                 "draft": "af374c3e-637b-4ef9-8d99-9143f5f0e46b",
                 "payload": {
-                    "emoji": "😜"
+                    "emoji": "😜",
+                    "sortOrder": "a2"
                 },
                 "rawText": "second card wwwwq q w 123 345 678 90",
                 "reviewCount": 0,
@@ -77,7 +81,8 @@
                 "title": "haha3",
                 "draft": "03e056bc-5f6b-4b9d-a29f-873c52bbf42f",
                 "payload": {
-                    "emoji": "🤧"
+                    "emoji": "🤧",
+                    "sortOrder": "a3"
                 },
                 "rawText": "从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。l 从这个角度看，AI 在我生活中扮演的正是放大－压缩镜头和「共同行动者」这双重角色的叠加。我先是在 AI 营造的低摩擦沙盒里，不断打磨自己的表达能力，校准观点的逻辑和情绪表达的分寸；随后，我再带着这套经由 AI 中介调整升级过的表达装备，走进真实的人群，坦然迎接每一次真正的人际摩擦。也正因为有 AI 充当这样一层技术中介，以往交流中的那些摩擦对我而言不再是一道令人生畏的障碍，反而变成了点燃理解、照亮彼此立场的星星之火。p",
                 "reviewCount": 0,
@@ -94,7 +99,9 @@
                 "folderId": "00000000-0000-0000-0000-000000000000",
                 "title": "A Paper Header",
                 "draft": "05f3a596-f600-4e6f-becb-d0e9b098f3d9",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a4"
+                },
                 "rawText": "My LLM coding workflow going into 2026 AI coding assistants became game-changers this year, but harnessing them effectively takes skill and structure. These tools dramatically increased what LLMs can do for real-world coding, and many developers (myself included) embraced them. At Anthropic, for example, engineers adopted Claude Code so heavily that today ~90% of the code for Claude Code is written by Claude Code itself. Yet, using LLMs for programming is not a push-button magic experience — it’s “difficult and unintuitive” and getting great results requires learning new patterns. Critical thinking remains key. Over a year of projects, I’ve converged on a workflow similar to what many experienced devs are discovering: treat the LLM as a powerful pair programmer that requires clear direction, context and oversight rather than autonomous judgment. In this article, I’ll share how I plan, code, and collaborate with AI going into 2026, distilling tips and best practices from my experience and the community’s collective learning. It’s a more disciplined “AI-assisted engineering” approach — leveraging AI aggressively while staying proudly accountable for the software produced. Start with a clear plan (specs before code) Don’t just throw wishes at the LLM — begin by defining the problem and planning a solution. One common mistake is diving straight into code generation with a vague prompt. In my workflow, and in many others’, the first step is brainstorming a detailed specification with the AI, then outlining a step-by-step plan, before writing any actual code. For a new project, I’ll describe the idea and ask the LLM to iteratively ask me questions until we’ve fleshed out requirements and edge cases. By the end, we compile this into a comprehensive spec.md — containing requirements, architecture decisions, data models, and even a testing strategy. This spec forms the foundation for development. Next, I feed the spec into a reasoning-capable model and prompt it to generate a project plan: break the implementation into logical, bite-sized tasks or milestones. The AI essentially helps me do a mini “design doc” or project plan. I often iterate on this plan — editing and asking the AI to critique or refine it — until it’s coherent and complete. Only then do I proceed to coding. This upfront investment might feel slow, but it pays off enormously. As Les Orchard put it, it’s like doing a “waterfall in 15 minutes” — a rapid structured planning phase that makes the subsequent coding much smoother. Having a clear spec and plan means when we unleash the codegen, both the human and the LLM know exactly what we’re building and why. In short, planning first forces you and the AI onto the same page and prevents wasted cycles. It’s a step many people are tempted to skip, but experienced LLM developers now treat a robust spec/plan as the cornerstone of the workflow. Break work into small, iterative chunks Scope management is everything — feed the LLM manageable tasks, not the whole codebase at once. A crucial lesson I’ve learned is to avoid asking the AI for large, monolithic outputs. Instead, we break the project into iterative steps or tickets and tackle them one by one. This mirrors good software engineering practice, but it’s even more important with AI in the loop. LLMs do best when given focused prompts: implement one function, fix one bug, add one feature at a time. For example, after planning, I will prompt the codegen model: “Okay, let’s implement Step 1 from the plan”. We code that, test it, then move to Step 2, and so on. Each chunk is small enough that the AI can handle it within context and you can understand the code it produces. This approach guards against the model going off the rails. If you ask for too much in one go, it’s likely to get confused or produce a “jumbled mess” that’s hard to untangle. Developers report that when they tried to have an LLM generate huge swaths of an app, they ended up with inconsistency and duplication — “like 10 devs worked on it without talking to each other,” one said. I’ve felt that pain; the fix is to stop, back up, and split the problem into smaller pieces. Each iteration, we carry forward the context of what’s been built and incrementally add to it. This also fits nicely with a test-driven development (TDD) approach — we can write or generate tests for each piece as we go (more on testing soon). Several coding-agent tools now explicitly support this chunked workflow. For instance, I often generate a structured “prompt plan” file that contains a sequence of prompts for each task, so that tools like Cursor can execute them one by one. The key point is to avoid huge leaps. By iterating in small loops, we greatly reduce the chance of catastrophic errors and we can course-correct quickly. LLMs excel at quick, contained tasks — use that to your advantage. Provide extensive context and guidance LLMs are only as good as the context you provide — show them the relevant code, docs, and constraints. When working on a codebase, I make sure to feed the AI all the information it needs to perform well. That includes the code it should modify or refer to, the project’s technical constraints, and any known pitfalls or preferred approaches. Modern tools help with this: for example, Anthropic’s Claude can import an entire GitHub repo into its context in “Projects” mode, and IDE assistants like Cursor or Copilot auto-include open files in the prompt. But I often go further — I will either use an MCP like Context7 or manually copy important pieces of the codebase or API docs into the conversation if I suspect the model doesn’t have them. Expert LLM users emphasize this “context packing” step. For example, doing a “brain dump” of everything the model should know before coding, including: high-level goals and invariants, examples of good solutions, and warnings about approaches to avoid. If I’m asking an AI to implement a tricky solution, I might tell it which naive solutions are too slow, or provide a reference implementation from elsewhere. If I’m using a niche library or a brand-new API, I’ll paste in the official docs or README so the AI isn’t flying blind. All of this upfront context dramatically improves the quality of its output, because the model isn’t guessing — it has the facts and constraints in front of it.",
                 "reviewCount": 0,
                 "isBookmarked": 0,
@@ -112,7 +119,8 @@
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "AA",
                 "payload": {
-                    "emoji": "💼"
+                    "emoji": "💼",
+                    "sortOrder": "a0"
                 },
                 "isBookmarked": 0,
                 "isArchived": 0
@@ -126,7 +134,9 @@
                 "creatorId": 2,
                 "parentId": "acea5b1f-d95d-4e9b-bf70-1b2715378c9a",
                 "title": "very",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a1"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -139,7 +149,9 @@
                 "creatorId": 2,
                 "parentId": "7df82c7f-f0b9-42b6-861f-677b500f97e9",
                 "title": "second folder",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a2"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -153,7 +165,8 @@
                 "parentId": "7df82c7f-f0b9-42b6-861f-677b500f97e9",
                 "title": "third folder",
                 "payload": {
-                    "emoji": "😃"
+                    "emoji": "😃",
+                    "sortOrder": "a3"
                 },
                 "isBookmarked": 0,
                 "isArchived": 0
@@ -167,7 +180,9 @@
                 "creatorId": 2,
                 "parentId": "88ae12dd-ab1c-49ad-82ff-6a97cf3f229e",
                 "title": "long",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a4"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -180,7 +195,9 @@
                 "creatorId": 2,
                 "parentId": "dc5ba453-ace3-44a4-9b66-fad7c810701a",
                 "title": "path",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a5"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -193,7 +210,9 @@
                 "creatorId": 2,
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "1234",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a6"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -206,7 +225,9 @@
                 "creatorId": 2,
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "to-archive folder",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a7"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -219,7 +240,9 @@
                 "creatorId": 2,
                 "parentId": "7df82c7f-f0b9-42b6-861f-677b500f97e9",
                 "title": "a",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a8"
+                },
                 "isBookmarked": 0,
                 "isArchived": 0
             },
@@ -232,7 +255,9 @@
                 "creatorId": 2,
                 "parentId": "f7e82828-7093-423c-8258-354677e5352b",
                 "title": "subfolder to archive",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a9"
+                },
                 "isBookmarked": 1,
                 "isArchived": 1
             },
@@ -246,7 +271,8 @@
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "1ww1",
                 "payload": {
-                    "emoji": "😍"
+                    "emoji": "😍",
+                    "sortOrder": "a10"
                 },
                 "isBookmarked": 1,
                 "isArchived": 0
@@ -260,7 +286,9 @@
                 "creatorId": 2,
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "test zero id 0",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a11"
+                },
                 "isBookmarked": 1,
                 "isArchived": 0
             },
@@ -274,7 +302,8 @@
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "first folder (renamed)",
                 "payload": {
-                    "emoji": "😘"
+                    "emoji": "😘",
+                    "sortOrder": "a12"
                 },
                 "isBookmarked": 1,
                 "isArchived": 0
@@ -289,7 +318,8 @@
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "BB very longlonglonglonglong",
                 "payload": {
-                    "emoji": "🤖"
+                    "emoji": "🤖",
+                    "sortOrder": "a13"
                 },
                 "isBookmarked": 0,
                 "isArchived": 0
@@ -303,7 +333,9 @@
                 "creatorId": 2,
                 "parentId": "00000000-0000-0000-0000-000000000000",
                 "title": "test two devices",
-                "payload": {},
+                "payload": {
+                    "sortOrder": "a14"
+                },
                 "isBookmarked": 1,
                 "isArchived": 0
             }

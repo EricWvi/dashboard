@@ -5,11 +5,9 @@ import {
   SchemaVersion,
   type Card,
   type CardField,
-  type CardPayload,
   type FlomoData,
   type Folder,
   type FolderField,
-  type FolderPayload,
 } from "./model";
 import {
   SyncStatus,
@@ -238,7 +236,7 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
         .and((card) => !card.isDeleted && card.isArchived === 0)
         .toArray();
       const orders = cards
-        .map((c) => (c.payload as CardPayload).sortOrder)
+        .map((c) => c.payload.sortOrder)
         .filter(Boolean);
       if (orders.length === 0) return null;
       orders.sort();
@@ -250,7 +248,7 @@ export class DexieFlomoDatabase implements IFlomoDatabase {
         .and((folder) => !folder.isDeleted && folder.isArchived === 0)
         .toArray();
       const orders = folders
-        .map((f) => (f.payload as FolderPayload).sortOrder)
+        .map((f) => f.payload.sortOrder)
         .filter(Boolean);
       if (orders.length === 0) return null;
       orders.sort();
