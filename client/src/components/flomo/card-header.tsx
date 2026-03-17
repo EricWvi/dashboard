@@ -13,6 +13,7 @@ import {
   Archive,
   ArchiveRestore,
   FolderInput,
+  FolderOpen,
   Menu,
   TextCursorInput,
   Trash2,
@@ -389,6 +390,13 @@ function MoreMenu({
   onDelete: () => void;
 }) {
   const { language } = useUserContextV2();
+  const { setCurrentFolderId } = useAppState();
+
+  const handleReveal = () => {
+    if (card) {
+      setCurrentFolderId(card.folderId);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -415,6 +423,10 @@ function MoreMenu({
             <DropdownMenuItem onClick={onMove}>
               <FolderInput className="text-muted-foreground" />
               <span>{i18nText[language].move}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleReveal}>
+              <FolderOpen className="text-muted-foreground" />
+              <span>{i18nText[language].reveal}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
@@ -452,6 +464,7 @@ const i18nText = {
     archive: "归档",
     delete: "删除",
     restore: "恢复",
+    reveal: "在文件夹中显示",
     edit: "编辑",
   },
   [UserLangEnum.ENUS]: {
@@ -460,6 +473,7 @@ const i18nText = {
     archive: "Archive",
     delete: "Delete",
     restore: "Restore",
+    reveal: "Reveal in Folder",
     edit: "Edit",
   },
 };
