@@ -224,28 +224,35 @@ fn write_bytes_atomically(file_path: &PathBuf, bytes: &[u8]) -> Result<(), Strin
     Ok(())
 }
 
-fn upload_file_to_backend(
+async fn upload_file_to_backend(
     uuid: &str,
     file_path: &PathBuf,
     _content_type: &str,
 ) -> Result<(), String> {
     let upload_url = format!("{}/api/upload", backend_url());
-    let client = reqwest::blocking::Client::builder()
+    let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::limited(10))
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    let bytes = std::fs::read(file_path)
-        .map_err(|e| format!("Failed to read cached file for upload: {}", e))?;
+    let bytes = tokio::task::spawn_blocking({
+        let file_path = file_path.clone();
+        move || {
+            std::fs::read(&file_path)
+                .map_err(|e| format!("Failed to read cached file for upload: {}", e))
+        }
+    })
+    .await
+    .map_err(|e| format!("Failed to join read task: {}", e))??;
 
     let file_name = file_path
         .file_name()
         .map(|v| v.to_string_lossy().to_string())
         .unwrap_or_else(|| "upload.bin".to_string());
 
-    let part = reqwest::blocking::multipart::Part::bytes(bytes).file_name(file_name);
+    let part = reqwest::multipart::Part::bytes(bytes).file_name(file_name);
 
-    let form = reqwest::blocking::multipart::Form::new()
+    let form = reqwest::multipart::Form::new()
         .text("uuid", uuid.to_string())
         .part("photos", part);
 
@@ -253,6 +260,7 @@ fn upload_file_to_backend(
         .post(&upload_url)
         .multipart(form)
         .send()
+        .await
         .map_err(|e| format!("Failed to upload media: {}", e))?;
 
     if !response.status().is_success() {
@@ -270,11 +278,19 @@ fn spawn_upload_media_job(
     max_attempts: usize,
     sleep_between_attempts: Duration,
 ) {
-    std::thread::spawn(move || {
+    tauri::async_runtime::spawn(async move {
         for attempt in 0..max_attempts {
-            match upload_file_to_backend(&uuid, &file_path, &content_type) {
+            match upload_file_to_backend(&uuid, &file_path, &content_type).await {
                 Ok(_) => {
-                    if let Err(e) = db.delete_media_job(&uuid) {
+                    let db_clone = db.clone();
+                    let uuid_clone = uuid.clone();
+                    if let Err(e) = tokio::task::spawn_blocking(move || {
+                        db_clone.delete_media_job(&uuid_clone)
+                    })
+                    .await
+                    .map_err(|e| format!("Failed to join db task: {}", e))
+                    .and_then(|r| r.map_err(|e| e.to_string()))
+                    {
                         eprintln!(
                             "media_cache: uploaded {}, but failed to delete media_job: {}",
                             uuid, e
@@ -291,7 +307,7 @@ fn spawn_upload_media_job(
                         e
                     );
                     if attempt + 1 < max_attempts {
-                        std::thread::sleep(sleep_between_attempts);
+                        tokio::time::sleep(sleep_between_attempts).await;
                     }
                 }
             }
@@ -331,13 +347,13 @@ fn replay_media_jobs_once(objects_dir: &PathBuf, db: Arc<MediaCacheDb>) {
 
 /// Synchronously download a file, save it to disk atomically, and write its
 /// content type to the DB. Returns an error string on failure.
-fn sync_download_and_save(
+async fn async_download_and_save(
     uuid: &str,
     file_path: &PathBuf,
-    db: &MediaCacheDb,
+    db: Arc<MediaCacheDb>,
 ) -> Result<(), String> {
     let download_url = format!("{}/api/m/{}", backend_url(), uuid);
-    let client = reqwest::blocking::Client::builder()
+    let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::limited(10))
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
@@ -345,6 +361,7 @@ fn sync_download_and_save(
     let response = client
         .get(&download_url)
         .send()
+        .await
         .map_err(|e| format!("Failed to download: {}", e))?;
 
     if !response.status().is_success() {
@@ -360,13 +377,27 @@ fn sync_download_and_save(
 
     let bytes = response
         .bytes()
+        .await
         .map_err(|e| format!("Failed to read response body: {}", e))?;
 
-    write_bytes_atomically(file_path, &bytes)?;
+    // Write file in blocking task
+    let file_path_clone = file_path.clone();
+    tokio::task::spawn_blocking(move || {
+        write_bytes_atomically(&file_path_clone, &bytes)
+    })
+    .await
+    .map_err(|e| format!("Failed to join write task: {}", e))??;
 
-    // Persist content type
-    db.set_content_type(uuid, &content_type)
-        .map_err(|e| format!("Failed to write content type: {}", e))?;
+    // Persist content type in blocking task
+    let db_clone = db.clone();
+    let uuid = uuid.to_string();
+    let content_type_clone = content_type.clone();
+    tokio::task::spawn_blocking(move || {
+        db_clone.set_content_type(&uuid, &content_type_clone)
+    })
+    .await
+    .map_err(|e| format!("Failed to join db task: {}", e))?
+    .map_err(|e| format!("Failed to write content type: {}", e))?;
 
     Ok(())
 }
@@ -462,12 +493,12 @@ async fn handle_upload_request(
 }
 
 /// Spin-wait for a file to appear on disk (200ms × 10 = 2s max).
-fn wait_for_file_on_disk(file_path: &PathBuf) {
+async fn wait_for_file_on_disk(file_path: &PathBuf) {
     for _ in 0..10 {
         if file_path.exists() {
             return;
         }
-        std::thread::sleep(std::time::Duration::from_millis(200));
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
     }
 }
 
@@ -491,15 +522,15 @@ async fn handle_media_request(
     // 1. If not cached, download to disk first
     if !file_path.exists() {
         if state.tasks.try_insert(&uuid) {
-            // We own the download slot — download, save, write DB synchronously
-            if let Err(e) = sync_download_and_save(&uuid, &file_path, &state.db) {
+            // We own the download slot — download, save, write DB asynchronously
+            if let Err(e) = async_download_and_save(&uuid, &file_path, &state.db).await {
                 state.tasks.remove(&uuid);
                 return (StatusCode::BAD_GATEWAY, e).into_response();
             }
             state.tasks.remove(&uuid);
         } else {
             // Another thread is downloading — wait for it to finish
-            wait_for_file_on_disk(&file_path);
+            wait_for_file_on_disk(&file_path).await;
         }
     }
 
