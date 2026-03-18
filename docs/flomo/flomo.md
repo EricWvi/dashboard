@@ -395,6 +395,8 @@ The card data is fetched via `useCard(cardId)` where `cardId` is stored in the `
 
 Each folder entry shows an emoji (defaulting to 📂) that opens an `EmojiPicker` on click. A `Sparkles` icon is displayed next to the title when `isBookmarked === 1`. A `MoreHorizontal` context menu exposes actions backed by dedicated dialogs. The entire section is wrapped in `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId`, giving a 300 ms easeOut opacity fade-in whenever the active folder changes.
 
+Folder sorting uses independent inter-item `DropZone` rows instead of making each folder item detect top/bottom edges. Rendering follows `[Zone0, Item1, Zone1, Item2, ...]`, with `SidebarMenu` gap set to `gap-0`. Each `DropZone` provides a 12px transparent hit area and shows a 2px insertion line only while hovered by a draggable folder. The target `sortOrder` is deterministic per zone: `generateKeyBetween(prevOrder, nextOrder)`. Zones also block drops when the dragged folder id is one of the two adjacent ids, preventing redundant "insert into current position" operations.
+
 | Action  | Component            | Behaviour                                                                                                                                  |
 | ------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Rename  | `RenameFolderDialog` | Pre-fills current title; updates on Enter or Confirm. IME-safe.                                                                            |
@@ -408,6 +410,8 @@ Dropdown menus set `onCloseAutoFocus={(e) => e.preventDefault()}` to prevent the
 ### NavCards (`nav-cards.tsx`)
 
 Each card entry shows an emoji (defaulting to 📄) that opens an `EmojiPicker` on click. A `Sparkles` icon is displayed next to the title when `isBookmarked === 1`. A `MoreHorizontal` context menu exposes actions. Like `NavFolders`, the section uses `AnimatePresence mode="wait"` with a `motion.div` keyed by `currentFolderId` for a 300 ms easeOut fade-in on folder change.
+
+Card sorting uses the same `DropZone` architecture as folders: cards are draggable-only display rows, while invisible 12px zones inserted before/between/after cards handle drop sensing and display a centered 2px insertion line when active. This removes top/bottom edge flicker and maps each zone directly to a deterministic `generateKeyBetween(prevOrder, nextOrder)` result. Zones reject drops when the dragged card id matches either adjacent id to avoid no-op self-adjacent inserts.
 
 | Action   | Component          | Behaviour                                                                                                                      |
 | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |

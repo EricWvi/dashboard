@@ -51,7 +51,6 @@ import {
   useDeleteFolder,
   useFolderPath,
 } from "@/hooks/flomo/use-folders";
-import { useUpdateCard } from "@/hooks/flomo/use-cards";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Folder } from "@/lib/flomo/model";
@@ -67,11 +66,6 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import {
-  attachClosestEdge,
-  extractClosestEdge,
-  type Edge,
-} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { generateKeyBetween } from "fractional-indexing";
 
@@ -84,7 +78,6 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
   const { data: folders } = useFoldersInParent(currentFolderId);
 
   const updateFolderMutation = useUpdateFolder();
-  const updateCardMutation = useUpdateCard();
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -119,35 +112,13 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
         const targetType = target.data.type as string;
 
         // Handle folder reorder
-        if (sourceType === "folder" && targetType === "folder") {
+        if (sourceType === "folder" && targetType === "folder-drop-zone") {
           const sourceId = source.data.id as string;
-          const targetId = target.data.id as string;
-          if (sourceId === targetId) return;
-
-          const edge = extractClosestEdge(target.data);
-          const targetIndex = sortedFolders.findIndex((f) => f.id === targetId);
-          if (targetIndex === -1) return;
-
           const sourceFolder = sortedFolders.find((f) => f.id === sourceId);
           if (!sourceFolder) return;
 
-          let before: string | null;
-          let after: string | null;
-          if (edge === "top") {
-            before =
-              targetIndex > 0
-                ? sortedFolders[targetIndex - 1].payload.sortOrder
-                : null;
-            after = sortedFolders[targetIndex].payload.sortOrder;
-          } else {
-            before = sortedFolders[targetIndex].payload.sortOrder;
-            after =
-              targetIndex < sortedFolders.length - 1
-                ? sortedFolders[targetIndex + 1].payload.sortOrder
-                : null;
-          }
-
-          const newSortOrder = generateKeyBetween(before, after);
+          const newSortOrder = target.data.sortOrder as string;
+          if (newSortOrder === sourceFolder.payload.sortOrder) return;
           updateFolderMutation.mutate({
             id: sourceId,
             data: {
@@ -157,7 +128,7 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
         }
       },
     });
-  }, [sortedFolders, updateFolderMutation, updateCardMutation]);
+  }, [sortedFolders, updateFolderMutation]);
 
   return (
     <>
@@ -171,24 +142,39 @@ export function NavFolders({ currentFolderId }: NavFoldersProps) {
             animate="animate"
             transition={folderTransition}
           >
-            <SidebarMenu>
-              {sortedFolders?.map((folder) => (
-                <DraggableFolderItem
-                  key={folder.id}
-                  folder={folder}
-                  onRename={() => {
-                    setRenamingFolder(folder);
-                    setRenameDialogOpen(true);
-                  }}
-                  onMove={() => {
-                    setMovingFolder(folder);
-                    setMoveDialogOpen(true);
-                  }}
-                  onDelete={() => {
-                    setDeletingFolder(folder);
-                    setDeleteDialogOpen(true);
-                  }}
-                />
+            <SidebarMenu className="gap-0">
+              {sortedFolders?.map((folder, index) => (
+                <Fragment key={folder.id}>
+                  {index === 0 && (
+                    <FolderDropZone
+                      prevOrder={null}
+                      nextOrder={folder.payload.sortOrder}
+                      prevId={null}
+                      nextId={folder.id}
+                    />
+                  )}
+                  <DraggableFolderItem
+                    folder={folder}
+                    onRename={() => {
+                      setRenamingFolder(folder);
+                      setRenameDialogOpen(true);
+                    }}
+                    onMove={() => {
+                      setMovingFolder(folder);
+                      setMoveDialogOpen(true);
+                    }}
+                    onDelete={() => {
+                      setDeletingFolder(folder);
+                      setDeleteDialogOpen(true);
+                    }}
+                  />
+                  <FolderDropZone
+                    prevOrder={folder.payload.sortOrder}
+                    nextOrder={sortedFolders[index + 1]?.payload.sortOrder ?? null}
+                    prevId={folder.id}
+                    nextId={sortedFolders[index + 1]?.id ?? null}
+                  />
+                </Fragment>
               ))}
             </SidebarMenu>
           </motion.div>
@@ -269,7 +255,6 @@ function DraggableFolderItem({
 
   const itemRef = useRef<HTMLLIElement>(null);
   const dragHandleRef = useRef<HTMLSpanElement>(null);
-  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
@@ -289,26 +274,6 @@ function DraggableFolderItem({
         onDragStart: () => setIsDragging(true),
         onDrop: () => setIsDragging(false),
       }),
-      dropTargetForElements({
-        element: el,
-        getData: ({ input, element }) =>
-          attachClosestEdge(
-            {
-              type: "folder",
-              id: folder.id,
-              sortOrder: folder.payload.sortOrder,
-            },
-            { input, element, allowedEdges: ["top", "bottom"] },
-          ),
-        canDrop: ({ source }) =>
-          source.data.id !== folder.id &&
-          (source.data.type === "folder" || source.data.type === "card"),
-        onDragEnter: ({ self }) =>
-          setClosestEdge(extractClosestEdge(self.data)),
-        onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
-        onDragLeave: () => setClosestEdge(null),
-        onDrop: () => setClosestEdge(null),
-      }),
     );
   }, [folder.id, folder.payload.sortOrder]);
 
@@ -317,9 +282,6 @@ function DraggableFolderItem({
       ref={itemRef}
       className={cn("relative cursor-pointer", isDragging && "opacity-50")}
     >
-      {closestEdge === "top" && (
-        <div className="bg-primary pointer-events-none absolute -top-[3px] right-0 left-0 h-0.5" />
-      )}
       <SidebarMenuButton
         asChild
         className="gap-0"
@@ -407,10 +369,54 @@ function DraggableFolderItem({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {closestEdge === "bottom" && (
-        <div className="bg-primary pointer-events-none absolute right-0 -bottom-[3px] left-0 h-0.5" />
-      )}
     </SidebarMenuItem>
+  );
+}
+
+interface FolderDropZoneProps {
+  prevOrder: string | null;
+  nextOrder: string | null;
+  prevId: string | null;
+  nextId: string | null;
+}
+
+function FolderDropZone({
+  prevOrder,
+  nextOrder,
+  prevId,
+  nextId,
+}: FolderDropZoneProps) {
+  const zoneRef = useRef<HTMLLIElement>(null);
+  const [isActive, setIsActive] = useState(false);
+  const sortOrder = generateKeyBetween(prevOrder, nextOrder);
+
+  useEffect(() => {
+    const el = zoneRef.current;
+    if (!el) return;
+
+    return dropTargetForElements({
+      element: el,
+      getData: () => ({
+        type: "folder-drop-zone",
+        sortOrder,
+      }),
+      canDrop: ({ source }) =>
+        source.data.type === "folder" &&
+        source.data.id !== prevId &&
+        source.data.id !== nextId,
+      onDragEnter: () => setIsActive(true),
+      onDrag: () => setIsActive(true),
+      onDragLeave: () => setIsActive(false),
+      onDrop: () => setIsActive(false),
+    });
+  }, [sortOrder, prevId, nextId]);
+
+  return (
+    <li ref={zoneRef} className="relative h-3 list-none">
+      {isActive && (
+        <div className="bg-primary pointer-events-none absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2" />
+      )}
+    </li>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Archive,
@@ -51,11 +51,6 @@ import {
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import {
-  attachClosestEdge,
-  extractClosestEdge,
-  type Edge,
-} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { generateKeyBetween } from "fractional-indexing";
 
@@ -105,35 +100,13 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
         const targetType = target.data.type as string;
 
         // Handle card reorder
-        if (sourceType === "card" && targetType === "card") {
+        if (sourceType === "card" && targetType === "card-drop-zone") {
           const sourceId = source.data.id as string;
-          const targetId = target.data.id as string;
-          if (sourceId === targetId) return;
-
-          const edge = extractClosestEdge(target.data);
-          const targetIndex = sortedCards.findIndex((c) => c.id === targetId);
-          if (targetIndex === -1) return;
-
           const sourceCard = sortedCards.find((c) => c.id === sourceId);
           if (!sourceCard) return;
 
-          let before: string | null;
-          let after: string | null;
-          if (edge === "top") {
-            before =
-              targetIndex > 0
-                ? sortedCards[targetIndex - 1].payload.sortOrder
-                : null;
-            after = sortedCards[targetIndex].payload.sortOrder;
-          } else {
-            before = sortedCards[targetIndex].payload.sortOrder;
-            after =
-              targetIndex < sortedCards.length - 1
-                ? sortedCards[targetIndex + 1].payload.sortOrder
-                : null;
-          }
-
-          const newSortOrder = generateKeyBetween(before, after);
+          const newSortOrder = target.data.sortOrder as string;
+          if (newSortOrder === sourceCard.payload.sortOrder) return;
           updateCardMutation.mutate({
             id: sourceId,
             data: {
@@ -157,24 +130,39 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
             animate="animate"
             transition={folderTransition}
           >
-            <SidebarMenu>
-              {sortedCards?.map((card) => (
-                <DraggableCardItem
-                  key={card.id}
-                  card={card}
-                  onRename={() => {
-                    setRenamingCard(card);
-                    setRenameDialogOpen(true);
-                  }}
-                  onMove={() => {
-                    setMovingCard(card);
-                    setMoveDialogOpen(true);
-                  }}
-                  onDelete={() => {
-                    setDeletingCard(card);
-                    setDeleteDialogOpen(true);
-                  }}
-                />
+            <SidebarMenu className="gap-0">
+              {sortedCards?.map((card, index) => (
+                <Fragment key={card.id}>
+                  {index === 0 && (
+                    <CardDropZone
+                      prevOrder={null}
+                      nextOrder={card.payload.sortOrder}
+                      prevId={null}
+                      nextId={card.id}
+                    />
+                  )}
+                  <DraggableCardItem
+                    card={card}
+                    onRename={() => {
+                      setRenamingCard(card);
+                      setRenameDialogOpen(true);
+                    }}
+                    onMove={() => {
+                      setMovingCard(card);
+                      setMoveDialogOpen(true);
+                    }}
+                    onDelete={() => {
+                      setDeletingCard(card);
+                      setDeleteDialogOpen(true);
+                    }}
+                  />
+                  <CardDropZone
+                    prevOrder={card.payload.sortOrder}
+                    nextOrder={sortedCards[index + 1]?.payload.sortOrder ?? null}
+                    prevId={card.id}
+                    nextId={sortedCards[index + 1]?.id ?? null}
+                  />
+                </Fragment>
               ))}
             </SidebarMenu>
           </motion.div>
@@ -264,7 +252,6 @@ function DraggableCardItem({
 
   const itemRef = useRef<HTMLLIElement>(null);
   const dragHandleRef = useRef<HTMLSpanElement>(null);
-  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
@@ -285,25 +272,6 @@ function DraggableCardItem({
         onDragStart: () => setIsDragging(true),
         onDrop: () => setIsDragging(false),
       }),
-      dropTargetForElements({
-        element: el,
-        getData: ({ input, element }) =>
-          attachClosestEdge(
-            {
-              type: "card",
-              id: card.id,
-              sortOrder: card.payload.sortOrder,
-            },
-            { input, element, allowedEdges: ["top", "bottom"] },
-          ),
-        canDrop: ({ source }) =>
-          source.data.type === "card" && source.data.id !== card.id,
-        onDragEnter: ({ self }) =>
-          setClosestEdge(extractClosestEdge(self.data)),
-        onDrag: ({ self }) => setClosestEdge(extractClosestEdge(self.data)),
-        onDragLeave: () => setClosestEdge(null),
-        onDrop: () => setClosestEdge(null),
-      }),
     );
   }, [card.id, card.payload.sortOrder, card.payload]);
 
@@ -314,9 +282,6 @@ function DraggableCardItem({
       ref={itemRef}
       className={cn("relative cursor-pointer", isDragging && "opacity-50")}
     >
-      {closestEdge === "top" && (
-        <div className="bg-primary pointer-events-none absolute -top-[3px] right-0 left-0 h-0.5" />
-      )}
       <SidebarMenuButton
         asChild
         className={cn(
@@ -409,10 +374,54 @@ function DraggableCardItem({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {closestEdge === "bottom" && (
-        <div className="bg-primary pointer-events-none absolute right-0 -bottom-[3px] left-0 h-0.5" />
-      )}
     </SidebarMenuItem>
+  );
+}
+
+interface CardDropZoneProps {
+  prevOrder: string | null;
+  nextOrder: string | null;
+  prevId: string | null;
+  nextId: string | null;
+}
+
+function CardDropZone({
+  prevOrder,
+  nextOrder,
+  prevId,
+  nextId,
+}: CardDropZoneProps) {
+  const zoneRef = useRef<HTMLLIElement>(null);
+  const [isActive, setIsActive] = useState(false);
+  const sortOrder = generateKeyBetween(prevOrder, nextOrder);
+
+  useEffect(() => {
+    const el = zoneRef.current;
+    if (!el) return;
+
+    return dropTargetForElements({
+      element: el,
+      getData: () => ({
+        type: "card-drop-zone",
+        sortOrder,
+      }),
+      canDrop: ({ source }) =>
+        source.data.type === "card" &&
+        source.data.id !== prevId &&
+        source.data.id !== nextId,
+      onDragEnter: () => setIsActive(true),
+      onDrag: () => setIsActive(true),
+      onDragLeave: () => setIsActive(false),
+      onDrop: () => setIsActive(false),
+    });
+  }, [sortOrder, prevId, nextId]);
+
+  return (
+    <li ref={zoneRef} className="relative h-3 list-none">
+      {isActive && (
+        <div className="bg-primary pointer-events-none absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2" />
+      )}
+    </li>
   );
 }
 
