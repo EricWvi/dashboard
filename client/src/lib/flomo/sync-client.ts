@@ -45,7 +45,7 @@ export class WebSyncClient implements ISyncClient {
   }
 
   async Push(data: FlomoData): Promise<{ ok: boolean; statusText: string }> {
-    const response = await postRequest(`/api/flomo?Action=Push`, data);
+    const response = await postRequest(`/api/flomo?Action=Push`, data, 2);
     const raw: BackendWrapper<unknown> = await response.json();
     return {
       ok: raw.code === 200,
@@ -61,6 +61,7 @@ export class WebSyncClient implements ISyncClient {
   async Pull(version: number): Promise<FlomoSyncResponse> {
     const response = await getRequest(
       `/api/flomo?Action=Pull&since=${version}`,
+      2,
     );
     const data: BackendWrapper<FlomoSyncResponse> = await response.json();
     return unwrapBackend(data);

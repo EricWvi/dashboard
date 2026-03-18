@@ -3,6 +3,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Result as SqliteResult};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+use reqwest;
 
 // --- Migration ---
 
@@ -1674,8 +1675,8 @@ pub mod commands {
     use crate::media_cache::backend_url;
 
     #[tauri::command]
-    pub fn flomo_full_sync() -> Result<serde_json::Value, String> {
-        let client = reqwest::blocking::Client::new();
+    pub async fn flomo_full_sync() -> Result<serde_json::Value, String> {
+        let client = reqwest::Client::new();
         let url = format!("{}/api/flomo?Action=FullSync", backend_url());
 
         #[cfg(debug_assertions)]
@@ -1684,6 +1685,7 @@ pub mod commands {
         let response = client
             .get(&url)
             .send()
+            .await
             .map_err(|e| format!("Failed to send full sync request: {}", e))?;
 
         if !response.status().is_success() {
@@ -1692,52 +1694,79 @@ pub mod commands {
 
         response
             .json::<serde_json::Value>()
+            .await
             .map_err(|e| format!("Failed to parse full sync response: {}", e))
     }
 
     #[tauri::command]
-    pub fn flomo_push(data: FlomoData) -> Result<serde_json::Value, String> {
-        let client = reqwest::blocking::Client::new();
+    pub async fn flomo_push(data: FlomoData) -> Result<serde_json::Value, String> {
+        let client = reqwest::Client::new();
         let url = format!("{}/api/flomo?Action=Push", backend_url());
 
         #[cfg(debug_assertions)]
         println!("[flomo_db][request] POST {}", url);
 
-        let response = client
-            .post(&url)
-            .json(&data)
-            .send()
-            .map_err(|e| format!("Failed to send push request: {}", e))?;
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            async {
+                let response = client
+                    .post(&url)
+                    .json(&data)
+                    .send()
+                    .await
+                    .map_err(|e| format!("Failed to send push request: {}", e))?;
 
-        if !response.status().is_success() {
-            return Err(format!("Push failed with status: {}", response.status()));
+                if !response.status().is_success() {
+                    return Err(format!("Push failed with status: {}", response.status()));
+                }
+
+                response
+                    .json::<serde_json::Value>()
+                    .await
+                    .map_err(|e| format!("Failed to parse push response: {}", e))
+            },
+        )
+        .await;
+
+        match result {
+            Ok(r) => r,
+            Err(_) => Err("Request timeout after 5s".to_string()),
         }
-
-        response
-            .json::<serde_json::Value>()
-            .map_err(|e| format!("Failed to parse push response: {}", e))
     }
 
     #[tauri::command]
-    pub fn flomo_pull(version: i64) -> Result<serde_json::Value, String> {
-        let client = reqwest::blocking::Client::new();
+    pub async fn flomo_pull(version: i64) -> Result<serde_json::Value, String> {
+        let client = reqwest::Client::new();
         let url = format!("{}/api/flomo?Action=Pull&since={}", backend_url(), version);
 
         #[cfg(debug_assertions)]
         println!("[flomo_db][request] GET {}", url);
 
-        let response = client
-            .get(&url)
-            .send()
-            .map_err(|e| format!("Failed to send pull request: {}", e))?;
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            async {
+                let response = client
+                    .get(&url)
+                    .send()
+                    .await
+                    .map_err(|e| format!("Failed to send pull request: {}", e))?;
 
-        if !response.status().is_success() {
-            return Err(format!("Pull failed with status: {}", response.status()));
+                if !response.status().is_success() {
+                    return Err(format!("Pull failed with status: {}", response.status()));
+                }
+
+                response
+                    .json::<serde_json::Value>()
+                    .await
+                    .map_err(|e| format!("Failed to parse pull response: {}", e))
+            },
+        )
+        .await;
+
+        match result {
+            Ok(r) => r,
+            Err(_) => Err("Request timeout after 5s".to_string()),
         }
-
-        response
-            .json::<serde_json::Value>()
-            .map_err(|e| format!("Failed to parse pull response: {}", e))
     }
 
     // --- Search ---
