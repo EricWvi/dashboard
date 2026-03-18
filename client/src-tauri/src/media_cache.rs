@@ -523,7 +523,7 @@ async fn handle_media_request(
     if !file_path.exists() {
         if state.tasks.try_insert(&uuid) {
             // We own the download slot — download, save, write DB asynchronously
-            if let Err(e) = async_download_and_save(&uuid, &file_path, &state.db).await {
+            if let Err(e) = async_download_and_save(&uuid, &file_path, state.db.clone()).await {
                 state.tasks.remove(&uuid);
                 return (StatusCode::BAD_GATEWAY, e).into_response();
             }
