@@ -393,7 +393,7 @@ function CardDropZone({
   prevId,
   nextId,
 }: CardDropZoneProps) {
-  const zoneRef = useRef<HTMLLIElement>(null);
+  const zoneRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(false);
   const sortOrder = generateKeyBetween(prevOrder, nextOrder);
 
@@ -419,7 +419,8 @@ function CardDropZone({
   }, [sortOrder, prevId, nextId]);
 
   return (
-    <li ref={zoneRef} className="relative h-2 list-none">
+    <li className="relative h-1 list-none">
+      <div ref={zoneRef} className="absolute -top-0.5 right-0 left-0 h-2" />
       {isActive && (
         <div className="bg-primary pointer-events-none absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2" />
       )}
