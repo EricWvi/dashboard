@@ -419,7 +419,7 @@ function CardDropZone({
   }, [sortOrder, prevId, nextId]);
 
   return (
-    <li ref={zoneRef} className="relative h-1 list-none">
+    <li ref={zoneRef} className="relative h-2 list-none">
       {isActive && (
         <div className="bg-primary pointer-events-none absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2" />
       )}
