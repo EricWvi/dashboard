@@ -14,10 +14,11 @@ struct MigrationStep {
 }
 
 fn migrations() -> Vec<MigrationStep> {
-    vec![MigrationStep {
-        version: "v0.1.0",
-        name: "Create user+cards+folders+tiptaps+sync_meta+migration",
-        sql: "
+    vec![
+        MigrationStep {
+            version: "v0.1.0",
+            name: "Create user+cards+folders+tiptaps+sync_meta+migration",
+            sql: "
             CREATE TABLE IF NOT EXISTS user (
                 key TEXT PRIMARY KEY,
                 username TEXT NOT NULL,
@@ -140,7 +141,28 @@ fn migrations() -> Vec<MigrationStep> {
                 value TEXT NOT NULL
             );
         ",
-    }]
+        },
+        MigrationStep {
+            version: "v0.1.1",
+            name: "Use INSERT OR REPLACE in flomo search index update triggers",
+            sql: "
+            DROP TRIGGER IF EXISTS cards_au;
+            CREATE TRIGGER cards_au AFTER UPDATE OF title ON cards BEGIN
+            INSERT OR REPLACE INTO cards_title_search(id, title) VALUES (new.id, new.title);
+            END;
+
+            DROP TRIGGER IF EXISTS cards_text_au;
+            CREATE TRIGGER cards_text_au AFTER UPDATE OF raw_text ON cards BEGIN
+            INSERT OR REPLACE INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
+            END;
+
+            DROP TRIGGER IF EXISTS folders_au;
+            CREATE TRIGGER folders_au AFTER UPDATE OF title ON folders BEGIN
+            INSERT OR REPLACE INTO folders_title_search(id, title) VALUES (new.id, new.title);
+            END;
+        ",
+        },
+    ]
 }
 
 // --- Models ---
@@ -692,8 +714,12 @@ impl FlomoDb {
 
     pub fn search_card(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
+        let query = query.trim();
+        if query.is_empty() {
+            return Ok(vec![]);
+        }
         let pattern = format!("%{}%", query);
-        let (sql, params) = if query.len() < 3 {
+        let (sql, params) = if query.chars().count() < 3 {
             (
                 "SELECT c.id FROM cards c WHERE c.title LIKE ?1 AND c.is_deleted = 0",
                 params![pattern],
@@ -713,8 +739,12 @@ impl FlomoDb {
 
     pub fn search_content(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
+        let query = query.trim();
+        if query.is_empty() {
+            return Ok(vec![]);
+        }
         let pattern = format!("%{}%", query);
-        let (sql, params) = if query.len() < 3 {
+        let (sql, params) = if query.chars().count() < 3 {
             (
                 "SELECT id FROM cards WHERE raw_text LIKE ?1 AND is_deleted = 0",
                 params![pattern],
@@ -943,8 +973,12 @@ impl FlomoDb {
 
     pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
+        let query = query.trim();
+        if query.is_empty() {
+            return Ok(vec![]);
+        }
         let pattern = format!("%{}%", query);
-        let (sql, params) = if query.len() < 3 {
+        let (sql, params) = if query.chars().count() < 3 {
             (
                 "SELECT id FROM folders WHERE title LIKE ?1 AND is_deleted = 0",
                 params![pattern],
@@ -2107,6 +2141,29 @@ mod tests {
         assert_eq!(card.sync_status, SYNC_STATUS_PENDING);
     }
 
+    #[test]
+    fn test_card_search_trim_and_multibyte_length() {
+        let db = make_db();
+        let card = Card {
+            id: "card-cn".to_string(),
+            folder_id: "folder-1".to_string(),
+            title: "你好世界".to_string(),
+            draft: "d1".to_string(),
+            payload: serde_json::json!({}),
+            raw_text: "这是正文".to_string(),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_card(&card).unwrap();
+
+        assert!(db.search_card("   ").unwrap().is_empty());
+        assert_eq!(db.search_card("  你好  ").unwrap(), vec!["card-cn".to_string()]);
+    }
+
     // --- Folder tests ---
 
     #[test]
@@ -2325,6 +2382,30 @@ mod tests {
         assert_eq!(folder.sync_status, SYNC_STATUS_SYNCED);
     }
 
+    #[test]
+    fn test_folder_search_trim_and_empty() {
+        let db = make_db();
+        let folder = Folder {
+            id: "folder-cn".to_string(),
+            parent_id: "root".to_string(),
+            title: "你好文件夹".to_string(),
+            payload: serde_json::json!({}),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_folder(&folder).unwrap();
+
+        assert!(db.search_folder("   ").unwrap().is_empty());
+        assert_eq!(
+            db.search_folder("  你好  ").unwrap(),
+            vec!["folder-cn".to_string()]
+        );
+    }
+
     // --- Tiptap tests ---
 
     #[test]
@@ -2343,6 +2424,105 @@ mod tests {
         assert_eq!(tiptap.content["type"], "doc");
         assert_eq!(tiptap.history.len(), 1);
         assert_eq!(tiptap.sync_status, SYNC_STATUS_PENDING);
+    }
+
+    #[test]
+    fn test_content_search_trim_and_empty() {
+        let db = make_db();
+        let card = Card {
+            id: "content-cn".to_string(),
+            folder_id: "folder-1".to_string(),
+            title: "标题".to_string(),
+            draft: "d1".to_string(),
+            payload: serde_json::json!({}),
+            raw_text: "这是中文内容".to_string(),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_card(&card).unwrap();
+
+        assert!(db.search_content("   ").unwrap().is_empty());
+        assert_eq!(
+            db.search_content("  中文  ").unwrap(),
+            vec!["content-cn".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_search_index_update_triggers_reinsert_rows() {
+        let db = make_db();
+
+        let card = Card {
+            id: "reindex-card".to_string(),
+            folder_id: "folder-1".to_string(),
+            title: "旧标题".to_string(),
+            draft: "d1".to_string(),
+            payload: serde_json::json!({}),
+            raw_text: "旧内容".to_string(),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_card(&card).unwrap();
+
+        let folder = Folder {
+            id: "reindex-folder".to_string(),
+            parent_id: "root".to_string(),
+            title: "旧目录".to_string(),
+            payload: serde_json::json!({}),
+            is_bookmarked: 0,
+            is_archived: 0,
+            created_at: 1000,
+            updated_at: 1000,
+            is_deleted: false,
+            sync_status: SYNC_STATUS_SYNCED,
+        };
+        db.put_folder(&folder).unwrap();
+
+        let conn = db.conn().unwrap();
+        conn.execute(
+            "DELETE FROM cards_title_search WHERE id = ?1",
+            params!["reindex-card"],
+        )
+        .unwrap();
+        conn.execute(
+            "DELETE FROM cards_raw_text_search WHERE id = ?1",
+            params!["reindex-card"],
+        )
+        .unwrap();
+        conn.execute(
+            "DELETE FROM folders_title_search WHERE id = ?1",
+            params!["reindex-folder"],
+        )
+        .unwrap();
+
+        db.update_card(
+            "reindex-card",
+            &serde_json::json!({"title": "新标题", "rawText": "新内容"}),
+        )
+        .unwrap();
+        db.update_folder("reindex-folder", &serde_json::json!({"title": "新目录"}))
+            .unwrap();
+
+        assert_eq!(
+            db.search_card("新标题").unwrap(),
+            vec!["reindex-card".to_string()]
+        );
+        assert_eq!(
+            db.search_content("新内容").unwrap(),
+            vec!["reindex-card".to_string()]
+        );
+        assert_eq!(
+            db.search_folder("新目录").unwrap(),
+            vec!["reindex-folder".to_string()]
+        );
     }
 
     #[test]
