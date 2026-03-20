@@ -65,7 +65,7 @@ fn migrations() -> Vec<MigrationStep> {
             END;
 
             CREATE TRIGGER cards_au AFTER UPDATE OF title ON cards BEGIN
-            UPDATE cards_title_search SET title = new.title WHERE id = old.id;
+            INSERT OR REPLACE INTO cards_title_search(id, title) VALUES (new.id, new.title);
             END;
 
             CREATE VIRTUAL TABLE cards_raw_text_search USING fts5(
@@ -83,7 +83,7 @@ fn migrations() -> Vec<MigrationStep> {
             END;
 
             CREATE TRIGGER cards_text_au AFTER UPDATE OF raw_text ON cards BEGIN
-            UPDATE cards_raw_text_search SET raw_text = new.raw_text WHERE id = old.id;
+            INSERT OR REPLACE INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
             END;
 
 
@@ -120,7 +120,7 @@ fn migrations() -> Vec<MigrationStep> {
             END;
 
             CREATE TRIGGER folders_au AFTER UPDATE OF title ON folders BEGIN
-            UPDATE folders_title_search SET title = new.title WHERE id = old.id;
+            INSERT OR REPLACE INTO folders_title_search(id, title) VALUES (new.id, new.title);
             END;
 
 
@@ -140,26 +140,6 @@ fn migrations() -> Vec<MigrationStep> {
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
-        ",
-        },
-        MigrationStep {
-            version: "v0.1.1",
-            name: "Use INSERT OR REPLACE in flomo search index update triggers",
-            sql: "
-            DROP TRIGGER IF EXISTS cards_au;
-            CREATE TRIGGER cards_au AFTER UPDATE OF title ON cards BEGIN
-            INSERT OR REPLACE INTO cards_title_search(id, title) VALUES (new.id, new.title);
-            END;
-
-            DROP TRIGGER IF EXISTS cards_text_au;
-            CREATE TRIGGER cards_text_au AFTER UPDATE OF raw_text ON cards BEGIN
-            INSERT OR REPLACE INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
-            END;
-
-            DROP TRIGGER IF EXISTS folders_au;
-            CREATE TRIGGER folders_au AFTER UPDATE OF title ON folders BEGIN
-            INSERT OR REPLACE INTO folders_title_search(id, title) VALUES (new.id, new.title);
-            END;
         ",
         },
     ]
