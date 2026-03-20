@@ -714,12 +714,12 @@ impl FlomoDb {
 
     pub fn search_card(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
-        let query = query.trim();
-        if query.is_empty() {
+        let trimmed_query = query.trim();
+        if trimmed_query.is_empty() {
             return Ok(vec![]);
         }
-        let pattern = format!("%{}%", query);
-        let (sql, params) = if query.chars().count() < 3 {
+        let pattern = format!("%{}%", trimmed_query);
+        let (sql, params) = if trimmed_query.chars().count() < 3 {
             (
                 "SELECT c.id FROM cards c WHERE c.title LIKE ?1 AND c.is_deleted = 0",
                 params![pattern],
@@ -727,7 +727,7 @@ impl FlomoDb {
         } else {
             (
                 "SELECT c.id FROM cards c JOIN cards_title_search ct ON c.id = ct.id WHERE cards_title_search MATCH ?1 AND c.is_deleted = 0",
-                params![query],
+                params![trimmed_query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
@@ -739,12 +739,12 @@ impl FlomoDb {
 
     pub fn search_content(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
-        let query = query.trim();
-        if query.is_empty() {
+        let trimmed_query = query.trim();
+        if trimmed_query.is_empty() {
             return Ok(vec![]);
         }
-        let pattern = format!("%{}%", query);
-        let (sql, params) = if query.chars().count() < 3 {
+        let pattern = format!("%{}%", trimmed_query);
+        let (sql, params) = if trimmed_query.chars().count() < 3 {
             (
                 "SELECT id FROM cards WHERE raw_text LIKE ?1 AND is_deleted = 0",
                 params![pattern],
@@ -752,7 +752,7 @@ impl FlomoDb {
         } else {
             (
                 "SELECT c.id FROM cards c JOIN cards_raw_text_search cr ON c.id = cr.id WHERE cards_raw_text_search MATCH ?1 AND c.is_deleted = 0",
-                params![query],
+                params![trimmed_query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
@@ -973,12 +973,12 @@ impl FlomoDb {
 
     pub fn search_folder(&self, query: &str) -> SqliteResult<Vec<String>> {
         let conn = self.conn()?;
-        let query = query.trim();
-        if query.is_empty() {
+        let trimmed_query = query.trim();
+        if trimmed_query.is_empty() {
             return Ok(vec![]);
         }
-        let pattern = format!("%{}%", query);
-        let (sql, params) = if query.chars().count() < 3 {
+        let pattern = format!("%{}%", trimmed_query);
+        let (sql, params) = if trimmed_query.chars().count() < 3 {
             (
                 "SELECT id FROM folders WHERE title LIKE ?1 AND is_deleted = 0",
                 params![pattern],
@@ -986,7 +986,7 @@ impl FlomoDb {
         } else {
             (
                 "SELECT f.id FROM folders f JOIN folders_title_search ft ON f.id = ft.id WHERE folders_title_search MATCH ?1 AND f.is_deleted = 0",
-                params![query],
+                params![trimmed_query],
             )
         };
         let mut stmt = conn.prepare(sql)?;
@@ -2160,6 +2160,7 @@ mod tests {
         };
         db.put_card(&card).unwrap();
 
+        assert!(db.search_card("").unwrap().is_empty());
         assert!(db.search_card("   ").unwrap().is_empty());
         assert_eq!(db.search_card("  你好  ").unwrap(), vec!["card-cn".to_string()]);
     }
@@ -2399,6 +2400,7 @@ mod tests {
         };
         db.put_folder(&folder).unwrap();
 
+        assert!(db.search_folder("").unwrap().is_empty());
         assert!(db.search_folder("   ").unwrap().is_empty());
         assert_eq!(
             db.search_folder("  你好  ").unwrap(),
@@ -2445,6 +2447,7 @@ mod tests {
         };
         db.put_card(&card).unwrap();
 
+        assert!(db.search_content("").unwrap().is_empty());
         assert!(db.search_content("   ").unwrap().is_empty());
         assert_eq!(
             db.search_content("  中文  ").unwrap(),
@@ -2486,22 +2489,24 @@ mod tests {
         };
         db.put_folder(&folder).unwrap();
 
-        let conn = db.conn().unwrap();
-        conn.execute(
-            "DELETE FROM cards_title_search WHERE id = ?1",
-            params!["reindex-card"],
-        )
-        .unwrap();
-        conn.execute(
-            "DELETE FROM cards_raw_text_search WHERE id = ?1",
-            params!["reindex-card"],
-        )
-        .unwrap();
-        conn.execute(
-            "DELETE FROM folders_title_search WHERE id = ?1",
-            params!["reindex-folder"],
-        )
-        .unwrap();
+        {
+            let conn = db.conn().unwrap();
+            conn.execute(
+                "DELETE FROM cards_title_search WHERE id = ?1",
+                params!["reindex-card"],
+            )
+            .unwrap();
+            conn.execute(
+                "DELETE FROM cards_raw_text_search WHERE id = ?1",
+                params!["reindex-card"],
+            )
+            .unwrap();
+            conn.execute(
+                "DELETE FROM folders_title_search WHERE id = ?1",
+                params!["reindex-folder"],
+            )
+            .unwrap();
+        }
 
         db.update_card(
             "reindex-card",
