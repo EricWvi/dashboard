@@ -57,7 +57,7 @@ fn migrations() -> Vec<MigrationStep> {
             );
 
             CREATE TRIGGER cards_ai AFTER INSERT ON cards BEGIN
-            INSERT INTO cards_title_search(id, title) VALUES (new.id, new.title);
+            INSERT OR REPLACE INTO cards_title_search(id, title) VALUES (new.id, new.title);
             END;
 
             CREATE TRIGGER cards_ad AFTER DELETE ON cards BEGIN
@@ -75,7 +75,7 @@ fn migrations() -> Vec<MigrationStep> {
             );
 
             CREATE TRIGGER cards_text_ai AFTER INSERT ON cards BEGIN
-            INSERT INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
+            INSERT OR REPLACE INTO cards_raw_text_search(id, raw_text) VALUES (new.id, new.raw_text);
             END;
 
             CREATE TRIGGER cards_text_ad AFTER DELETE ON cards BEGIN
@@ -112,7 +112,7 @@ fn migrations() -> Vec<MigrationStep> {
             );
 
             CREATE TRIGGER folders_ai AFTER INSERT ON folders BEGIN
-            INSERT INTO folders_title_search(id, title) VALUES (new.id, new.title);
+            INSERT OR REPLACE INTO folders_title_search(id, title) VALUES (new.id, new.title);
             END;
 
             CREATE TRIGGER folders_ad AFTER DELETE ON folders BEGIN

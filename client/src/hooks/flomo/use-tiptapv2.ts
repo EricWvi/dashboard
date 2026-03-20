@@ -1,4 +1,5 @@
 import { flomoDatabase } from "@/lib/flomo/db-interface";
+import { type JSONContent } from "@tiptap/react";
 
 const defaultContent = [
   {
@@ -43,6 +44,28 @@ export async function createTiptapWithTitle(title: string) {
   });
 }
 
+export async function updateTiptapTitle(id: string, title: string) {
+  const prev = await flomoDatabase.getTiptap(id);
+  if (!prev) return;
+  const content = prev.content as JSONContent;
+  const titleNode = content.content?.find(
+    (node) => node.type === "heading" && node.attrs?.level === 1,
+  );
+  if (titleNode) {
+    titleNode.content = [{ text: title, type: "text" }];
+  } else {
+    content.content?.unshift({
+      type: "heading",
+      attrs: { level: 1, textAlign: null },
+      content: [{ text: title, type: "text" }],
+    });
+  }
+  return flomoDatabase.updateTiptap(id, {
+    content,
+    history: [{ time: Date.now(), content }, ...(prev.history || [])],
+  });
+}
+
 export async function syncDraft({
   id,
   content,
@@ -63,12 +86,23 @@ export async function syncDraft({
 
 export async function saveDraft({
   id,
+  cardId,
   content,
 }: {
   id: string;
-  content: Record<string, unknown>;
+  cardId: string;
+  content: JSONContent;
 }) {
   const prev = await flomoDatabase.getTiptap(id);
+  const title = content.content?.find(
+    (node) => node.type === "heading" && node.attrs?.level === 1,
+  )?.content?.[0].text;
+  if (title) {
+    const card = await flomoDatabase.getCard(cardId);
+    if (card!.title !== title) {
+      await flomoDatabase.updateCard(cardId, { title });
+    }
+  }
   return flomoDatabase.updateTiptap(id, {
     content,
     history: [{ time: Date.now(), content }, ...(prev?.history || [])],

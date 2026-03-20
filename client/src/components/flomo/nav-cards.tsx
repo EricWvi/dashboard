@@ -70,6 +70,7 @@ export function NavCards({ currentFolderId }: NavCardsProps) {
   const [renamingCard, setRenamingCard] = useState<{
     id: string;
     title: string;
+    draft: string;
   } | null>(null);
 
   // Move dialog state

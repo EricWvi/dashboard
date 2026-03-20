@@ -16,7 +16,7 @@ export function CardPane() {
   return (
     <>
       <CardHeader />
-      <div className="relative flex-1 overflow-hidden">
+      <div className="bg-tt-background relative flex-1 overflow-hidden">
         <div id="only-tt-scroll-container" className="h-full overflow-y-auto">
           {/* Sentinel element for IntersectionObserver - triggers title visibility */}
           <div id="card-header-sentinel" className="h-px w-full shrink-0" />

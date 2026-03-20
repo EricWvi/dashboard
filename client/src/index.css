@@ -44,6 +44,7 @@
 
   --color-emoji-accent: var(--emoji-accent);
   --color-tab-highlight: var(--tab-highlight);
+  --color-tt-background: var(--tt-bg-color);
 }
 
 :root {

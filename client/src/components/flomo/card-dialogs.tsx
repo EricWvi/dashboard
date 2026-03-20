@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,12 +22,13 @@ import { flomoDatabase } from "@/lib/flomo/db-interface";
 import { RootFolderId, type Card, type Folder } from "@/lib/flomo/model";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
 import { generateKeyBetween } from "fractional-indexing";
+import { updateTiptapTitle } from "@/hooks/flomo/use-tiptapv2";
 
 // ─── RenameCardDialog ────────────────────────────────────────────────
 interface RenameCardDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  card: { id: string; title: string };
+  card: { id: string; title: string; draft: string };
 }
 
 export function RenameCardDialog({
@@ -41,7 +42,8 @@ export function RenameCardDialog({
 
   const updateCardMutation = useUpdateCard();
 
-  const renameCard = () => {
+  const renameCard = async () => {
+    await updateTiptapTitle(card.draft, cardName);
     return updateCardMutation.mutateAsync({
       id: card.id,
       data: { title: cardName },
@@ -128,16 +130,20 @@ export function MoveCardDialog({ open, setOpen, card }: MoveCardDialogProps) {
     }
   }, [navigateFolderId]);
 
-  const scrollRef = useRef<HTMLOListElement>(null);
-  useEffect(() => {
-    if (scrollRef.current) {
-      const container = scrollRef.current;
-      container.scrollTo({
-        left: container.scrollWidth,
-        behavior: "smooth",
-      });
-    }
-  }, [path]);
+  const scrollBreadcrumbToEnd = useCallback(
+    (node: HTMLOListElement | null) => {
+      if (node) {
+        // use requestAnimationFrame to ensure the scroll happens after the DOM updates
+        requestAnimationFrame(() => {
+          node.scrollTo({
+            left: node.scrollWidth,
+            behavior: "smooth",
+          });
+        });
+      }
+    },
+    [path],
+  );
 
   const moveCard = async () => {
     const lastOrder = await flomoDatabase.lastOrderInFolder(
@@ -171,7 +177,7 @@ export function MoveCardDialog({ open, setOpen, card }: MoveCardDialogProps) {
           {/* Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList
-              ref={scrollRef}
+              ref={scrollBreadcrumbToEnd}
               className="scrollbar-hide flex-nowrap overflow-x-auto whitespace-nowrap"
             >
               <BreadcrumbItem

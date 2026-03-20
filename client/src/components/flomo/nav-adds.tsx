@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import { useEffect, useState } from "react";
 import { useCreateCard } from "@/hooks/flomo/use-cards";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useCreateFolder } from "@/hooks/flomo/use-folders";
+import { useEditorState } from "@/hooks/use-editor-state";
+import { flomoDatabase } from "@/lib/flomo/db-interface";
 
 export function NavAdds() {
   const { language } = useUserContextV2();
@@ -97,7 +100,9 @@ interface AddCardDialogProps {
 
 function AddCardDialog({ open, setOpen }: AddCardDialogProps) {
   const { language } = useUserContextV2();
-  const { currentFolderId } = useAppState();
+  const { isMobile, toggleSidebar } = useSidebar();
+  const { currentFolderId, setCardIdForDraft } = useAppState();
+  const { openTab } = useEditorState();
   const [isComposing, setIsComposing] = useState(false);
   const [cardName, setCardName] = useState("");
 
@@ -109,6 +114,19 @@ function AddCardDialog({ open, setOpen }: AddCardDialogProps) {
       title: cardName,
       payload: {},
     });
+  };
+
+  const afterAddCard = async (id: string) => {
+    const card = await flomoDatabase.getCard(id);
+    if (!card) return;
+    setOpen(false);
+    openTab({
+      draftId: card.draft,
+      title: card.title,
+      editable: true,
+    });
+    setCardIdForDraft(card.draft, card.id);
+    if (isMobile) toggleSidebar();
   };
 
   useEffect(() => {
@@ -134,7 +152,7 @@ function AddCardDialog({ open, setOpen }: AddCardDialogProps) {
             onCompositionEnd={() => setIsComposing(false)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !isComposing) {
-                addCard().then(() => setOpen(false));
+                addCard().then((id) => afterAddCard(id));
               }
             }}
             autoFocus
@@ -145,7 +163,7 @@ function AddCardDialog({ open, setOpen }: AddCardDialogProps) {
             </Button>
             <Button
               onClick={() => {
-                addCard().then(() => setOpen(false));
+                addCard().then((id) => afterAddCard(id));
               }}
               disabled={!cardName.trim() || createCardMutation.isPending}
             >

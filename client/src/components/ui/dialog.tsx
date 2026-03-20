@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 function Dialog({
   ...props
@@ -48,9 +49,11 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  disableAutoFocus = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  disableAutoFocus?: boolean;
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
@@ -63,6 +66,11 @@ function DialogContent({
         )}
         {...props}
       >
+        {disableAutoFocus && (
+          <VisuallyHidden>
+            <span tabIndex={0} />
+          </VisuallyHidden>
+        )}
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

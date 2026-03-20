@@ -133,15 +133,18 @@ export function CardHeader() {
       if (activeTabId) {
         setTabEditable(activeTabId, false);
         if (changed) {
-          const str = e.getText();
+          let str = e.getText().trim().replace(/\s+/g, " ");
+          if (str.startsWith(card!.title)) {
+            str = str.slice(card!.title.length);
+          }
           updateCardMutation.mutate({
             id: cardId,
-            data: { rawText: str.trim().replace(/\s+/g, " ") },
+            data: { rawText: str },
           });
         }
       }
     },
-    [activeTabId, cardId, setTabEditable],
+    [activeTabId, card, cardId, setTabEditable],
   );
 
   const handleSave = useCallback(
@@ -149,11 +152,12 @@ export function CardHeader() {
       if (activeTabId) {
         await saveDraft({
           id: activeTabId,
-          content: e.getJSON() as Record<string, unknown>,
+          cardId,
+          content: e.getJSON(),
         });
       }
     },
-    [activeTabId],
+    [activeTabId, cardId],
   );
 
   const handleDrop = useCallback(async () => {
@@ -238,7 +242,7 @@ export function CardHeader() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-2">
+      <header className="bg-tt-background flex h-16 shrink-0 items-center gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2 px-4">
           <SidebarTrigger className="text-muted-foreground -ml-1" />
           {isEditing ? (
