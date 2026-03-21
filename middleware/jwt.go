@@ -9,6 +9,7 @@ import (
 	"github.com/EricWvi/dashboard/handler"
 	"github.com/EricWvi/dashboard/log"
 	"github.com/EricWvi/dashboard/model"
+	"github.com/EricWvi/dashboard/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,9 +58,25 @@ func getId(email string) uint {
 
 func JWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		email := c.Request.Header.Get("Remote-Email")
+		token := c.Request.Header.Get("Onlyquant-Token")
+		if token == "" {
+			if c.Request.URL.Query().Get("Action") != "Auth" {
+				handler.ReplyError(c, http.StatusBadRequest, "request is not authenticated")
+				c.Abort()
+				return
+			} else {
+				c.Set("UserId", uint(0))
+				return
+			}
+		}
+		email, err := service.Decrypt(service.Key(), token)
+		if err != nil {
+			handler.ReplyError(c, http.StatusBadRequest, "token is invalid")
+			c.Abort()
+			return
+		}
 		if len(email) == 0 {
-			handler.ReplyError(c, http.StatusBadRequest, "request is not authenticated")
+			handler.ReplyError(c, http.StatusBadRequest, "email is empty")
 			c.Abort()
 			return
 		} else {

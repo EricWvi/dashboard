@@ -60,7 +60,7 @@ jobs:
 
       - name: Inject Android XML Patches
         working-directory: ./client
-        run: node src-tauri/scripts/apply-android-xml.js
+        run: node src-tauri/scripts/apply-android-xml.js ${{ github.event.inputs.app_type }}
 
       - name: Build Android Debug APK (ARM64)
         working-directory: ./client

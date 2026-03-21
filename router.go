@@ -6,12 +6,13 @@ import (
 	"strings"
 
 	"github.com/EricWvi/dashboard/handler"
+	"github.com/EricWvi/dashboard/handler/auth"
 	"github.com/EricWvi/dashboard/handler/blog"
 	"github.com/EricWvi/dashboard/handler/bookmark"
 	"github.com/EricWvi/dashboard/handler/collection"
+	"github.com/EricWvi/dashboard/handler/dashboard"
 	"github.com/EricWvi/dashboard/handler/echo"
 	"github.com/EricWvi/dashboard/handler/entry"
-	"github.com/EricWvi/dashboard/handler/dashboard"
 	"github.com/EricWvi/dashboard/handler/flomo"
 	"github.com/EricWvi/dashboard/handler/journal"
 	"github.com/EricWvi/dashboard/handler/media"
@@ -92,6 +93,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	// middleware.Session maintains session status
 	// back.Use(middleware.Session())
 
+	back.GET("/auth", auth.DefaultHandler)
 	back.GET("/user", user.DefaultHandler)
 	back.POST("/user", user.DefaultHandler)
 	back.GET("/media", media.DefaultHandler)

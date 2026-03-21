@@ -11,6 +11,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const appType = process.argv[2] || "flomo";
+
 const genDir = join(__dirname, "../gen/android");
 const manifestPath = join(genDir, "app/src/main/AndroidManifest.xml");
 const resXmlDir = join(genDir, "app/src/main/res/xml");
@@ -37,5 +39,29 @@ if (!manifest.includes("android:networkSecurityConfig")) {
     '<application\n        android:networkSecurityConfig="@xml/network_security_config"',
   );
   writeFileSync(manifestPath, manifest);
-  console.log("✅ AndroidManifest.xml modified");
+  console.log("✅ AndroidManifest.xml networkSecurityConfig modified");
+}
+
+const deepLinkIntent = `
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="${appType}" android:host="oidc" android:path="/callback" />
+        </intent-filter>
+    </activity>`;
+
+if (!manifest.includes(`android:scheme="${appType}"`)) {
+  // find the last occurrence of </activity> that is associated with the main activity
+  // and inject the deep link intent-filter before it
+  // usually the main activity is the one that contains the intent filter with action MAIN
+  if (manifest.includes("android.intent.action.MAIN")) {
+    manifest = manifest.replace("</activity>", deepLinkIntent);
+    writeFileSync(manifestPath, manifest);
+    console.log(
+      `✅ Deep Link (${appType}://) injected into AndroidManifest.xml`,
+    );
+  } else {
+    console.error("❌ Could not find MainActivity to inject Deep Link");
+  }
 }
