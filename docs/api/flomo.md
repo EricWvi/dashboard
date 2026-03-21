@@ -412,6 +412,7 @@ Common error scenarios:
 - All responses include a `requestId` field for request tracking
 - All operations are scoped to the authenticated user (via `creatorId`)
 - GET requests use URL parameters, POST requests use JSON body + URL parameters for Action
+- Tauri-side sync/media requests include header `Onlyquant-Token` from local OIDC auth state
 
 ### Local-First Sync (`/api/flomo`)
 

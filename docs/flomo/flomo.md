@@ -68,6 +68,14 @@ client/
 
 ## Features
 
+### Authentication (OIDC in Tauri)
+
+- In Tauri runtime, `checkAuth()` calls command `onlyquant_is_logged_in` instead of returning immediately.
+- Tauri keeps `oqAuthToken` in a global runtime state (`AuthToken`) and persists it in `media_cache.db` table `oq_meta` under key `oqAuthToken`.
+- During app startup, `init_media_cache` loads `oqAuthToken` from `oq_meta` (if present) and initializes `AuthToken`.
+- If token is absent, `onlyquant_is_logged_in` triggers OIDC with `https://auth.onlyquant.top/api/oidc/authorization`, using deep link redirect URI `flomo://`, then exchanges code through backend `/api/auth?Action=Auth`.
+- Tauri backend requests include header `Onlyquant-Token` with current token value.
+
 ### Core Functionality
 
 - **Quick Capture**: Fast note creation with minimal friction

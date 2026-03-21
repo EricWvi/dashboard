@@ -1711,7 +1711,11 @@ pub mod commands {
 
     // --- Sync API commands ---
 
-    use crate::media_cache::backend_url;
+    use crate::media_cache::{backend_url, current_auth_token};
+
+    fn apply_auth_header(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        builder.header("Onlyquant-Token", current_auth_token().unwrap_or_default())
+    }
 
     #[tauri::command]
     pub async fn flomo_full_sync() -> Result<serde_json::Value, String> {
@@ -1722,7 +1726,8 @@ pub mod commands {
         println!("[flomo_db][request] GET {}", url);
 
         let response = client
-            .get(&url)
+            .get(&url);
+        let response = apply_auth_header(response)
             .send()
             .await
             .map_err(|e| format!("Failed to send full sync request: {}", e))?;
@@ -1749,7 +1754,8 @@ pub mod commands {
             std::time::Duration::from_secs(5),
             async {
                 let response = client
-                    .post(&url)
+                    .post(&url);
+                let response = apply_auth_header(response)
                     .json(&data)
                     .send()
                     .await
@@ -1785,7 +1791,8 @@ pub mod commands {
             std::time::Duration::from_secs(5),
             async {
                 let response = client
-                    .get(&url)
+                    .get(&url);
+                let response = apply_auth_header(response)
                     .send()
                     .await
                     .map_err(|e| format!("Failed to send pull request: {}", e))?;

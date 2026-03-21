@@ -13,7 +13,8 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
-use tauri::Manager;
+use tauri::{Listener, Manager};
+use tauri_plugin_deep_link::DeepLinkExt;
 use tower::ServiceExt;
 use tower_http::{cors::CorsLayer, services::ServeFile};
 
@@ -97,6 +98,11 @@ impl MediaCacheDb {
                 content_type TEXT NOT NULL,
                 file_name TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS oq_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
             ",
         )?;
         Ok(())
@@ -157,6 +163,25 @@ impl MediaCacheDb {
             result.push(row?);
         }
         Ok(result)
+    }
+
+    pub fn get_meta(&self, key: &str) -> SqliteResult<Option<String>> {
+        let conn = self.conn()?;
+        let mut stmt = conn.prepare("SELECT value FROM oq_meta WHERE key = ?1")?;
+        let mut rows = stmt.query_map(params![key], |row| row.get::<_, String>(0))?;
+        match rows.next() {
+            Some(value) => Ok(Some(value?)),
+            None => Ok(None),
+        }
+    }
+
+    pub fn set_meta(&self, key: &str, value: &str) -> SqliteResult<()> {
+        let conn = self.conn()?;
+        conn.execute(
+            "INSERT OR REPLACE INTO oq_meta (key, value) VALUES (?1, ?2)",
+            params![key, value],
+        )?;
+        Ok(())
     }
 }
 
@@ -231,6 +256,98 @@ fn write_bytes_atomically(file_path: &PathBuf, bytes: &[u8]) -> Result<(), Strin
     Ok(())
 }
 
+#[derive(Default)]
+pub struct AuthToken {
+    token: Mutex<Option<String>>,
+}
+
+impl AuthToken {
+    pub fn new() -> Self {
+        Self {
+            token: Mutex::new(None),
+        }
+    }
+
+    pub fn get(&self) -> Option<String> {
+        self.token.lock().unwrap().clone()
+    }
+
+    pub fn set(&self, token: String) {
+        *self.token.lock().unwrap() = Some(token);
+    }
+}
+
+fn apply_auth_header(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+    builder.header("Onlyquant-Token", current_auth_token().unwrap_or_default())
+}
+
+fn parse_oidc_callback_url(
+    callback_url: &str,
+    expected_state: &str,
+) -> Result<Option<String>, String> {
+    let parsed = reqwest::Url::parse(callback_url)
+        .map_err(|e| format!("Invalid callback URL: {}", e))?;
+    let mut code: Option<String> = None;
+    let mut state: Option<String> = None;
+    let mut error: Option<String> = None;
+    let mut error_description: Option<String> = None;
+
+    for (k, v) in parsed.query_pairs() {
+        match k.as_ref() {
+            "code" => code = Some(v.into_owned()),
+            "state" => state = Some(v.into_owned()),
+            "error" => error = Some(v.into_owned()),
+            "error_description" => error_description = Some(v.into_owned()),
+            _ => {}
+        }
+    }
+
+    if let Some(err) = error {
+        return Err(format!(
+            "OIDC auth error: {}",
+            error_description.unwrap_or(err)
+        ));
+    }
+
+    let Some(code) = code else {
+        return Ok(None);
+    };
+
+    if state.as_deref() != Some(expected_state) {
+        return Err("Invalid OIDC state".to_string());
+    }
+
+    Ok(Some(code))
+}
+
+async fn exchange_oidc_code_for_token(code: &str) -> Result<String, String> {
+    let redirect_uri = "flomo%3A%2F%2F";
+    let auth_url = format!(
+        "{}/api/auth?Action=Auth&code={}&redirect_uri={}",
+        backend_url(), code, redirect_uri
+    );
+    let response = apply_auth_header(reqwest::Client::new().get(&auth_url))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to exchange OIDC code: {}", e))?;
+    if !response.status().is_success() {
+        return Err(format!(
+            "OIDC exchange failed with status {}",
+            response.status()
+        ));
+    }
+    let json = response
+        .json::<serde_json::Value>()
+        .await
+        .map_err(|e| format!("Invalid OIDC exchange response: {}", e))?;
+    let token = json
+        .get("message")
+        .and_then(|m| m.get("token"))
+        .and_then(|t| t.as_str())
+        .ok_or_else(|| "Missing token in OIDC response".to_string())?;
+    Ok(token.to_string())
+}
+
 async fn upload_file_to_backend(
     uuid: &str,
     file_path: &PathBuf,
@@ -262,8 +379,7 @@ async fn upload_file_to_backend(
         .text("uuid", uuid.to_string())
         .part("photos", part);
 
-    let response = client
-        .post(&upload_url)
+    let response = apply_auth_header(client.post(&upload_url))
         .multipart(form)
         .send()
         .await
@@ -366,8 +482,7 @@ async fn async_download_and_save(
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    let response = client
-        .get(&download_url)
+    let response = apply_auth_header(client.get(&download_url))
         .send()
         .await
         .map_err(|e| format!("Failed to download: {}", e))?;
@@ -610,6 +725,7 @@ static CACHE_DB: OnceLock<Arc<MediaCacheDb>> = OnceLock::new();
 static DOWNLOADING_TASKS: OnceLock<Arc<DownloadingTasks>> = OnceLock::new();
 static OBJECTS_DIR: OnceLock<PathBuf> = OnceLock::new();
 static MEDIA_SERVER_PORT: OnceLock<u16> = OnceLock::new();
+static AUTH_TOKEN: OnceLock<AuthToken> = OnceLock::new();
 
 pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
     let external_dir = app
@@ -629,6 +745,14 @@ pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
     let db = Arc::new(
         MediaCacheDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?,
     );
+    AUTH_TOKEN
+        .set(AuthToken::new())
+        .map_err(|_| "AuthToken already initialized".to_string())?;
+
+    if let Some(token) = db.get_meta("oqAuthToken").map_err(|e| e.to_string())? {
+        set_auth_token(token);
+    }
+
     let tasks = Arc::new(DownloadingTasks::new());
 
     replay_media_jobs_once(&objects_dir, db.clone());
@@ -651,12 +775,96 @@ pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+pub fn current_auth_token() -> Option<String> {
+    AUTH_TOKEN.get().and_then(AuthToken::get)
+}
+
+pub fn set_auth_token(token: String) {
+    if let Some(auth_token) = AUTH_TOKEN.get() {
+        auth_token.set(token);
+    }
+}
+
 #[tauri::command]
 pub fn get_local_media_server_port() -> Result<u16, String> {
     MEDIA_SERVER_PORT
         .get()
         .copied()
         .ok_or_else(|| "Media server is not initialized".to_string())
+}
+
+#[tauri::command]
+pub async fn onlyquant_is_logged_in(app: tauri::AppHandle) -> Result<(), String> {
+    if current_auth_token().is_some() {
+        return Ok(());
+    }
+
+    let db = CACHE_DB
+        .get()
+        .cloned()
+        .ok_or_else(|| "Media cache db is not initialized".to_string())?;
+
+    let state = uuid::Uuid::new_v4().to_string();
+    let client_id =
+        "Tp6WnNpVj9Sa8gdPZt8bVGq~yjKnjUZkG8J5IJ~aoIj5-Azn~pXUXq5fPXP-8BLQqOVnxq8P";
+    let redirect_uri = "flomo%3A%2F%2F";
+    let auth_url = format!(
+        "https://auth.onlyquant.top/api/oidc/authorization?client_id={}&redirect_uri={}&response_type=code&scope=openid%20profile%20email&state={}",
+        client_id, redirect_uri, state
+    );
+
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<String, String>>();
+    let tx = Arc::new(Mutex::new(Some(tx)));
+    let state_for_listener = state.clone();
+    let tx_for_listener = tx.clone();
+
+    let event_id = app.deep_link().on_open_url(move |event| {
+        let urls = event.urls();
+        for url in urls {
+            match parse_oidc_callback_url(url.as_ref(), &state_for_listener) {
+                Ok(Some(code)) => {
+                    if let Some(sender) = tx_for_listener.lock().unwrap().take() {
+                        let _ = sender.send(Ok(code));
+                    }
+                    break;
+                }
+                Ok(None) => {}
+                Err(err) => {
+                    if let Some(sender) = tx_for_listener.lock().unwrap().take() {
+                        let _ = sender.send(Err(err));
+                    }
+                    break;
+                }
+            }
+        }
+    });
+
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main window not found".to_string())?;
+    window
+        .navigate(
+            reqwest::Url::parse(&auth_url).map_err(|e| format!("Invalid auth URL: {}", e))?,
+        )
+        .map_err(|e| format!("Failed to open OIDC authorization URL: {}", e))?;
+
+    let code_result = tokio::time::timeout(Duration::from_secs(300), rx).await;
+    app.unlisten(event_id);
+
+    let code = code_result
+        .map_err(|_| "OIDC login timed out".to_string())?
+        .map_err(|_| "OIDC callback channel closed".to_string())??;
+    let token = exchange_oidc_code_for_token(&code).await?;
+
+    let db_clone = db.clone();
+    let token_for_db = token.clone();
+    tokio::task::spawn_blocking(move || db_clone.set_meta("oqAuthToken", &token_for_db))
+        .await
+        .map_err(|e| format!("Failed to persist OIDC token task: {}", e))?
+        .map_err(|e| format!("Failed to persist OIDC token: {}", e))?;
+    set_auth_token(token);
+
+    Ok(())
 }
 
 // --- Tests ---
@@ -708,6 +916,12 @@ mod tests {
                 "photo.png".to_string(),
             )]
         );
+
+        db.set_meta("oqAuthToken", "test-token").unwrap();
+        assert_eq!(
+            db.get_meta("oqAuthToken").unwrap(),
+            Some("test-token".to_string())
+        );
     }
 
     #[test]
@@ -733,5 +947,26 @@ mod tests {
     fn test_sanitize_content_type_invalid_value() {
         let invalid = "video/mp4\nX-Bad: yes";
         assert_eq!(sanitize_content_type(invalid), "application/octet-stream");
+    }
+
+    #[test]
+    fn test_parse_oidc_callback_url() {
+        let state = "abc123";
+        let ok = parse_oidc_callback_url(
+            "flomo://?code=test-code&state=abc123",
+            state,
+        )
+        .unwrap();
+        assert_eq!(ok, Some("test-code".to_string()));
+
+        let no_code = parse_oidc_callback_url("flomo://?state=abc123", state).unwrap();
+        assert_eq!(no_code, None);
+
+        let err = parse_oidc_callback_url(
+            "flomo://?code=test-code&state=wrong",
+            state,
+        )
+        .unwrap_err();
+        assert!(err.contains("Invalid OIDC state"));
     }
 }

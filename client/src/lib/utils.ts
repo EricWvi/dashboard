@@ -43,7 +43,10 @@ export function formatMediaUrl(url: string): string {
 }
 
 export async function checkAuth(): Promise<void> {
-  if (isTauri()) return;
+  if (isTauri()) {
+    await invoke("onlyquant_is_logged_in");
+    return;
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
