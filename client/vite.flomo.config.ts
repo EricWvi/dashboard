@@ -22,7 +22,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         headers: {
-          "Remote-Email": "test@onlyquant.top",
+          "Onlyquant-Token":
+            "xnkjsZpkmMEXrTFPvTWgT1OM+YGyDKhU3OhxVks4rAv6mp92Vw9bXGRGdRufYw==",
         },
       },
     },
@@ -34,10 +35,13 @@ export default defineConfig({
       name: "flomo-mock",
       configureServer(server: any) {
         server.middlewares.use((req: any, res: any, next: any) => {
-          if (req.url?.includes("/api/flomo") && req.url?.includes("Action=Full")) {
+          if (
+            req.url?.includes("/api/flomo") &&
+            req.url?.includes("Action=Full")
+          ) {
             const mockData = fs.readFileSync(
               path.resolve(__dirname, "mock/flomo.json"),
-              "utf-8"
+              "utf-8",
             );
             res.setHeader("Content-Type", "application/json");
             res.end(mockData);

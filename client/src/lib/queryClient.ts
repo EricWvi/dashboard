@@ -26,6 +26,9 @@ export async function getRequest(
     try {
       const res = await fetch(url, {
         method,
+        headers: {
+          "Onlyquant-Token": localStorage.getItem("oqAuthToken") || "",
+        },
         credentials: "include",
         signal: controller.signal,
       });
@@ -71,6 +74,7 @@ export async function postRequest(
         method,
         headers: {
           "Content-Type": "application/json",
+          "Onlyquant-Token": localStorage.getItem("oqAuthToken") || "",
         },
         body: JSON.stringify(data),
         credentials: "include",

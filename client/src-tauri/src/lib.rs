@@ -24,6 +24,7 @@ pub fn run() {
   {
     builder = builder.invoke_handler(tauri::generate_handler![
       media_cache::get_local_media_server_port,
+      media_cache::onlyquant_is_logged_in,
       flomo_db::commands::flomo_get_user,
       flomo_db::commands::flomo_put_user,
       flomo_db::commands::flomo_get_card,
@@ -81,6 +82,7 @@ pub fn run() {
     builder =
       builder.invoke_handler(tauri::generate_handler![
         media_cache::get_local_media_server_port,
+        media_cache::onlyquant_is_logged_in,
       ]);
   }
 

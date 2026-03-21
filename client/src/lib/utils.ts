@@ -2,6 +2,7 @@ import { UserLangEnum, type I18nText, type UserLang } from "@/hooks/use-user";
 import { invoke } from "@tauri-apps/api/core";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { v4 as uuidv4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,6 +41,86 @@ export function formatMediaUrl(url: string): string {
   }
   return formattedUrl;
 }
+
+export async function checkAuth(): Promise<void> {
+  if (isTauri()) {
+    await invoke("onlyquant_is_logged_in");
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get("code");
+  const error = urlParams.get("error");
+
+  if (error) {
+    const errorDescription = urlParams.get("error_description");
+    console.error(`Authentication error: ${errorDescription || error}`);
+    return;
+  }
+
+  if (code && !localStorage.getItem("oqAuthToken")) {
+    await handleOidcCallback();
+  }
+
+  // Check if we need to authenticate
+  if (!localStorage.getItem("oqAuthToken")) {
+    startOidcAuthentication();
+    return;
+  }
+}
+
+const startOidcAuthentication = () => {
+  const state = uuidv4();
+  sessionStorage.setItem("oidc_state", state);
+  const redirectUri = encodeURIComponent(
+    window.location.origin + "/oidc/callback",
+  );
+
+  const clientId =
+    "Tp6WnNpVj9Sa8gdPZt8bVGq~yjKnjUZkG8J5IJ~aoIj5-Azn~pXUXq5fPXP-8BLQqOVnxq8P";
+  const authUrl = `https://auth.onlyquant.top/api/oidc/authorization?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email&state=${state}`;
+  window.location.href = authUrl;
+};
+
+const handleOidcCallback = async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get("code");
+  const state = urlParams.get("state");
+
+  // Verify state parameter
+  const savedState = sessionStorage.getItem("oidc_state");
+
+  if (!savedState || savedState !== state) {
+    throw new Error(
+      `Invalid state parameter - saved: ${savedState}, received: ${state}`,
+    );
+  }
+
+  // Exchange code for token
+  const redirectUri = encodeURIComponent(
+    window.location.origin + "/oidc/callback",
+  );
+  try {
+    const response = await fetch(
+      `/api/auth?Action=Auth&code=${code}&redirect_uri=${redirectUri}`,
+    );
+    if (!response.ok) {
+      throw new Error("Failed to authenticate");
+    }
+    const data = await response.json();
+    if (data.message.token) {
+      localStorage.setItem("oqAuthToken", data.message.token);
+      // Remove state after successful authentication
+      sessionStorage.removeItem("oidc_state");
+      // Clear the code from URL
+      window.history.replaceState({}, document.title, window.location.origin);
+    }
+  } catch (err) {
+    throw new Error(
+      err instanceof Error ? err.message : "Authentication failed",
+    );
+  }
+};
 
 export function dateString(
   date: Date | string | null | undefined,

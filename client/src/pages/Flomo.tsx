@@ -9,7 +9,7 @@ import { CardPane } from "@/components/flomo/card-pane";
 import { ArchiveFrame } from "@/components/flomo/archive-decoration";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useEditorState } from "@/hooks/use-editor-state";
-import { cn } from "@/lib/utils";
+import { checkAuth, cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { syncDraft, getContent } from "@/hooks/flomo/use-tiptapv2";
 
@@ -34,6 +34,7 @@ export default function Flomo() {
     syncManagerRef.current = manager;
 
     const initSync = async () => {
+      await checkAuth();
       if (await manager.needFullSync()) {
         // First time use - perform full sync
         console.log("performing full sync");
