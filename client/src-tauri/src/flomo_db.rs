@@ -1725,9 +1725,7 @@ pub mod commands {
         #[cfg(debug_assertions)]
         println!("[flomo_db][request] GET {}", url);
 
-        let response = client
-            .get(&url);
-        let response = apply_auth_header(response)
+        let response = apply_auth_header(client.get(&url))
             .send()
             .await
             .map_err(|e| format!("Failed to send full sync request: {}", e))?;
@@ -1753,9 +1751,7 @@ pub mod commands {
         let result = tokio::time::timeout(
             std::time::Duration::from_secs(5),
             async {
-                let response = client
-                    .post(&url);
-                let response = apply_auth_header(response)
+                let response = apply_auth_header(client.post(&url))
                     .json(&data)
                     .send()
                     .await
@@ -1790,9 +1786,7 @@ pub mod commands {
         let result = tokio::time::timeout(
             std::time::Duration::from_secs(5),
             async {
-                let response = client
-                    .get(&url);
-                let response = apply_auth_header(response)
+                let response = apply_auth_header(client.get(&url))
                     .send()
                     .await
                     .map_err(|e| format!("Failed to send pull request: {}", e))?;

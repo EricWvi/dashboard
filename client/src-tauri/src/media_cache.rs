@@ -36,6 +36,12 @@ pub fn backend_url() -> String {
     format!("https://{}.onlyquant.top", SITE_NAME)
 }
 
+const OIDC_CLIENT_ID: &str =
+    "Tp6WnNpVj9Sa8gdPZt8bVGq~yjKnjUZkG8J5IJ~aoIj5-Azn~pXUXq5fPXP-8BLQqOVnxq8P";
+const OIDC_REDIRECT_URI_ENCODED: &str = "flomo%3A%2F%2F";
+const OIDC_LOGIN_TIMEOUT_SECS: u64 = 300;
+const OQ_AUTH_TOKEN_KEY: &str = "oqAuthToken";
+
 // --- MediaCacheDb ---
 
 pub struct MediaCacheDb {
@@ -321,12 +327,12 @@ fn parse_oidc_callback_url(
 }
 
 async fn exchange_oidc_code_for_token(code: &str) -> Result<String, String> {
-    let redirect_uri = "flomo%3A%2F%2F";
     let auth_url = format!(
         "{}/api/auth?Action=Auth&code={}&redirect_uri={}",
-        backend_url(), code, redirect_uri
+        backend_url(), code, OIDC_REDIRECT_URI_ENCODED
     );
-    let response = apply_auth_header(reqwest::Client::new().get(&auth_url))
+    let response = reqwest::Client::new()
+        .get(&auth_url)
         .send()
         .await
         .map_err(|e| format!("Failed to exchange OIDC code: {}", e))?;
@@ -749,7 +755,7 @@ pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
         .set(AuthToken::new())
         .map_err(|_| "AuthToken already initialized".to_string())?;
 
-    if let Some(token) = db.get_meta("oqAuthToken").map_err(|e| e.to_string())? {
+    if let Some(token) = db.get_meta(OQ_AUTH_TOKEN_KEY).map_err(|e| e.to_string())? {
         set_auth_token(token);
     }
 
@@ -805,12 +811,9 @@ pub async fn onlyquant_is_logged_in(app: tauri::AppHandle) -> Result<(), String>
         .ok_or_else(|| "Media cache db is not initialized".to_string())?;
 
     let state = uuid::Uuid::new_v4().to_string();
-    let client_id =
-        "Tp6WnNpVj9Sa8gdPZt8bVGq~yjKnjUZkG8J5IJ~aoIj5-Azn~pXUXq5fPXP-8BLQqOVnxq8P";
-    let redirect_uri = "flomo%3A%2F%2F";
     let auth_url = format!(
         "https://auth.onlyquant.top/api/oidc/authorization?client_id={}&redirect_uri={}&response_type=code&scope=openid%20profile%20email&state={}",
-        client_id, redirect_uri, state
+        OIDC_CLIENT_ID, OIDC_REDIRECT_URI_ENCODED, state
     );
 
     let (tx, rx) = tokio::sync::oneshot::channel::<Result<String, String>>();
@@ -844,21 +847,28 @@ pub async fn onlyquant_is_logged_in(app: tauri::AppHandle) -> Result<(), String>
         .ok_or_else(|| "Main window not found".to_string())?;
     window
         .navigate(
-            reqwest::Url::parse(&auth_url).map_err(|e| format!("Invalid auth URL: {}", e))?,
+            reqwest::Url::parse(&auth_url)
+                .map_err(|e| format!("Failed to construct OIDC authorization URL: {}", e))?,
         )
         .map_err(|e| format!("Failed to open OIDC authorization URL: {}", e))?;
 
-    let code_result = tokio::time::timeout(Duration::from_secs(300), rx).await;
+    let code_result =
+        tokio::time::timeout(Duration::from_secs(OIDC_LOGIN_TIMEOUT_SECS), rx).await;
     app.unlisten(event_id);
 
     let code = code_result
-        .map_err(|_| "OIDC login timed out".to_string())?
+        .map_err(|_| {
+            format!(
+                "OIDC login timed out after {} seconds",
+                OIDC_LOGIN_TIMEOUT_SECS
+            )
+        })?
         .map_err(|_| "OIDC callback channel closed".to_string())??;
     let token = exchange_oidc_code_for_token(&code).await?;
 
     let db_clone = db.clone();
     let token_for_db = token.clone();
-    tokio::task::spawn_blocking(move || db_clone.set_meta("oqAuthToken", &token_for_db))
+    tokio::task::spawn_blocking(move || db_clone.set_meta(OQ_AUTH_TOKEN_KEY, &token_for_db))
         .await
         .map_err(|e| format!("Failed to persist OIDC token task: {}", e))?
         .map_err(|e| format!("Failed to persist OIDC token: {}", e))?;
@@ -917,9 +927,9 @@ mod tests {
             )]
         );
 
-        db.set_meta("oqAuthToken", "test-token").unwrap();
+        db.set_meta(OQ_AUTH_TOKEN_KEY, "test-token").unwrap();
         assert_eq!(
-            db.get_meta("oqAuthToken").unwrap(),
+            db.get_meta(OQ_AUTH_TOKEN_KEY).unwrap(),
             Some("test-token".to_string())
         );
     }
