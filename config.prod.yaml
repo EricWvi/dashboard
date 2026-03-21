@@ -20,3 +20,7 @@ db:
   host: postgres
   port: 5432
   username: onlyquant
+oidc:
+  tokenEndpoint: "https://auth.onlyquant.top/api/oidc/token"
+  userinfoEndpoint: "https://auth.onlyquant.top/api/oidc/userinfo"
+  clientId: "Tp6WnNpVj9Sa8gdPZt8bVGq~yjKnjUZkG8J5IJ~aoIj5-Azn~pXUXq5fPXP-8BLQqOVnxq8P"
