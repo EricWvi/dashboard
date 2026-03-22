@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 import { createTiptap, keyDraft, type Draft } from "@/hooks/use-draft";
-import { keyTags, type LocTreeNode, TagsQueryOptions } from "./use-tagv2";
+import { createTags, type LocTreeNode, TagsQueryOptions } from "./use-tagv2";
 
 export type Entry = {
   id: number;
@@ -74,7 +74,6 @@ export interface QueryCondition {
 
 const keyEntry = (id: number) => ["/api/entry", id] as const;
 const keyMetaItem = (item: string) => ["/api/meta", item] as const;
-const keyMeta = () => ["/api/meta"] as const;
 
 export async function listEntries(
   page: number = 1,
@@ -138,8 +137,6 @@ function flattenLocTree(nodes: LocTreeNode[]): string[] {
 }
 
 export function useUpdateEntry() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: number } & Partial<Entry>) => {
       const response = await postRequest("/api/entry?Action=UpdateEntry", {
@@ -172,16 +169,9 @@ export function useUpdateEntry() {
 
         const newTags = [...filteredTags, ...locPaths];
         if (newTags.length > 0) {
-          await postRequest("/api/bookmark?Action=CreateTags", {
-            tags: newTags,
-            group: "journal",
-          });
-          queryClient.invalidateQueries({
-            queryKey: keyTags(),
-          });
+          await createTags(newTags);
         }
       }
-      queryClient.invalidateQueries({ queryKey: keyEntry(variables.id) });
     },
   });
 }
@@ -190,8 +180,13 @@ export async function deleteEntry(id: number) {
   return postRequest("/api/entry?Action=DeleteEntry", { id });
 }
 
+/**
+ * @deprecated No-op in v2 local-first flow. Query refresh is triggered by `journalDatabase` decorators.
+ */
 export function refreshMeta() {
-  queryClient.invalidateQueries({ queryKey: keyMeta(), exact: false });
+  // Keep API compatibility with previous `use-entries` callers.
+  // In v2 local-first flow, `journalDatabase` already triggers query refresh via db-interface decorators.
+  return;
 }
 
 export function useGetEntriesCount(year: number) {
@@ -256,31 +251,21 @@ export function useGetCurrentYear() {
 }
 
 export function useBookmarkEntry() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await postRequest("/api/entry?Action=BookmarkEntry", { id });
       return response.json();
     },
-    onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey: keyEntry(id) });
-    },
   });
 }
 
 export function useUnbookmarkEntry() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await postRequest("/api/entry?Action=UnbookmarkEntry", {
         id,
       });
       return response.json();
-    },
-    onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({ queryKey: keyEntry(id) });
     },
   });
 }

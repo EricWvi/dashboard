@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getRequest } from "@/lib/queryClient";
+import { journalDatabase } from "@/lib/journal/db-interface";
 
 export type Tag = {
   value: string;
@@ -46,25 +46,43 @@ export function buildLocTree(locPaths: string[]): LocTreeNode[] {
 export const TagsQueryOptions = {
   queryKey: keyTags(),
   queryFn: async () => {
-    const response = await getRequest("/api/bookmark?Action=ListTags&group=journal");
-    const data = await response.json();
+    const allTags = await journalDatabase.getAllTags();
     const tags: Tag[] = [];
     const locPaths: string[] = [];
 
-    data.message.tags.sort().forEach((tag: string) => {
-      if (tag.startsWith("tag:")) {
-        const t = tag.replace("tag:", "");
-        tags.push({ value: t, label: t });
-      } else if (tag.startsWith("loc:")) {
-        const t = tag.replace("loc:", "");
-        locPaths.push(t);
-      }
-    });
+    allTags
+      .map((tag) => tag.name)
+      .sort()
+      .forEach((tag) => {
+        if (tag.startsWith("tag:")) {
+          const t = tag.replace("tag:", "");
+          tags.push({ value: t, label: t });
+        } else if (tag.startsWith("loc:")) {
+          const t = tag.replace("loc:", "");
+          locPaths.push(t);
+        }
+      });
 
     const locTree = buildLocTree(locPaths);
     return { tags, locTree };
   },
 };
+
+export async function createTags(tags: string[]) {
+  const existing = await journalDatabase.getAllTags();
+  const exists = new Set(existing.map((tag) => tag.name));
+  const newTags = tags.filter((tag) => !exists.has(tag));
+  if (newTags.length === 0) {
+    return;
+  }
+  await Promise.all(
+    newTags.map((tag) =>
+      journalDatabase.addTag({
+        name: tag,
+      }),
+    ),
+  );
+}
 
 export function useTags() {
   return useQuery(TagsQueryOptions);
