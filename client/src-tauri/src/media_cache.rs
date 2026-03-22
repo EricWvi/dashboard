@@ -15,6 +15,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tauri::{Listener, Manager};
 use tauri_plugin_deep_link::DeepLinkExt;
+use tauri_plugin_shell::ShellExt;
 use tower::ServiceExt;
 use tower_http::{cors::CorsLayer, services::ServeFile};
 
@@ -842,14 +843,9 @@ pub async fn onlyquant_is_logged_in(app: tauri::AppHandle) -> Result<(), String>
         }
     });
 
-    let window = app
-        .get_webview_window("main")
-        .ok_or_else(|| "Main window not found".to_string())?;
-    window
-        .navigate(
-            reqwest::Url::parse(&auth_url)
-                .map_err(|e| format!("Failed to construct OIDC authorization URL: {}", e))?,
-        )
+    app
+        .shell()
+        .open(auth_url, None)
         .map_err(|e| format!("Failed to open OIDC authorization URL: {}", e))?;
 
     let code_result =
