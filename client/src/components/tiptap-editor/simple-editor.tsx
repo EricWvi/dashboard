@@ -78,11 +78,12 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 import "@/components/tiptap-editor/simple-editor.scss";
 
 import { useEffect, useCallback } from "react";
-import { Eraser, Save } from "lucide-react";
+import { Eraser, Minimize2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 type ListHistoryFn = () => Promise<number[]>;
 type GetHistoryFn = (ts: number) => Promise<unknown>;
@@ -90,6 +91,7 @@ type RestoreHistoryFn = (ts: number) => Promise<unknown>;
 
 const MainToolbarContent = React.memo(
   ({
+    allowMinimize,
     editor,
     onHighlighterClick,
     onLinkClick,
@@ -100,6 +102,7 @@ const MainToolbarContent = React.memo(
     getHistory,
     restoreHistory,
   }: {
+    allowMinimize: boolean;
     editor: Editor;
     onHighlighterClick: () => void;
     onLinkClick: () => void;
@@ -111,6 +114,7 @@ const MainToolbarContent = React.memo(
     restoreHistory: RestoreHistoryFn;
   }) => {
     const { language } = useUserContextV2();
+    const { hideTabs } = useEditorState();
     return (
       <>
         <ToolbarGroup>
@@ -129,6 +133,16 @@ const MainToolbarContent = React.memo(
           <UndoRedoButton action="undo" />
           <UndoRedoButton action="redo" />
         </ToolbarGroup>
+
+        {isMobile && allowMinimize && (
+          <Button
+            data-style="ghost"
+            tooltip={i18nText[language].minimize}
+            onClick={hideTabs}
+          >
+            <Minimize2 className="size-4" />
+          </Button>
+        )}
 
         <ToolbarSeparator />
 
@@ -213,6 +227,15 @@ const MainToolbarContent = React.memo(
             restoreHistory={restoreHistory}
           />
           {/* <ThemeToggle /> */}
+          {!isMobile && allowMinimize && (
+            <Button
+              data-style="ghost"
+              tooltip={i18nText[language].minimize}
+              onClick={hideTabs}
+            >
+              <Minimize2 className="size-4" />
+            </Button>
+          )}
         </ToolbarGroup>
       </>
     );
@@ -280,6 +303,7 @@ export const useSimpleEditor = (
 };
 
 export function EditorToolbar({
+  allowMinimize = false,
   onClose,
   onSave,
   onDrop,
@@ -287,6 +311,7 @@ export function EditorToolbar({
   getHistory,
   restoreHistory,
 }: {
+  allowMinimize?: boolean;
   onClose?: (e: Editor, changed: boolean) => void;
   onSave: (e: Editor) => Promise<unknown>;
   onDrop: (e: Editor) => Promise<unknown>;
@@ -339,6 +364,7 @@ export function EditorToolbar({
     <Toolbar className="!relative">
       {mobileView === "main" ? (
         <MainToolbarContent
+          allowMinimize={allowMinimize}
           editor={editor}
           onHighlighterClick={() => setMobileView("highlighter")}
           onLinkClick={() => setMobileView("link")}
@@ -439,6 +465,7 @@ export function ReadOnlyTiptap({
 const i18nText = {
   [UserLangEnum.ZHCN]: {
     save: "保存",
+    minimize: "最小化",
     drop: "取消更改",
     outOfSync: "🔄 文档内容有更新！",
     uploadFailed: "上传失败",
@@ -447,6 +474,7 @@ const i18nText = {
   },
   [UserLangEnum.ENUS]: {
     save: "Save",
+    minimize: "Minimize",
     drop: "Drop",
     outOfSync: "🔄 Draft content is out of sync!",
     uploadFailed: "Upload failed",
