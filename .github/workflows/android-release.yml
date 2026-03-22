@@ -81,6 +81,7 @@ jobs:
             });
           "
 
+          npm run tauri icon src-tauri/icons/raw/${{ matrix.app_type }}.png
           npm run tauri android init -- --ci || true
 
       - name: Inject Android XML Patches
