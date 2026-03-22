@@ -1,4 +1,4 @@
-package entry
+package journal
 
 import (
 	"github.com/EricWvi/dashboard/config"

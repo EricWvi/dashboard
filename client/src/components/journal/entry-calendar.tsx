@@ -1,5 +1,5 @@
 import { ActivityCalendar } from "react-activity-calendar";
-import { type CurrentYearCount } from "@/hooks/use-entries";
+import { type CurrentYearCount } from "@/hooks/journal/use-entryv2";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";
 import {

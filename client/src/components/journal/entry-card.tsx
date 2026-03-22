@@ -1,4 +1,4 @@
-import { EntryMeta, useEntry } from "@/hooks/use-entries";
+import { EntryMeta, useEntry } from "@/hooks/journal/use-entryv2";
 import { ImageList } from "@/components/journal/image-list";
 import React, {
   useCallback,

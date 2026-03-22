@@ -7,7 +7,7 @@ import EntryCalendar from "./entry-calendar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
 import { ToolbarMenu } from "./dropdown-menu";
-import { useGetCurrentYear } from "@/hooks/use-entries";
+import { useGetCurrentYear } from "@/hooks/journal/use-entryv2";
 
 interface HeaderProps {
   dateRangeText: () => string[];

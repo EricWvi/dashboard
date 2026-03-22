@@ -10,10 +10,11 @@ import {
   useUpdateEntry,
   useEntry,
   useBookmarkEntry,
+  useGetEntryDate,
   useUnbookmarkEntry,
   type EntryMeta,
-  useTags,
-} from "@/hooks/use-entries";
+} from "@/hooks/journal/use-entryv2";
+import { useTags } from "@/hooks/journal/use-tagv2";
 import {
   EditPen,
   Bookmark,
@@ -28,7 +29,6 @@ import {
   Tag,
 } from "./icon";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useGetEntryDate } from "@/hooks/use-entries";
 import { Check } from "lucide-react";
 
 const entryCardMenuItems = [
