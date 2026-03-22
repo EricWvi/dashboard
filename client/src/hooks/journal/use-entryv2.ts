@@ -68,7 +68,8 @@ export class EntryMeta {
 
 export interface QueryCondition {
   operator: string;
-  value: string | string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any;
 }
 
 const keyEntry = (id: number) => ["/api/entry", id] as const;
@@ -195,7 +196,7 @@ export function refreshMeta() {
 
 export function useGetEntriesCount(year: number) {
   return useQuery<number>({
-    queryKey: keyMetaItem(`entryCount/${year}`),
+    queryKey: keyMetaItem("entryCount/" + year),
     enabled: !!year,
     queryFn: async () => {
       const response = await getRequest(`/api/entry?Action=GetEntriesCount&year=${year}`);
