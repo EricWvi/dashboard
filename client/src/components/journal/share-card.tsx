@@ -4,7 +4,7 @@ import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPng } from "html-to-image";
-import { useEntry, type EntryMeta } from "@/hooks/use-entries";
+import { useEntry, type EntryMeta } from "@/hooks/journal/use-entryv2";
 import { MapPin } from "lucide-react";
 import { useDraft } from "@/hooks/use-draft";
 

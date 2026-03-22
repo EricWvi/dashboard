@@ -10,10 +10,10 @@ import {
   useUpdateEntry,
   refreshMeta,
   deleteEntry,
-  useTags,
   EntryQueryOptions,
   type Entry,
-} from "@/hooks/use-entries";
+} from "@/hooks/journal/use-entryv2";
+import { useTags } from "@/hooks/journal/use-tagv2";
 import ShareCard from "@/components/journal/share-card";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
