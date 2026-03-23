@@ -12,6 +12,8 @@ export class SyncManager {
   private client: ISyncClient;
   private isSyncing = false;
   private intervalMs: number = 3000;
+  private countdown: number = this.intervalMs;
+  private waitMs: number = this.intervalMs;
   private syncTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(db: IFlomoDatabase, client: ISyncClient) {
@@ -122,7 +124,7 @@ export class SyncManager {
   /**
    * Push local changes to server
    */
-  async pushChanges(): Promise<void> {
+  async pushChanges(): Promise<boolean> {
     try {
       const pending = await this.db.getPendingChanges();
 
@@ -131,7 +133,7 @@ export class SyncManager {
         pending.folders.length === 0 &&
         pending.tiptaps.length === 0
       ) {
-        return;
+        return false;
       }
 
       // Send to server
@@ -158,6 +160,7 @@ export class SyncManager {
         console.log(
           `Pushed ${pending.cards.length} cards, ${pending.folders.length} folders, ${pending.tiptaps.length} tiptaps`,
         );
+        return true;
       } else {
         throw new Error(`Push failed: ${response.statusText}`);
       }
@@ -170,7 +173,7 @@ export class SyncManager {
   /**
    * Pull changes from server (incremental sync)
    */
-  async pullChanges(): Promise<void> {
+  async pullChanges(): Promise<boolean> {
     try {
       const lastVersion = await this.db.getLastServerVersion();
 
@@ -183,7 +186,7 @@ export class SyncManager {
         serverData.folders.length === 0 &&
         serverData.tiptaps.length === 0
       ) {
-        return;
+        return false;
       }
 
       // Apply changes using Last-Write-Wins (LWW) strategy
@@ -284,6 +287,7 @@ export class SyncManager {
           `Pulled ${userApplied} user, ${cardApplied} cards, ${folderApplied} folders, ${tiptapApplied} tiptaps`,
         );
       }
+      return true;
     } catch (error) {
       console.error("Pull failed:", error);
       throw error;
@@ -300,16 +304,24 @@ export class SyncManager {
     }
 
     this.isSyncing = true;
+    let hasPushChanges: boolean | null = null;
+    let hasPullChanges: boolean | null = null;
 
     try {
       // Push local changes first
-      await this.pushChanges();
+      hasPushChanges = await this.pushChanges();
       // Then pull remote changes
-      await this.pullChanges();
+      hasPullChanges = await this.pullChanges();
     } catch (error) {
       console.error("Sync failed:", error);
       // Don't throw - we'll retry on next interval
     } finally {
+      if (hasPushChanges === false && hasPullChanges === false) {
+        this.waitMs = Math.min(this.waitMs * 2, 30 * 1000);
+      } else {
+        this.waitMs = this.intervalMs;
+      }
+      this.countdown = this.waitMs;
       this.isSyncing = false;
     }
   }
@@ -319,6 +331,8 @@ export class SyncManager {
    */
   startAutoSync(): void {
     this.stopAutoSync();
+    this.waitMs = this.intervalMs;
+    this.countdown = this.intervalMs;
     console.log(`Starting auto-sync`);
     this.autoSync();
   }
@@ -334,6 +348,17 @@ export class SyncManager {
   }
 
   autoSync(): void {
+    this.countdown -= this.intervalMs;
+    if (this.countdown > 0) {
+      if (this.syncTimeout !== undefined) {
+        clearTimeout(this.syncTimeout);
+      }
+      this.syncTimeout = setTimeout(() => {
+        this.autoSync();
+      }, this.intervalMs);
+      return;
+    }
+
     this.sync().finally(() => {
       if (this.syncTimeout !== undefined) {
         clearTimeout(this.syncTimeout);
