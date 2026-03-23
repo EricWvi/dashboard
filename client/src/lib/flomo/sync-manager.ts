@@ -15,6 +15,7 @@ export class SyncManager {
   private intervalMs: number = 3000;
   private countdown: number;
   private waitMs: number;
+  private didPullThisRound = false;
   private syncTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(db: IFlomoDatabase, client: ISyncClient) {
@@ -178,6 +179,13 @@ export class SyncManager {
    */
   async pullChanges(): Promise<boolean> {
     try {
+      this.didPullThisRound = false;
+      this.countdown -= this.intervalMs;
+      if (this.countdown > 0) {
+        return false;
+      }
+
+      this.didPullThisRound = true;
       const lastVersion = await this.db.getLastServerVersion();
 
       // Fetch changes since last version
@@ -307,6 +315,7 @@ export class SyncManager {
     }
 
     this.isSyncing = true;
+    this.didPullThisRound = false;
     let hasPushChanges = true;
     let hasPullChanges = true;
 
@@ -319,12 +328,14 @@ export class SyncManager {
       console.error("Sync failed:", error);
       // Don't throw - we'll retry on next interval
     } finally {
-      if (!hasPushChanges && !hasPullChanges) {
-        this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
-      } else {
-        this.waitMs = this.intervalMs;
+      if (this.didPullThisRound) {
+        if (!hasPushChanges && !hasPullChanges) {
+          this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
+        } else {
+          this.waitMs = this.intervalMs;
+        }
+        this.countdown = this.waitMs;
       }
-      this.countdown = this.waitMs;
       this.isSyncing = false;
     }
   }
@@ -351,17 +362,6 @@ export class SyncManager {
   }
 
   autoSync(): void {
-    this.countdown -= this.intervalMs;
-    if (this.countdown > 0) {
-      if (this.syncTimeout !== undefined) {
-        clearTimeout(this.syncTimeout);
-      }
-      this.syncTimeout = setTimeout(() => {
-        this.autoSync();
-      }, this.intervalMs);
-      return;
-    }
-
     this.sync().finally(() => {
       if (this.syncTimeout !== undefined) {
         clearTimeout(this.syncTimeout);
