@@ -8,17 +8,20 @@ import { syncEvents } from "@/lib/sync-events";
  * SyncManager handles bidirectional synchronization between local database and server
  */
 export class SyncManager {
+  private static readonly MAX_WAIT_MS = 30 * 1000;
   private db: IFlomoDatabase;
   private client: ISyncClient;
   private isSyncing = false;
   private intervalMs: number = 3000;
-  private countdown: number = this.intervalMs;
-  private waitMs: number = this.intervalMs;
+  private countdown: number;
+  private waitMs: number;
   private syncTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(db: IFlomoDatabase, client: ISyncClient) {
     this.db = db;
     this.client = client;
+    this.countdown = this.intervalMs;
+    this.waitMs = this.intervalMs;
   }
 
   async needFullSync(): Promise<boolean> {
@@ -304,8 +307,8 @@ export class SyncManager {
     }
 
     this.isSyncing = true;
-    let hasPushChanges: boolean | null = null;
-    let hasPullChanges: boolean | null = null;
+    let hasPushChanges = true;
+    let hasPullChanges = true;
 
     try {
       // Push local changes first
@@ -316,8 +319,8 @@ export class SyncManager {
       console.error("Sync failed:", error);
       // Don't throw - we'll retry on next interval
     } finally {
-      if (hasPushChanges === false && hasPullChanges === false) {
-        this.waitMs = Math.min(this.waitMs * 2, 30 * 1000);
+      if (!hasPushChanges && !hasPullChanges) {
+        this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
       } else {
         this.waitMs = this.intervalMs;
       }
