@@ -1,4 +1,4 @@
-import { SchemaVersion, type DashboardData } from "./model";
+import { SchemaVersion } from "./model";
 import { type Tag, type TiptapV2, SyncStatus } from "@/lib/model";
 import { dashboardDatabase, type IDashboardDatabase } from "./db-interface";
 import { syncClient, type ISyncClient } from "./sync-client";
@@ -29,7 +29,16 @@ export class SyncManager {
       return true;
     }
     const schemaVersion = await this.db.getSyncMeta("schemaVersion");
-    return !schemaVersion || Number(schemaVersion.value) !== SchemaVersion;
+    if (!schemaVersion) {
+      return true;
+    }
+    const parsedSchemaVersion =
+      typeof schemaVersion.value === "number"
+        ? schemaVersion.value
+        : parseInt(String(schemaVersion.value), 10);
+    return !Number.isFinite(parsedSchemaVersion)
+      ? true
+      : parsedSchemaVersion !== SchemaVersion;
   }
 
   /**
@@ -215,7 +224,7 @@ export class SyncManager {
       // Fetch changes since last version
       const serverData = await this.client.Pull(lastVersion);
 
-      if (serverData.users.length === 0 && this.isEmptyRemoteData(serverData)) {
+      if (serverData.users.length === 0 && this.isEmptyData(serverData)) {
         return;
       }
 
@@ -422,31 +431,19 @@ export class SyncManager {
     });
   }
 
-  private isEmptyData(data: DashboardData): boolean {
-    return (
-      data.tags.length === 0 &&
-      data.blogs.length === 0 &&
-      data.bookmarks.length === 0 &&
-      data.collections.length === 0 &&
-      data.echoes.length === 0 &&
-      data.quickNotes.length === 0 &&
-      data.todos.length === 0 &&
-      data.watches.length === 0 &&
-      data.tiptaps.length === 0
-    );
-  }
-
-  private isEmptyRemoteData(data: {
-    tags: { length: number };
-    blogs: { length: number };
-    bookmarks: { length: number };
-    collections: { length: number };
-    echoes: { length: number };
-    quickNotes: { length: number };
-    todos: { length: number };
-    watches: { length: number };
-    tiptaps: { length: number };
-  }): boolean {
+  private isEmptyData(
+    data: {
+      tags: unknown[];
+      blogs: unknown[];
+      bookmarks: unknown[];
+      collections: unknown[];
+      echoes: unknown[];
+      quickNotes: unknown[];
+      todos: unknown[];
+      watches: unknown[];
+      tiptaps: unknown[];
+    },
+  ): boolean {
     return (
       data.tags.length === 0 &&
       data.blogs.length === 0 &&
