@@ -62,7 +62,7 @@ import {
   useUpdateSchedule,
   useUpdateTodo,
   type Todo,
-} from "@/hooks/use-todos";
+} from "@/hooks/dashboard/use-todov2";
 import {
   stripeColor,
   formatDate,

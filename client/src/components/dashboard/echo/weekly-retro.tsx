@@ -17,7 +17,7 @@ import {
   useEchoes,
   useToggleEchoMark,
   useYears,
-} from "@/hooks/use-echoes";
+} from "@/hooks/dashboard/use-echov2";
 import { Button } from "@/components/ui/button";
 import { useTTContext } from "@/components/editor";
 import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";

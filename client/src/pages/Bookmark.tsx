@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/react-table/data-table";
 import { bookmarkColumns } from "@/components/react-table/data-table-columns";
-import { useBookmarks } from "@/hooks/use-bookmarks";
+import { useBookmarks } from "@/hooks/dashboard/use-bookmarkv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";

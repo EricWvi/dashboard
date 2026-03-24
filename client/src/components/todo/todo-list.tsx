@@ -41,7 +41,7 @@ import {
   useUpdateCollection,
   type Todo,
   useClearTodos,
-} from "@/hooks/use-todos";
+} from "@/hooks/dashboard/use-todov2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CompletedTodoView,

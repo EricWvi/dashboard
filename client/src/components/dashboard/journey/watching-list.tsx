@@ -9,7 +9,7 @@ import {
   WatchTypeText,
   type WatchMeasure,
   WatchMeasureText,
-} from "@/hooks/use-watches";
+} from "@/hooks/dashboard/use-watchv2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { types } from "@/components/react-table/data-table-columns";
 import { Badge } from "@/components/ui/badge";

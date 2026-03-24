@@ -7,8 +7,8 @@ import {
   WatchEnum,
   WatchTypeText,
   type Watch,
-} from "@/hooks/use-watches";
-import { type Bookmark, clickBookmark, Domain } from "@/hooks/use-bookmarks";
+} from "@/hooks/dashboard/use-watchv2";
+import { type Bookmark, clickBookmark, Domain } from "@/hooks/dashboard/use-bookmarkv2";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {
@@ -50,7 +50,7 @@ import {
   Tv,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
-import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/use-blogs";
+import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/dashboard/use-blogv2";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";

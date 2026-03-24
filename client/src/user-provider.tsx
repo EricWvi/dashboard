@@ -34,8 +34,14 @@ type UserContextTypeV2 = {
 };
 const UserContextV2 = createContext<UserContextTypeV2 | undefined>(undefined);
 
-export const UserProviderV2 = ({ children }: { children: ReactNode }) => {
-  const { data: userInfo } = useUserV2();
+export const UserProviderV2 = ({
+  children,
+  getUserFn,
+}: {
+  children: ReactNode;
+  getUserFn: () => Promise<UserField | undefined>;
+}) => {
+  const { data: userInfo } = useUserV2(getUserFn);
   if (!userInfo) return null;
 
   return (

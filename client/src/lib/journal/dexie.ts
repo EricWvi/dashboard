@@ -5,12 +5,12 @@ import {
   type Entry,
   type EntryField,
   type JournalData,
-  type Tag,
-  type TagField,
 } from "./model";
 import {
   SyncStatus,
   type SyncMeta,
+  type Tag,
+  type TagField,
   type TiptapV2,
   type TiptapV2Field,
   type User,

@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useWatches, WatchStatus } from "@/hooks/use-watches";
+import { useWatches, WatchStatus } from "@/hooks/dashboard/use-watchv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { WatchingList } from "@/components/dashboard/journey/watching-list";

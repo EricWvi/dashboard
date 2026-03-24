@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { createTiptap } from "./use-draft";
 import { keyTags, TagsQueryOptions } from "./use-bookmarks";
-import { UserLangEnum, type I18nText } from "./use-user";
+import { UserLangEnum, type I18nText } from "@/lib/model";
 
 export type Blog = {
   id: number;

@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/react-table/data-table";
 import { blogColumns } from "@/components/react-table/data-table-columns";
-import { useBlogs } from "@/hooks/use-blogs";
+import { useBlogs } from "@/hooks/dashboard/use-blogv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserLangEnum } from "@/hooks/use-user";
 import { useUserContext } from "@/user-provider";

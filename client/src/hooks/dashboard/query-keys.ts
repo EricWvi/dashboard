@@ -1,3 +1,4 @@
+import type { WatchStatus } from "@/lib/dashboard/model";
 import { queryClient } from "@/lib/queryClient";
 import { syncEvents } from "@/lib/sync-events";
 import debounce from "lodash/debounce";
@@ -24,6 +25,12 @@ const keys = {
   echoes: {
     all: ["echoes"] as const,
     detail: (id: string) => [...keys.echoes.all, "detail", id] as const,
+    year: (type: string, year: number) =>
+      [...keys.echoes.all, "type", type, "year", year] as const,
+    question: (type: string, sub: number) =>
+      [...keys.echoes.all, "type", type, "question", sub] as const,
+    years: (type: string) =>
+      [...keys.echoes.all, "type", type, "years"] as const,
   },
   quickNotes: {
     all: ["quickNotes"] as const,
@@ -32,9 +39,15 @@ const keys = {
   todos: {
     all: ["todos"] as const,
     detail: (id: string) => [...keys.todos.all, "detail", id] as const,
+    inCollection: (collectionId: string) =>
+      [...keys.todos.all, "collection", collectionId] as const,
+    completedInCollection: (collectionId: string) =>
+      [...keys.todos.all, "completed", "collection", collectionId] as const,
+    today: () => [...keys.todos.all, "today"] as const,
   },
   watches: {
     all: ["watches"] as const,
+    ofStatus: (status: WatchStatus) => [...keys.watches.all, status] as const,
     detail: (id: string) => [...keys.watches.all, "detail", id] as const,
   },
   tiptaps: {

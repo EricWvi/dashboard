@@ -6,7 +6,7 @@ import { useUserContext } from "@/user-provider";
 import { UserLangEnum, type UserLang } from "@/hooks/use-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StarIcon } from "@/components/ui/icons";
-import { WatchEnum, type Watch, type WatchType } from "@/hooks/use-watches";
+import { WatchEnum, type Watch, type WatchType } from "@/hooks/dashboard/use-watchv2";
 import { Share } from "lucide-react";
 import { toPng } from "html-to-image";
 

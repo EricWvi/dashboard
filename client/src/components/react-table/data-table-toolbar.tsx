@@ -51,7 +51,7 @@ import {
   type WatchType,
   WatchTypeText,
   RatingText,
-} from "@/hooks/use-watches";
+} from "@/hooks/dashboard/use-watchv2";
 import { dateString, todayStart } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -59,9 +59,9 @@ import {
   useCreateBookmark,
   useTags,
   type DomainType,
-} from "@/hooks/use-bookmarks";
+} from "@/hooks/dashboard/use-bookmarkv2";
 import { createTiptap } from "@/hooks/use-draft";
-import { useCreateBlog } from "@/hooks/use-blogs";
+import { useCreateBlog } from "@/hooks/dashboard/use-blogv2";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
 

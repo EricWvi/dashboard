@@ -41,6 +41,11 @@ export const UserLangEnum: {
   ENUS: "en-US",
 };
 
+export type I18nText = {
+  [UserLangEnum.ENUS]: string;
+  [UserLangEnum.ZHCN]: string;
+};
+
 export interface UserField {
   username: string;
   email: string;

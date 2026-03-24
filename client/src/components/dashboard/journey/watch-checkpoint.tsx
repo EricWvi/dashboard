@@ -3,7 +3,7 @@ import {
   type WatchMeasure,
   WatchMeasureText,
   WatchMeasureEnum,
-} from "@/hooks/use-watches";
+} from "@/hooks/dashboard/use-watchv2";
 import { useUserContext } from "@/user-provider";
 
 export default function WatchCheckpoints({

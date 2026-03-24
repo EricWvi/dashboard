@@ -1,16 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
-import { flomoDatabase } from "@/lib/flomo/db-interface";
-import type { UserField } from "@/lib/model";
-
-export type UserLang = "zh-CN" | "en-US";
-export const UserLangEnum: {
-  ZHCN: UserLang;
-  ENUS: UserLang;
-} = {
-  ZHCN: "zh-CN",
-  ENUS: "en-US",
-};
+import { type UserField, type UserLang, UserLangEnum } from "@/lib/model";
 
 export type User = {
   avatar: string;
@@ -22,11 +12,6 @@ export type User = {
   session: string;
   version: string;
   buildTime: string;
-};
-
-export type I18nText = {
-  [UserLangEnum.ENUS]: string;
-  [UserLangEnum.ZHCN]: string;
 };
 
 const keyUser = () => ["/meta/user"];
@@ -187,11 +172,11 @@ const defaultUserField: UserField = {
   language: UserLangEnum.ZHCN,
 };
 
-export function useUserV2() {
+export function useUserV2(getUserFn: () => Promise<UserField | undefined>) {
   return useQuery<UserField>({
     queryKey: ["user"],
     queryFn: async () => {
-      const user = await flomoDatabase.getUser();
+      const user = await getUserFn();
       return user || defaultUserField;
     },
     staleTime: Infinity,

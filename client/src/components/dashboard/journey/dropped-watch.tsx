@@ -3,7 +3,7 @@ import {
   useWatches,
   WatchStatus,
   WatchTypeText,
-} from "@/hooks/use-watches";
+} from "@/hooks/dashboard/use-watchv2";
 import {
   Dialog,
   DialogContent,

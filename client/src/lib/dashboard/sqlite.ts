@@ -10,12 +10,14 @@ import type {
   DashboardData,
   Echo,
   EchoField,
+  EchoType,
   QuickNote,
   QuickNoteField,
   Todo,
   TodoField,
   Watch,
   WatchField,
+  WatchStatus,
 } from "./model";
 import type {
   SyncMeta,
@@ -206,8 +208,16 @@ export class SqliteDashboardDatabase implements IDashboardDatabase {
     return (await invoke("dashboard_get_echo", { id })) ?? undefined;
   }
 
-  async getEchoes(): Promise<Echo[]> {
-    return invoke("dashboard_get_echoes");
+  async getEchoesOfYear(type: EchoType, year: number): Promise<Echo[]> {
+    return invoke("dashboard_get_echoes_of_year", { type, year });
+  }
+
+  async getEchoesOfQuestion(type: EchoType, sub: number): Promise<Echo[]> {
+    return invoke("dashboard_get_echoes_of_question", { type, sub });
+  }
+
+  async getYearsOfEchoType(type: EchoType): Promise<number[]> {
+    return invoke("dashboard_get_years_of_echo_type", { type });
   }
 
   async addEcho(echo: EchoField): Promise<string> {
@@ -286,8 +296,20 @@ export class SqliteDashboardDatabase implements IDashboardDatabase {
     return (await invoke("dashboard_get_todo", { id })) ?? undefined;
   }
 
-  async getTodos(): Promise<Todo[]> {
-    return invoke("dashboard_get_todos");
+  async getTodos(collectionId: string): Promise<Todo[]> {
+    return invoke("dashboard_get_todos", { collectionId });
+  }
+
+  async getCompletedTodos(collectionId: string): Promise<Todo[]> {
+    return invoke("dashboard_get_completed_todos", { collectionId });
+  }
+
+  async getTodayTodos(): Promise<Todo[]> {
+    return invoke("dashboard_get_today_todos");
+  }
+
+  async listAllTodos(): Promise<Todo[]> {
+    return invoke("dashboard_list_all_todos");
   }
 
   async addTodo(todo: TodoField): Promise<string> {
@@ -323,8 +345,8 @@ export class SqliteDashboardDatabase implements IDashboardDatabase {
     return (await invoke("dashboard_get_watch", { id })) ?? undefined;
   }
 
-  async getWatches(): Promise<Watch[]> {
-    return invoke("dashboard_get_watches");
+  async getWatches(status: WatchStatus): Promise<Watch[]> {
+    return invoke("dashboard_get_watches", { status });
   }
 
   async addWatch(watch: WatchField): Promise<string> {
@@ -339,7 +361,7 @@ export class SqliteDashboardDatabase implements IDashboardDatabase {
     await invoke("dashboard_put_watches", { watches });
   }
 
-  async updateWatch(id: string, updates: Partial<WatchField>): Promise<void> {
+  async updateWatch(id: string, updates: Partial<Watch>): Promise<void> {
     await invoke("dashboard_update_watch", { id, updates });
   }
 

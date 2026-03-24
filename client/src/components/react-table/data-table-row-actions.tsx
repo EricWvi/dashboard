@@ -53,7 +53,7 @@ import {
   type WatchMeasure,
   WatchTypeText,
   WatchMeasureText,
-} from "@/hooks/use-watches";
+} from "@/hooks/dashboard/use-watchv2";
 import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, formatMediaUrl, todayStart } from "@/lib/utils";
@@ -65,10 +65,10 @@ import {
   useUpdateBookmark,
   type Bookmark,
   type DomainType,
-} from "@/hooks/use-bookmarks";
+} from "@/hooks/dashboard/use-bookmarkv2";
 import { createTiptap } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
-import { BlogEnum, useUpdateBlog, type Blog } from "@/hooks/use-blogs";
+import { BlogEnum, useUpdateBlog, type Blog } from "@/hooks/dashboard/use-blogv2";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/hooks/use-user";
 

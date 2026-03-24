@@ -16,7 +16,7 @@ import {
   EchoEnum,
   useCreateQuestionEcho,
   useEchoesOfQuestion,
-} from "@/hooks/use-echoes";
+} from "@/hooks/dashboard/use-echov2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getDecadePair } from "@/lib/utils";
 import { useEffect, useState } from "react";

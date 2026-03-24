@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import Dexie, { type EntityTable } from "dexie";
 import {
   SchemaVersion,
+  WatchStatus,
   type Blog,
   type BlogField,
   type Bookmark,
@@ -11,6 +12,7 @@ import {
   type DashboardData,
   type Echo,
   type EchoField,
+  type EchoType,
   type QuickNote,
   type QuickNoteField,
   type Todo,
@@ -29,8 +31,11 @@ import {
   type UserField,
 } from "@/lib/model";
 import type { IDashboardDatabase } from "./db-interface";
+import { todayStart, tomorrowStart } from "@/lib/utils";
 
 const USER_KEY = "current_user";
+const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
+const NO_PLAN_TS = 5000000000000;
 
 // Database interface for type safety
 export interface DashboardDB {
@@ -68,16 +73,17 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
   }
 
   private initSchema() {
+    // TODO 不同 model 的查询利用索引
     this.db.version(SchemaVersion).stores({
       user: "key",
       tags: "id, syncStatus, updatedAt",
-      blogs: "id, syncStatus, updatedAt",
-      bookmarks: "id, syncStatus, updatedAt",
-      collections: "id, syncStatus, updatedAt",
-      echoes: "id, syncStatus, updatedAt",
+      blogs: "id, syncStatus, updatedAt, createdAt",
+      bookmarks: "id, syncStatus, updatedAt, createdAt",
+      collections: "id, syncStatus, updatedAt, createdAt",
+      echoes: "id, syncStatus, updatedAt, [type+sub], [type+year]",
       quickNotes: "id, syncStatus, updatedAt",
-      todos: "id, syncStatus, updatedAt, collectionId",
-      watches: "id, syncStatus, updatedAt",
+      todos: "id, syncStatus, updatedAt, collectionId, schedule",
+      watches: "id, syncStatus, updatedAt, [status+createdAt]",
       tiptaps: "id, syncStatus, updatedAt",
       syncMeta: "key",
     });
@@ -319,8 +325,29 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
     return this.db.echoes.get(id);
   }
 
-  async getEchoes(): Promise<Echo[]> {
-    return this.db.echoes.filter((echo) => !echo.isDeleted).toArray();
+  async getEchoesOfYear(type: EchoType, year: number): Promise<Echo[]> {
+    return this.db.echoes
+      .where("[type+year]")
+      .equals([type, year])
+      .filter((echo) => !echo.isDeleted)
+      .toArray();
+  }
+
+  async getEchoesOfQuestion(type: EchoType, sub: number): Promise<Echo[]> {
+    return this.db.echoes
+      .where("[type+sub]")
+      .equals([type, sub])
+      .filter((echo) => !echo.isDeleted)
+      .toArray();
+  }
+
+  async getYearsOfEchoType(type: EchoType): Promise<number[]> {
+    const keys = await this.db.echoes
+      .where("[type+year]")
+      .between([type, Dexie.minKey], [type, Dexie.maxKey])
+      .uniqueKeys();
+
+    return keys.map((key) => (key as unknown as [EchoType, number])[1]);
   }
 
   async addEcho(echo: EchoField): Promise<string> {
@@ -426,8 +453,40 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
     return this.db.todos.get(id);
   }
 
-  async getTodos(): Promise<Todo[]> {
-    return this.db.todos.filter((todo) => !todo.isDeleted).toArray();
+  async getTodos(collectionId: string): Promise<Todo[]> {
+    return this.db.todos
+      .where("collectionId")
+      .equals(collectionId)
+      .filter((todo) => !todo.isDeleted && !todo.completed)
+      .toArray();
+  }
+
+  async getCompletedTodos(collectionId: string): Promise<Todo[]> {
+    return this.db.todos
+      .where("collectionId")
+      .equals(collectionId)
+      .filter((todo) => todo.completed && !todo.isDeleted)
+      .toArray();
+  }
+
+  async getTodayTodos(): Promise<Todo[]> {
+    return this.db.todos
+      .where("schedule")
+      .between(todayStart().getTime(), tomorrowStart().getTime())
+      .filter((todo) => !todo.isDeleted && !todo.completed)
+      .toArray();
+  }
+
+  async listAllTodos(): Promise<Todo[]> {
+    return this.db.todos
+      .filter(
+        (todo) =>
+          !todo.isDeleted &&
+          !todo.completed &&
+          todo.collectionId !== ZERO_UUID &&
+          (todo.schedule === null || todo.schedule !== NO_PLAN_TS),
+      )
+      .toArray();
   }
 
   async addTodo(todo: TodoField): Promise<string> {
@@ -477,8 +536,13 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
     return this.db.watches.get(id);
   }
 
-  async getWatches(): Promise<Watch[]> {
-    return this.db.watches.filter((watch) => !watch.isDeleted).toArray();
+  async getWatches(status: WatchStatus): Promise<Watch[]> {
+    return this.db.watches
+      .where("[status+createdAt]")
+      .between([status, Dexie.minKey], [status, Dexie.maxKey])
+      .reverse()
+      .filter((watch) => !watch.isDeleted)
+      .toArray();
   }
 
   async addWatch(watch: WatchField): Promise<string> {
@@ -495,7 +559,7 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
     await this.db.watches.bulkPut(watches);
   }
 
-  async updateWatch(id: string, updates: Partial<WatchField>): Promise<void> {
+  async updateWatch(id: string, updates: Partial<Watch>): Promise<void> {
     await this.db.watches.update(id, {
       ...updates,
       updatedAt: Date.now(),

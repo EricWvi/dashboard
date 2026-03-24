@@ -2,6 +2,7 @@ import { tiptapRefresh, triggerRefresh } from "@/hooks/dashboard/query-keys";
 import { DexieDashboardDatabase } from "./dexie";
 import { SqliteDashboardDatabase } from "./sqlite";
 import {
+  WatchStatus,
   type Blog,
   type BlogField,
   type Bookmark,
@@ -11,6 +12,7 @@ import {
   type DashboardData,
   type Echo,
   type EchoField,
+  type EchoType,
   type QuickNote,
   type QuickNoteField,
   type Todo,
@@ -85,7 +87,9 @@ export interface IDashboardDatabase {
 
   // Echoes
   getEcho(id: string): Promise<Echo | undefined>;
-  getEchoes(): Promise<Echo[]>;
+  getEchoesOfYear(type: EchoType, year: number): Promise<Echo[]>;
+  getEchoesOfQuestion(type: EchoType, sub: number): Promise<Echo[]>;
+  getYearsOfEchoType(type: EchoType): Promise<number[]>;
   addEcho(echo: EchoField): Promise<string>;
   putEcho(echo: Echo): Promise<void>;
   putEchoes(echoes: Echo[]): Promise<void>;
@@ -107,22 +111,25 @@ export interface IDashboardDatabase {
 
   // Todos
   getTodo(id: string): Promise<Todo | undefined>;
-  getTodos(): Promise<Todo[]>;
+  getTodos(collectionId: string): Promise<Todo[]>;
+  getCompletedTodos(collectionId: string): Promise<Todo[]>;
+  getTodayTodos(): Promise<Todo[]>;
+  listAllTodos(): Promise<Todo[]>;
   addTodo(todo: TodoField): Promise<string>;
   putTodo(todo: Todo): Promise<void>;
   putTodos(todos: Todo[]): Promise<void>;
-  updateTodo(id: string, updates: Partial<TodoField>): Promise<void>;
+  updateTodo(id: string, updates: Partial<Todo>): Promise<void>;
   deleteTodo(id: string): Promise<void>;
   softDeleteTodo(id: string): Promise<void>;
   markTodoSynced(id: string, updatedAt: number): Promise<void>;
 
   // Watches
   getWatch(id: string): Promise<Watch | undefined>;
-  getWatches(): Promise<Watch[]>;
+  getWatches(status: WatchStatus): Promise<Watch[]>;
   addWatch(watch: WatchField): Promise<string>;
   putWatch(watch: Watch): Promise<void>;
   putWatches(watches: Watch[]): Promise<void>;
-  updateWatch(id: string, updates: Partial<WatchField>): Promise<void>;
+  updateWatch(id: string, updates: Partial<Watch>): Promise<void>;
   deleteWatch(id: string): Promise<void>;
   softDeleteWatch(id: string): Promise<void>;
   markWatchSynced(id: string, updatedAt: number): Promise<void>;
@@ -364,8 +371,16 @@ export class RefreshDecorator implements IDashboardDatabase {
     return this.baseDb.getEcho(id);
   }
 
-  async getEchoes(): Promise<Echo[]> {
-    return this.baseDb.getEchoes();
+  async getEchoesOfYear(type: EchoType, year: number): Promise<Echo[]> {
+    return this.baseDb.getEchoesOfYear(type, year);
+  }
+
+  async getEchoesOfQuestion(type: EchoType, sub: number): Promise<Echo[]> {
+    return this.baseDb.getEchoesOfQuestion(type, sub);
+  }
+
+  async getYearsOfEchoType(type: EchoType): Promise<number[]> {
+    return this.baseDb.getYearsOfEchoType(type);
   }
 
   async addEcho(echo: EchoField): Promise<string> {
@@ -455,8 +470,20 @@ export class RefreshDecorator implements IDashboardDatabase {
     return this.baseDb.getTodo(id);
   }
 
-  async getTodos(): Promise<Todo[]> {
-    return this.baseDb.getTodos();
+  async getTodos(collectionId: string): Promise<Todo[]> {
+    return this.baseDb.getTodos(collectionId);
+  }
+
+  async getCompletedTodos(collectionId: string): Promise<Todo[]> {
+    return this.baseDb.getCompletedTodos(collectionId);
+  }
+
+  async getTodayTodos(): Promise<Todo[]> {
+    return this.baseDb.getTodayTodos();
+  }
+
+  async listAllTodos(): Promise<Todo[]> {
+    return this.baseDb.listAllTodos();
   }
 
   async addTodo(todo: TodoField): Promise<string> {
@@ -499,8 +526,8 @@ export class RefreshDecorator implements IDashboardDatabase {
     return this.baseDb.getWatch(id);
   }
 
-  async getWatches(): Promise<Watch[]> {
-    return this.baseDb.getWatches();
+  async getWatches(status: WatchStatus): Promise<Watch[]> {
+    return this.baseDb.getWatches(status);
   }
 
   async addWatch(watch: WatchField): Promise<string> {
@@ -519,7 +546,7 @@ export class RefreshDecorator implements IDashboardDatabase {
     this.onTableChange("watches");
   }
 
-  async updateWatch(id: string, updates: Partial<WatchField>): Promise<void> {
+  async updateWatch(id: string, updates: Partial<Watch>): Promise<void> {
     await this.baseDb.updateWatch(id, updates);
     this.onTableChange("watches");
   }
