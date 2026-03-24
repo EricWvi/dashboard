@@ -1,4 +1,4 @@
-import type { MetaField } from "@/lib/model";
+import type { MetaField, Tag, TiptapV2 } from "@/lib/model";
 
 export const SchemaVersion = 1;
 
@@ -72,3 +72,15 @@ export interface BlogField {
 }
 
 export interface Blog extends MetaField, BlogField {}
+
+export interface DashboardData {
+  tags: Tag[];
+  blogs: Blog[];
+  bookmarks: Bookmark[];
+  collections: Collection[];
+  echoes: Echo[];
+  quickNotes: QuickNote[];
+  todos: Todo[];
+  watches: Watch[];
+  tiptaps: TiptapV2[];
+}
