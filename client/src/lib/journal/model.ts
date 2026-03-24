@@ -1,4 +1,4 @@
-import type { MetaField, TiptapV2 } from "@/lib/model";
+import type { MetaField, Tag, TiptapV2 } from "@/lib/model";
 
 export const SchemaVersion = 1;
 
@@ -17,13 +17,6 @@ export interface EntryField {
 }
 
 export interface Entry extends MetaField, EntryField {}
-
-// Tag
-export interface TagField {
-  name: string;
-}
-
-export interface Tag extends MetaField, TagField {}
 
 export interface JournalData {
   entries: Entry[];

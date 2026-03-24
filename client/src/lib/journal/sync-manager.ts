@@ -1,5 +1,5 @@
-import { SchemaVersion, type Entry, type Tag } from "./model";
-import { type TiptapV2, SyncStatus } from "@/lib/model";
+import { SchemaVersion, type Entry } from "./model";
+import { type Tag, type TiptapV2, SyncStatus } from "@/lib/model";
 import { journalDatabase, type IJournalDatabase } from "./db-interface";
 import { syncClient, type ISyncClient } from "./sync-client";
 import { syncEvents } from "@/lib/sync-events";
@@ -233,10 +233,7 @@ export class SyncManager {
         const localTag = await this.db.getTag(remoteTag.id);
         if (!localTag || remoteTag.updatedAt > localTag.updatedAt) {
           updates.push(
-            this.db.putTag({
-              ...remoteTag,
-              syncStatus: SyncStatus.Synced,
-            }),
+            this.db.putTag({ ...remoteTag, syncStatus: SyncStatus.Synced }),
           );
           tagApplied++;
         }

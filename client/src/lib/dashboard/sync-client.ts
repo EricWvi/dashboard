@@ -1,15 +1,30 @@
-import { type Entry, type JournalData } from "./model";
+import {
+  type Blog,
+  type Bookmark,
+  type Collection,
+  type DashboardData,
+  type Echo,
+  type QuickNote,
+  type Todo,
+  type Watch,
+} from "./model";
 import { type Tag, type TiptapV2, type User } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
 import { isTauri } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/core";
 
 // API response types
-interface JournalSyncResponse {
+interface DashboardSyncResponse {
   serverVersion: number;
   users: Omit<User, "key" | "syncStatus">[];
-  entries: Omit<Entry, "syncStatus">[];
   tags: Omit<Tag, "syncStatus">[];
+  blogs: Omit<Blog, "syncStatus">[];
+  bookmarks: Omit<Bookmark, "syncStatus">[];
+  collections: Omit<Collection, "syncStatus">[];
+  echoes: Omit<Echo, "syncStatus">[];
+  quickNotes: Omit<QuickNote, "syncStatus">[];
+  todos: Omit<Todo, "syncStatus">[];
+  watches: Omit<Watch, "syncStatus">[];
   tiptaps: Omit<TiptapV2, "syncStatus">[];
 }
 
@@ -29,20 +44,22 @@ function unwrapBackend<T>(raw: BackendWrapper<T>): T {
 }
 
 export interface ISyncClient {
-  FullSync(): Promise<JournalSyncResponse>;
-  Push(data: JournalData): Promise<{ ok: boolean; statusText: string }>;
-  Pull(version: number): Promise<JournalSyncResponse>;
+  FullSync(): Promise<DashboardSyncResponse>;
+  Push(data: DashboardData): Promise<{ ok: boolean; statusText: string }>;
+  Pull(version: number): Promise<DashboardSyncResponse>;
 }
 
 export class WebSyncClient implements ISyncClient {
-  async FullSync(): Promise<JournalSyncResponse> {
-    const response = await getRequest(`/api/journal?Action=FullSync`);
-    const data: BackendWrapper<JournalSyncResponse> = await response.json();
+  async FullSync(): Promise<DashboardSyncResponse> {
+    const response = await getRequest(`/api/dashboard?Action=FullSync`);
+    const data: BackendWrapper<DashboardSyncResponse> = await response.json();
     return unwrapBackend(data);
   }
 
-  async Push(data: JournalData): Promise<{ ok: boolean; statusText: string }> {
-    const response = await postRequest(`/api/journal?Action=Push`, data, 2);
+  async Push(
+    data: DashboardData,
+  ): Promise<{ ok: boolean; statusText: string }> {
+    const response = await postRequest(`/api/dashboard?Action=Push`, data, 2);
     const raw: BackendWrapper<unknown> = await response.json();
     return {
       ok: raw.code === 200,
@@ -55,25 +72,30 @@ export class WebSyncClient implements ISyncClient {
     };
   }
 
-  async Pull(version: number): Promise<JournalSyncResponse> {
+  async Pull(version: number): Promise<DashboardSyncResponse> {
     const response = await getRequest(
-      `/api/journal?Action=Pull&since=${version}`,
+      `/api/dashboard?Action=Pull&since=${version}`,
       2,
     );
-    const data: BackendWrapper<JournalSyncResponse> = await response.json();
+    const data: BackendWrapper<DashboardSyncResponse> = await response.json();
     return unwrapBackend(data);
   }
 }
 
 export class TauriSyncClient implements ISyncClient {
-  async FullSync(): Promise<JournalSyncResponse> {
-    const raw: BackendWrapper<JournalSyncResponse> =
-      await invoke("journal_full_sync");
+  async FullSync(): Promise<DashboardSyncResponse> {
+    const raw: BackendWrapper<DashboardSyncResponse> = await invoke(
+      "dashboard_full_sync",
+    );
     return unwrapBackend(raw);
   }
 
-  async Push(data: JournalData): Promise<{ ok: boolean; statusText: string }> {
-    const raw: BackendWrapper<unknown> = await invoke("journal_push", { data });
+  async Push(
+    data: DashboardData,
+  ): Promise<{ ok: boolean; statusText: string }> {
+    const raw: BackendWrapper<unknown> = await invoke("dashboard_push", {
+      data,
+    });
     return {
       ok: raw.code === 200,
       statusText:
@@ -85,9 +107,9 @@ export class TauriSyncClient implements ISyncClient {
     };
   }
 
-  async Pull(version: number): Promise<JournalSyncResponse> {
-    const raw: BackendWrapper<JournalSyncResponse> = await invoke(
-      "journal_pull",
+  async Pull(version: number): Promise<DashboardSyncResponse> {
+    const raw: BackendWrapper<DashboardSyncResponse> = await invoke(
+      "dashboard_pull",
       {
         version,
       },

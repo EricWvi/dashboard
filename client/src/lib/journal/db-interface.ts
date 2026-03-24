@@ -1,15 +1,11 @@
 import { tiptapRefresh, triggerRefresh } from "@/hooks/journal/query-keys";
 import { DexieJournalDatabase } from "./dexie";
 import { SqliteJournalDatabase } from "./sqlite";
-import {
-  type Entry,
-  type EntryField,
-  type JournalData,
-  type Tag,
-  type TagField,
-} from "./model";
+import { type Entry, type EntryField, type JournalData } from "./model";
 import {
   type SyncMeta,
+  type Tag,
+  type TagField,
   type TiptapV2,
   type TiptapV2Field,
   type User,
