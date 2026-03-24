@@ -21,6 +21,12 @@ export interface TiptapV2Field {
 
 export interface TiptapV2 extends MetaField, TiptapV2Field {}
 
+export interface TagField {
+  name: string;
+}
+
+export interface Tag extends MetaField, TagField {}
+
 export interface SyncMeta {
   key: string;
   value: number | string;
