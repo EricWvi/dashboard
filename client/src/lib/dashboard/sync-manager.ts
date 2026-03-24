@@ -10,12 +10,17 @@ export class SyncManager {
   private db: IDashboardDatabase;
   private client: ISyncClient;
   private isSyncing = false;
-  private intervalMs: number = 3000;
+  private intervalMs: number;
   private syncTimeout: NodeJS.Timeout | undefined = undefined;
 
-  constructor(db: IDashboardDatabase, client: ISyncClient) {
+  constructor(
+    db: IDashboardDatabase,
+    client: ISyncClient,
+    options?: { intervalMs?: number },
+  ) {
     this.db = db;
     this.client = client;
+    this.intervalMs = options?.intervalMs ?? 3000;
   }
 
   async needFullSync(): Promise<boolean> {
@@ -24,7 +29,7 @@ export class SyncManager {
       return true;
     }
     const schemaVersion = await this.db.getSyncMeta("schemaVersion");
-    return schemaVersion!.value !== SchemaVersion;
+    return !schemaVersion || Number(schemaVersion.value) !== SchemaVersion;
   }
 
   /**
@@ -38,10 +43,6 @@ export class SyncManager {
     }
 
     this.isSyncing = true;
-
-    this.db.clearAllData().catch((error) => {
-      console.error("Failed to clear local database during full sync:", error);
-    });
 
     try {
       console.log("Starting full sync...");
@@ -214,18 +215,7 @@ export class SyncManager {
       // Fetch changes since last version
       const serverData = await this.client.Pull(lastVersion);
 
-      if (
-        serverData.users.length === 0 &&
-        serverData.tags.length === 0 &&
-        serverData.blogs.length === 0 &&
-        serverData.bookmarks.length === 0 &&
-        serverData.collections.length === 0 &&
-        serverData.echoes.length === 0 &&
-        serverData.quickNotes.length === 0 &&
-        serverData.todos.length === 0 &&
-        serverData.watches.length === 0 &&
-        serverData.tiptaps.length === 0
-      ) {
+      if (serverData.users.length === 0 && this.isEmptyRemoteData(serverData)) {
         return;
       }
 
@@ -433,6 +423,30 @@ export class SyncManager {
   }
 
   private isEmptyData(data: DashboardData): boolean {
+    return (
+      data.tags.length === 0 &&
+      data.blogs.length === 0 &&
+      data.bookmarks.length === 0 &&
+      data.collections.length === 0 &&
+      data.echoes.length === 0 &&
+      data.quickNotes.length === 0 &&
+      data.todos.length === 0 &&
+      data.watches.length === 0 &&
+      data.tiptaps.length === 0
+    );
+  }
+
+  private isEmptyRemoteData(data: {
+    tags: { length: number };
+    blogs: { length: number };
+    bookmarks: { length: number };
+    collections: { length: number };
+    echoes: { length: number };
+    quickNotes: { length: number };
+    todos: { length: number };
+    watches: { length: number };
+    tiptaps: { length: number };
+  }): boolean {
     return (
       data.tags.length === 0 &&
       data.blogs.length === 0 &&
