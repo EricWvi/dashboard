@@ -43,7 +43,7 @@ import {
   TextCursorInput,
   Trash2,
 } from "lucide-react";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import {
   useFoldersInParent,

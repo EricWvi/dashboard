@@ -51,7 +51,7 @@ import {
 } from "@/components/todo/todo-entry";
 import { fullDateString, isSetToday, isSetDate } from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 const TodoList = ({

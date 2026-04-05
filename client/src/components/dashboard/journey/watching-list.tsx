@@ -54,7 +54,7 @@ import { createTiptap } from "@/hooks/use-draft";
 import WatchCheckpoints from "@/components/dashboard/journey/watch-checkpoint";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {

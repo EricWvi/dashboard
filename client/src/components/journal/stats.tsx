@@ -13,7 +13,7 @@ import {
   useGetEntryDate,
   useGetWordsCount,
 } from "@/hooks/journal/use-entryv2";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import React, { useEffect, useRef } from "react";
 import "odometer/themes/odometer-theme-default.css";
 

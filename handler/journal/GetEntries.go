@@ -42,9 +42,9 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 			today := time.Now()
 			m.Raw("EXTRACT(MONTH FROM created_at) = ? AND EXTRACT(DAY FROM created_at) = ?", today.Month(), today.Day())
 		case "contains":
-			m.ILIKE(model.Entry_RawText, "%"+cond.Value.(string)+"%")
+			m.ILIKE(model.EntryV2_RawText, "%"+cond.Value.(string)+"%")
 		case "bookmarked":
-			m.Eq(model.Entry_Bookmark, true)
+			m.Eq(model.EntryV2_Bookmark, true)
 		case "on":
 			dateStr := cond.Value.(string)
 			m.GTE(model.CreatedAt, dateStr)
@@ -62,14 +62,14 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 		}
 	}
 
-	var entries []*model.Entry
+	var entries []model.EntryMeta
 	var hasMore bool
 	var err error
 
 	if useRandomOperator {
-		entries, hasMore, err = model.GetRandomEntries(config.ContextDB(c), userId, 8)
+		entries, hasMore, err = model.GetRandomEntriesV2(config.ContextDB(c), userId, 8)
 	} else {
-		entries, hasMore, err = model.FindEntries(config.ContextDB(c), m, req.Page)
+		entries, hasMore, err = model.FindEntriesV2(config.ContextDB(c), m, req.Page)
 	}
 
 	if err != nil {
@@ -77,26 +77,7 @@ func (b Base) GetEntries(c *gin.Context, req *GetEntriesRequest) *GetEntriesResp
 		return nil
 	}
 
-	ids := []any{}
-	for _, entry := range entries {
-		if entry.Draft != 0 {
-			ids = append(ids, entry.Draft)
-		}
-	}
-	drafts := []model.Tiptap{}
-	if len(ids) != 0 {
-		where := model.WhereMap{}
-		where.Eq(model.CreatorId, middleware.GetUserId(c))
-		where.In(model.Id, ids)
-		drafts, err = model.ListTiptaps(config.ContextDB(c), where)
-		if err != nil {
-			handler.Errorf(c, "%s", err.Error())
-			return nil
-		}
-	}
-
 	return &GetEntriesResponse{
-		drafts,
 		entries,
 		hasMore,
 	}
@@ -113,7 +94,6 @@ type QueryCondition struct {
 }
 
 type GetEntriesResponse struct {
-	Drafts  []model.Tiptap `json:"drafts"`
-	Entries []*model.Entry `json:"entries"`
-	HasMore bool           `json:"hasMore"`
+	Entries []model.EntryMeta `json:"entries"`
+	HasMore bool              `json:"hasMore"`
 }

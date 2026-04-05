@@ -20,6 +20,7 @@ func (b Base) FullSync(c *gin.Context, req *FullSyncRequest) *FullSyncResponse {
 	var entries []model.EntryV2
 	var tags []model.TagV2
 	var tiptaps []model.TiptapV2
+	var statistics []model.StatisticV2
 	var fetchErr error
 
 	wg.Add(1)
@@ -66,6 +67,17 @@ func (b Base) FullSync(c *gin.Context, req *FullSyncRequest) *FullSyncResponse {
 		tiptaps = result
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		result, err := model.FullStatisticV2(db, userId)
+		if err != nil {
+			fetchErr = err
+			return
+		}
+		statistics = result
+	}()
+
 	wg.Wait()
 
 	if fetchErr != nil {
@@ -93,6 +105,11 @@ func (b Base) FullSync(c *gin.Context, req *FullSyncRequest) *FullSyncResponse {
 			serverVersion = tiptaps[i].ServerVersion
 		}
 	}
+	for i := range statistics {
+		if statistics[i].ServerVersion > serverVersion {
+			serverVersion = statistics[i].ServerVersion
+		}
+	}
 
 	return &FullSyncResponse{
 		ServerVersion: serverVersion,
@@ -100,6 +117,7 @@ func (b Base) FullSync(c *gin.Context, req *FullSyncRequest) *FullSyncResponse {
 		Entry:         entries,
 		Tag:           tags,
 		Tiptap:        tiptaps,
+		Statistic:     statistics,
 	}
 }
 
@@ -107,9 +125,10 @@ type FullSyncRequest struct {
 }
 
 type FullSyncResponse struct {
-	ServerVersion int64              `json:"serverVersion"`
-	User          []model.UserV2View `json:"users"`
-	Entry         []model.EntryV2    `json:"entries"`
-	Tag           []model.TagV2      `json:"tags"`
-	Tiptap        []model.TiptapV2   `json:"tiptaps"`
+	ServerVersion int64                 `json:"serverVersion"`
+	User          []model.UserV2View    `json:"users"`
+	Entry         []model.EntryV2       `json:"entries"`
+	Tag           []model.TagV2         `json:"tags"`
+	Tiptap        []model.TiptapV2      `json:"tiptaps"`
+	Statistic     []model.StatisticV2   `json:"statistics"`
 }

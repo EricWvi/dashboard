@@ -4,7 +4,14 @@ import { type EntryField } from "@/lib/journal/model";
 import keys from "./query-keys";
 import { createTiptap } from "./use-tiptapv2";
 import { createTags, parseTags, type LocTreeNode } from "./use-tagv2";
-import { getRequest } from "@/lib/queryClient";
+import {
+  getWordsCount,
+  getCurrentYear,
+  getEntryDate,
+  getAllDates,
+} from "@/lib/journal/statistics";
+import { syncClient } from "@/lib/journal/sync-client";
+import { EntryMeta, type QueryCondition } from "@/lib/journal/model";
 
 export type CurrentYearCount = {
   date: string;
@@ -12,75 +19,14 @@ export type CurrentYearCount = {
   level: number;
 };
 
-export class EntryMeta {
-  id: string;
-  draft: string;
-  year: number;
-  month: number;
-  day: number;
-
-  constructor(
-    id: string,
-    draft: string,
-    year: number,
-    month: number,
-    day: number,
-  ) {
-    this.id = id;
-    this.draft = draft;
-    this.year = year;
-    this.month = month;
-    this.day = day;
-  }
-
-  isToday(): boolean {
-    const today = new Date();
-    return (
-      this.year === today.getFullYear() &&
-      this.month === today.getMonth() + 1 &&
-      this.day === today.getDate()
-    );
-  }
-
-  isYesterday(): boolean {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return (
-      this.year === yesterday.getFullYear() &&
-      this.month === yesterday.getMonth() + 1 &&
-      this.day === yesterday.getDate()
-    );
-  }
-}
-
-export interface QueryCondition {
-  operator: string;
-  value: any;
-}
+export { EntryMeta };
+export type { QueryCondition };
 
 export async function listEntries(
   page: number = 1,
   condition: QueryCondition[] = [],
-): Promise<[EntryMeta[], boolean]> {
-  const response = await getRequest(
-    `/api/journal?Action=GetEntries&page=${page}&condition=${JSON.stringify(condition)}`,
-  );
-  const data = await response.json();
-
-  const metas = (
-    data.message.entries as { createdAt: string; id: string; draft: string }[]
-  ).map((entry) => {
-    const time = new Date(entry.createdAt);
-    return new EntryMeta(
-      entry.id,
-      entry.draft,
-      time.getFullYear(),
-      time.getMonth() + 1,
-      time.getDate(),
-    );
-  });
-
-  return [metas, data.message.hasMore];
+): Promise<{ entries: EntryMeta[]; hasMore: boolean }> {
+  return syncClient.listEntries(page, condition);
 }
 
 export function useEntry(id: string) {
@@ -164,27 +110,11 @@ export async function deleteEntry(id: string) {
   return journalDatabase.softDeleteEntry(id);
 }
 
-export function useGetEntriesCount(year: number) {
-  return useQuery<number>({
-    queryKey: keys.entries.meta("entryCount/" + year),
-    enabled: !!year,
-    queryFn: async () => {
-      const response = await getRequest(
-        `/api/journal?Action=GetEntriesCount&year=${year}`,
-      );
-      const data = await response.json();
-      return data.message.count;
-    },
-  });
-}
-
 export function useGetWordsCount() {
   return useQuery<number>({
     queryKey: keys.entries.meta("words"),
     queryFn: async () => {
-      const response = await getRequest("/api/journal?Action=GetWordsCount");
-      const data = await response.json();
-      return data.message.count;
+      return getWordsCount();
     },
   });
 }
@@ -206,12 +136,27 @@ export function useGetEntryDate() {
   return useQuery<DatesWithCount>({
     queryKey: keys.entries.meta("dates"),
     queryFn: async () => {
-      const response = await getRequest("/api/journal?Action=GetEntryDate");
-      const data = await response.json();
-      return {
-        dates: data.message.entryDates,
-        count: data.message.total,
-      };
+      // Try to get from local database first
+      const entryDateStat = await getEntryDate();
+      const allDatesStat = await getAllDates();
+
+      const dates: DatesTree = [];
+      if (Object.keys(entryDateStat).length > 0) {
+        for (const [yearStr, months] of Object.entries(entryDateStat)) {
+          const year = parseInt(yearStr, 10);
+          const monthsArray: { month: number; days: number[] }[] = [];
+          for (const [monthStr, days] of Object.entries(months)) {
+            monthsArray.push({
+              month: parseInt(monthStr, 10),
+              days: days,
+            });
+          }
+          monthsArray.sort((a, b) => b.month - a.month);
+          dates.push({ year, months: monthsArray });
+        }
+        dates.sort((a, b) => b.year - a.year);
+      }
+      return { dates, count: allDatesStat };
     },
   });
 }
@@ -220,9 +165,44 @@ export function useGetCurrentYear() {
   return useQuery<{ activity: CurrentYearCount[]; count: number }>({
     queryKey: keys.entries.meta("currentYear"),
     queryFn: async () => {
-      const response = await getRequest("/api/journal?Action=GetCurrentYear");
-      const data = await response.json();
-      return data.message;
+      const stat = await getCurrentYear();
+
+      const currentYear = new Date().getFullYear();
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      const yearStartStr = `${currentYear}-01-01`;
+
+      // Build activity array from existing data
+      const activity: CurrentYearCount[] = [];
+      if (Object.keys(stat).length > 0) {
+        const sortedDates = Object.keys(stat).sort();
+        for (const date of sortedDates) {
+          const count = stat[date] ?? 0;
+          const level = Math.min(count, 4);
+          activity.push({ date, count, level });
+        }
+      }
+
+      // Ensure start of year is included
+      if (activity.length === 0 || activity[0].date !== yearStartStr) {
+        activity.unshift({ date: yearStartStr, count: 0, level: 0 });
+      }
+
+      // Ensure today is included
+      if (
+        activity.length === 0 ||
+        activity[activity.length - 1].date !== todayStr
+      ) {
+        activity.push({ date: todayStr, count: 0, level: 0 });
+      }
+
+      // Calculate total count
+      const totalCount = Object.values(stat).reduce(
+        (sum, count) => sum + count,
+        0,
+      );
+
+      return { activity, count: totalCount };
     },
   });
 }

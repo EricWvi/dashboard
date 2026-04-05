@@ -33,7 +33,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ReadOnlyTiptap } from "./simple-editor";
 import { dateString } from "@/lib/utils";
 import { RestoreIcon } from "@/components/tiptap-icons/restore-icon";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { diffJSONContent } from "@/lib/tiptap-diff";
 import { Editor, type JSONContent } from "@tiptap/react";

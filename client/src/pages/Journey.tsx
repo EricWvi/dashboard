@@ -18,7 +18,7 @@ import { WatchingList } from "@/components/dashboard/journey/watching-list";
 import { Package2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DroppedList from "@/components/dashboard/journey/dropped-watch";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 function WatchingTab() {

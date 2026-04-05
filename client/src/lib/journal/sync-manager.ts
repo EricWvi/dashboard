@@ -75,6 +75,7 @@ export class SyncManager {
         this.db.putEntries(entries),
         this.db.putTags(tags),
         this.db.putTiptaps(tiptaps),
+        this.db.putStatistics(serverData.statistics),
       ]);
 
       await this.db.setSyncMeta("schemaVersion", SchemaVersion);
@@ -181,7 +182,8 @@ export class SyncManager {
         serverData.users.length === 0 &&
         serverData.entries.length === 0 &&
         serverData.tags.length === 0 &&
-        serverData.tiptaps.length === 0
+        serverData.tiptaps.length === 0 &&
+        serverData.statistics.length === 0
       ) {
         return;
       }
@@ -259,6 +261,8 @@ export class SyncManager {
           tiptapApplied++;
         }
       }
+
+      updates.push(this.db.putStatistics(serverData.statistics));
 
       await Promise.all(updates);
 

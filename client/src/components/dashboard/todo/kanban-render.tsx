@@ -57,7 +57,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Textarea } from "@/components/ui/textarea";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PopoverText from "@/components/dashboard/todo/popovertext";

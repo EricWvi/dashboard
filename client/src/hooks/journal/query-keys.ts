@@ -18,6 +18,9 @@ const keys = {
     all: ["tiptaps"] as const,
     detail: (id: string) => [...keys.tiptaps.all, "detail", id] as const,
   },
+  statistics: {
+    all: ["statistics"] as const,
+  },
 };
 
 export default keys;
@@ -27,6 +30,7 @@ const TABLE_MAP: Record<string, readonly unknown[]> = {
   tags: keys.tags.all,
   user: keys.user.current,
   tiptaps: keys.tiptaps.all,
+  statistics: keys.statistics.all,
 };
 
 // Create independent debounced functions for each table to avoid cancellation
@@ -58,6 +62,13 @@ const invalidateTiptaps = debounce(() => {
   });
 }, 100);
 
+const invalidateStatistics = debounce(() => {
+  queryClient.invalidateQueries({
+    queryKey: TABLE_MAP.statistics,
+    exact: false,
+  });
+}, 100);
+
 export const triggerRefresh = (table: string) => {
   switch (table) {
     case "user":
@@ -71,6 +82,9 @@ export const triggerRefresh = (table: string) => {
       break;
     case "tiptaps":
       invalidateTiptaps();
+      break;
+    case "statistics":
+      invalidateStatistics();
       break;
   }
 };

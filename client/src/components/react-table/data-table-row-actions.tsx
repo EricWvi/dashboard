@@ -68,9 +68,13 @@ import {
 } from "@/hooks/dashboard/use-bookmarkv2";
 import { createTiptap } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
-import { BlogEnum, useUpdateBlog, type Blog } from "@/hooks/dashboard/use-blogv2";
+import {
+  BlogEnum,
+  useUpdateBlog,
+  type Blog,
+} from "@/hooks/dashboard/use-blogv2";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;

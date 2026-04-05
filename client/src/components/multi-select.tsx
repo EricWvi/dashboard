@@ -27,7 +27,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 /**

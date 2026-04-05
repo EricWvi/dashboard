@@ -35,7 +35,7 @@ import {
   pickHighlightColorsByValue,
   useColorHighlight,
 } from "@/components/tiptap-ui/color-highlight-button";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export interface ColorHighlightPopoverContentProps {

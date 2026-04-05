@@ -30,7 +30,7 @@ import {
   CardItemGroup,
 } from "@/components/tiptap-ui-primitive/card";
 import { Input, InputGroup } from "@/components/tiptap-ui-primitive/input";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export interface LinkMainProps {

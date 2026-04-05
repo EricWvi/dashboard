@@ -13,14 +13,14 @@ import {
   More,
   MoreArrow,
 } from "@/components/journal/icon";
-import { useDraft } from "@/hooks/use-draft";
 import { generateHTML, type JSONContent } from "@tiptap/react";
-import { extensionSetup } from "@/components/tiptap-templates/simple/simple-editor";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { extensionSetup } from "@/components/tiptap-editor/simple-editor";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import MediaViewer from "./media-viewer";
 import { EntryCardMenuHeight, DropdownMenu } from "./dropdown-menu";
+import { useDraft } from "@/hooks/journal/use-tiptapv2";
 
 const filterText = (doc: JSONContent) => {
   return {
@@ -57,7 +57,7 @@ const monthToText = [
   { [UserLangEnum.ENUS]: "December", [UserLangEnum.ZHCN]: "十二月" },
 ];
 
-const formatTime = (date: Date | string) => {
+const formatTime = (date: number) => {
   return new Date(date).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -65,7 +65,7 @@ const formatTime = (date: Date | string) => {
   });
 };
 
-const formatDate = (date: Date | string, language: UserLang) => {
+const formatDate = (date: number, language: UserLang) => {
   if (language === UserLangEnum.ENUS) {
     return new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
@@ -88,9 +88,9 @@ interface EntryCardProps {
   showMonth: boolean;
   showToday: boolean;
   showYesterday: boolean;
-  onEditTags: (id: number) => void;
+  onEditTags: (id: string) => void;
   onShare: (meta: EntryMeta) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 function EntryCard({

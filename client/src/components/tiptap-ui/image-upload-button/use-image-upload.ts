@@ -13,7 +13,7 @@ import { isExtensionAvailable, isNodeTypeSelected } from "@/lib/tiptap-utils";
 
 // --- Icons ---
 import { ImagePlusIcon } from "@/components/tiptap-icons/image-plus-icon";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export const IMAGE_UPLOAD_SHORTCUT_KEY = "mod+shift+i";

@@ -10,7 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // --- Lib ---
 import { isExtensionAvailable, handleVideoUpload } from "@/lib/tiptap-utils";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 // --- Icons ---

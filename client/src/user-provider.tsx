@@ -1,6 +1,6 @@
-import { useUser, useUserV2, type User, type UserLang } from "@/hooks/use-user";
+import { useUser, useUserV2, type User } from "@/hooks/use-user";
 import { createContext, useContext, type ReactNode } from "react";
-import type { UserField } from "@/lib/model";
+import type { UserField, UserLang } from "@/lib/model";
 
 type UserContextType = {
   user: User;

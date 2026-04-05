@@ -20,7 +20,7 @@ import {
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
 import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Badge } from "@/components/tiptap-ui-primitive/badge";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export interface TextAlignButtonProps

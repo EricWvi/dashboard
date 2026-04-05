@@ -84,7 +84,7 @@ import { Label } from "@/components/ui/label";
 import { createKanban } from "@/hooks/use-kanban";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 const TodoTitle = ({

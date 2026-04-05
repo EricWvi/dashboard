@@ -1,12 +1,12 @@
-import { ReadOnlyTiptap } from "@/components/tiptap-templates/simple/simple-editor";
+import { ReadOnlyTiptap } from "@/components/tiptap-editor/simple-editor";
 import { useEffect, useRef, useState } from "react";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPng } from "html-to-image";
 import { useEntry, type EntryMeta } from "@/hooks/journal/use-entryv2";
 import { MapPin } from "lucide-react";
-import { useDraft } from "@/hooks/use-draft";
+import { useDraft } from "@/hooks/journal/use-tiptapv2";
 
 function download(dataUrl: string, filename: string) {
   const link = document.createElement("a");
@@ -15,7 +15,7 @@ function download(dataUrl: string, filename: string) {
   link.click();
 }
 
-function ContentHTML({ id }: { id: number }) {
+function ContentHTML({ id }: { id: string }) {
   const { data: draft, isFetching } = useDraft(id); // TODO
 
   if (isFetching) return null;

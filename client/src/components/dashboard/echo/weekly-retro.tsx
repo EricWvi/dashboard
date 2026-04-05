@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, getWeekRange, getWeekYearPair } from "@/lib/utils";
 import { MarkIcon } from "@/components/ui/icons";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export const WeeklyRetro = () => {

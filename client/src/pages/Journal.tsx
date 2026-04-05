@@ -8,19 +8,12 @@ import {
   type QueryCondition,
   listEntries,
   useUpdateEntry,
-  refreshMeta,
   deleteEntry,
-  useTags,
-  EntryQueryOptions,
-  type Entry,
-} from "@/hooks/use-entries";
+} from "@/hooks/journal/use-entryv2";
 import ShareCard from "@/components/journal/share-card";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
-import { useCloseActionContext } from "@/close-action-provider";
-import type { Editor } from "@tiptap/react";
-import { countWords } from "alfaaz";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 import {
   Dialog,
@@ -42,8 +35,10 @@ import {
 } from "@/components/journal/icon";
 import { MultiSelect } from "@/components/multi-select";
 import { Label } from "@/components/ui/label";
-import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { useEditorState } from "@/hooks/use-editor-state";
+import { useTags } from "@/hooks/journal/use-tagv2";
+import { journalDatabase } from "@/lib/journal/db-interface";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -205,12 +200,11 @@ const Conditions = React.memo(
 export default function Journal() {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
-  const { setOnClose } = useCloseActionContext();
+  const { openTab } = useEditorState();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
   const { language } = useUserContext();
 
   const [entries, setEntries] = useState<entryWrapper[]>([]);
-  const updateEntryMutation = useUpdateEntry();
   const conditionRef = useRef<QueryCondition[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
@@ -218,7 +212,7 @@ export default function Journal() {
   const [shareMeta, setShareMeta] = useState<EntryMeta>({} as EntryMeta);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
-  const [editEntryId, setEditEntryId] = useState<number>(0);
+  const [editEntryId, setEditEntryId] = useState<string>("");
 
   useEffect(() => {
     loadInitialData();
@@ -234,10 +228,10 @@ export default function Journal() {
   const loadInitialData = useCallback(async () => {
     loading.current = true;
     listEntries(1, conditionRef.current)
-      .then(([metas, more]) => {
+      .then(({ entries, hasMore }) => {
         setTimeout(() => {
-          setEntries(buildWrapper([], metas));
-          setHasMore(more);
+          setEntries(buildWrapper([], entries));
+          setHasMore(hasMore);
           setPage(2);
         }, 150);
       })
@@ -253,8 +247,11 @@ export default function Journal() {
     if (loading.current) return;
     loading.current = true;
     try {
-      const [metas, hasMore] = await listEntries(page, conditionRef.current);
-      setEntries((prev) => buildWrapper(prev, metas));
+      const { entries, hasMore } = await listEntries(
+        page,
+        conditionRef.current,
+      );
+      setEntries((prev) => buildWrapper(prev, entries));
       setHasMore(hasMore);
       setPage((prev) => prev + 1);
     } catch (err) {
@@ -266,34 +263,17 @@ export default function Journal() {
 
   const handleCreateEntry = useCallback(async () => {
     createEntry().then(([id, draft]) => {
-      setOnClose(() => (e: Editor, changed: boolean) => {
-        if (changed) {
-          const str = e.getText();
-          updateEntryMutation
-            .mutateAsync({
-              id,
-              wordCount: countWords(str),
-              rawText: str.trim().replace(/\s+/g, " "),
-            })
-            .then(() => {
-              refreshMeta();
-              refresh();
-            });
-        } else {
-          refreshMeta();
-          refresh();
-        }
-
-        setOnClose(() => () => {});
+      openTab({
+        draftId: draft,
+        title: id,
+        editable: true,
       });
-      setEditorId(draft);
       setEditorDialogOpen(true);
     });
   }, []);
 
-  const handleDeleteEntry = useCallback(async (id: number) => {
+  const handleDeleteEntry = useCallback(async (id: string) => {
     deleteEntry(id).then(() => {
-      refreshMeta();
       refresh();
     });
   }, []);
@@ -495,7 +475,7 @@ export default function Journal() {
     setShareDialogOpen(true);
   }, []);
 
-  const handleEditTagsDialogOpen = useCallback((id: number) => {
+  const handleEditTagsDialogOpen = useCallback((id: string) => {
     setEditEntryId(id);
     setEditTagsDialogOpen(true);
   }, []);
@@ -622,7 +602,7 @@ export default function Journal() {
 interface EditMetaDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  entryId: number;
+  entryId: string;
 }
 
 function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
@@ -635,16 +615,14 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
   const [selectedLoc3, setSelectedLoc3] = useState<string[]>([]);
 
   useEffect(() => {
-    if (open && entryId > 0) {
-      queryClient
-        .fetchQuery<Entry>(EntryQueryOptions(entryId))
-        .then((entry) => {
-          setSelectedTags(entry.payload.tags || []);
-          const location = entry.payload.location || [];
-          setSelectedLoc1(location[0] ? [location[0]] : []);
-          setSelectedLoc2(location[1] ? [location[1]] : []);
-          setSelectedLoc3(location[2] ? [location[2]] : []);
-        });
+    if (open && entryId !== "") {
+      journalDatabase.getEntry(entryId).then((entry) => {
+        setSelectedTags(entry!.payload.tags || []);
+        const location = entry!.payload.location || [];
+        setSelectedLoc1(location[0] ? [location[0]] : []);
+        setSelectedLoc2(location[1] ? [location[1]] : []);
+        setSelectedLoc3(location[2] ? [location[2]] : []);
+      });
     }
   }, [open, entryId]);
 
@@ -708,7 +686,7 @@ function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
     };
     updateEntryMutation.mutateAsync({
       id: entryId,
-      payload,
+      data: { payload },
     });
   };
 

@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeeklyRetro } from "@/components/dashboard/echo/weekly-retro";
 import { AnnualRetro } from "@/components/dashboard/echo/annual-retro";
 import { DecadeRetro } from "@/components/dashboard/echo/decade-retro";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export default function Echo() {

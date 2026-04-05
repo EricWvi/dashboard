@@ -18,11 +18,8 @@ import {
   TodoIcon,
 } from "@/components/ui/icons";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
-import {
-  getSessionStatus,
-  syncSessionStatus,
-  UserLangEnum,
-} from "@/hooks/use-user";
+import { getSessionStatus, syncSessionStatus } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export default function TabbedApp() {

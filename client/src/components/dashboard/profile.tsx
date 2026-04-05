@@ -29,12 +29,12 @@ import {
   invalidMailCount,
   invalidRSSCount,
   useMailCount,
-  UserLangEnum,
   useRSSCount,
   useUpdateEmailToken,
   useUpdateProfile,
   useUpdateRssToken,
 } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useRef, useState } from "react";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { Plus, X } from "lucide-react";

@@ -22,7 +22,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;

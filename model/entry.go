@@ -120,14 +120,10 @@ func CountEntries(db *gorm.DB, where map[string]any) (int64, error) {
 type CurrentYearCount struct {
 	Date  string `json:"date"`
 	Count int    `json:"count"`
-	Level int    `json:"level"`
 }
 
 func CountCurrentYear(db *gorm.DB, where map[string]any) ([]CurrentYearCount, error) {
-	var results []struct {
-		Date  string
-		Count int
-	}
+	var results []CurrentYearCount
 
 	currentYear := time.Now().Year()
 	startDate := fmt.Sprintf("%d-01-01", currentYear)
@@ -144,18 +140,7 @@ func CountCurrentYear(db *gorm.DB, where map[string]any) ([]CurrentYearCount, er
 		return nil, err
 	}
 
-	// Convert to CurrentYearCount with level calculation
-	var counts []CurrentYearCount
-	for _, result := range results {
-		level := min(result.Count, 4)
-		counts = append(counts, CurrentYearCount{
-			Date:  result.Date,
-			Count: result.Count,
-			Level: level,
-		})
-	}
-
-	return counts, nil
+	return results, nil
 }
 
 func FindEntries(db *gorm.DB, where WhereExpr, page uint) ([]*Entry, bool, error) {

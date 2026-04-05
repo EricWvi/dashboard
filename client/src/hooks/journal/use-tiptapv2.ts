@@ -1,5 +1,19 @@
 import { journalDatabase } from "@/lib/journal/db-interface";
+import { useQuery } from "@tanstack/react-query";
 import { type JSONContent } from "@tiptap/react";
+import keys from "./query-keys";
+
+export function useDraft(id: string) {
+  return useQuery({
+    enabled: !!id,
+    queryKey: keys.tiptaps.detail(id),
+    queryFn: async () => {
+      return journalDatabase.getTiptap(id);
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}
 
 const defaultContent = [
   {

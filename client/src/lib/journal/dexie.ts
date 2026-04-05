@@ -1,10 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
 import Dexie, { type EntityTable } from "dexie";
 import {
+  EntryMeta,
   SchemaVersion,
   type Entry,
   type EntryField,
   type JournalData,
+  type QueryCondition,
+  type Statistic,
 } from "./model";
 import {
   SyncStatus,
@@ -16,6 +19,7 @@ import {
   type User,
 } from "@/lib/model";
 import type { IJournalDatabase } from "./db-interface";
+import { onEntryCreate, onEntryDelete, onEntryUpdate } from "./statistics";
 
 const USER_KEY = "current_user";
 
@@ -26,6 +30,7 @@ export interface JournalDB {
   tags: EntityTable<Tag, "id">;
   tiptaps: EntityTable<TiptapV2, "id">;
   syncMeta: EntityTable<SyncMeta, "key">;
+  statistics: EntityTable<Statistic, "stKey">;
 }
 
 // Dexie implementation
@@ -40,10 +45,11 @@ export class DexieJournalDatabase implements IJournalDatabase {
   private initSchema() {
     this.db.version(SchemaVersion).stores({
       user: "key",
-      entries: "id, syncStatus, updatedAt",
+      entries: "id, syncStatus, updatedAt, createdAt",
       tags: "id, syncStatus, updatedAt",
       tiptaps: "id, syncStatus, updatedAt",
       syncMeta: "key",
+      statistics: "stKey",
     });
   }
 
@@ -65,16 +71,50 @@ export class DexieJournalDatabase implements IJournalDatabase {
     return this.db.entries.get(id);
   }
 
+  async getEntries(
+    page: number,
+    _condition: QueryCondition[],
+  ): Promise<{ entries: EntryMeta[]; hasMore: boolean }> {
+    const pageSize = 8;
+    const offset = (page - 1) * pageSize;
+    const rawData = this.db.entries
+      .orderBy("createdAt")
+      .reverse()
+      .filter((e) => !e.isDeleted)
+      .offset(offset)
+      .limit(pageSize + 1) // Fetch one extra to check if there's more
+      .toArray();
+    return rawData.then((entries) => {
+      const hasMore = entries.length > pageSize;
+      const result = entries
+        .slice(0, pageSize)
+        .map(
+          (entry) =>
+            new EntryMeta(
+              entry.id,
+              entry.draft,
+              new Date(entry.createdAt).getFullYear(),
+              new Date(entry.createdAt).getMonth() + 1,
+              new Date(entry.createdAt).getDate(),
+            ),
+        );
+      return { entries: result, hasMore };
+    });
+  }
+
   async addEntry(entry: EntryField): Promise<string> {
     const id = uuidv4();
+    const now = Date.now();
     await this.db.entries.add({
       ...entry,
       id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
       isDeleted: false,
       syncStatus: SyncStatus.Pending,
     });
+    // Update statistics
+    await onEntryCreate(now, entry.wordCount);
     return id;
   }
 
@@ -87,11 +127,20 @@ export class DexieJournalDatabase implements IJournalDatabase {
   }
 
   async updateEntry(id: string, updates: Partial<EntryField>): Promise<void> {
+    // Get old entry for wordCount comparison
+    const oldEntry = await this.db.entries.get(id);
+    const oldWordCount = oldEntry?.wordCount ?? 0;
+
     await this.db.entries.update(id, {
       ...updates,
       updatedAt: Date.now(),
       syncStatus: SyncStatus.Pending,
     });
+
+    // Update statistics if wordCount changed
+    if (updates.wordCount !== undefined && updates.wordCount !== oldWordCount) {
+      await onEntryUpdate(oldWordCount, updates.wordCount);
+    }
   }
 
   async deleteEntry(id: string): Promise<void> {
@@ -99,11 +148,17 @@ export class DexieJournalDatabase implements IJournalDatabase {
   }
 
   async softDeleteEntry(id: string): Promise<void> {
-    await this.db.entries.update(id, {
-      isDeleted: true,
-      updatedAt: Date.now(),
-      syncStatus: SyncStatus.Pending,
-    });
+    // Get entry for statistics update
+    const entry = await this.db.entries.get(id);
+    if (entry) {
+      await this.db.entries.update(id, {
+        isDeleted: true,
+        updatedAt: Date.now(),
+        syncStatus: SyncStatus.Pending,
+      });
+      // Update statistics
+      await onEntryDelete(entry.createdAt, entry.wordCount);
+    }
   }
 
   async markEntrySynced(id: string, updatedAt: number): Promise<void> {
@@ -320,6 +375,7 @@ export class DexieJournalDatabase implements IJournalDatabase {
         this.db.tags,
         this.db.tiptaps,
         this.db.syncMeta,
+        this.db.statistics,
       ],
       async () => {
         await Promise.all([
@@ -328,8 +384,32 @@ export class DexieJournalDatabase implements IJournalDatabase {
           this.db.tags.clear(),
           this.db.tiptaps.clear(),
           this.db.syncMeta.clear(),
+          this.db.statistics.clear(),
         ]);
       },
     );
+  }
+
+  // Statistics
+  async getStatistic(key: string): Promise<Statistic | undefined> {
+    return this.db.statistics.get(key);
+  }
+
+  async setStatistic(key: string, value: unknown): Promise<void> {
+    const existing = await this.getStatistic(key);
+    if (existing) {
+      await this.db.statistics.update(existing.stKey, {
+        stValue: value,
+      });
+    } else {
+      await this.db.statistics.add({
+        stKey: key,
+        stValue: value,
+      });
+    }
+  }
+
+  async putStatistics(statistics: Statistic[]): Promise<void> {
+    await this.db.statistics.bulkPut(statistics);
   }
 }

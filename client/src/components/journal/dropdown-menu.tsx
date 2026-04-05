@@ -1,13 +1,8 @@
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import "./dropdown-menu.css";
 import { useUserContext } from "@/user-provider";
-import { countWords } from "alfaaz";
-import { Editor } from "@tiptap/react";
 import { useTTContext } from "@/components/editor";
-import { useCloseActionContext } from "@/close-action-provider";
 import {
-  refreshMeta,
-  useUpdateEntry,
   useEntry,
   useBookmarkEntry,
   useGetEntryDate,
@@ -16,7 +11,7 @@ import {
 } from "@/hooks/journal/use-entryv2";
 import { useTags } from "@/hooks/journal/use-tagv2";
 import {
-  EditPen,
+  Expand,
   Bookmark,
   Unbookmark,
   Share,
@@ -30,14 +25,15 @@ import {
 } from "./icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 const entryCardMenuItems = [
   {
     type: "item",
-    label: "edit",
+    label: "expand",
     icon: (
       <div className="h-[14px] w-5">
-        <EditPen />
+        <Expand />
       </div>
     ),
     height: 44,
@@ -135,9 +131,8 @@ export function DropdownMenu({
   onClose,
 }: DropdownMenuProps) {
   const { language } = useUserContext();
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
-  const { setOnClose } = useCloseActionContext();
-  const updateEntryMutation = useUpdateEntry();
+  const { openTab } = useEditorState();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
   const bookmarkEntryMutation = useBookmarkEntry();
   const unbookmarkEntryMutation = useUnbookmarkEntry();
   const { data: entry } = useEntry(meta.id);
@@ -145,8 +140,8 @@ export function DropdownMenu({
   const isBookmarked = entry?.bookmark ?? false;
 
   const handleClick = (action: string) => {
-    if (action === "edit") {
-      handleEditEntry(meta.id, meta.draft);
+    if (action === "expand") {
+      handleExpandEntry(meta.draft);
     } else if (action === "bookmark") {
       handleBookmark();
     } else if (action === "share") {
@@ -161,31 +156,19 @@ export function DropdownMenu({
 
   const handleBookmark = () => {
     if (isBookmarked) {
-      unbookmarkEntryMutation.mutate(meta.id);
+      unbookmarkEntryMutation.mutate({ id: meta.id });
     } else {
-      bookmarkEntryMutation.mutate(meta.id);
+      bookmarkEntryMutation.mutate({ id: meta.id });
     }
   };
 
-  const handleEditEntry = (id: number, draft: number) => {
-    setEditorId(draft);
-    setEditorDialogOpen(true);
-    setOnClose(() => (e: Editor, changed: boolean) => {
-      if (changed) {
-        const str = e.getText();
-        updateEntryMutation
-          .mutateAsync({
-            id,
-            wordCount: countWords(str),
-            rawText: str.trim().replace(/\s+/g, " "),
-          })
-          .then(() => {
-            refreshMeta();
-          });
-      }
-
-      setOnClose(() => () => {});
+  const handleExpandEntry = (draft: string) => {
+    openTab({
+      draftId: draft,
+      title: meta.id,
+      editable: false,
     });
+    setEditorDialogOpen(true);
   };
 
   return (
@@ -1005,7 +988,7 @@ export function ToolbarMenu({
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
-    edit: "编辑",
+    expand: "展开",
     bookmark: "书签",
     unbookmark: "移除书签",
     bookmarkFilter: "查看书签",
@@ -1023,7 +1006,7 @@ const i18nText = {
     noLocations: "未找到位置",
   },
   [UserLangEnum.ENUS]: {
-    edit: "Edit",
+    expand: "Expand",
     bookmark: "Bookmark",
     unbookmark: "Unbookmark",
     bookmarkFilter: "Show Bookmarks",

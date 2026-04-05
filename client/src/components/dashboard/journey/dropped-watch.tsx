@@ -17,7 +17,7 @@ import { dateString } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import WatchReview from "@/components/dashboard/journey/watch-review";
 

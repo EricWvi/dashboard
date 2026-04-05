@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 interface DataTablePaginationProps<TData> {

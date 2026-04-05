@@ -1,7 +1,14 @@
 import { tiptapRefresh, triggerRefresh } from "@/hooks/journal/query-keys";
 import { DexieJournalDatabase } from "./dexie";
 import { SqliteJournalDatabase } from "./sqlite";
-import { type Entry, type EntryField, type JournalData } from "./model";
+import {
+  EntryMeta,
+  type Entry,
+  type EntryField,
+  type JournalData,
+  type QueryCondition,
+  type Statistic,
+} from "./model";
 import {
   type SyncMeta,
   type Tag,
@@ -21,6 +28,10 @@ export interface IJournalDatabase {
   // Entries
   getEntry(id: string): Promise<Omit<Entry, "rawText"> | undefined>;
   getFullEntry(id: string): Promise<Entry | undefined>;
+  getEntries(
+    page: number,
+    condition: QueryCondition[],
+  ): Promise<{ entries: EntryMeta[]; hasMore: boolean }>;
   addEntry(entry: EntryField): Promise<string>;
   putEntry(entry: Entry): Promise<void>;
   putEntries(entries: Entry[]): Promise<void>;
@@ -61,6 +72,11 @@ export interface IJournalDatabase {
   setSyncMeta(key: string, value: number | string): Promise<void>;
   getLastServerVersion(): Promise<number>;
   clearAllData(): Promise<void>;
+
+  // Statistics
+  getStatistic(key: string): Promise<Statistic | undefined>;
+  setStatistic(key: string, value: unknown): Promise<void>;
+  putStatistics(statistics: Statistic[]): Promise<void>;
 }
 
 export class RefreshDecorator implements IJournalDatabase {
@@ -92,6 +108,13 @@ export class RefreshDecorator implements IJournalDatabase {
 
   async getFullEntry(id: string): Promise<Entry | undefined> {
     return this.baseDb.getFullEntry(id);
+  }
+
+  async getEntries(
+    page: number,
+    condition: QueryCondition[],
+  ): Promise<{ entries: EntryMeta[]; hasMore: boolean }> {
+    return this.baseDb.getEntries(page, condition);
   }
 
   async addEntry(entry: EntryField): Promise<string> {
@@ -258,6 +281,21 @@ export class RefreshDecorator implements IJournalDatabase {
 
   async clearAllData(): Promise<void> {
     return this.baseDb.clearAllData();
+  }
+
+  // Statistics
+  async getStatistic(key: string): Promise<Statistic | undefined> {
+    return this.baseDb.getStatistic(key);
+  }
+
+  async setStatistic(key: string, value: unknown): Promise<void> {
+    await this.baseDb.setStatistic(key, value);
+    this.onTableChange("statistics");
+  }
+
+  async putStatistics(statistics: Statistic[]): Promise<void> {
+    await this.baseDb.putStatistics(statistics);
+    this.onTableChange("statistics");
   }
 }
 

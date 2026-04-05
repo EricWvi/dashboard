@@ -2,7 +2,7 @@ import { DataTable } from "@/components/react-table/data-table";
 import { blogColumns } from "@/components/react-table/data-table-columns";
 import { useBlogs } from "@/hooks/dashboard/use-blogv2";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export default function Blog() {

@@ -8,7 +8,11 @@ import {
   WatchTypeText,
   type Watch,
 } from "@/hooks/dashboard/use-watchv2";
-import { type Bookmark, clickBookmark, Domain } from "@/hooks/dashboard/use-bookmarkv2";
+import {
+  type Bookmark,
+  clickBookmark,
+  Domain,
+} from "@/hooks/dashboard/use-bookmarkv2";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {
@@ -50,9 +54,13 @@ import {
   Tv,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
-import { BlogEnum, BlogTypeText, type Blog } from "@/hooks/dashboard/use-blogv2";
+import {
+  BlogEnum,
+  BlogTypeText,
+  type Blog,
+} from "@/hooks/dashboard/use-blogv2";
 import { useTTContext } from "@/components/editor";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 import WatchReview from "@/components/dashboard/journey/watch-review";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";

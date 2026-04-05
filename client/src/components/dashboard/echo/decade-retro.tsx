@@ -27,7 +27,7 @@ import { createTiptap } from "@/hooks/use-draft";
 import { PenLine } from "lucide-react";
 import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 
 export const DecadeRetro = () => {
   const { language } = useUserContext();

@@ -1,4 +1,4 @@
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { Icon, Search, More } from "./icon";
 import Stats from "./stats";
 import React, { useCallback, useEffect, useRef, useState } from "react";

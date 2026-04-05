@@ -31,7 +31,40 @@ func GetAllMigrations() []MigrationStep {
 			Up:      MigrateToLocalFirstV2Models,
 			Down:    RollbackToLocalFirstV2Models,
 		},
+		{
+			Version: "v2.11.0",
+			Name:    "Add statistics table",
+			Up:      AddStatisticTable,
+			Down:    RemoveStatisticTable,
+		},
 	}
+}
+
+// ------------------- v2.11.0 -------------------
+func AddStatisticTable(db *gorm.DB) error {
+	return db.Exec(`
+		CREATE TABLE public.d_statistic (
+			id UUID PRIMARY KEY,
+			creator_id int4 NOT NULL,
+			st_key varchar(20) NOT NULL,
+			st_value jsonb DEFAULT '{}'::jsonb NOT NULL,
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL,
+			server_version BIGINT NOT NULL,
+			is_deleted BOOLEAN DEFAULT FALSE
+		);
+		CREATE INDEX idx_statistic_creator_server_version ON public.d_statistic USING btree (creator_id, server_version);
+		CREATE INDEX idx_statistic_creator_key ON public.d_statistic USING btree (creator_id, st_key);
+		CREATE TRIGGER trg_statistic_version
+		BEFORE INSERT OR UPDATE ON public.d_statistic
+		FOR EACH ROW EXECUTE FUNCTION global_bump_server_version();
+	`).Error
+}
+
+func RemoveStatisticTable(db *gorm.DB) error {
+	return db.Exec(`
+		DROP TABLE IF EXISTS public.d_statistic CASCADE;
+	`).Error
 }
 
 // ------------------- v2.10.0 -------------------

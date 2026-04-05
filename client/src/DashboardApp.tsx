@@ -2,7 +2,7 @@ import TabbedApp from "@/components/dashboard/tabbed-app";
 import SignUp from "@/components/dashboard/sign-up";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { TTProvider, SimpleEditorWrapper } from "@/components/editor";
+import { TTOverlayProvider, SimpleEditorWrapper } from "@/components/editor";
 import {
   KanbanProvider,
   KanbanWrapper,
@@ -21,7 +21,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
-        <TTProvider>
+        <TTOverlayProvider>
           <KanbanProvider>
             <MainPage />
             <SimpleEditorWrapper />
@@ -29,9 +29,8 @@ export default function App() {
             <Toaster position="top-right" />
             <SearchCommand />
           </KanbanProvider>
-        </TTProvider>
+        </TTOverlayProvider>
       </UserProvider>
     </QueryClientProvider>
   );
 }
-

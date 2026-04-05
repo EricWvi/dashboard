@@ -1,61 +1,28 @@
-import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
-import { useDraft } from "@/hooks/use-draft";
-import type { Editor } from "@tiptap/react";
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { useControlledOverlay } from "@/hooks/use-controlled-overlay";
+import { createContext, useContext, type ReactNode } from "react";
 
-type TTEditorContext = {
+type TTOverlayContextType = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  id: number;
-  setId: (n: number) => void;
 };
 
-const TTContext = createContext<TTEditorContext | undefined>(undefined);
+const TTOverlayContext = createContext<TTOverlayContextType | undefined>(
+  undefined,
+);
 
-export const TTProvider = ({ children }: { children: ReactNode }) => {
-  const [id, setId] = useState<number>(0);
-  const [open, setOpen] = useState<boolean>(false);
+export const TTOverlayProvider = ({ children }: { children: ReactNode }) => {
+  const { open, onOpenChange } = useControlledOverlay("simple-editor-wrapper");
 
   return (
-    <TTContext.Provider value={{ id, setId, open, setOpen }}>
+    <TTOverlayContext.Provider value={{ open, setOpen: onOpenChange }}>
       {children}
-    </TTContext.Provider>
+    </TTOverlayContext.Provider>
   );
 };
 
 export const useTTContext = () => {
-  const context = useContext(TTContext);
-  if (!context) throw new Error("useTTContext must be used within TTProvider");
+  const context = useContext(TTOverlayContext);
+  if (!context)
+    throw new Error("useTTContext must be used within TTOverlayProvider");
   return context;
-};
-
-export const SimpleEditorWrapper = ({
-  showToast = true,
-  removeCache = true,
-  onClose = () => {},
-}: {
-  showToast?: boolean;
-  removeCache?: boolean;
-  onClose?: (e: Editor, changed: boolean) => void;
-}) => {
-  const { open, id } = useTTContext();
-  const { data: draft } = useDraft(id);
-  return (
-    open &&
-    !!draft && (
-      <div className="bg-background fixed inset-0 z-50">
-        {/* removing `overflow-auto` from the fixed overlay and instead 
-          constraining the editor’s height and making it scrollable 
-          solves the mobile overlay + sticky toolbar problem */}
-        <SimpleEditor
-          key={draft.ts}
-          draft={draft.content}
-          ts={draft.ts}
-          showToast={showToast}
-          removeCache={removeCache}
-          onClose={onClose}
-        />
-      </div>
-    )
-  );
 };

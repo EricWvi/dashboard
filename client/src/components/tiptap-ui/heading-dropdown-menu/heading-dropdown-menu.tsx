@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
 } from "@/components/tiptap-ui-primitive/dropdown-menu";
 import { Card, CardBody } from "@/components/tiptap-ui-primitive/card";
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export interface HeadingDropdownMenuProps

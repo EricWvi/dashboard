@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
 } from "@/components/tiptap-ui-primitive/dropdown-menu";
 import { Card, CardBody } from "@/components/tiptap-ui-primitive/card";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export interface ListDropdownMenuProps extends Omit<ButtonProps, "type"> {

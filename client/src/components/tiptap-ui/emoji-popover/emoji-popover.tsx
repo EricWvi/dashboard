@@ -19,7 +19,7 @@ import {
   useEmoji,
   EMOJI_LIST,
 } from "@/components/tiptap-ui/emoji-button/use-emoji";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 
 export interface EmojiPopoverContentProps {

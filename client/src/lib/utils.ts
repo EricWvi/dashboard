@@ -1,4 +1,4 @@
-import { UserLangEnum, type I18nText, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type I18nText, type UserLang } from "@/lib/model";
 import { invoke } from "@tauri-apps/api/core";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";

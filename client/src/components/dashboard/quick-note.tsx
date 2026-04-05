@@ -38,7 +38,7 @@ import {
 } from "@/hooks/use-draft";
 import { useTTContext } from "@/components/editor";
 import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export const QuickNoteList = () => {

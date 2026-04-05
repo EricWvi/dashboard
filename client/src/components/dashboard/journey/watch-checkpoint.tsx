@@ -1,4 +1,4 @@
-import { UserLangEnum, type UserLang } from "@/hooks/use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import {
   type WatchMeasure,
   WatchMeasureText,

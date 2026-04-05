@@ -128,6 +128,12 @@ func (b Base) Push(c *gin.Context, req *PushRequest) *PushResponse {
 		return nil
 	}
 
+	// Recalculate statistics after successful sync
+	if err := model.CalculateStatistics(db, userId); err != nil {
+		handler.Errorf(c, "failed to calculate statistics: %s", err.Error())
+		return nil
+	}
+
 	return &PushResponse{
 		Success: true,
 	}

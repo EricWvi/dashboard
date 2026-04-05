@@ -3,8 +3,6 @@ import { dashboardDatabase } from "@/lib/dashboard/db-interface";
 import type { Echo, EchoField, EchoType } from "@/lib/dashboard/model";
 import keys from "./query-keys";
 
-const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
-
 export function useEchoes(
   year: number,
   type: EchoType,

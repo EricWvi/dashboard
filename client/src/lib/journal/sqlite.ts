@@ -1,7 +1,21 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { IJournalDatabase } from "./db-interface";
-import type { Entry, EntryField, JournalData, Tag, TagField } from "./model";
-import type { SyncMeta, TiptapV2, TiptapV2Field, User } from "@/lib/model";
+import type {
+  Entry,
+  EntryField,
+  EntryMeta,
+  JournalData,
+  QueryCondition,
+  Statistic,
+} from "./model";
+import type {
+  SyncMeta,
+  Tag,
+  TagField,
+  TiptapV2,
+  TiptapV2Field,
+  User,
+} from "@/lib/model";
 
 // SQLite implementation via Tauri commands
 export class SqliteJournalDatabase implements IJournalDatabase {
@@ -23,6 +37,13 @@ export class SqliteJournalDatabase implements IJournalDatabase {
 
   async getFullEntry(id: string): Promise<Entry | undefined> {
     return (await invoke("journal_get_full_entry", { id })) ?? undefined;
+  }
+
+  async getEntries(
+    page: number,
+    condition: QueryCondition[],
+  ): Promise<{ entries: EntryMeta[]; hasMore: boolean }> {
+    return invoke("journal_get_entries", { page, condition });
   }
 
   async addEntry(entry: EntryField): Promise<string> {
@@ -176,5 +197,21 @@ export class SqliteJournalDatabase implements IJournalDatabase {
 
   async clearAllData(): Promise<void> {
     await invoke("journal_clear_all_data");
+  }
+
+  // Statistics
+  async getStatistic(key: string): Promise<Statistic | undefined> {
+    return (
+      (await invoke<Statistic | null>("journal_get_statistic", { key })) ??
+      undefined
+    );
+  }
+
+  async setStatistic(key: string, value: unknown): Promise<void> {
+    await invoke("journal_set_statistic", { key, value });
+  }
+
+  async putStatistics(statistics: Statistic[]): Promise<void> {
+    await invoke("journal_put_statistics", { statistics });
   }
 }

@@ -63,7 +63,7 @@ import {
 import { createTiptap } from "@/hooks/use-draft";
 import { useCreateBlog } from "@/hooks/dashboard/use-blogv2";
 import { useUserContext } from "@/user-provider";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;

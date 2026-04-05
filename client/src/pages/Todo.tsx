@@ -1,6 +1,9 @@
 "use client";
 import TodoList from "@/components/todo/todo-list";
-import { useCollections, useCreateCollection } from "@/hooks/dashboard/use-todov2";
+import {
+  useCollections,
+  useCreateCollection,
+} from "@/hooks/dashboard/use-todov2";
 import { useState } from "react";
 import {
   Dialog,
@@ -20,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, FolderPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { UserLangEnum } from "@/hooks/use-user";
+import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export default function Todo() {
