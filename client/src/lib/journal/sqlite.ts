@@ -35,10 +35,6 @@ export class SqliteJournalDatabase implements IJournalDatabase {
     return (await invoke("journal_get_entry", { id })) ?? undefined;
   }
 
-  async getFullEntry(id: string): Promise<Entry | undefined> {
-    return (await invoke("journal_get_full_entry", { id })) ?? undefined;
-  }
-
   async getEntries(
     page: number,
     condition: QueryCondition[],

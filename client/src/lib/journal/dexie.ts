@@ -45,9 +45,9 @@ export class DexieJournalDatabase implements IJournalDatabase {
   private initSchema() {
     this.db.version(SchemaVersion).stores({
       user: "key",
-      entries: "id, syncStatus, updatedAt, createdAt",
-      tags: "id, syncStatus, updatedAt",
-      tiptaps: "id, syncStatus, updatedAt",
+      entries: "id, syncStatus, createdAt",
+      tags: "id, syncStatus",
+      tiptaps: "id, syncStatus",
       syncMeta: "key",
       statistics: "stKey",
     });
@@ -64,10 +64,6 @@ export class DexieJournalDatabase implements IJournalDatabase {
 
   // Entries
   async getEntry(id: string): Promise<Omit<Entry, "rawText"> | undefined> {
-    return this.db.entries.get(id);
-  }
-
-  async getFullEntry(id: string): Promise<Entry | undefined> {
     return this.db.entries.get(id);
   }
 

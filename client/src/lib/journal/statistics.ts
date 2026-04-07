@@ -135,29 +135,7 @@ export async function onEntryDelete(
   }
   await setCurrentYear(currentYear);
 
-  // Update entry date and all dates count
-  await updateEntryDateForDelete(createdAt);
-}
-
-async function updateEntryDateForDelete(createdAt: number): Promise<void> {
-  const { year, month, day } = getYearMonthDay(createdAt);
-  const entryDate = await getEntryDate();
-
-  if (!entryDate[year] || !entryDate[year][month]) {
-    return;
-  }
-
-  const days = entryDate[year][month];
-  const dayIndex = days.indexOf(day);
-  if (dayIndex === -1) {
-    return;
-  }
-
-  // Remove the day only if it's the last entry for that day
-  // This requires checking if there are other entries on the same day
-  // For now, we'll keep the day in the list since we can't easily check
-  // if there are other entries on the same day without querying the entries table
-  // In a real implementation, you might want to check the entries table
+  // do not update entry date and all dates count
 }
 
 // Update statistics when updating an entry

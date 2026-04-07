@@ -27,7 +27,6 @@ export interface IJournalDatabase {
 
   // Entries
   getEntry(id: string): Promise<Omit<Entry, "rawText"> | undefined>;
-  getFullEntry(id: string): Promise<Entry | undefined>;
   getEntries(
     page: number,
     condition: QueryCondition[],
@@ -104,10 +103,6 @@ export class RefreshDecorator implements IJournalDatabase {
   // Entries
   async getEntry(id: string): Promise<Omit<Entry, "rawText"> | undefined> {
     return this.baseDb.getEntry(id);
-  }
-
-  async getFullEntry(id: string): Promise<Entry | undefined> {
-    return this.baseDb.getFullEntry(id);
   }
 
   async getEntries(
