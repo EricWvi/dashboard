@@ -99,3 +99,8 @@ Uploads local journal changes to the server. Server performs upsert based on UUI
 - **Tiptap**: Filtered by `site = SiteJournal (2)`
 - **Tag**: Filtered by `t_group = "journal"`
 - **User**: Shared `d_user_v2` table (read-only in sync; pull and full include user, push does not)
+
+## Tauri GetEntries behavior
+
+- In Tauri (`client/src-tauri/src/journal_db.rs`), `journal_get_entries` performs local SQLite filtering and pagination (`pageSize = 8`) for operators: `tag`, `location`, `random`, `todays`, `contains`, `bookmarked`, `on`, `before`.
+- Tauri does not call backend `Action=GetEntries`; backend `GetEntries` remains for web usage.
