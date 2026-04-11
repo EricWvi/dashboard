@@ -6,7 +6,9 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
   delay: number,
 ): T {
   const lastCall = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     return () => {

@@ -8,15 +8,20 @@ import { syncEvents } from "@/lib/sync-events";
  * SyncManager handles bidirectional synchronization between local database and server
  */
 export class SyncManager {
+  private static readonly MAX_WAIT_MS = 30 * 1000;
   private db: IFlomoDatabase;
   private client: ISyncClient;
   private isSyncing = false;
   private intervalMs: number = 3000;
-  private syncTimeout: NodeJS.Timeout | undefined = undefined;
+  private waitMs: number;
+  private nextPull: number;
+  private syncTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
   constructor(db: IFlomoDatabase, client: ISyncClient) {
     this.db = db;
     this.client = client;
+    this.waitMs = this.intervalMs;
+    this.nextPull = Date.now() + this.intervalMs;
   }
 
   async needFullSync(): Promise<boolean> {
@@ -134,6 +139,9 @@ export class SyncManager {
         return;
       }
 
+      this.nextPull = 0;
+      this.waitMs = this.intervalMs;
+
       // Send to server
       const response = await this.client.Push(pending);
 
@@ -172,6 +180,8 @@ export class SyncManager {
    */
   async pullChanges(): Promise<void> {
     try {
+      if (Date.now() < this.nextPull) return;
+
       const lastVersion = await this.db.getLastServerVersion();
 
       // Fetch changes since last version
@@ -183,8 +193,12 @@ export class SyncManager {
         serverData.folders.length === 0 &&
         serverData.tiptaps.length === 0
       ) {
+        this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
+        this.nextPull = Date.now() + this.waitMs;
         return;
       }
+
+      this.waitMs = this.intervalMs;
 
       // Apply changes using Last-Write-Wins (LWW) strategy
       const updates: Array<Promise<void>> = [];
@@ -309,6 +323,8 @@ export class SyncManager {
     } catch (error) {
       console.error("Sync failed:", error);
       // Don't throw - we'll retry on next interval
+      this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
+      this.nextPull = Date.now() + this.waitMs;
     } finally {
       this.isSyncing = false;
     }
@@ -319,6 +335,8 @@ export class SyncManager {
    */
   startAutoSync(): void {
     this.stopAutoSync();
+    this.waitMs = this.intervalMs;
+    this.nextPull = Date.now() + this.intervalMs;
     console.log(`Starting auto-sync`);
     this.autoSync();
   }

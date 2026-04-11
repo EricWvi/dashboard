@@ -9,7 +9,6 @@ const keys = {
   entries: {
     all: ["entries"] as const,
     detail: (id: string) => [...keys.entries.all, "detail", id] as const,
-    meta: (item: string) => [...keys.entries.all, "meta", item] as const,
   },
   tags: {
     all: ["tags"] as const,
@@ -20,6 +19,9 @@ const keys = {
   },
   statistics: {
     all: ["statistics"] as const,
+    wordsCount: () => [...keys.statistics.all, "wordsCount"] as const,
+    entryDate: () => [...keys.statistics.all, "entryDate"] as const,
+    currentYear: () => [...keys.statistics.all, "currentYear"] as const,
   },
 };
 

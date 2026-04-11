@@ -16,7 +16,7 @@ import {
 import { generateHTML, type JSONContent } from "@tiptap/react";
 import { extensionSetup } from "@/components/tiptap-editor/simple-editor";
 import { UserLangEnum, type UserLang } from "@/lib/model";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import MediaViewer from "./media-viewer";
 import { EntryCardMenuHeight, DropdownMenu } from "./dropdown-menu";
@@ -103,7 +103,7 @@ function EntryCard({
   onShare,
   onDelete,
 }: EntryCardProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { data: entry } = useEntry(meta.id);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);

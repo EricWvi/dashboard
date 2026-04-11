@@ -14,7 +14,7 @@ import ShareCard from "@/components/journal/share-card";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/lib/model";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,9 @@ import { Button } from "@/components/ui/button";
 import { useEditorState } from "@/hooks/use-editor-state";
 import { useTags } from "@/hooks/journal/use-tagv2";
 import { journalDatabase } from "@/lib/journal/db-interface";
+import { getSyncManager, type SyncManager } from "@/lib/journal/sync-manager";
+import { syncEvents } from "@/lib/sync-events";
+import { checkAuth } from "@/lib/utils";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -150,7 +153,7 @@ const getConditionIcon = (operator: string) => {
 
 const Conditions = React.memo(
   ({ conditions, onRemove, onClearAll }: ConditionsProps) => {
-    const { language } = useUserContext();
+    const { language } = useUserContextV2();
     if (conditions.length === 0) return null;
 
     return (
@@ -198,11 +201,13 @@ const Conditions = React.memo(
 );
 
 export default function Journal() {
+  const [isInitializing, setIsInitializing] = useState(true);
+  const syncManagerRef = useRef<SyncManager | null>(null);
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const { openTab } = useEditorState();
   const { setOpen: setEditorDialogOpen } = useTTContext();
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
 
   const [entries, setEntries] = useState<entryWrapper[]>([]);
   const conditionRef = useRef<QueryCondition[]>([]);
@@ -213,6 +218,47 @@ export default function Journal() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
   const [editEntryId, setEditEntryId] = useState<string>("");
+
+  const invalidateTabInstance = useEditorState(
+    (state) => state.invalidateTabInstance,
+  );
+  // Subscribe to sync events and invalidate affected tab instances
+  useEffect(() => {
+    const unsubscribe = syncEvents.on((draftId) => {
+      invalidateTabInstance(draftId);
+    });
+    return unsubscribe;
+  }, [invalidateTabInstance]);
+
+  useEffect(() => {
+    const manager = getSyncManager();
+    syncManagerRef.current = manager;
+
+    const initSync = async () => {
+      await checkAuth();
+      if (await manager.needFullSync()) {
+        // First time use - perform full sync
+        console.log("performing full sync");
+        manager.fullSync().then(() => {
+          setTimeout(() => {
+            manager.startAutoSync();
+          }, 5000); // Start auto sync after 5 seconds
+          setIsInitializing(false);
+        });
+      } else {
+        manager.startAutoSync();
+        setTimeout(() => {
+          setIsInitializing(false);
+        }, 500);
+      }
+    };
+
+    initSync();
+
+    return () => {
+      manager.stopAutoSync();
+    };
+  }, []);
 
   useEffect(() => {
     loadInitialData();
@@ -480,6 +526,16 @@ export default function Journal() {
     setEditTagsDialogOpen(true);
   }, []);
 
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#f7f5f4] dark:bg-[#0a0913]">
+        <div className="size-24 sm:size-36">
+          <img src="/logo.svg" alt="Journal Logo" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="journal-bg fixed inset-0 z-1"></div>
@@ -606,7 +662,7 @@ interface EditMetaDialogProps {
 }
 
 function EditMetaDialog({ open, setOpen, entryId }: EditMetaDialogProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const updateEntryMutation = useUpdateEntry();
   const { data: tags } = useTags();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);

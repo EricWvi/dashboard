@@ -1,6 +1,6 @@
 import { UserLangEnum } from "@/lib/model";
 import "./dropdown-menu.css";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import { useTTContext } from "@/components/editor";
 import {
   useEntry,
@@ -130,7 +130,7 @@ export function DropdownMenu({
   onDelete,
   onClose,
 }: DropdownMenuProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { openTab } = useEditorState();
   const { setOpen: setEditorDialogOpen } = useTTContext();
   const bookmarkEntryMutation = useBookmarkEntry();
@@ -245,7 +245,7 @@ const DateRangeHeader = ({
   onDateRangeFilter?: (date: string) => void;
   expanded?: boolean;
 }) => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const [rotated, setRotated] = useState(false);
   useEffect(() => {
     if (expanded) {
@@ -302,7 +302,7 @@ const DateRange = ({
   placeholder: number[];
   onDateRangeFilter: (date: string) => void;
 }) => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { data: dates } = useGetEntryDate();
 
   const currentDate = new Date();
@@ -447,7 +447,7 @@ const TagFilter = ({
   tagText: string;
 }) => {
   const { data: tags } = useTags();
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const [rotated, setRotated] = useState(false);
   useEffect(() => {
     setTimeout(() => {
@@ -509,7 +509,7 @@ const LocationFilter = ({
   onLocationFilter: (location: string[]) => void;
   locationText: string[];
 }) => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { data: tags } = useTags();
   const [rotated, setRotated] = useState(false);
 
@@ -793,7 +793,7 @@ export function ToolbarMenu({
   onTagFilter,
   onLocationFilter,
 }: ToolbarMenuProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const datePair = dateRangeText();
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const submenuRefs = useRef<Record<string, HTMLDivElement | null>>({});

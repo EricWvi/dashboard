@@ -112,7 +112,7 @@ export async function deleteEntry(id: string) {
 
 export function useGetWordsCount() {
   return useQuery<number>({
-    queryKey: keys.entries.meta("words"),
+    queryKey: keys.statistics.wordsCount(),
     queryFn: async () => {
       return getWordsCount();
     },
@@ -134,7 +134,7 @@ export interface DatesWithCount {
 
 export function useGetEntryDate() {
   return useQuery<DatesWithCount>({
-    queryKey: keys.entries.meta("dates"),
+    queryKey: keys.statistics.entryDate(),
     queryFn: async () => {
       // Try to get from local database first
       const entryDateStat = await getEntryDate();
@@ -163,7 +163,7 @@ export function useGetEntryDate() {
 
 export function useGetCurrentYear() {
   return useQuery<{ activity: CurrentYearCount[]; count: number }>({
-    queryKey: keys.entries.meta("currentYear"),
+    queryKey: keys.statistics.currentYear(),
     queryFn: async () => {
       const stat = await getCurrentYear();
 

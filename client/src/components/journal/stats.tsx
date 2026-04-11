@@ -1,4 +1,4 @@
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import {
   Calendar,
   Description,
@@ -75,7 +75,7 @@ const i18nText = {
 };
 
 const Stats = () => {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const { data: currentYearData, isPending: yearIsPending } =
     useGetCurrentYear();
   const { data: wordCount, isPending: wordCountIsPending } = useGetWordsCount();

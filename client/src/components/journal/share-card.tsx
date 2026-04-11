@@ -1,6 +1,6 @@
 import { ReadOnlyTiptap } from "@/components/tiptap-editor/simple-editor";
 import { useEffect, useRef, useState } from "react";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toPng } from "html-to-image";
@@ -33,7 +33,7 @@ export default function ShareCard({
   meta: EntryMeta;
   onClose: () => void;
 }) {
-  const { user } = useUserContext();
+  const { user } = useUserContextV2();
   const { data: entry } = useEntry(meta.id);
   const entryCardRef = useRef<HTMLDivElement | null>(null);
   const avatarImageRef = useRef<HTMLImageElement | null>(null);

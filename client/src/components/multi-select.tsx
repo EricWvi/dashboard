@@ -28,7 +28,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { UserLangEnum } from "@/lib/model";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 
 /**
  * Animation types and configurations
@@ -354,7 +354,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     },
     ref,
   ) => {
-    const { language } = useUserContext();
+    const { language } = useUserContextV2();
     const [selectedValues, setSelectedValues] =
       React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
@@ -574,7 +574,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           uniqueOptions.push(option);
         }
       });
-      if (process.env.NODE_ENV === "development" && duplicates.length > 0) {
+      if (import.meta.env.NODE_ENV === "development" && duplicates.length > 0) {
         const action = deduplicateOptions
           ? "automatically removed"
           : "detected";
@@ -595,7 +595,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const getOptionByValue = React.useCallback(
       (value: string): MultiSelectOption | undefined => {
         const option = getAllOptions().find((option) => option.value === value);
-        if (!option && process.env.NODE_ENV === "development") {
+        if (!option && import.meta.env.NODE_ENV === "development") {
           console.warn(
             `MultiSelect: Option with value "${value}" not found in options list`,
           );

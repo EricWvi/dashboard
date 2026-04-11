@@ -2,7 +2,7 @@ import { UserLangEnum } from "@/lib/model";
 import { Icon, Search, More } from "./icon";
 import Stats from "./stats";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import EntryCalendar from "./entry-calendar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
@@ -26,7 +26,7 @@ interface HeaderProps {
 
 function Header(props: HeaderProps) {
   const isMobile = useIsMobile();
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [isAnimating, setIsAnimating] = useState(true);
@@ -199,7 +199,7 @@ function Toolbar({
   setToolbarMenuOpen,
   setToolbarMenuPosition,
 }: ToolbarProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const [opacity, setOpacity] = useState(0);
   const moreIconRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -283,7 +283,7 @@ export function SearchInput({
   onSearch: (query: string) => void;
   onCancel: () => void;
 }) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const [query, setQuery] = useState("");
   const [isComposing, setIsComposing] = useState(false);
 

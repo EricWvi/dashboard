@@ -27,7 +27,7 @@ export function MediaSwiper({
   onSwiperInit,
   onNavigationChange,
 }: MediaSwiperProps) {
-  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const DOUBLE_TAP_ZOOM = 2; // Zoom level for double tap
   const MAX_PINCH_ZOOM = 10; // Maximum zoom level for pinch

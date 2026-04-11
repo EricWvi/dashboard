@@ -1,7 +1,7 @@
 import { ActivityCalendar } from "react-activity-calendar";
 import { type CurrentYearCount } from "@/hooks/journal/use-entryv2";
 import { UserLangEnum, type UserLang } from "@/lib/model";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import {
   Tooltip,
   TooltipContent,
@@ -77,7 +77,7 @@ interface EntryCalendarProps {
 }
 
 function EntryCalendar({ activity, onDateClick }: EntryCalendarProps) {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const isMobile = useIsMobile();
   const calendarRef = useRef<HTMLDivElement>(null);
 

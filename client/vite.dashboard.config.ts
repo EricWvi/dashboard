@@ -21,7 +21,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         headers: {
-          "Remote-Email": "test@onlyquant.top",
+          "Onlyquant-Token":
+            "xnkjsZpkmMEXrTFPvTWgT1OM+YGyDKhU3OhxVks4rAv6mp92Vw9bXGRGdRufYw==",
         },
       },
     },
