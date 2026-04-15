@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
 import { type UserField, type UserLang, UserLangEnum } from "@/lib/model";
 export { type UserLang, UserLangEnum } from "@/lib/model";
+export type { I18nText } from "@/lib/model";
 
 export type User = {
   avatar: string;

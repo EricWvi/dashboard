@@ -30,3 +30,4 @@ export function ContentHTML({ id }: { id: string | number }) {
   return <ContentRender id={id} />;
 }
 
+export { ReadOnlyTiptap };
