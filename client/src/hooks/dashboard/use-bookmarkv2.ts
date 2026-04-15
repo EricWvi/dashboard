@@ -5,7 +5,9 @@ import {
 } from "@tanstack/react-query";
 import { dashboardDatabase } from "@/lib/dashboard/db-interface";
 import keys from "./query-keys";
-import type { BookmarkField } from "@/lib/dashboard/model";
+import { Domain, type BookmarkField, type DomainType } from "@/lib/dashboard/model";
+export { Domain, type DomainType } from "@/lib/dashboard/model";
+export type Bookmark = BookmarkField & { id: string; click?: number };
 
 export function useBookmarks() {
   return useQuery({
@@ -93,25 +95,29 @@ export function useCreateBookmark() {
 
 export function useDeleteBookmark() {
   return useMutation({
-    mutationFn: async (id: string) => {
-      await dashboardDatabase.softDeleteBookmark(id);
+    mutationFn: async (data: string | number | { id: string | number }) => {
+      const id = typeof data === "object" ? data.id : data;
+      await dashboardDatabase.softDeleteBookmark(String(id));
     },
   });
 }
 
 export function useUpdateBookmark() {
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<BookmarkField>;
-    }) => {
+    mutationFn: async (
+      params:
+        | { id: string | number; data: Partial<BookmarkField> }
+        | ({ id: string | number } & Partial<BookmarkField>),
+    ) => {
+      const { id } = params;
+      const data =
+        "data" in params ? params.data : (({ id, ...rest }) => rest)(params);
       if (data.payload) {
         await ensureTags(data.payload);
       }
-      return dashboardDatabase.updateBookmark(id, data);
+      return dashboardDatabase.updateBookmark(String(id), data);
     },
   });
 }
+
+export function clickBookmark(_id: string | number) {}

@@ -2,11 +2,29 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { dashboardDatabase } from "@/lib/dashboard/db-interface";
 import keys from "./query-keys";
 import {
+  Rating,
+  RatingText,
+  WatchEnum,
+  WatchMeasureEnum,
+  WatchMeasureText,
   WatchStatus,
   WatchTypeText,
   type Watch,
   type WatchField,
+  type WatchMeasure,
   type WatchPayload,
+  type WatchType,
+} from "@/lib/dashboard/model";
+export {
+  Rating,
+  RatingText,
+  WatchEnum,
+  WatchMeasureEnum,
+  WatchMeasureText,
+  WatchStatus,
+  WatchTypeText,
+  type Watch,
+  type WatchMeasure,
   type WatchType,
 } from "@/lib/dashboard/model";
 
@@ -25,45 +43,57 @@ export function useWatches(status: WatchStatus) {
 
 export function useCreateWatch() {
   return useMutation({
-    mutationFn: async (data: WatchField) => {
-      return dashboardDatabase.addWatch(data);
+    mutationFn: async (data: Partial<WatchField>) => {
+      return dashboardDatabase.addWatch({
+        type: data.type ?? WatchEnum.MOVIE,
+        title: data.title ?? "",
+        status: data.status ?? WatchStatus.PLAN_TO_WATCH,
+        year: data.year ?? new Date().getFullYear(),
+        rate: data.rate ?? 0,
+        payload: data.payload ?? {},
+        author: data.author ?? "",
+      });
     },
   });
 }
 
 export function useDeleteWatch() {
   return useMutation({
-    mutationFn: async (id: string) => {
-      return dashboardDatabase.softDeleteWatch(id);
+    mutationFn: async (data: string | number | { id: string | number }) => {
+      const id = typeof data === "object" ? data.id : data;
+      return dashboardDatabase.softDeleteWatch(String(id));
     },
   });
 }
 
-export function useUpdateWatch() {
+export function useUpdateWatch(_status?: WatchStatus[]) {
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<WatchField>;
-    }) => {
-      return dashboardDatabase.updateWatch(id, data);
+    mutationFn: async (
+      params:
+        | { id: string | number; data: Partial<WatchField> }
+        | ({ id: string | number } & Partial<WatchField>),
+    ) => {
+      const { id } = params;
+      const payload = "data" in params ? params.data : (({ id, ...rest }) => rest)(params);
+      return dashboardDatabase.updateWatch(String(id), payload);
     },
   });
 }
+
+export const useCreateToWatch = useCreateWatch;
+export const useCreateWatched = useCreateWatch;
 
 export function useStartWatch() {
   return useMutation({
     mutationFn: async (data: {
-      id: string;
+      id: string | number;
       payload: WatchPayload;
       title: string;
       type: WatchType;
       link: string;
     }) => {
       const user = await dashboardDatabase.getUser();
-      await dashboardDatabase.updateWatch(data.id, {
+      await dashboardDatabase.updateWatch(String(data.id), {
         status: WatchStatus.WATCHING,
         payload: data.payload,
         createdAt: new Date().getTime(),
@@ -93,8 +123,8 @@ export function useStartWatch() {
 
 export function useCompleteWatch() {
   return useMutation({
-    mutationFn: async (data: { id: string; rate: number }) => {
-      await dashboardDatabase.updateWatch(data.id, {
+    mutationFn: async (data: { id: string | number; rate: number }) => {
+      await dashboardDatabase.updateWatch(String(data.id), {
         status: WatchStatus.COMPLETED,
         rate: data.rate,
         createdAt: new Date().getTime(),

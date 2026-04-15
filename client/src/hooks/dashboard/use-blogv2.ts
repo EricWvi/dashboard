@@ -5,9 +5,12 @@ import { ensureTags } from "./use-bookmarkv2";
 import keys from "./query-keys";
 import {
   BlogEnum,
+  BlogTypeText,
+  type Blog,
   type BlogField,
   type BlogPayload,
 } from "@/lib/dashboard/model";
+export { BlogEnum, BlogTypeText, type Blog } from "@/lib/dashboard/model";
 
 export function useBlogs() {
   return useQuery({
@@ -36,17 +39,18 @@ export function useCreateBlog() {
 
 export function useUpdateBlog() {
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<BlogField>;
-    }) => {
+    mutationFn: async (
+      params:
+        | { id: string | number; data: Partial<BlogField> }
+        | ({ id: string | number } & Partial<BlogField>),
+    ) => {
+      const { id } = params;
+      const data =
+        "data" in params ? params.data : (({ id, ...rest }) => rest)(params);
       if (data.payload) {
         await ensureTags(data.payload);
       }
-      return dashboardDatabase.updateBlog(id, data);
+      return dashboardDatabase.updateBlog(String(id), data);
     },
   });
 }
