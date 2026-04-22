@@ -27,19 +27,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { dateString, stripeColor } from "@/lib/utils";
+import { dateString, stripeColor, ZERO_UUID } from "@/lib/utils";
 import {
-  createTiptap,
   useBottomQuickNote,
   useCreateQuickNote,
   useDeleteQuickNote,
   useQuickNotes,
   useUpdateQuickNote,
-} from "@/hooks/use-draft";
+} from "@/hooks/dashboard/use-quick-notev2";
 import { useTTContext } from "@/components/editor";
-import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
+import { ContentRender } from "@/components/dashboard/content-render";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
+import { useEditorState } from "@/hooks/use-editor-state";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 
 export const QuickNoteList = () => {
   const { language } = useUserContext();
@@ -51,20 +52,21 @@ export const QuickNoteList = () => {
   const bottomQuickNoteMutation = useBottomQuickNote();
   const createQuickNoteMutation = useCreateQuickNote();
   const deleteQuickNoteMutation = useDeleteQuickNote();
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
 
   const [noteName, setNoteName] = useState("");
-  const [noteId, setNoteId] = useState(0);
+  const [noteId, setNoteId] = useState(ZERO_UUID);
   // confirm dialog state
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-  const handleEditTitleDialogOpen = (note: { id: number; title: string }) => {
+  const handleEditTitleDialogOpen = (note: { id: string; title: string }) => {
     setNoteName(note.title);
     setNoteId(note.id);
     setEditTitleDialogOpen(true);
   };
 
-  const moveToBottom = async (id: number) => {
+  const moveToBottom = async (id: string) => {
     bottomQuickNoteMutation.mutateAsync({ id });
   };
 
@@ -72,7 +74,7 @@ export const QuickNoteList = () => {
     updateQuickNoteMutation
       .mutateAsync({
         id: noteId,
-        title: noteName,
+        data: { title: noteName },
       })
       .then(() => {
         setEditTitleDialogOpen(false);
@@ -85,7 +87,11 @@ export const QuickNoteList = () => {
       title: dateString(new Date(), "-"),
       draft: draftId,
     });
-    setEditorId(draftId);
+    openTab({
+      draftId: draftId,
+      title: i18nText[language].quickNote + " - " + dateString(new Date(), "-"),
+      editable: true,
+    });
     setEditorDialogOpen(true);
   };
 
@@ -177,7 +183,11 @@ export const QuickNoteList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            setEditorId(note.draft);
+                            openTab({
+                              draftId: note.draft,
+                              title: note.title,
+                              editable: true,
+                            });
                             setEditorDialogOpen(true);
                           }}
                         >
@@ -275,9 +285,7 @@ export const QuickNoteList = () => {
             <Button
               variant="destructive"
               onClick={() => {
-                deleteQuickNoteMutation.mutateAsync({
-                  id: noteId,
-                });
+                deleteQuickNoteMutation.mutateAsync(noteId);
                 setConfirmDialogOpen(false);
               }}
             >

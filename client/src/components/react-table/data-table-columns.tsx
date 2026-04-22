@@ -1,18 +1,6 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-
-import {
-  Rating,
-  WatchEnum,
-  WatchTypeText,
-  type Watch,
-} from "@/hooks/dashboard/use-watchv2";
-import {
-  type Bookmark,
-  clickBookmark,
-  Domain,
-} from "@/hooks/dashboard/use-bookmarkv2";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import {
@@ -23,7 +11,6 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   BlogTableRowActions,
   BookmarkTableRowActions,
@@ -54,20 +41,25 @@ import {
   Tv,
 } from "lucide-react";
 import { dateString } from "@/lib/utils";
-import {
-  BlogEnum,
-  BlogTypeText,
-  type Blog,
-} from "@/hooks/dashboard/use-blogv2";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 import WatchReview from "@/components/dashboard/journey/watch-review";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useEffect, useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useDraft } from "@/hooks/use-draft";
-import { ReadOnlyTiptap } from "../tiptap-templates/simple/simple-editor";
+import { useState } from "react";
+import {
+  BlogEnum,
+  BlogTypeText,
+  Domain,
+  Rating,
+  WatchEnum,
+  WatchTypeText,
+  type Blog,
+  type Bookmark,
+  type Watch,
+} from "@/lib/dashboard/model";
+import { ContentRender } from "@/components/dashboard/content-render";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 export const ratings = [
   {
@@ -200,38 +192,6 @@ const i18nText = {
     updated: "Updated",
   },
 };
-
-function ContentRender({ id }: { id: number }) {
-  const isMobile = useIsMobile();
-  const { data: draft, isFetching } = useDraft(id); // TODO
-  const [showLoading, setShowLoading] = useState(true);
-  useEffect(() => {
-    if (!isFetching) {
-      setTimeout(() => {
-        setShowLoading(false);
-      }, 200);
-    } else {
-      setShowLoading(true);
-    }
-  }, [isFetching]);
-
-  return (
-    <div
-      className={`overflow-scroll ${isMobile ? "h-[70vh] max-h-[70vh]" : "h-[80vh] max-h-[80vh] w-full px-4"}`}
-    >
-      {showLoading ? (
-        <div className="mx-auto mt-6 max-w-[870px] space-y-4">
-          <Skeleton className="h-8 w-40 rounded-sm" />
-          <Skeleton className="h-[30vh] rounded-sm" />
-          <Skeleton className="h-8 w-30 rounded-sm" />
-          <Skeleton className="h-[30vh] rounded-sm" />
-        </div>
-      ) : (
-        <ReadOnlyTiptap draft={draft?.content} />
-      )}
-    </div>
-  );
-}
 
 export const watchedColumns: ColumnDef<Watch>[] = [
   {
@@ -689,7 +649,6 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
               className="max-w-[500px] truncate font-medium"
               href={row.original.url}
               target="_blank"
-              onClick={() => clickBookmark(row.original.id)}
             >
               {row.getValue("title")}
             </a>
@@ -717,7 +676,7 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
         <div className="flex gap-2">
           {row.original.payload.draft ? (
             <Dialog>
-              <DialogTrigger onClick={() => clickBookmark(row.original.id)}>
+              <DialogTrigger>
                 <div className="cursor-pointer font-medium underline decoration-1">
                   cheatsheet
                 </div>
@@ -741,7 +700,6 @@ export const bookmarkColumns: ColumnDef<Bookmark>[] = [
               className="max-w-[600px] truncate font-medium underline decoration-1"
               href={row.original.url}
               target="_blank"
-              onClick={() => clickBookmark(row.original.id)}
             >
               {row.getValue("url")}
             </a>
@@ -858,8 +816,8 @@ export const blogColumns: ColumnDef<Blog>[] = [
     },
     cell: ({ row }) => {
       const { language } = useUserContext();
-      const { setId: setEditorId, setOpen: setEditorDialogOpen } =
-        useTTContext();
+      const { setOpen: setEditorDialogOpen } = useTTContext();
+      const { openTab } = useEditorState();
 
       return (
         <div className="flex gap-2">
@@ -867,7 +825,11 @@ export const blogColumns: ColumnDef<Blog>[] = [
             <span
               className="cursor-pointer"
               onClick={() => {
-                setEditorId(row.original.draft);
+                openTab({
+                  draftId: row.original.draft,
+                  title: row.original.title,
+                  editable: false,
+                });
                 setEditorDialogOpen(true);
               }}
             >

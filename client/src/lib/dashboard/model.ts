@@ -292,7 +292,7 @@ export const Domain: {
 type BookmarkPayload = {
   whats?: string[];
   hows?: string[];
-  draft?: number;
+  draft?: string; // UUID
 };
 
 export interface BookmarkField {

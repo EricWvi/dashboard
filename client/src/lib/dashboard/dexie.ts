@@ -31,10 +31,9 @@ import {
   type UserField,
 } from "@/lib/model";
 import type { IDashboardDatabase } from "./db-interface";
-import { todayStart, tomorrowStart } from "@/lib/utils";
+import { todayStart, tomorrowStart, ZERO_UUID } from "@/lib/utils";
 
 const USER_KEY = "current_user";
-const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
 const NO_PLAN_TS = 5000000000000;
 
 // Database interface for type safety
@@ -472,7 +471,7 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
   async getTodayTodos(): Promise<Todo[]> {
     return this.db.todos
       .where("schedule")
-      .between(todayStart().getTime(), tomorrowStart().getTime())
+      .between(todayStart(), tomorrowStart())
       .filter((todo) => !todo.isDeleted && !todo.completed)
       .toArray();
   }
@@ -547,6 +546,13 @@ export class DexieDashboardDatabase implements IDashboardDatabase {
 
   async addWatch(watch: WatchField): Promise<string> {
     const meta = createBaseMeta();
+    await this.db.watches.add({ ...watch, ...meta });
+    return meta.id;
+  }
+
+  async addWatched(watch: WatchField, createdAt: number): Promise<string> {
+    const meta = createBaseMeta();
+    meta.createdAt = createdAt;
     await this.db.watches.add({ ...watch, ...meta });
     return meta.id;
   }

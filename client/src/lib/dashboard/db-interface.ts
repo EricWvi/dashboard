@@ -127,6 +127,7 @@ export interface IDashboardDatabase {
   getWatch(id: string): Promise<Watch | undefined>;
   getWatches(status: WatchStatus): Promise<Watch[]>;
   addWatch(watch: WatchField): Promise<string>;
+  addWatched(watch: WatchField, createdAt: number): Promise<string>;
   putWatch(watch: Watch): Promise<void>;
   putWatches(watches: Watch[]): Promise<void>;
   updateWatch(id: string, updates: Partial<Watch>): Promise<void>;
@@ -532,6 +533,12 @@ export class RefreshDecorator implements IDashboardDatabase {
 
   async addWatch(watch: WatchField): Promise<string> {
     const id = await this.baseDb.addWatch(watch);
+    this.onTableChange("watches");
+    return id;
+  }
+
+  async addWatched(watch: WatchField, createdAt: number): Promise<string> {
+    const id = await this.baseDb.addWatched(watch, createdAt);
     this.onTableChange("watches");
     return id;
   }

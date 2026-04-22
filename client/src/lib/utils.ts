@@ -1,8 +1,10 @@
-import { UserLangEnum, type I18nText, type UserLang } from "@/lib/model";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import { invoke } from "@tauri-apps/api/core";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { v4 as uuidv4 } from "uuid";
+
+export const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -123,7 +125,7 @@ const handleOidcCallback = async () => {
 };
 
 export function dateString(
-  date: Date | string | null | undefined,
+  date: number | Date | string | null | undefined,
   sep: string = "/",
 ): string {
   if (!date) return "";
@@ -138,7 +140,7 @@ export function dateString(
 }
 
 export function fullDateString(
-  date: Date | string | null | undefined,
+  date: number | Date | string | null | undefined,
   lang: UserLang = UserLangEnum.ENUS,
 ): string {
   if (!date) return "";
@@ -251,131 +253,22 @@ export function dotColor(level: number, difficulty: number): string {
     : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600";
 }
 
-export const formatDate = (
-  date: Date | string | null | undefined,
-  done: boolean,
-): { label: I18nText; color: string } => {
-  const today_default = {
-    label: {
-      [UserLangEnum.ENUS]: "Today",
-      [UserLangEnum.ZHCN]: "今日",
-    },
-    color:
-      "opacity-0 group-hover:opacity-50 border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
-  };
-  if (!date) {
-    return today_default;
-  }
-  const inDate = new Date(date);
-  if (isSetToday(inDate)) {
-    return {
-      label: {
-        [UserLangEnum.ENUS]: "Today",
-        [UserLangEnum.ZHCN]: "今日",
-      },
-      color: done
-        ? "opacity-100 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-        : "opacity-100 border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
-    };
-  } else if (isSetDate(inDate)) {
-    const today = new Date();
-    const diffDays = Math.ceil(
-      (inDate.getTime() - today.getTime()) / (1000 * 3600 * 24),
-    );
-    if (diffDays === 1) {
-      return {
-        label: {
-          [UserLangEnum.ENUS]: "Tomorrow",
-          [UserLangEnum.ZHCN]: "明日",
-        },
-        color:
-          "opacity-100 border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
-      };
-    } else if (diffDays <= 6) {
-      return {
-        label: {
-          [UserLangEnum.ENUS]: `In ${diffDays} days`,
-          [UserLangEnum.ZHCN]: `${diffDays} 日后`,
-        },
-        color:
-          "opacity-100 border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
-      };
-    } else {
-      return {
-        label: {
-          [UserLangEnum.ENUS]: inDate.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-          [UserLangEnum.ZHCN]: inDate.toLocaleDateString("zh-CN", {
-            month: "short",
-            day: "numeric",
-          }),
-        },
-        color: "opacity-100",
-      };
-    }
-  } else if (isDisabledPlan(inDate)) {
-    return {
-      label: {
-        [UserLangEnum.ENUS]: "No Plan",
-        [UserLangEnum.ZHCN]: "无规划",
-      },
-      color: "opacity-100",
-    };
-  }
-  return today_default;
-};
-
-export const isSetDate = (date: Date | string | null | undefined) => {
-  if (!date) return false;
-  const today = new Date();
-  const inputDate = new Date(date);
-  return (
-    !isDisabledPlan(inputDate) &&
-    (inputDate.getFullYear() > today.getFullYear() ||
-      (inputDate.getFullYear() === today.getFullYear() &&
-        inputDate.getMonth() > today.getMonth()) ||
-      (inputDate.getFullYear() === today.getFullYear() &&
-        inputDate.getMonth() === today.getMonth() &&
-        inputDate.getDate() >= today.getDate()))
-  );
-};
-
-export const isSetToday = (date: Date | string | null | undefined) => {
-  if (!date) return false;
-  const today = new Date();
-  const inputDate = new Date(date);
-  return (
-    inputDate.getFullYear() === today.getFullYear() &&
-    inputDate.getMonth() === today.getMonth() &&
-    inputDate.getDate() === today.getDate()
-  );
-};
-
-export const isDisabledPlan = (date: Date | string | null | undefined) => {
-  if (!date) return false;
-  const inputDate = new Date(date);
-  return inputDate.getTime() === noPlanStart().getTime();
-};
-
 export const todayStart = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return today;
+  return today.getTime();
 };
 
 export const tomorrowStart = () => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
-  return tomorrow;
+  return tomorrow.getTime();
 };
 
 export const noPlanStart = () => {
-  // Tue Oct 02 2096 15:06:40 GMT+0800
-  const noPlan = new Date(4000000000000);
-  return noPlan;
+  // 2128-06-11 16:53:20
+  return 5000000000000;
 };
 
 export function refinedGreeting() {

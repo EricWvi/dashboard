@@ -1,9 +1,9 @@
-import { UserLangEnum, type UserLang } from "@/lib/model";
 import {
-  type WatchMeasure,
-  WatchMeasureText,
   WatchMeasureEnum,
-} from "@/hooks/dashboard/use-watchv2";
+  WatchMeasureText,
+  type WatchMeasure,
+} from "@/lib/dashboard/model";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 
 export default function WatchCheckpoints({

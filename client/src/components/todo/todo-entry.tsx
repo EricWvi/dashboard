@@ -61,37 +61,37 @@ import {
   useUnsetLink,
   useUpdateSchedule,
   useUpdateTodo,
-  type Todo,
 } from "@/hooks/dashboard/use-todov2";
 import {
   stripeColor,
-  formatDate,
-  isSetDate,
-  isSetToday,
   todayStart,
   dotColor,
   tomorrowStart,
   underlineColor,
   noPlanStart,
-  isDisabledPlan,
   fullDateString,
+  ZERO_UUID,
 } from "@/lib/utils";
 import { useTTContext } from "@/components/editor";
 import { useKanbanContext } from "@/components/dashboard/todo/kanban";
-import { createTiptap } from "@/hooks/use-draft";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { createKanban } from "@/hooks/use-kanban";
+import { createKanban } from "@/hooks/dashboard/use-kanbanv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";
-import { UserLangEnum } from "@/lib/model";
+import { UserLangEnum, type I18nText } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
+import type { Todo, TodoField } from "@/lib/dashboard/model";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 const TodoTitle = ({
   todo,
   todayView,
   children,
-}: { todo: Todo; todayView?: boolean } & { children?: React.ReactNode }) => {
+}: { todo: TodoField; todayView?: boolean } & {
+  children?: React.ReactNode;
+}) => {
   const isMobile = useIsMobile();
   const todoText = `${todo.title}${todo.completed ? ` (${todo.count})` : ""}`;
   return (
@@ -122,6 +122,114 @@ const TodoTitle = ({
   );
 };
 
+export const formatDate = (
+  date: number | null,
+  done: boolean,
+): { label: I18nText; color: string } => {
+  const today_default = {
+    label: {
+      [UserLangEnum.ENUS]: "Today",
+      [UserLangEnum.ZHCN]: "今日",
+    },
+    color:
+      "opacity-0 group-hover:opacity-50 border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  };
+  if (!date) {
+    return today_default;
+  }
+  const inDate = new Date(date);
+  if (isSetToday(inDate)) {
+    return {
+      label: {
+        [UserLangEnum.ENUS]: "Today",
+        [UserLangEnum.ZHCN]: "今日",
+      },
+      color: done
+        ? "opacity-100 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+        : "opacity-100 border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+    };
+  } else if (isSetDate(inDate)) {
+    const today = new Date();
+    const diffDays = Math.ceil(
+      (inDate.getTime() - today.getTime()) / (1000 * 3600 * 24),
+    );
+    if (diffDays === 1) {
+      return {
+        label: {
+          [UserLangEnum.ENUS]: "Tomorrow",
+          [UserLangEnum.ZHCN]: "明日",
+        },
+        color:
+          "opacity-100 border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+      };
+    } else if (diffDays <= 6) {
+      return {
+        label: {
+          [UserLangEnum.ENUS]: `In ${diffDays} days`,
+          [UserLangEnum.ZHCN]: `${diffDays} 日后`,
+        },
+        color:
+          "opacity-100 border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
+      };
+    } else {
+      return {
+        label: {
+          [UserLangEnum.ENUS]: inDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          [UserLangEnum.ZHCN]: inDate.toLocaleDateString("zh-CN", {
+            month: "short",
+            day: "numeric",
+          }),
+        },
+        color: "opacity-100",
+      };
+    }
+  } else if (isDisabledPlan(inDate)) {
+    return {
+      label: {
+        [UserLangEnum.ENUS]: "No Plan",
+        [UserLangEnum.ZHCN]: "无规划",
+      },
+      color: "opacity-100",
+    };
+  }
+  return today_default;
+};
+
+export const isSetDate = (date: Date | number | null | undefined) => {
+  if (!date) return false;
+  const today = new Date();
+  const inputDate = new Date(date);
+  return (
+    !isDisabledPlan(inputDate) &&
+    (inputDate.getFullYear() > today.getFullYear() ||
+      (inputDate.getFullYear() === today.getFullYear() &&
+        inputDate.getMonth() > today.getMonth()) ||
+      (inputDate.getFullYear() === today.getFullYear() &&
+        inputDate.getMonth() === today.getMonth() &&
+        inputDate.getDate() >= today.getDate()))
+  );
+};
+
+export const isSetToday = (date: Date | number | null | undefined) => {
+  if (!date) return false;
+  const today = new Date();
+  const inputDate = new Date(date);
+  return (
+    inputDate.getFullYear() === today.getFullYear() &&
+    inputDate.getMonth() === today.getMonth() &&
+    inputDate.getDate() === today.getDate()
+  );
+};
+
+const isDisabledPlan = (date: Date | number | null | undefined) => {
+  if (!date) return false;
+  const inputDate = new Date(date);
+  return inputDate.getTime() === noPlanStart();
+};
+
 export const PlanTodoView = ({
   todo,
   disabled,
@@ -131,7 +239,7 @@ export const PlanTodoView = ({
   todo: Todo;
   disabled: boolean;
   isFuture: boolean;
-  handleCheck: (id: number, checked: boolean) => void;
+  handleCheck: (id: string, checked: boolean) => void;
 }) => {
   const { language } = useUserContext();
   return (
@@ -204,10 +312,13 @@ const todayTodoViewI18N = {
   },
 };
 
-export const TodayTodoView = ({ id }: { id: number }) => {
+export const TodayTodoView = ({ id }: { id: string }) => {
   const { language } = useUserContext();
   const [isComposing, setIsComposing] = useState(false);
   const { data: todo } = useTodo(id);
+
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
 
   // to-do state
   const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
@@ -218,7 +329,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
   const unsetLinkMutation = useUnsetLink();
   const updateScheduleMutation = useUpdateSchedule();
   const renameTodo = async () => {
-    await updateTodoMutation.mutateAsync({ id, title: editTodoName });
+    await updateTodoMutation.mutateAsync({ id, data: { title: editTodoName } });
   };
   const doneTodo = async () => {
     await doneTodoMutation.mutateAsync({ id });
@@ -227,7 +338,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
     await undoneTodoMutation.mutateAsync({ id });
   };
   const unsetScheduleDate = async () => {
-    await updateScheduleMutation.mutateAsync({ id, schedule: new Date(0) });
+    await updateScheduleMutation.mutateAsync({ id, schedule: 0 });
   };
 
   // link state
@@ -237,19 +348,18 @@ export const TodayTodoView = ({ id }: { id: number }) => {
     if (link.trim() === "") {
       await unsetLinkMutation.mutateAsync({ id });
     } else {
-      await updateTodoMutation.mutateAsync({ id, link });
+      await updateTodoMutation.mutateAsync({ id, data: { link } });
     }
   };
   // kanban state
   const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
     useKanbanContext();
-  const updateTodoKanban = async (kanbanId: number) => {
-    await updateTodoMutation.mutateAsync({ id, kanban: kanbanId });
+  const updateTodoKanban = async (kanbanId: string) => {
+    await updateTodoMutation.mutateAsync({ id, data: { kanban: kanbanId } });
   };
   // editor state
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
-  const updateTodoDraft = async (draftId: number) => {
-    await updateTodoMutation.mutateAsync({ id, draft: draftId });
+  const updateTodoDraft = async (draftId: string) => {
+    await updateTodoMutation.mutateAsync({ id, data: { draft: draftId } });
   };
 
   if (!todo) return null;
@@ -327,12 +437,20 @@ export const TodayTodoView = ({ id }: { id: number }) => {
       <ContextMenuItem
         onClick={async (e) => {
           if (!e.isTrusted || e.detail === 0) return;
-          if (todo.draft !== 0) {
-            setEditorId(todo.draft);
+          if (todo.draft !== ZERO_UUID) {
+            openTab({
+              draftId: todo.draft,
+              title: todo.title,
+              editable: false,
+            });
             setEditorDialogOpen(true);
           } else {
             const draftId = await createTiptap();
-            setEditorId(draftId);
+            openTab({
+              draftId: draftId,
+              title: todo.title,
+              editable: false,
+            });
             setEditorDialogOpen(true);
             updateTodoDraft(draftId);
           }
@@ -344,7 +462,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
       <ContextMenuItem
         onClick={async (e) => {
           if (!e.isTrusted || e.detail === 0) return;
-          if (todo.kanban !== 0) {
+          if (todo.kanban !== ZERO_UUID) {
             setKanbanId(todo.kanban);
             setKanbanDialogOpen(true);
           } else {
@@ -375,7 +493,7 @@ export const TodayTodoView = ({ id }: { id: number }) => {
             <CardContent className="group flex items-center justify-between pr-2 pl-4 lg:pl-6">
               <TodoTitle todo={todo} todayView />
               <span className="flex items-center gap-1">
-                {todo.kanban !== 0 && (
+                {todo.kanban !== ZERO_UUID && (
                   <Button
                     variant="ghost"
                     className="size-4 xl:size-6"
@@ -387,12 +505,16 @@ export const TodayTodoView = ({ id }: { id: number }) => {
                     <SquareKanban className="text-muted-foreground" />
                   </Button>
                 )}
-                {todo.draft !== 0 && (
+                {todo.draft !== ZERO_UUID && (
                   <Button
                     variant="ghost"
                     className="size-4 xl:size-6"
                     onClick={() => {
-                      setEditorId(todo.draft);
+                      openTab({
+                        draftId: todo.draft,
+                        title: todo.title,
+                        editable: false,
+                      });
                       setEditorDialogOpen(true);
                     }}
                   >
@@ -516,14 +638,15 @@ export const CompletedTodoView = ({
   id,
   collectionId,
 }: {
-  id: number;
-  collectionId: number;
+  id: string;
+  collectionId: string;
 }) => {
   const { language } = useUserContext();
   const { data: todo } = useTodo(id);
+  const { openTab } = useEditorState();
 
   const restoreTodoMutation = useRestoreTodo();
-  const deleteTodoMutation = useDeleteTodo(collectionId, true);
+  const deleteTodoMutation = useDeleteTodo();
   const deleteTodo = async () => {
     await deleteTodoMutation.mutateAsync(id);
   };
@@ -534,7 +657,7 @@ export const CompletedTodoView = ({
   const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
     useKanbanContext();
   // editor state
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
 
   if (!todo) return null;
 
@@ -564,7 +687,7 @@ export const CompletedTodoView = ({
                   hour12: false,
                 })}
               </Badge>
-              {todo.kanban !== 0 && (
+              {todo.kanban !== ZERO_UUID && (
                 <Button
                   variant="ghost"
                   className="mx-1 size-4 xl:mx-0 xl:size-8"
@@ -576,12 +699,16 @@ export const CompletedTodoView = ({
                   <SquareKanban className="text-muted-foreground" />
                 </Button>
               )}
-              {todo.draft !== 0 && (
+              {todo.draft !== ZERO_UUID && (
                 <Button
                   variant="ghost"
                   className="size-4 xl:size-8"
                   onClick={() => {
-                    setEditorId(todo.draft);
+                    openTab({
+                      draftId: todo.draft,
+                      title: todo.title,
+                      editable: false,
+                    });
                     setEditorDialogOpen(true);
                   }}
                 >
@@ -623,8 +750,8 @@ export const TodoEntry = ({
   top,
   bottom,
 }: {
-  id: number;
-  collectionId: number;
+  id: string;
+  collectionId: string;
   top: boolean;
   bottom: boolean;
 }) => {
@@ -633,11 +760,12 @@ export const TodoEntry = ({
   const [isComposing, setIsComposing] = useState(false);
   const { data: collections } = useCollections();
   const { data: todo } = useTodo(id);
+  const { openTab } = useEditorState();
 
   // to-do state
   const [editTodoDialogOpen, setEditTodoDialogOpen] = useState(false);
   const [editTodoName, setEditTodoName] = useState("");
-  const deleteTodoMutation = useDeleteTodo(collectionId);
+  const deleteTodoMutation = useDeleteTodo();
   const updateTodoMutation = useUpdateTodo();
   const undoneTodoMutation = useUndoneTodo();
   const updateScheduleMutation = useUpdateSchedule();
@@ -662,16 +790,14 @@ export const TodoEntry = ({
     setConfirmAction("complete");
     // setAction treats a function as an updater
     // wrap actual function to avoid React calling it with the previous state as an argument
-    setAction(
-      () => () => completeTodoMutation.mutateAsync({ id, collectionId }),
-    );
+    setAction(() => () => completeTodoMutation.mutateAsync({ id }));
     setConfirmDialogOpen(true);
   };
   const renameTodo = async () => {
-    await updateTodoMutation.mutateAsync({ id, title: editTodoName });
+    await updateTodoMutation.mutateAsync({ id, data: { title: editTodoName } });
   };
-  const moveTodo = async (dst: number) => {
-    await moveTodoMutation.mutateAsync({ id, src: collectionId, dst });
+  const moveTodo = async (dst: string) => {
+    await moveTodoMutation.mutateAsync({ id, dst });
   };
   const topTodo = async () => {
     await topTodoMutation.mutateAsync({ id, collectionId });
@@ -682,7 +808,7 @@ export const TodoEntry = ({
   // difficulty state
   const [difficultyLabel, setDifficultyLabel] = useState(0);
   const updateDifficulty = async (difficulty: number) => {
-    await updateTodoMutation.mutateAsync({ id, difficulty });
+    await updateTodoMutation.mutateAsync({ id, data: { difficulty } });
   };
   // link state
   const [editLinkDialogOpen, setEditLinkDialogOpen] = useState(false);
@@ -691,34 +817,34 @@ export const TodoEntry = ({
     if (link.trim() === "") {
       await unsetLinkMutation.mutateAsync({ id });
     } else {
-      await updateTodoMutation.mutateAsync({ id, link });
+      await updateTodoMutation.mutateAsync({ id, data: { link } });
     }
   };
   // date state
   const [editDateDialogOpen, setEditDateDialogOpen] = useState(false);
   const [openCalendar, setOpenCalendar] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState<Date | undefined | null>(
+  const [scheduleDate, setScheduleDate] = useState<number | undefined | null>(
     undefined,
   );
-  const updateScheduleDate = async (date: Date | undefined | null) => {
+  const updateScheduleDate = async (date: number | undefined | null) => {
     if (!date) {
       return;
     }
     await updateScheduleMutation.mutateAsync({ id, schedule: date });
   };
   const unsetScheduleDate = async () => {
-    await updateScheduleMutation.mutateAsync({ id, schedule: new Date(0) });
+    await updateScheduleMutation.mutateAsync({ id, schedule: 0 });
   };
   // editor state
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
-  const updateTodoDraft = async (draftId: number) => {
-    await updateTodoMutation.mutateAsync({ id, draft: draftId });
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const updateTodoDraft = async (draftId: string) => {
+    await updateTodoMutation.mutateAsync({ id, data: { draft: draftId } });
   };
   // kanban state
   const { setId: setKanbanId, setOpen: setKanbanDialogOpen } =
     useKanbanContext();
-  const updateTodoKanban = async (kanbanId: number) => {
-    await updateTodoMutation.mutateAsync({ id, kanban: kanbanId });
+  const updateTodoKanban = async (kanbanId: string) => {
+    await updateTodoMutation.mutateAsync({ id, data: { kanban: kanbanId } });
   };
   // confirm dialog state
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -731,7 +857,7 @@ export const TodoEntry = ({
 
   const TodoMenuContent = () => (
     <ContextMenuContent>
-      {collectionId !== 0 &&
+      {collectionId !== ZERO_UUID &&
         (isSetToday(todo.schedule) ? (
           todo.done ? (
             <>
@@ -780,7 +906,7 @@ export const TodoEntry = ({
       {/* set today and completed: true  -->  ["Reset Date"] */}
       {/* set date (not today) and done: false  -->  ["Reset Date","Unset Date"] */}
       {/* set date (not today) and done: true  --> should not exist  */}
-      {collectionId !== 0 &&
+      {collectionId !== ZERO_UUID &&
         (todo.schedule && isSetDate(todo.schedule) ? (
           <>
             <ContextMenuItem
@@ -840,7 +966,7 @@ export const TodoEntry = ({
             )}
           </>
         ))}
-      {collectionId !== 0 && <ContextMenuSeparator />}
+      {collectionId !== ZERO_UUID && <ContextMenuSeparator />}
       <ContextMenuItem
         onClick={(e) => {
           if (!e.isTrusted || e.detail === 0) return;
@@ -864,12 +990,20 @@ export const TodoEntry = ({
       <ContextMenuItem
         onClick={async (e) => {
           if (!e.isTrusted || e.detail === 0) return;
-          if (todo.draft !== 0) {
-            setEditorId(todo.draft);
+          if (todo.draft !== ZERO_UUID) {
+            openTab({
+              draftId: todo.draft,
+              title: todo.title,
+              editable: false,
+            });
             setEditorDialogOpen(true);
           } else {
             const draftId = await createTiptap();
-            setEditorId(draftId);
+            openTab({
+              draftId: draftId,
+              title: todo.title,
+              editable: false,
+            });
             setEditorDialogOpen(true);
             updateTodoDraft(draftId);
           }
@@ -881,7 +1015,7 @@ export const TodoEntry = ({
       <ContextMenuItem
         onClick={async (e) => {
           if (!e.isTrusted || e.detail === 0) return;
-          if (todo.kanban !== 0) {
+          if (todo.kanban !== ZERO_UUID) {
             setKanbanId(todo.kanban);
             setKanbanDialogOpen(true);
           } else {
@@ -896,7 +1030,7 @@ export const TodoEntry = ({
         {todoEntryI18NText[language].kanban}
       </ContextMenuItem>
       <ContextMenuSeparator />
-      {!top && collectionId !== 0 && (
+      {!top && collectionId !== ZERO_UUID && (
         <ContextMenuItem
           onClick={(e) => {
             if (!e.isTrusted || e.detail === 0) return;
@@ -907,7 +1041,7 @@ export const TodoEntry = ({
           {todoEntryI18NText[language].top}
         </ContextMenuItem>
       )}
-      {!bottom && collectionId !== 0 && (
+      {!bottom && collectionId !== ZERO_UUID && (
         <ContextMenuItem
           onClick={(e) => {
             if (!e.isTrusted || e.detail === 0) return;
@@ -927,7 +1061,7 @@ export const TodoEntry = ({
         </ContextMenuSubTrigger>
         <ContextMenuSubContent>
           {collections
-            ?.filter((c) => c.id !== collectionId && c.id !== 0)
+            ?.filter((c) => c.id !== collectionId && c.id !== ZERO_UUID)
             .map((collection) => (
               <ContextMenuItem
                 key={collection.id}
@@ -996,7 +1130,7 @@ export const TodoEntry = ({
 
             <span className="flex items-center gap-1 xl:gap-0">
               {/* Schedule date badge */}
-              {collectionId !== 0 && (
+              {collectionId !== ZERO_UUID && (
                 <Badge
                   variant="outline"
                   onClick={() => {
@@ -1024,7 +1158,7 @@ export const TodoEntry = ({
                   {formatDate(todo.schedule, todo.done).label[language]}
                 </Badge>
               )}
-              {todo.kanban !== 0 && (
+              {todo.kanban !== ZERO_UUID && (
                 <Button
                   variant="ghost"
                   className="size-4 xl:size-8"
@@ -1036,12 +1170,16 @@ export const TodoEntry = ({
                   <SquareKanban className="text-muted-foreground" />
                 </Button>
               )}
-              {todo.draft !== 0 && (
+              {todo.draft !== ZERO_UUID && (
                 <Button
                   variant="ghost"
                   className="size-4 xl:size-8"
                   onClick={() => {
-                    setEditorId(todo.draft);
+                    openTab({
+                      draftId: todo.draft,
+                      title: todo.title,
+                      editable: false,
+                    });
                     setEditorDialogOpen(true);
                   }}
                 >
@@ -1209,15 +1347,15 @@ export const TodoEntry = ({
                 >
                   <Calendar
                     mode="single"
-                    disabled={(date) => date < todayStart()}
+                    disabled={(date) => date.getTime() < todayStart()}
                     selected={
                       scheduleDate && isSetDate(scheduleDate)
-                        ? scheduleDate
+                        ? new Date(scheduleDate)
                         : undefined
                     }
                     captionLayout="dropdown"
                     onSelect={(date) => {
-                      setScheduleDate(date);
+                      setScheduleDate(date?.getTime());
                       setOpenCalendar(false);
                     }}
                   />

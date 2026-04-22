@@ -43,27 +43,26 @@ import {
 } from "@/components/react-table/data-table-columns";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { useState } from "react";
-import {
-  useCreateToWatch,
-  useCreateWatched,
-  WatchStatus,
-  WatchEnum,
-  type WatchType,
-  WatchTypeText,
-  RatingText,
-} from "@/hooks/dashboard/use-watchv2";
-import { dateString, todayStart } from "@/lib/utils";
+import { dateString, todayStart, ZERO_UUID } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Domain,
-  useCreateBookmark,
-  useTags,
-  type DomainType,
-} from "@/hooks/dashboard/use-bookmarkv2";
-import { createTiptap } from "@/hooks/use-draft";
+import { useCreateBookmark, useTags } from "@/hooks/dashboard/use-bookmarkv2";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { useCreateBlog } from "@/hooks/dashboard/use-blogv2";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
+import {
+  Domain,
+  RatingText,
+  WatchEnum,
+  WatchStatus,
+  WatchTypeText,
+  type DomainType,
+  type WatchType,
+} from "@/lib/dashboard/model";
+import {
+  useCreateWatch,
+  useCreateWatched,
+} from "@/hooks/dashboard/use-watchv2";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -102,14 +101,16 @@ export function WatchedTableToolbar<TData>({
 
   const createEntry = async () => {
     return createEntryMutation.mutateAsync({
-      title: entryName,
-      type: entryType,
-      status: WatchStatus.COMPLETED,
-      year: entryYear ?? new Date().getFullYear(),
-      rate: entryRate,
-      createdAt: entryMark ?? todayStart(),
-      payload: {},
-      author: entryAuthor,
+      watch: {
+        title: entryName,
+        type: entryType,
+        status: WatchStatus.COMPLETED,
+        year: entryYear ?? new Date().getFullYear(),
+        rate: entryRate,
+        payload: {},
+        author: entryAuthor,
+      },
+      createdAt: entryMark?.getTime() ?? todayStart(),
     });
   };
 
@@ -456,7 +457,7 @@ export function ToWatchTableToolbar<TData>({
   const [isComposing, setIsComposing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const isFiltered = table.getState().columnFilters.length > 0;
-  const createEntryMutation = useCreateToWatch();
+  const createEntryMutation = useCreateWatch();
   const [addEntryDialogOpen, setAddEntryDialogOpen] = useState(false);
   const [entryName, setEntryName] = useState("");
   const [entryType, setEntryType] = useState<WatchType>(WatchEnum.MOVIE);
@@ -481,6 +482,7 @@ export function ToWatchTableToolbar<TData>({
       year: entryYear ?? 0,
       payload: { link: entryLink, epoch: 1 },
       author: entryAuthor,
+      rate: 0,
     });
   };
 
@@ -741,7 +743,7 @@ export function BookmarkTableToolbar<TData>({
     whats: string[],
     hows: string[],
   ) => {
-    const draft = url !== "cheatsheet" ? 0 : await createTiptap();
+    const draft = url !== "cheatsheet" ? ZERO_UUID : await createTiptap();
     return createBookmarkMutation.mutateAsync({
       title,
       url,

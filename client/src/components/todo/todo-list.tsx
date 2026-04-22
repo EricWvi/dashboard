@@ -39,26 +39,28 @@ import {
   useToday,
   useTodos,
   useUpdateCollection,
-  type Todo,
   useClearTodos,
 } from "@/hooks/dashboard/use-todov2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CompletedTodoView,
+  isSetToday,
+  isSetDate,
   PlanTodoView,
   TodayTodoView,
   TodoEntry,
 } from "@/components/todo/todo-entry";
-import { fullDateString, isSetToday, isSetDate } from "@/lib/utils";
+import { fullDateString, ZERO_UUID } from "@/lib/utils";
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
+import type { Todo } from "@/lib/dashboard/model";
 
 const TodoList = ({
   collectionId,
   headerContent,
 }: {
-  collectionId: number;
+  collectionId: string;
 } & { headerContent?: React.ReactNode }) => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
@@ -87,7 +89,7 @@ const TodoList = ({
     if (editListName.trim() !== "") {
       await updateCollectionMutation.mutateAsync({
         id: collectionId,
-        name: editListName,
+        data: { name: editListName },
       });
     }
   };
@@ -115,7 +117,7 @@ const TodoList = ({
               </CardTitle>
 
               {/* to do list top right menu */}
-              {collectionId !== 0 && (
+              {collectionId !== ZERO_UUID && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -197,7 +199,7 @@ const TodoList = ({
                     <div className="pb-6">
                       {
                         <div className="space-y-2">
-                          {todos.map((todo: number, idx: number) => (
+                          {todos.map((todo: string, idx: number) => (
                             <TodoEntry
                               key={todo}
                               id={todo}
@@ -210,9 +212,11 @@ const TodoList = ({
                       }
 
                       {/* display Completed Tasks List in TodoList when isMobile */}
-                      {collectionId !== 0 && isMobile && completedTodoOpen && (
-                        <CompletedList collectionId={collectionId} />
-                      )}
+                      {collectionId !== ZERO_UUID &&
+                        isMobile &&
+                        completedTodoOpen && (
+                          <CompletedList collectionId={collectionId} />
+                        )}
                     </div>
                   </div>
                 ))}
@@ -315,7 +319,7 @@ const TodoList = ({
   );
 };
 
-const CompletedList = ({ collectionId }: { collectionId: number }) => {
+const CompletedList = ({ collectionId }: { collectionId: string }) => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
   const { data: collection } = useCollection(collectionId);
@@ -363,7 +367,7 @@ const CompletedList = ({ collectionId }: { collectionId: number }) => {
           (completed.length > 0 ? (
             <div className="min-h-0 w-full flex-1">
               <div className="space-y-2">
-                {completed.map((todo: number) => (
+                {completed.map((todo: string) => (
                   <CompletedTodoView
                     key={todo}
                     id={todo}
@@ -447,7 +451,7 @@ export const TodayTodoList = () => {
   // plan today dialog
   const [allTodos, setAllTodos] = useState<Todo[]>([]);
   const [planTodayDialogOpen, setPlanTodayDialogOpen] = useState(false);
-  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const planTodayMutation = usePlanToday();
 
   const planSelectedIds = async () => {
@@ -541,7 +545,7 @@ export const TodayTodoList = () => {
                             acc[item.collectionId] || []).push(item);
                           return acc;
                         },
-                        {} as Record<number, Todo[]>,
+                        {} as Record<string, Todo[]>,
                       ),
                   ).map(([key, items]) => (
                     <div key={key}>
@@ -597,7 +601,7 @@ export const TodayTodoList = () => {
                       acc[item.collectionId] || []).push(item);
                     return acc;
                   },
-                  {} as Record<number, Todo[]>,
+                  {} as Record<string, Todo[]>,
                 ),
             ).map(([key, items]) => (
               <div key={key}>
@@ -617,7 +621,7 @@ export const TodayTodoList = () => {
                       isFuture={
                         isSetDate(todo.schedule) && !isSetToday(todo.schedule)
                       }
-                      handleCheck={(id: number, checked: boolean) => {
+                      handleCheck={(id: string, checked: boolean) => {
                         setCheckedIds((prev) => {
                           const newSet = new Set(prev);
                           if (checked) {

@@ -9,8 +9,7 @@ import {
   type WatchPayload,
   type WatchType,
 } from "@/lib/dashboard/model";
-
-const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
+import { ZERO_UUID } from "@/lib/utils";
 
 export function useWatches(status: WatchStatus) {
   return useQuery({
@@ -31,6 +30,14 @@ export function useCreateWatch() {
   });
 }
 
+export function useCreateWatched() {
+  return useMutation({
+    mutationFn: async (data: { watch: WatchField; createdAt: number }) => {
+      return dashboardDatabase.addWatched(data.watch, data.createdAt);
+    },
+  });
+}
+
 export function useDeleteWatch() {
   return useMutation({
     mutationFn: async (id: string) => {
@@ -41,13 +48,7 @@ export function useDeleteWatch() {
 
 export function useUpdateWatch() {
   return useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<WatchField>;
-    }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Watch> }) => {
       return dashboardDatabase.updateWatch(id, data);
     },
   });

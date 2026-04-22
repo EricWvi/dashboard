@@ -12,7 +12,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  EchoEnum,
   useCreateEcho,
   useEchoes,
   useToggleEchoMark,
@@ -20,16 +19,23 @@ import {
 } from "@/hooks/dashboard/use-echov2";
 import { Button } from "@/components/ui/button";
 import { useTTContext } from "@/components/editor";
-import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
+import { ContentRender } from "@/components/dashboard/content-render";
 import { useEffect, useState } from "react";
-import { createTiptap } from "@/hooks/use-draft";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { PenLine } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { dateString, getWeekRange, getWeekYearPair } from "@/lib/utils";
+import {
+  dateString,
+  getWeekRange,
+  getWeekYearPair,
+  ZERO_UUID,
+} from "@/lib/utils";
 import { MarkIcon } from "@/components/ui/icons";
 import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
+import { EchoEnum } from "@/lib/dashboard/model";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 export const WeeklyRetro = () => {
   const isMobile = useIsMobile();
@@ -100,21 +106,19 @@ const Weeks = ({ year }: { year: number }) => {
       setShowLoading(true);
     }
   }, [isPending]);
-  const {
-    id,
-    setId: setEditorId,
-    setOpen: setEditorDialogOpen,
-  } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
   const createEchoMutation = useCreateEcho(year, EchoEnum.WEEK);
 
   const [dialogWeekRange, setDialogWeekRange] = useState("");
   const [dialogWeek, setDialogWeek] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMark, setDialogMark] = useState(false);
-  const [dialogWeekId, setDialogWeekId] = useState(0);
+  const [dialogWeekId, setDialogWeekId] = useState(ZERO_UUID);
+  const [dialogDraft, setDialogDraft] = useState(ZERO_UUID);
 
-  const useToggleEchoMarkMutation = useToggleEchoMark(year, EchoEnum.WEEK);
-  const toggleMark = (id: number, mark: boolean) => {
+  const useToggleEchoMarkMutation = useToggleEchoMark();
+  const toggleMark = (id: string, mark: boolean) => {
     return useToggleEchoMarkMutation.mutateAsync({ id, mark });
   };
 
@@ -139,7 +143,11 @@ const Weeks = ({ year }: { year: number }) => {
                 draft,
               });
             }
-            setEditorId(draft);
+            openTab({
+              draftId: draft,
+              title: getWeekLabel(currWeek, language),
+              editable: false,
+            });
             setEditorDialogOpen(true);
           }}
         >
@@ -159,7 +167,11 @@ const Weeks = ({ year }: { year: number }) => {
                 sub: currWeek - 1,
                 draft,
               });
-              setEditorId(draft);
+              openTab({
+                draftId: draft,
+                title: getWeekLabel(currWeek - 1, language),
+                editable: true,
+              });
               setEditorDialogOpen(true);
             }}
           >
@@ -182,7 +194,7 @@ const Weeks = ({ year }: { year: number }) => {
                 setDialogOpen(true);
                 setDialogMark(week.mark);
                 setDialogWeekId(week.id);
-                setEditorId(week.draft);
+                setDialogDraft(week.draft);
               }}
             >
               {getWeekLabel(week.sub, language)}
@@ -208,7 +220,11 @@ const Weeks = ({ year }: { year: number }) => {
                 sub: lastWeekOfLastYear,
                 draft,
               });
-              setEditorId(draft);
+              openTab({
+                draftId: draft,
+                title: getWeekLabel(lastWeekOfLastYear, language),
+                editable: true,
+              });
               setEditorDialogOpen(true);
             }}
           >
@@ -267,7 +283,7 @@ const Weeks = ({ year }: { year: number }) => {
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
-          <ContentRender id={id} />
+          <ContentRender id={dialogDraft} />
         </DialogContent>
       </Dialog>
     </div>

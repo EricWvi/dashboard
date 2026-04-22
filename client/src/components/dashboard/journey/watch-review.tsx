@@ -1,4 +1,3 @@
-import { ContentHTML } from "@/components/tiptap-templates/simple/simple-editor";
 import ColorThief from "colorthief";
 import chroma from "chroma-js";
 import { useEffect, useRef, useState } from "react";
@@ -6,13 +5,11 @@ import { useUserContext } from "@/user-provider";
 import { UserLangEnum, type UserLang } from "@/lib/model";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StarIcon } from "@/components/ui/icons";
-import {
-  WatchEnum,
-  type Watch,
-  type WatchType,
-} from "@/hooks/dashboard/use-watchv2";
 import { Share } from "lucide-react";
 import { toPng } from "html-to-image";
+import { useDraft } from "@/hooks/dashboard/use-tiptapv2";
+import { ReadOnlyTiptap } from "@/components/tiptap-editor/simple-editor";
+import { WatchEnum, type Watch, type WatchType } from "@/lib/dashboard/model";
 
 function download(dataUrl: string, filename: string) {
   const link = document.createElement("a");
@@ -29,6 +26,17 @@ const i18nText = {
     rate: "Rate",
   },
 };
+
+function ContentHTML({ id }: { id: string }) {
+  const { data: draft, isFetching } = useDraft(id); // TODO
+
+  if (isFetching) return null;
+  return (
+    <div className="w-full">
+      <ReadOnlyTiptap draft={draft?.content} style="padding: 0 0 12px" />
+    </div>
+  );
+}
 
 export default function WatchReview({
   watch,
@@ -249,7 +257,7 @@ export default function WatchReview({
 
 function dateString(
   type: WatchType,
-  date: Date,
+  date: number,
   epoch: number,
   language: UserLang,
   dropped: boolean = false,

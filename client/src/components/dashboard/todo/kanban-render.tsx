@@ -42,15 +42,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { useKanbanContext } from "@/components/dashboard/todo/kanban";
-import { dateString } from "@/lib/utils";
+import { dateString, ZERO_UUID } from "@/lib/utils";
 import {
   type Task,
   type Kanban as KanbanObj,
   syncKanban,
-  removeKanbanQuery,
-  invalidateKanbanQuery,
-} from "@/hooks/use-kanban";
-import { toast } from "sonner";
+  saveKanban,
+} from "@/hooks/dashboard/use-kanbanv2";
 import {
   HoverCard,
   HoverCardContent,
@@ -130,13 +128,6 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
 
   const isDirtyRef = useRef(false);
   const isChanged = useRef(false);
-  const prevTs = useRef(data.ts);
-
-  const handleOutOfSync = () => {
-    isDirtyRef.current = false;
-    invalidateKanbanQuery(data.id);
-    alert(i18nText[language].outOfSync);
-  };
 
   const [columnValue, setColumnValue] = useState<Record<string, Task[]>>(
     data.content.columnValue,
@@ -159,21 +150,19 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
     // sync every 5 seconds
     const interval = setInterval(() => {
       if (isDirtyRef.current) {
-        const currTs = Date.now();
         syncKanban({
           id: data.id,
           content: {
             columns: columnsRef.current,
             columnValue: columnValueRef.current,
           },
-          prev: prevTs.current,
-          curr: currTs,
         })
           .then(() => {
             isDirtyRef.current = false;
-            prevTs.current = currTs;
           })
-          .catch(handleOutOfSync);
+          .catch(() => {
+            isDirtyRef.current = false;
+          });
       }
     }, 5000);
     return () => clearInterval(interval);
@@ -194,24 +183,19 @@ export default function KanbanRender({ data }: { data: KanbanObj }) {
   const handleSave = () => {
     isDirtyRef.current = false;
     if (isChanged.current) {
-      syncKanban({
+      saveKanban({
         id: data.id,
         content: {
           columns: columnsRef.current,
           columnValue: columnValueRef.current,
         },
-        prev: -1,
-        curr: Date.now(),
       }).then(() => {
-        toast.success(i18nText[language].success);
-        setKanbanId(0);
+        setKanbanId(ZERO_UUID);
         setKanbanDialogOpen(false);
-        removeKanbanQuery(data.id);
       });
     } else {
-      setKanbanId(0);
+      setKanbanId(ZERO_UUID);
       setKanbanDialogOpen(false);
-      removeKanbanQuery(data.id);
     }
   };
 

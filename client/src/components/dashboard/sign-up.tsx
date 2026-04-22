@@ -1,22 +1,18 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  UserLangEnum,
-  useSignUp,
-  useUpdateLanguage,
-  type UserLang,
-} from "@/hooks/use-user";
+import { useSignUp, useUpdateLanguage } from "@/hooks/use-user";
 import { fileUpload } from "@/lib/file-upload";
 import { formatMediaUrl } from "@/lib/utils";
-import { useUserContext } from "@/user-provider";
+import { useUserContextV2 } from "@/user-provider";
 import { ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LanguageSwitch } from "@/components/dashboard/language-switch";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 
 export default function SignUp() {
-  const { language } = useUserContext();
+  const { language } = useUserContextV2();
   const isMobile = useIsMobile();
   const inputRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

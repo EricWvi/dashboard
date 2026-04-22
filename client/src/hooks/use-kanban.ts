@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRequest, postRequest, queryClient } from "@/lib/queryClient";
-import { UserLangEnum, type UserLang } from "./use-user";
+import { UserLangEnum, type UserLang } from "@/lib/model";
 
 export interface Task {
   id: string;

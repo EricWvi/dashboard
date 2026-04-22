@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRequest, postRequest } from "@/lib/queryClient";
-import { UserLangEnum, UserQueryOptions, type I18nText } from "./use-user";
+import { UserQueryOptions } from "./use-user";
 import { keyTodosOfCollection } from "./use-todos";
+import { UserLangEnum, type I18nText } from "@/lib/model";
 
 export type Watch = {
   id: number;

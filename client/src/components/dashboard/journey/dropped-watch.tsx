@@ -1,9 +1,4 @@
-import {
-  useRecoverWatch,
-  useWatches,
-  WatchStatus,
-  WatchTypeText,
-} from "@/hooks/dashboard/use-watchv2";
+import { useRecoverWatch, useWatches } from "@/hooks/dashboard/use-watchv2";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +15,7 @@ import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import WatchReview from "@/components/dashboard/journey/watch-review";
+import { WatchStatus, WatchTypeText } from "@/lib/dashboard/model";
 
 export default function DroppedList() {
   const { language } = useUserContext();

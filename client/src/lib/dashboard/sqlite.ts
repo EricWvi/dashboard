@@ -353,6 +353,10 @@ export class SqliteDashboardDatabase implements IDashboardDatabase {
     return invoke("dashboard_add_watch", { watch });
   }
 
+  async addWatched(watch: WatchField, createdAt: number): Promise<string> {
+    return invoke("dashboard_add_watch", { watch, createdAt });
+  }
+
   async putWatch(watch: Watch): Promise<void> {
     await invoke("dashboard_put_watch", { watch });
   }

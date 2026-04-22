@@ -1,14 +1,6 @@
 import {
   useUpdateWatch,
-  WatchStatus,
-  type Watch,
-  WatchEnum,
-  type WatchType,
-  WatchMeasureEnum,
   useCompleteWatch,
-  WatchTypeText,
-  type WatchMeasure,
-  WatchMeasureText,
 } from "@/hooks/dashboard/use-watchv2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { types } from "@/components/react-table/data-table-columns";
@@ -50,11 +42,22 @@ import {
 import { dateString, formatMediaUrl } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
 import { useTTContext } from "@/components/editor";
-import { createTiptap } from "@/hooks/use-draft";
 import WatchCheckpoints from "@/components/dashboard/journey/watch-checkpoint";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum, type UserLang } from "@/lib/model";
+import {
+  WatchEnum,
+  WatchMeasureEnum,
+  WatchMeasureText,
+  WatchStatus,
+  WatchTypeText,
+  type Watch,
+  type WatchMeasure,
+  type WatchType,
+} from "@/lib/dashboard/model";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 const i18nText = {
   [UserLangEnum.ZHCN]: {
@@ -127,37 +130,38 @@ const WatchingItem = React.memo(({ watch }: { watch: Watch }) => {
   const { language } = useUserContext();
   const isMobile = useIsMobile();
   const type = types.find((type) => type.value === watch.type);
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
 
-  const updateWatchMutation = useUpdateWatch([WatchStatus.WATCHING]);
-  const dropWatchMutation = useUpdateWatch([
-    WatchStatus.WATCHING,
-    WatchStatus.DROPPED,
-  ]);
+  const updateWatchMutation = useUpdateWatch();
   const completeWatchMutation = useCompleteWatch();
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
-      title: entryName,
-      type: entryType === "" ? watch.type : entryType,
-      year: entryYear === 0 ? watch.year : entryYear,
-      payload: {
-        ...watch.payload,
-        img: entryImg,
-        link: entryLink,
+      data: {
+        title: entryName,
+        type: entryType === "" ? watch.type : entryType,
+        year: entryYear === 0 ? watch.year : entryYear,
+        payload: {
+          ...watch.payload,
+          img: entryImg,
+          link: entryLink,
+        },
       },
     });
   };
   const archiveWatch = () => {
-    return dropWatchMutation.mutateAsync({
+    return updateWatchMutation.mutateAsync({
       id: watch.id,
-      status: WatchStatus.DROPPED,
-      payload: {
-        ...watch.payload,
-        checkpoints: [
-          ...(watch.payload.checkpoints ?? []),
-          [dateString(new Date(), "-"), -1],
-        ],
+      data: {
+        status: WatchStatus.DROPPED,
+        payload: {
+          ...watch.payload,
+          checkpoints: [
+            ...(watch.payload.checkpoints ?? []),
+            [dateString(new Date(), "-"), -1],
+          ],
+        },
       },
     });
   };
@@ -166,12 +170,22 @@ const WatchingItem = React.memo(({ watch }: { watch: Watch }) => {
       const draftId = await createTiptap();
       updateWatchMutation.mutateAsync({
         id: watch.id,
-        payload: { ...watch.payload, quotes: draftId },
+        data: {
+          payload: { ...watch.payload, quotes: draftId },
+        },
       });
-      setEditorId(draftId);
+      openTab({
+        draftId: draftId,
+        title: watch.title,
+        editable: false,
+      });
       setEditorDialogOpen(true);
     } else {
-      setEditorId(watch.payload.quotes);
+      openTab({
+        draftId: watch.payload.quotes,
+        title: watch.title,
+        editable: false,
+      });
       setEditorDialogOpen(true);
     }
     handleUpdateProgressOpen(false);
@@ -181,12 +195,22 @@ const WatchingItem = React.memo(({ watch }: { watch: Watch }) => {
       const draftId = await createTiptap();
       updateWatchMutation.mutateAsync({
         id: watch.id,
-        payload: { ...watch.payload, review: draftId },
+        data: {
+          payload: { ...watch.payload, review: draftId },
+        },
       });
-      setEditorId(draftId);
+      openTab({
+        draftId: draftId,
+        title: watch.title,
+        editable: false,
+      });
       setEditorDialogOpen(true);
     } else {
-      setEditorId(watch.payload.review);
+      openTab({
+        draftId: watch.payload.review,
+        title: watch.title,
+        editable: false,
+      });
       setEditorDialogOpen(true);
     }
     handleUpdateProgressOpen(false);
@@ -210,13 +234,15 @@ const WatchingItem = React.memo(({ watch }: { watch: Watch }) => {
     }
     return updateWatchMutation.mutateAsync({
       id: watch.id,
-      payload: {
-        ...watch.payload,
-        measure:
-          entryMeasure === "" ? WatchMeasureEnum.PERCENTAGE : entryMeasure,
-        range: range >= watchProgress ? range : watchProgress,
-        progress: watchProgress,
-        checkpoints: curr,
+      data: {
+        payload: {
+          ...watch.payload,
+          measure:
+            entryMeasure === "" ? WatchMeasureEnum.PERCENTAGE : entryMeasure,
+          range: range >= watchProgress ? range : watchProgress,
+          progress: watchProgress,
+          checkpoints: curr,
+        },
       },
     });
   };

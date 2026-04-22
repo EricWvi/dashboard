@@ -2,10 +2,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { dashboardDatabase } from "@/lib/dashboard/db-interface";
 import keys from "./query-keys";
 import { queryClient } from "@/lib/queryClient";
-import { todayStart } from "@/lib/utils";
+import { todayStart, ZERO_UUID } from "@/lib/utils";
 import type { CollectionField, TodoField } from "@/lib/dashboard/model";
-
-const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
 
 export function useTodos(collectionId: string) {
   return useQuery({
@@ -135,9 +133,9 @@ export function useBottomTodo() {
 
 export function useUpdateSchedule() {
   return useMutation({
-    mutationFn: async (data: { id: string; schedule: Date }) => {
+    mutationFn: async (data: { id: string; schedule: number }) => {
       await dashboardDatabase.updateTodo(data.id, {
-        schedule: data.schedule.getTime(),
+        schedule: data.schedule,
       });
     },
   });
@@ -244,7 +242,7 @@ export function usePlanToday() {
         data.ids.map((id) =>
           dashboardDatabase.updateTodo(id, {
             done: false,
-            schedule: todayStart().getTime(),
+            schedule: todayStart(),
           }),
         ),
       );

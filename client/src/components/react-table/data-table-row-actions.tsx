@@ -41,40 +41,41 @@ import { Progress } from "@/components/ui/progress";
 
 import { domains, types } from "@/components/react-table/data-table-columns";
 import {
+  useCreateWatch,
   useDeleteWatch,
   useStartWatch,
   useUpdateWatch,
-  WatchMeasureEnum,
-  WatchStatus,
-  WatchEnum,
-  type WatchType,
-  type Watch,
-  useCreateToWatch,
-  type WatchMeasure,
-  WatchTypeText,
-  WatchMeasureText,
 } from "@/hooks/dashboard/use-watchv2";
 import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { dateString, formatMediaUrl, todayStart } from "@/lib/utils";
 import { fileUpload } from "@/lib/file-upload";
 import {
-  Domain,
   useDeleteBookmark,
   useTags,
   useUpdateBookmark,
-  type Bookmark,
-  type DomainType,
 } from "@/hooks/dashboard/use-bookmarkv2";
-import { createTiptap } from "@/hooks/use-draft";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { useTTContext } from "@/components/editor";
-import {
-  BlogEnum,
-  useUpdateBlog,
-  type Blog,
-} from "@/hooks/dashboard/use-blogv2";
+import { useUpdateBlog } from "@/hooks/dashboard/use-blogv2";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
+import {
+  BlogEnum,
+  Domain,
+  WatchEnum,
+  WatchMeasureEnum,
+  WatchMeasureText,
+  WatchStatus,
+  WatchTypeText,
+  type Blog,
+  type Bookmark,
+  type DomainType,
+  type Watch,
+  type WatchMeasure,
+  type WatchType,
+} from "@/lib/dashboard/model";
+import { useEditorState } from "@/hooks/use-editor-state";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -96,20 +97,23 @@ export function WatchedTableRowActions<TData>({
   const [entryMarkMonth, setEntryMarkMonth] = useState<Date>(new Date());
   const [entryAuthor, setEntryAuthor] = useState<string>("");
   const [datepickerOpen, setDatepickerOpen] = useState(false);
-  const updateWatchMutation = useUpdateWatch([WatchStatus.COMPLETED]);
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const updateWatchMutation = useUpdateWatch();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
 
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
-      title: entryName,
-      type: entryType ?? WatchEnum.MOVIE,
-      status: WatchStatus.COMPLETED,
-      year: entryYear ?? new Date().getFullYear(),
-      rate: entryRate,
-      createdAt: entryMark ?? todayStart(),
-      payload: { ...watch.payload, img: entryImg },
-      author: entryAuthor,
+      data: {
+        title: entryName,
+        type: entryType ?? WatchEnum.MOVIE,
+        status: WatchStatus.COMPLETED,
+        year: entryYear ?? new Date().getFullYear(),
+        rate: entryRate,
+        createdAt: entryMark?.getTime() ?? todayStart(),
+        payload: { ...watch.payload, img: entryImg },
+        author: entryAuthor,
+      },
     });
   };
   const editQuotes = async () => {
@@ -117,12 +121,22 @@ export function WatchedTableRowActions<TData>({
       const draftId = await createTiptap();
       updateWatchMutation.mutateAsync({
         id: watch.id,
-        payload: { ...watch.payload, quotes: draftId },
+        data: {
+          payload: { ...watch.payload, quotes: draftId },
+        },
       });
-      setEditorId(draftId);
+      openTab({
+        draftId: draftId,
+        title: watch.title + watchI18nText[language].quotes,
+        editable: true,
+      });
       setEditorDialogOpen(true);
     } else {
-      setEditorId(watch.payload.quotes);
+      openTab({
+        draftId: watch.payload.quotes,
+        title: watch.title + watchI18nText[language].quotes,
+        editable: true,
+      });
       setEditorDialogOpen(true);
     }
   };
@@ -131,12 +145,22 @@ export function WatchedTableRowActions<TData>({
       const draftId = await createTiptap();
       updateWatchMutation.mutateAsync({
         id: watch.id,
-        payload: { ...watch.payload, review: draftId },
+        data: {
+          payload: { ...watch.payload, review: draftId },
+        },
       });
-      setEditorId(draftId);
+      openTab({
+        draftId: draftId,
+        title: watch.title + watchI18nText[language].review,
+        editable: true,
+      });
       setEditorDialogOpen(true);
     } else {
-      setEditorId(watch.payload.review);
+      openTab({
+        draftId: watch.payload.review,
+        title: watch.title + watchI18nText[language].review,
+        editable: false,
+      });
       setEditorDialogOpen(true);
     }
   };
@@ -147,15 +171,12 @@ export function WatchedTableRowActions<TData>({
   const deleteWatchMutation = useDeleteWatch();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteWatch = () => {
-    return deleteWatchMutation.mutateAsync({
-      id: watch.id,
-      status: watch.status,
-    });
+    return deleteWatchMutation.mutateAsync(watch.id);
   };
 
   // watch again confirm
   const [watchAgainDialogOpen, setWatchAgainDialogOpen] = useState(false);
-  const createEntryMutation = useCreateToWatch();
+  const createEntryMutation = useCreateWatch();
   const watchAgain = () => {
     return createEntryMutation.mutateAsync({
       title: watch.title,
@@ -645,28 +666,31 @@ export function ToWatchTableRowActions<TData>({
   const { language } = useUserContext();
   const isMobile = useIsMobile();
   const watch = row.original as Watch;
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
   const [entryName, setEntryName] = useState("");
   const [entryType, setEntryType] = useState<WatchType | undefined>(undefined);
   const [entryYear, setEntryYear] = useState<number | undefined>(undefined);
   const [entryImg, setEntryImg] = useState<string | undefined>(undefined);
   const [entryLink, setEntryLink] = useState<string>("");
   const [entryAuthor, setEntryAuthor] = useState<string>("");
-  const updateWatchMutation = useUpdateWatch([WatchStatus.PLAN_TO_WATCH]);
+  const updateWatchMutation = useUpdateWatch();
   const startWatchMutation = useStartWatch();
 
   const updateWatch = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
-      title: entryName,
-      type: entryType ?? WatchEnum.MOVIE,
-      year: entryYear ?? new Date().getFullYear(),
-      payload: {
-        ...watch.payload,
-        img: entryImg,
-        link: entryLink,
+      data: {
+        title: entryName,
+        type: entryType ?? WatchEnum.MOVIE,
+        year: entryYear ?? new Date().getFullYear(),
+        payload: {
+          ...watch.payload,
+          img: entryImg,
+          link: entryLink,
+        },
+        author: entryAuthor,
       },
-      author: entryAuthor,
     });
   };
   const reviewWatch = async () => {
@@ -674,19 +698,27 @@ export function ToWatchTableRowActions<TData>({
       const draftId = await createTiptap();
       updateWatchMutation.mutateAsync({
         id: watch.id,
-        payload: { ...watch.payload, review: draftId },
+        data: { payload: { ...watch.payload, review: draftId } },
       });
-      setEditorId(draftId);
+      openTab({
+        draftId: draftId,
+        title: watch.title + watchI18nText[language].review,
+        editable: true,
+      });
       setEditorDialogOpen(true);
     } else {
-      setEditorId(watch.payload.review);
+      openTab({
+        draftId: watch.payload.review,
+        title: watch.title + watchI18nText[language].review,
+        editable: false,
+      });
       setEditorDialogOpen(true);
     }
   };
   const moveToTop = () => {
     return updateWatchMutation.mutateAsync({
       id: watch.id,
-      createdAt: new Date(),
+      data: { createdAt: new Date().getTime() },
     });
   };
 
@@ -727,10 +759,7 @@ export function ToWatchTableRowActions<TData>({
   const deleteWatchMutation = useDeleteWatch();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteWatch = () => {
-    return deleteWatchMutation.mutateAsync({
-      id: watch.id,
-      status: watch.status,
-    });
+    return deleteWatchMutation.mutateAsync(watch.id);
   };
 
   // edit watch entry dialog
@@ -1155,7 +1184,8 @@ export function BookmarkTableRowActions<TData>({
   const [bookmarkLink, setBookmarkLink] = useState<string>("");
   const [selectedWhats, setSelectedWhats] = useState<string[]>([]);
   const [selectedHows, setSelectedHows] = useState<string[]>([]);
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
   const updateBookmarkMutation = useUpdateBookmark();
   const updateBookmark = async () => {
     const draft =
@@ -1164,14 +1194,16 @@ export function BookmarkTableRowActions<TData>({
         : bookmark.payload.draft;
     return updateBookmarkMutation.mutateAsync({
       id: bookmark.id,
-      title: bookmarkName,
-      url: bookmarkLink,
-      domain: bookmarkType,
-      payload: {
-        ...bookmark.payload,
-        draft,
-        whats: selectedWhats,
-        hows: selectedHows,
+      data: {
+        title: bookmarkName,
+        url: bookmarkLink,
+        domain: bookmarkType,
+        payload: {
+          ...bookmark.payload,
+          draft,
+          whats: selectedWhats,
+          hows: selectedHows,
+        },
       },
     });
   };
@@ -1180,7 +1212,7 @@ export function BookmarkTableRowActions<TData>({
   const deleteBookmarkMutation = useDeleteBookmark();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const deleteBookmark = () => {
-    return deleteBookmarkMutation.mutateAsync({ id: bookmark.id });
+    return deleteBookmarkMutation.mutateAsync(bookmark.id);
   };
 
   // edit bookmark dialog
@@ -1211,7 +1243,11 @@ export function BookmarkTableRowActions<TData>({
         {!!bookmark.payload.draft && (
           <DropdownMenuItem
             onClick={() => {
-              setEditorId(bookmark.payload.draft ?? 0);
+              openTab({
+                draftId: bookmark.payload.draft!,
+                title: bookmark.title + " - Cheat Sheet",
+                editable: true,
+              });
               setEditorDialogOpen(true);
             }}
           >
@@ -1468,11 +1504,13 @@ export function BlogTableRowActions<TData>({
   const updateBlog = () => {
     return updateBlogMutation.mutateAsync({
       id: blog.id,
-      title: blogName,
-      payload: {
-        ...blog.payload,
-        whats: selectedWhats,
-        hows: selectedHows,
+      data: {
+        title: blogName,
+        payload: {
+          ...blog.payload,
+          whats: selectedWhats,
+          hows: selectedHows,
+        },
       },
     });
   };
@@ -1480,14 +1518,14 @@ export function BlogTableRowActions<TData>({
   const publishBlog = () => {
     return updateBlogMutation.mutateAsync({
       id: blog.id,
-      visibility: BlogEnum.PUBLIC,
+      data: { visibility: BlogEnum.PUBLIC },
     });
   };
 
   const unpublishBlog = () => {
     return updateBlogMutation.mutateAsync({
       id: blog.id,
-      visibility: BlogEnum.PRIVATE,
+      data: { visibility: BlogEnum.PRIVATE },
     });
   };
 
@@ -1500,13 +1538,13 @@ export function BlogTableRowActions<TData>({
   const archiveBlog = () => {
     return updateBlogMutation.mutateAsync({
       id: blog.id,
-      visibility: BlogEnum.ARCHIVED,
+      data: { visibility: BlogEnum.ARCHIVED },
     });
   };
   const unarchiveBlog = () => {
     return updateBlogMutation.mutateAsync({
       id: blog.id,
-      visibility: BlogEnum.PRIVATE,
+      data: { visibility: BlogEnum.PRIVATE },
     });
   };
 
@@ -1520,7 +1558,8 @@ export function BlogTableRowActions<TData>({
     }
     setEditMetaDialogOpen(open);
   };
-  const { setId: setEditorId, setOpen: setEditorDialogOpen } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
 
   return (
     <DropdownMenu>
@@ -1536,7 +1575,11 @@ export function BlogTableRowActions<TData>({
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem
           onClick={() => {
-            setEditorId(blog.draft);
+            openTab({
+              draftId: blog.draft,
+              title: blog.title,
+              editable: true,
+            });
             setEditorDialogOpen(true);
           }}
         >

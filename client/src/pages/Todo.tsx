@@ -25,6 +25,7 @@ import { ChevronDown, FolderPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
+import { ZERO_UUID } from "@/lib/utils";
 
 export default function Todo() {
   const { language } = useUserContext();
@@ -33,7 +34,7 @@ export default function Todo() {
   const { data: collections } = useCollections();
 
   const [listDropdownOpen, setListDropdownOpen] = useState(false);
-  const [activeListId, setActiveListId] = useState<number>(0);
+  const [activeListId, setActiveListId] = useState<string>(ZERO_UUID);
 
   const [newListName, setNewListName] = useState("");
   const [newListDialogOpen, setNewListDialogOpen] = useState(false);

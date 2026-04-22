@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useWatches, WatchStatus } from "@/hooks/dashboard/use-watchv2";
+import { useWatches } from "@/hooks/dashboard/use-watchv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { WatchingList } from "@/components/dashboard/journey/watching-list";
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import DroppedList from "@/components/dashboard/journey/dropped-watch";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
+import { WatchStatus } from "@/lib/dashboard/model";
 
 function WatchingTab() {
   const isMobile = useIsMobile();

@@ -13,21 +13,22 @@ import {
 } from "@/components/ui/dialog";
 
 import {
-  EchoEnum,
   useCreateQuestionEcho,
   useEchoesOfQuestion,
 } from "@/hooks/dashboard/use-echov2";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getDecadePair } from "@/lib/utils";
+import { getDecadePair, ZERO_UUID } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useTTContext } from "@/components/editor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { createTiptap } from "@/hooks/use-draft";
+import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { PenLine } from "lucide-react";
-import { ContentRender } from "@/components/tiptap-templates/simple/simple-editor";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
+import { EchoEnum } from "@/lib/dashboard/model";
+import { useEditorState } from "@/hooks/use-editor-state";
+import { ContentRender } from "@/components/dashboard/content-render";
 
 export const DecadeRetro = () => {
   const { language } = useUserContext();
@@ -79,14 +80,12 @@ const Years = ({
       setShowLoading(true);
     }
   }, [isPending]);
-  const {
-    id,
-    setId: setEditorId,
-    setOpen: setEditorDialogOpen,
-  } = useTTContext();
+  const { setOpen: setEditorDialogOpen } = useTTContext();
+  const { openTab } = useEditorState();
   const createEchoMutation = useCreateQuestionEcho(questionId, EchoEnum.DECADE);
 
   const [dialogDecadeEnd, setDialogDecadeEnd] = useState(0);
+  const [dialogDraft, setDialogDraft] = useState(ZERO_UUID);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const currDecadeDraft =
@@ -111,7 +110,14 @@ const Years = ({
               draft,
             });
           }
-          setEditorId(draft);
+          openTab({
+            draftId: draft,
+            title:
+              `${currDecadeStart}-${currDecadeEnd}` +
+              " · " +
+              questionIndex.toString(),
+            editable: false,
+          });
           setEditorDialogOpen(true);
         }}
       >
@@ -127,7 +133,7 @@ const Years = ({
             onClick={() => {
               setDialogDecadeEnd(year.year);
               setDialogOpen(true);
-              setEditorId(year.draft);
+              setDialogDraft(year.draft);
             }}
           >
             {`${year.year - 9}-${year.year}`}
@@ -160,6 +166,14 @@ const Years = ({
                       onClick={() => {
                         setEditorDialogOpen(true);
                         setDialogOpen(false);
+                        openTab({
+                          draftId: dialogDraft,
+                          title:
+                            `${currDecadeStart}-${currDecadeEnd}` +
+                            " · " +
+                            questionIndex.toString(),
+                          editable: true,
+                        });
                       }}
                     >
                       <PenLine />
@@ -169,7 +183,7 @@ const Years = ({
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
-          <ContentRender id={id} />
+          <ContentRender id={dialogDraft} />
         </DialogContent>
       </Dialog>
     </div>

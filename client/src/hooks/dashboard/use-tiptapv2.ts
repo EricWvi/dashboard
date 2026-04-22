@@ -1,5 +1,19 @@
 import { dashboardDatabase } from "@/lib/dashboard/db-interface";
 import { type JSONContent } from "@tiptap/react";
+import keys from "./query-keys";
+import { useQuery } from "@tanstack/react-query";
+
+export function useDraft(id: string) {
+  return useQuery({
+    enabled: !!id,
+    queryKey: keys.tiptaps.detail(id),
+    queryFn: async () => {
+      return dashboardDatabase.getTiptap(id);
+    },
+    staleTime: Infinity,
+    placeholderData: (previousData) => previousData,
+  });
+}
 
 const defaultContent = [
   {
