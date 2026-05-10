@@ -19,7 +19,10 @@ import {
   type User,
 } from "@/lib/model";
 import type { IJournalDatabase } from "./db-interface";
-import { onEntryCreate, onEntryDelete, onEntryUpdate } from "./statistics";
+import {
+  createJournalStatisticsStore,
+  type JournalStatisticsStore,
+} from "./statistics";
 
 const USER_KEY = "current_user";
 
@@ -36,10 +39,16 @@ export interface JournalDB {
 // Dexie implementation
 export class DexieJournalDatabase implements IJournalDatabase {
   private db: Dexie & JournalDB;
+  private statistics: JournalStatisticsStore;
 
-  constructor() {
-    this.db = new Dexie("JournalDB") as Dexie & JournalDB;
+  constructor(options?: {
+    dbName?: string;
+    statisticsStore?: JournalStatisticsStore;
+  }) {
+    this.db = new Dexie(options?.dbName ?? "JournalDB") as Dexie & JournalDB;
     this.initSchema();
+    this.statistics =
+      options?.statisticsStore ?? createJournalStatisticsStore(this);
   }
 
   private initSchema() {
@@ -69,8 +78,9 @@ export class DexieJournalDatabase implements IJournalDatabase {
 
   async getEntries(
     page: number,
-    _condition: QueryCondition[],
+    condition: QueryCondition[],
   ): Promise<{ entries: EntryMeta[]; hasMore: boolean }> {
+    void condition;
     const pageSize = 8;
     const offset = (page - 1) * pageSize;
     const rawData = this.db.entries
@@ -110,7 +120,7 @@ export class DexieJournalDatabase implements IJournalDatabase {
       syncStatus: SyncStatus.Pending,
     });
     // Update statistics
-    await onEntryCreate(now, entry.wordCount);
+    await this.statistics.onEntryCreate(now, entry.wordCount);
     return id;
   }
 
@@ -135,7 +145,7 @@ export class DexieJournalDatabase implements IJournalDatabase {
 
     // Update statistics if wordCount changed
     if (updates.wordCount !== undefined && updates.wordCount !== oldWordCount) {
-      await onEntryUpdate(oldWordCount, updates.wordCount);
+      await this.statistics.onEntryUpdate(oldWordCount, updates.wordCount);
     }
   }
 
@@ -153,7 +163,7 @@ export class DexieJournalDatabase implements IJournalDatabase {
         syncStatus: SyncStatus.Pending,
       });
       // Update statistics
-      await onEntryDelete(entry.createdAt, entry.wordCount);
+      await this.statistics.onEntryDelete(entry.createdAt, entry.wordCount);
     }
   }
 

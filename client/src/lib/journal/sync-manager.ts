@@ -12,16 +12,23 @@ export class SyncManager {
   private db: IJournalDatabase;
   private client: ISyncClient;
   private isSyncing = false;
-  private intervalMs: number = 3000;
+  private intervalMs: number;
   private waitMs: number;
   private nextPull: number;
   private syncTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+  private now: () => number;
 
-  constructor(db: IJournalDatabase, client: ISyncClient) {
+  constructor(
+    db: IJournalDatabase,
+    client: ISyncClient,
+    options?: { intervalMs?: number; now?: () => number },
+  ) {
     this.db = db;
     this.client = client;
+    this.intervalMs = options?.intervalMs ?? 3000;
+    this.now = options?.now ?? Date.now;
     this.waitMs = this.intervalMs;
-    this.nextPull = Date.now() + this.intervalMs;
+    this.nextPull = this.now() + this.intervalMs;
   }
 
   async needFullSync(): Promise<boolean> {
@@ -30,7 +37,16 @@ export class SyncManager {
       return true;
     }
     const schemaVersion = await this.db.getSyncMeta("schemaVersion");
-    return schemaVersion!.value !== SchemaVersion;
+    if (!schemaVersion) {
+      return true;
+    }
+    const parsedSchemaVersion =
+      typeof schemaVersion.value === "number"
+        ? schemaVersion.value
+        : parseInt(String(schemaVersion.value), 10);
+    return !Number.isFinite(parsedSchemaVersion)
+      ? true
+      : parsedSchemaVersion !== SchemaVersion;
   }
 
   /**
@@ -181,7 +197,7 @@ export class SyncManager {
    */
   async pullChanges(): Promise<void> {
     try {
-      if (Date.now() < this.nextPull) return;
+      if (this.now() < this.nextPull) return;
 
       const lastVersion = await this.db.getLastServerVersion();
 
@@ -196,7 +212,7 @@ export class SyncManager {
         serverData.statistics.length === 0
       ) {
         this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
-        this.nextPull = Date.now() + this.waitMs;
+        this.nextPull = this.now() + this.waitMs;
         return;
       }
 
@@ -324,7 +340,7 @@ export class SyncManager {
       console.error("Sync failed:", error);
       // Don't throw - we'll retry on next interval
       this.waitMs = Math.min(this.waitMs * 2, SyncManager.MAX_WAIT_MS);
-      this.nextPull = Date.now() + this.waitMs;
+      this.nextPull = this.now() + this.waitMs;
     } finally {
       this.isSyncing = false;
     }
@@ -336,7 +352,7 @@ export class SyncManager {
   startAutoSync(): void {
     this.stopAutoSync();
     this.waitMs = this.intervalMs;
-    this.nextPull = Date.now() + this.intervalMs;
+    this.nextPull = this.now() + this.intervalMs;
     console.log(`Starting auto-sync`);
     this.autoSync();
   }

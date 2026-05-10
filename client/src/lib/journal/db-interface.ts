@@ -18,6 +18,7 @@ import {
   type User,
 } from "@/lib/model";
 import { isTauri } from "@/lib/utils";
+import { setJournalStatisticsDatabase } from "./statistics";
 
 // Database abstraction interface
 export interface IJournalDatabase {
@@ -294,21 +295,27 @@ export class RefreshDecorator implements IJournalDatabase {
   }
 }
 
-// Create base database based on runtime environment
-function createBaseDatabase(): IJournalDatabase {
+export function createBaseJournalDatabase(): IJournalDatabase {
   if (isTauri()) {
     return new SqliteJournalDatabase();
   }
   return new DexieJournalDatabase();
 }
 
-// Export singleton instance
-export const journalDatabase: IJournalDatabase = new RefreshDecorator(
-  createBaseDatabase(),
-  (table, id?: string) => {
-    if (table === "tiptap") {
-      tiptapRefresh(id!);
-    }
-    triggerRefresh(table);
-  },
-);
+export function createJournalDatabase(
+  baseDb: IJournalDatabase = createBaseJournalDatabase(),
+): IJournalDatabase {
+  return new RefreshDecorator(
+    baseDb,
+    (table, id?: string) => {
+      if (table === "tiptap") {
+        tiptapRefresh(id!);
+      }
+      triggerRefresh(table);
+    },
+  );
+}
+
+export const journalDatabase: IJournalDatabase = createJournalDatabase();
+
+setJournalStatisticsDatabase(journalDatabase);

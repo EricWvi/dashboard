@@ -12,14 +12,19 @@ export class SyncManager {
   private db: IFlomoDatabase;
   private client: ISyncClient;
   private isSyncing = false;
-  private intervalMs: number = 3000;
+  private intervalMs: number;
   private waitMs: number;
   private nextPull: number;
   private syncTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
-  constructor(db: IFlomoDatabase, client: ISyncClient) {
+  constructor(
+    db: IFlomoDatabase,
+    client: ISyncClient,
+    options?: { intervalMs?: number },
+  ) {
     this.db = db;
     this.client = client;
+    this.intervalMs = options?.intervalMs ?? 3000;
     this.waitMs = this.intervalMs;
     this.nextPull = Date.now() + this.intervalMs;
   }
@@ -30,7 +35,16 @@ export class SyncManager {
       return true;
     }
     const schemaVersion = await this.db.getSyncMeta("schemaVersion");
-    return schemaVersion!.value !== SchemaVersion;
+    if (!schemaVersion) {
+      return true;
+    }
+    const parsedSchemaVersion =
+      typeof schemaVersion.value === "number"
+        ? schemaVersion.value
+        : parseInt(String(schemaVersion.value), 10);
+    return !Number.isFinite(parsedSchemaVersion)
+      ? true
+      : parsedSchemaVersion !== SchemaVersion;
   }
 
   /**
