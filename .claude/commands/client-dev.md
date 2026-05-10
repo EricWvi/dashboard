@@ -1,1 +1,0 @@
-../../.github/prompts/client-dev.prompt.md
