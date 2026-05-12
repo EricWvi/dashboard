@@ -5,8 +5,38 @@ description = "A Tauri App"
 authors = ["you"]
 license = ""
 repository = ""
-edition = "2021"
-rust-version = "1.77.2"
+edition.workspace = true
+rust-version.workspace = true
+
+[workspace]
+members = ["crates/journal", "crates/sqlite"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+
+[workspace.dependencies]
+app-journal = { path = "crates/journal" }
+app-sqlite = { path = "crates/sqlite" }
+axum = { version = "0.7", features = ["multipart"] }
+log = "0.4"
+r2d2 = "0.8"
+r2d2_sqlite = "0.24"
+reqwest = { version = "0.12", default-features = false, features = ["multipart", "rustls-tls", "json"] }
+rusqlite = { version = "0.31", features = ["bundled", "trace"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-deep-link = "2"
+tauri-plugin-log = "2"
+tauri-plugin-shell = "2"
+thiserror = "1"
+time = "0.3"
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+uuid = { version = "1", features = ["v4"] }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,25 +51,27 @@ dashboard = []
 journal = []
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { workspace = true }
 
 [dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-log = "0.4"
-tauri = { version = "2", features = [] }
-tauri-plugin-log = "2"
-tauri-plugin-deep-link = "2"
-tauri-plugin-shell = "2"
-rusqlite = { version = "0.31", features = ["bundled", "trace"] }
-r2d2 = "0.8"
-r2d2_sqlite = "0.24"
-uuid = { version = "1", features = ["v4"] }
-reqwest = { version = "0.12", default-features = false, features = ["multipart", "rustls-tls", "json"] }
-tokio = { version = "1", features = ["full"] }
-axum = { version = "0.7", features = ["multipart"] }
-tower = "0.5"
-tower-http = { version = "0.5", features = ["fs", "cors"] }
+app-journal = { workspace = true }
+axum = { workspace = true }
+log = { workspace = true }
+r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
+reqwest = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tauri = { workspace = true }
+tauri-plugin-deep-link = { workspace = true }
+tauri-plugin-log = { workspace = true }
+tauri-plugin-shell = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"

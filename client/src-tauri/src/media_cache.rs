@@ -1,14 +1,13 @@
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{params, Result as SqliteResult};
 use axum::{
+    Json, Router,
     extract::{Multipart, Path, Request, State},
-    http::{header, HeaderValue, StatusCode},
-    Json,
+    http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
     routing::{get, post},
-    Router,
 };
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::{Result as SqliteResult, params};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -91,9 +90,7 @@ impl MediaCacheDb {
         Ok(db)
     }
 
-    fn conn(
-        &self,
-    ) -> SqliteResult<r2d2::PooledConnection<SqliteConnectionManager>> {
+    fn conn(&self) -> SqliteResult<r2d2::PooledConnection<SqliteConnectionManager>> {
         self.pool
             .get()
             .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
@@ -101,7 +98,8 @@ impl MediaCacheDb {
 
     fn run_migrations(&self) -> SqliteResult<()> {
         let conn = self.conn()?;
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             CREATE TABLE IF NOT EXISTS media_cache (
                 uuid TEXT PRIMARY KEY,
                 content_type TEXT NOT NULL
@@ -124,8 +122,7 @@ impl MediaCacheDb {
 
     pub fn get_content_type(&self, uuid: &str) -> SqliteResult<Option<String>> {
         let conn = self.conn()?;
-        let mut stmt =
-            conn.prepare("SELECT content_type FROM media_cache WHERE uuid = ?1")?;
+        let mut stmt = conn.prepare("SELECT content_type FROM media_cache WHERE uuid = ?1")?;
         let mut rows = stmt.query_map(params![uuid], |row| row.get::<_, String>(0))?;
         match rows.next() {
             Some(ct) => Ok(Some(ct?)),
@@ -263,8 +260,7 @@ fn write_bytes_atomically(file_path: &PathBuf, bytes: &[u8]) -> Result<(), Strin
     tmp_name.push(".tmp");
     let tmp_path = file_path.with_file_name(tmp_name);
 
-    std::fs::write(&tmp_path, bytes)
-        .map_err(|e| format!("Failed to write tmp file: {}", e))?;
+    std::fs::write(&tmp_path, bytes).map_err(|e| format!("Failed to write tmp file: {}", e))?;
     std::fs::rename(&tmp_path, file_path)
         .map_err(|e| format!("Failed to rename tmp file: {}", e))?;
     Ok(())
@@ -299,8 +295,8 @@ fn parse_oidc_callback_url(
     callback_url: &str,
     expected_state: &str,
 ) -> Result<Option<String>, String> {
-    let parsed = reqwest::Url::parse(callback_url)
-        .map_err(|e| format!("Invalid callback URL: {}", e))?;
+    let parsed =
+        reqwest::Url::parse(callback_url).map_err(|e| format!("Invalid callback URL: {}", e))?;
     let mut code: Option<String> = None;
     let mut state: Option<String> = None;
     let mut error: Option<String> = None;
@@ -337,7 +333,9 @@ fn parse_oidc_callback_url(
 async fn exchange_oidc_code_for_token(code: &str) -> Result<String, String> {
     let auth_url = format!(
         "{}/api/auth?Action=Auth&code={}&redirect_uri={}",
-        backend_url(), code, OIDC_REDIRECT_URI_ENCODED
+        backend_url(),
+        code,
+        OIDC_REDIRECT_URI_ENCODED
     );
     let response = reqwest::Client::new()
         .get(&auth_url)
@@ -421,12 +419,11 @@ fn spawn_upload_media_job(
                 Ok(_) => {
                     let db_clone = db.clone();
                     let uuid_clone = uuid.clone();
-                    if let Err(e) = tokio::task::spawn_blocking(move || {
-                        db_clone.delete_media_job(&uuid_clone)
-                    })
-                    .await
-                    .map_err(|e| format!("Failed to join db task: {}", e))
-                    .and_then(|r| r.map_err(|e| e.to_string()))
+                    if let Err(e) =
+                        tokio::task::spawn_blocking(move || db_clone.delete_media_job(&uuid_clone))
+                            .await
+                            .map_err(|e| format!("Failed to join db task: {}", e))
+                            .and_then(|r| r.map_err(|e| e.to_string()))
                     {
                         eprintln!(
                             "media_cache: uploaded {}, but failed to delete media_job: {}",
@@ -519,22 +516,18 @@ async fn async_download_and_save(
 
     // Write file in blocking task
     let file_path_clone = file_path.clone();
-    tokio::task::spawn_blocking(move || {
-        write_bytes_atomically(&file_path_clone, &bytes)
-    })
-    .await
-    .map_err(|e| format!("Failed to join write task: {}", e))??;
+    tokio::task::spawn_blocking(move || write_bytes_atomically(&file_path_clone, &bytes))
+        .await
+        .map_err(|e| format!("Failed to join write task: {}", e))??;
 
     // Persist content type in blocking task
     let db_clone = db.clone();
     let uuid = uuid.to_string();
     let content_type_clone = content_type.clone();
-    tokio::task::spawn_blocking(move || {
-        db_clone.set_content_type(&uuid, &content_type_clone)
-    })
-    .await
-    .map_err(|e| format!("Failed to join db task: {}", e))?
-    .map_err(|e| format!("Failed to write content type: {}", e))?;
+    tokio::task::spawn_blocking(move || db_clone.set_content_type(&uuid, &content_type_clone))
+        .await
+        .map_err(|e| format!("Failed to join db task: {}", e))?
+        .map_err(|e| format!("Failed to write content type: {}", e))?;
 
     Ok(())
 }
@@ -549,8 +542,11 @@ async fn handle_upload_request(
         let next_field = match multipart.next_field().await {
             Ok(field) => field,
             Err(e) => {
-                return (StatusCode::BAD_REQUEST, format!("Invalid multipart form: {}", e))
-                    .into_response()
+                return (
+                    StatusCode::BAD_REQUEST,
+                    format!("Invalid multipart form: {}", e),
+                )
+                    .into_response();
             }
         };
 
@@ -574,8 +570,11 @@ async fn handle_upload_request(
         let bytes = match field.bytes().await {
             Ok(bytes) => bytes,
             Err(e) => {
-                return (StatusCode::BAD_REQUEST, format!("Failed to read upload bytes: {}", e))
-                    .into_response()
+                return (
+                    StatusCode::BAD_REQUEST,
+                    format!("Failed to read upload bytes: {}", e),
+                )
+                    .into_response();
             }
         };
 
@@ -619,7 +618,11 @@ async fn handle_upload_request(
         return (StatusCode::BAD_REQUEST, "No files found in form data").into_response();
     }
 
-    (StatusCode::OK, Json(serde_json::json!({ "photos": uploaded_ids }))).into_response()
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({ "photos": uploaded_ids })),
+    )
+        .into_response()
 }
 
 /// Spin-wait for a file to appear on disk (200ms × 10 = 2s max).
@@ -638,7 +641,10 @@ async fn handle_media_request(
     request: Request,
 ) -> Response {
     if uuid.len() < 4 {
-        return (StatusCode::BAD_REQUEST, "Invalid path, expected /api/m/{uuid}")
+        return (
+            StatusCode::BAD_REQUEST,
+            "Invalid path, expected /api/m/{uuid}",
+        )
             .into_response();
     }
 
@@ -685,7 +691,10 @@ async fn handle_media_request(
             }
             response.into_response()
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("ServeFile failed: {}", e))
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("ServeFile failed: {}", e),
+        )
             .into_response(),
     }
 }
@@ -742,23 +751,15 @@ static MEDIA_SERVER_PORT: OnceLock<u16> = OnceLock::new();
 static AUTH_TOKEN: OnceLock<AuthToken> = OnceLock::new();
 
 pub fn init_media_cache(app: &tauri::AppHandle) -> Result<(), String> {
-    let external_dir = app
-        .path()
-        .document_dir()
-        .map_err(|e| e.to_string())?;
+    let external_dir = app.path().document_dir().map_err(|e| e.to_string())?;
 
     let objects_dir = external_dir.join("objects");
     std::fs::create_dir_all(&objects_dir).map_err(|e| e.to_string())?;
 
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
     let db_path = app_data_dir.join("media_cache.db");
-    let db = Arc::new(
-        MediaCacheDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?,
-    );
+    let db = Arc::new(MediaCacheDb::new(db_path.to_str().unwrap()).map_err(|e| e.to_string())?);
     AUTH_TOKEN
         .set(AuthToken::new())
         .map_err(|_| "AuthToken already initialized".to_string())?;
@@ -850,13 +851,11 @@ pub async fn onlyquant_is_logged_in(app: tauri::AppHandle) -> Result<(), String>
         }
     });
 
-    app
-        .shell()
+    app.shell()
         .open(auth_url, None)
         .map_err(|e| format!("Failed to open OIDC authorization URL: {}", e))?;
 
-    let code_result =
-        tokio::time::timeout(Duration::from_secs(OIDC_LOGIN_TIMEOUT_SECS), rx).await;
+    let code_result = tokio::time::timeout(Duration::from_secs(OIDC_LOGIN_TIMEOUT_SECS), rx).await;
     app.unlisten(event_id);
 
     let code = code_result
@@ -892,10 +891,7 @@ mod tests {
         let objects_dir = PathBuf::from("/data/objects");
         let uuid = "abcdef1234567890";
         let path = cache_file_path(&objects_dir, uuid);
-        assert_eq!(
-            path,
-            Path::new("/data/objects/ab/cd/abcdef1234567890")
-        );
+        assert_eq!(path, Path::new("/data/objects/ab/cd/abcdef1234567890"));
     }
 
     #[test]
@@ -965,21 +961,17 @@ mod tests {
     #[test]
     fn test_parse_oidc_callback_url() {
         let state = "abc123";
-        let ok = parse_oidc_callback_url(
-            "flomo://oidc/callback?code=test-code&state=abc123",
-            state,
-        )
-        .unwrap();
+        let ok =
+            parse_oidc_callback_url("flomo://oidc/callback?code=test-code&state=abc123", state)
+                .unwrap();
         assert_eq!(ok, Some("test-code".to_string()));
 
         let no_code = parse_oidc_callback_url("flomo://oidc/callback?state=abc123", state).unwrap();
         assert_eq!(no_code, None);
 
-        let err = parse_oidc_callback_url(
-            "flomo://oidc/callback?code=test-code&state=wrong",
-            state,
-        )
-        .unwrap_err();
+        let err =
+            parse_oidc_callback_url("flomo://oidc/callback?code=test-code&state=wrong", state)
+                .unwrap_err();
         assert!(err.contains("Invalid OIDC state"));
     }
 }

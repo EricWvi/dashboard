@@ -91,6 +91,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 name = "app"
 version = "0.1.0"
 dependencies = [
+ "app-journal",
  "axum",
  "log",
  "r2d2",
@@ -105,10 +106,37 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tempfile",
+ "thiserror 1.0.69",
  "tokio",
  "tower",
  "tower-http 0.5.2",
  "uuid",
+]
+
+[[package]]
+name = "app-journal"
+version = "0.1.0"
+dependencies = [
+ "app-sqlite",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "time",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "app-sqlite"
+version = "0.1.0"
+dependencies = [
+ "r2d2",
+ "r2d2_sqlite",
+ "rusqlite",
+ "serde_json",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

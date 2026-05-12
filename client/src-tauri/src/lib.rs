@@ -1,7 +1,7 @@
 #[cfg(feature = "flomo")]
 mod flomo_db;
 #[cfg(feature = "journal")]
-mod journal_db;
+mod journal;
 mod media_cache;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -21,7 +21,7 @@ pub fn run() {
             #[cfg(feature = "flomo")]
             flomo_db::commands::init_db(app.handle())?;
             #[cfg(feature = "journal")]
-            journal_db::commands::init_db(app.handle())?;
+            journal::init(app.handle())?;
             media_cache::init_media_cache(app.handle())?;
             Ok(())
         });
@@ -88,50 +88,50 @@ pub fn run() {
         builder = builder.invoke_handler(tauri::generate_handler![
             media_cache::get_local_media_server_port,
             media_cache::onlyquant_is_logged_in,
-            journal_db::commands::journal_get_user,
-            journal_db::commands::journal_put_user,
-            journal_db::commands::journal_get_entry,
-            journal_db::commands::journal_get_entries,
-            journal_db::commands::journal_add_entry,
-            journal_db::commands::journal_put_entry,
-            journal_db::commands::journal_put_entries,
-            journal_db::commands::journal_update_entry,
-            journal_db::commands::journal_delete_entry,
-            journal_db::commands::journal_soft_delete_entry,
-            journal_db::commands::journal_mark_entry_synced,
-            journal_db::commands::journal_get_tag,
-            journal_db::commands::journal_get_all_tags,
-            journal_db::commands::journal_add_tag,
-            journal_db::commands::journal_put_tag,
-            journal_db::commands::journal_put_tags,
-            journal_db::commands::journal_update_tag,
-            journal_db::commands::journal_delete_tag,
-            journal_db::commands::journal_soft_delete_tag,
-            journal_db::commands::journal_mark_tag_synced,
-            journal_db::commands::journal_get_tiptap,
-            journal_db::commands::journal_add_tiptap,
-            journal_db::commands::journal_put_tiptap,
-            journal_db::commands::journal_put_tiptaps,
-            journal_db::commands::journal_sync_tiptap,
-            journal_db::commands::journal_update_tiptap,
-            journal_db::commands::journal_delete_tiptap,
-            journal_db::commands::journal_soft_delete_tiptap,
-            journal_db::commands::journal_mark_tiptap_synced,
-            journal_db::commands::journal_list_tiptap_history,
-            journal_db::commands::journal_get_tiptap_history,
-            journal_db::commands::journal_restore_tiptap_history,
-            journal_db::commands::journal_get_pending_changes,
-            journal_db::commands::journal_get_local_data_for_sync,
-            journal_db::commands::journal_get_sync_meta,
-            journal_db::commands::journal_set_sync_meta,
-            journal_db::commands::journal_get_last_server_version,
-            journal_db::commands::journal_clear_all_data,
-            journal_db::commands::journal_get_statistic,
-            journal_db::commands::journal_set_statistic,
-            journal_db::commands::journal_put_statistics,
-            journal_db::commands::journal_full_sync,
-            journal_db::commands::journal_push,
-            journal_db::commands::journal_pull,
+            journal::journal_get_user,
+            journal::journal_put_user,
+            journal::journal_get_entry,
+            journal::journal_get_entries,
+            journal::journal_add_entry,
+            journal::journal_put_entry,
+            journal::journal_put_entries,
+            journal::journal_update_entry,
+            journal::journal_delete_entry,
+            journal::journal_soft_delete_entry,
+            journal::journal_mark_entry_synced,
+            journal::journal_get_tag,
+            journal::journal_get_all_tags,
+            journal::journal_add_tag,
+            journal::journal_put_tag,
+            journal::journal_put_tags,
+            journal::journal_update_tag,
+            journal::journal_delete_tag,
+            journal::journal_soft_delete_tag,
+            journal::journal_mark_tag_synced,
+            journal::journal_get_tiptap,
+            journal::journal_add_tiptap,
+            journal::journal_put_tiptap,
+            journal::journal_put_tiptaps,
+            journal::journal_sync_tiptap,
+            journal::journal_update_tiptap,
+            journal::journal_delete_tiptap,
+            journal::journal_soft_delete_tiptap,
+            journal::journal_mark_tiptap_synced,
+            journal::journal_list_tiptap_history,
+            journal::journal_get_tiptap_history,
+            journal::journal_restore_tiptap_history,
+            journal::journal_get_pending_changes,
+            journal::journal_get_local_data_for_sync,
+            journal::journal_get_sync_meta,
+            journal::journal_set_sync_meta,
+            journal::journal_get_last_server_version,
+            journal::journal_clear_all_data,
+            journal::journal_get_statistic,
+            journal::journal_set_statistic,
+            journal::journal_put_statistics,
+            journal::journal_full_sync,
+            journal::journal_push,
+            journal::journal_pull,
         ]);
     }
 
