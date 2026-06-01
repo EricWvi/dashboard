@@ -1,0 +1,23 @@
+[package]
+name = "only-logging"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_logging"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+tracing = { workspace = true }
+tracing-appender = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }
