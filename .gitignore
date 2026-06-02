@@ -5,3 +5,9 @@ client/journal
 client/flomo
 client/src-tauri/gen/
 /dashboard
+
+/target
+packages/contracts/.test-dist/
+/.data
+.tmp
+*.tsbuildinfo

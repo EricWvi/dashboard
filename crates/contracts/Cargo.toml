@@ -1,0 +1,19 @@
+[package]
+name = "only-contracts"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_contracts"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+ts-rs = { workspace = true, features = ["format"] }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+serde_json = { workspace = true }

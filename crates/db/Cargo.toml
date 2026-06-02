@@ -1,0 +1,25 @@
+[package]
+name = "only-db"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_db"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+only-application = { workspace = true }
+only-domain = { workspace = true }
+only-logging = { workspace = true }
+r2d2 = { workspace = true }
+rusqlite = { workspace = true, features = ["bundled"] }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }
+tracing-subscriber = { workspace = true }

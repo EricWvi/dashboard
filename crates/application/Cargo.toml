@@ -1,0 +1,25 @@
+[package]
+name = "only-application"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_application"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+only-contracts = { workspace = true }
+only-domain = { workspace = true }
+only-logging = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tracing-subscriber = { workspace = true }
