@@ -12,7 +12,7 @@ pub struct Watch {
     pub title: String,
     /// Watch progress status string (e.g. "To Watch", "Watching", "Watched").
     pub status: String,
-    /// Release year; `None` when unset (the schema uses 3000 as a sentinel default).
+    /// Release year; `None` when unset (the schema uses 2099 as a sentinel default).
     pub year: Option<i32>,
     /// User rating; `None` when unrated.
     pub rate: Option<i32>,
