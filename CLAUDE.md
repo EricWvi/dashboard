@@ -41,7 +41,7 @@ In the crates folder where the rust code lives:
 ## Tests
 
 - run format: `cargo fmt --all`
-- run full tests: `task test`
+- run full tests (which include testcontainers): `task test`
 
 ### Test assertions
 
