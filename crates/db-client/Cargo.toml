@@ -1,10 +1,10 @@
 [package]
-name = "only-db"
+name = "only-db-client"
 version.workspace = true
 edition.workspace = true
 
 [lib]
-name = "only_db"
+name = "only_db_client"
 path = "src/lib.rs"
 
 [lints]

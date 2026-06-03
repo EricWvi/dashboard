@@ -2,7 +2,6 @@
 members = [
     "crates/application",
     "crates/contracts",
-    "crates/db",
     "crates/domain",
     "crates/logging",
 ]
@@ -16,7 +15,6 @@ edition = "2024"
 # Internal
 only-application = { path = "crates/application" }
 only-contracts = { path = "crates/contracts" }
-only-db = { path = "crates/db" }
 only-domain = { path = "crates/domain" }
 only-logging = { path = "crates/logging" }
 
