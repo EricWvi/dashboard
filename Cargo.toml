@@ -34,6 +34,7 @@ futures = "0.3"
 humantime = "2"
 mime_guess = "2"
 minio = "0.4"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 pretty_assertions = "1"
 r2d2 = "0.8"
 testcontainers = "0.27"

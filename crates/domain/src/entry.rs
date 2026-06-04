@@ -19,6 +19,7 @@ pub struct Entry {
 
 impl Entry {
     /// Creates an entry snapshot together with its persistence-managed audit metadata.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: EntryId,
         creator_id: i32,

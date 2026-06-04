@@ -6,11 +6,11 @@ use only_db_server::{
     SystemTimestampSource, default_migration_catalog,
 };
 use only_infrastructure::MinioObjectStore;
+use only_logging::only_info;
 use only_scheduler::Job;
 use only_scheduler::Scheduler;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use only_logging::only_info;
 
 use crate::app_state::AppState;
 use crate::config::MinioRuntimeConfig;

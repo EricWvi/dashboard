@@ -23,6 +23,7 @@ pub struct Watch {
 
 impl Watch {
     /// Creates a watch entry snapshot together with its persistence-managed audit metadata.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: WatchId,
         creator_id: i32,

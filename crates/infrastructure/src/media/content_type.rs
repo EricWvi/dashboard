@@ -3,7 +3,9 @@
 /// Delegates to `mime_guess`, falling back to `application/octet-stream`
 /// when no mapping is found.
 pub fn from_extension(ext: &str) -> String {
-    mime_guess::from_ext(ext).first_or_octet_stream().to_string()
+    mime_guess::from_ext(ext)
+        .first_or_octet_stream()
+        .to_string()
 }
 
 #[cfg(test)]

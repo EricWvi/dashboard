@@ -20,6 +20,7 @@ pub struct Folder {
 
 impl Folder {
     /// Creates a folder snapshot together with its persistence-managed audit metadata.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: FolderId,
         creator_id: i32,

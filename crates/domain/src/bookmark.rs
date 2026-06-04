@@ -18,6 +18,7 @@ pub struct Bookmark {
 
 impl Bookmark {
     /// Creates a bookmark snapshot together with its persistence-managed audit metadata.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: BookmarkId,
         creator_id: i32,

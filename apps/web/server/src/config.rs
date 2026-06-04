@@ -13,6 +13,7 @@ const DEFAULT_USE_SSL: &str = "true";
 const DEFAULT_PRESIGN_EXPIRY: &str = "160h";
 
 /// Runtime configuration read from environment variables for the MinIO object store.
+#[derive(Debug)]
 pub struct MinioRuntimeConfig {
     pub endpoint: String,
     pub bucket: String,

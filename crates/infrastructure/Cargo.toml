@@ -18,6 +18,9 @@ futures = { workspace = true }
 http = "1"
 mime_guess = { workspace = true }
 minio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["rt"] }

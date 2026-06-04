@@ -19,6 +19,7 @@ pub struct User {
 
 impl User {
     /// Creates a user snapshot together with its persistence-managed sync version.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: UserId,
         email: impl Into<String>,

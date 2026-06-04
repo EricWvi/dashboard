@@ -53,7 +53,8 @@ fn new_media(creator_id: i32, key: &str) -> NewMedia {
         link: None,
         key: key.to_string(),
         presigned_url: Some(format!("https://example.com/{key}")),
-        last_presigned_time: OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc()),
+        last_presigned_time: OffsetDateTime::now_local()
+            .unwrap_or_else(|_| OffsetDateTime::now_utc()),
     }
 }
 
@@ -113,7 +114,8 @@ async fn find_expired_presigns_filters_by_cutoff() {
     let (_container, pool) = bootstrap_test_db().await;
     let repo = PostgresMediaRepository::new(pool);
 
-    let old_time = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc()) - Duration::days(7);
+    let old_time = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc())
+        - Duration::days(7);
     let recent_time = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
 
     let old_media = NewMedia {
@@ -137,7 +139,8 @@ async fn find_expired_presigns_filters_by_cutoff() {
         .await
         .expect("create recent failed");
 
-    let cutoff = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc()) - Duration::days(5);
+    let cutoff = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc())
+        - Duration::days(5);
     let expired = repo
         .find_expired_presigns(cutoff)
         .await
@@ -161,7 +164,8 @@ async fn update_presigned_url_sets_new_url_and_timestamp() {
         .expect("create failed");
 
     let new_url = "https://example.com/refreshed".to_string();
-    let new_time = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc()) + Duration::hours(1);
+    let new_time = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc())
+        + Duration::hours(1);
 
     repo.update_presigned_url(created.id, new_url.clone(), new_time)
         .await

@@ -24,6 +24,7 @@ pub struct Media {
 
 impl Media {
     /// Creates a media record snapshot from persistence-layer fields.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: MediaId,
         creator_id: i32,

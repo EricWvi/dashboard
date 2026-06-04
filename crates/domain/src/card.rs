@@ -23,6 +23,7 @@ pub struct Card {
 
 impl Card {
     /// Creates a card snapshot together with its persistence-managed audit metadata.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: CardId,
         creator_id: i32,

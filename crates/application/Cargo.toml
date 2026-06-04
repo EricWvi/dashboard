@@ -15,6 +15,7 @@ only-domain = { workspace = true }
 only-logging = { workspace = true }
 only-scheduler = { workspace = true }
 bytes = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }

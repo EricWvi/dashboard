@@ -18,6 +18,7 @@ pub struct Echo {
 
 impl Echo {
     /// Creates an echo snapshot together with its persistence-managed audit metadata.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: EchoId,
         creator_id: i32,
