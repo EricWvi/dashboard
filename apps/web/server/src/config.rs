@@ -1,6 +1,18 @@
 use only_infrastructure::MinioConfig;
+use only_logging::LogLevel;
 
 use crate::error::WebBootstrapError;
+
+const DB_HOST_VAR: &str = "DASHBOARD_DB_HOST";
+const DB_PORT_VAR: &str = "DASHBOARD_DB_PORT";
+const DB_NAME_VAR: &str = "DASHBOARD_DB_NAME";
+const DB_USERNAME_VAR: &str = "DASHBOARD_DB_USERNAME";
+const DB_PASSWORD_VAR: &str = "DASHBOARD_DB_PASSWORD";
+
+const DEFAULT_DB_PORT: &str = "5432";
+
+const LOG_LEVEL_VAR: &str = "DASHBOARD_LOG_LEVEL";
+const DEFAULT_LOG_LEVEL: &str = "info";
 
 const ENDPOINT_VAR: &str = "DASHBOARD_MINIO_ENDPOINT";
 const BUCKET_VAR: &str = "DASHBOARD_MINIO_BUCKET";
@@ -103,6 +115,92 @@ fn required_non_empty(
     match read_var(key) {
         Some(v) if !v.trim().is_empty() => Ok(v),
         _ => Err(err),
+    }
+}
+
+/// Runtime configuration for the PostgreSQL database connection.
+#[derive(Debug)]
+pub struct DatabaseRuntimeConfig {
+    host: String,
+    port: u16,
+    name: String,
+    username: String,
+    password: String,
+}
+
+impl DatabaseRuntimeConfig {
+    /// Reads configuration from the process environment.
+    pub fn from_env() -> Result<Self, WebBootstrapError> {
+        Self::from_reader(|key| std::env::var(key).ok())
+    }
+
+    /// Reads configuration from a caller-supplied variable reader, enabling test isolation.
+    pub fn from_reader(
+        mut read_var: impl FnMut(&str) -> Option<String>,
+    ) -> Result<Self, WebBootstrapError> {
+        let host = required_non_empty(
+            &mut read_var,
+            DB_HOST_VAR,
+            WebBootstrapError::DatabaseHostEmpty,
+        )?;
+        let name = required_non_empty(
+            &mut read_var,
+            DB_NAME_VAR,
+            WebBootstrapError::DatabaseNameEmpty,
+        )?;
+        let username = required_non_empty(
+            &mut read_var,
+            DB_USERNAME_VAR,
+            WebBootstrapError::DatabaseUsernameEmpty,
+        )?;
+        let password = required_non_empty(
+            &mut read_var,
+            DB_PASSWORD_VAR,
+            WebBootstrapError::DatabasePasswordEmpty,
+        )?;
+
+        let port_raw = read_var(DB_PORT_VAR).unwrap_or_else(|| DEFAULT_DB_PORT.to_string());
+        let port =
+            port_raw
+                .parse::<u16>()
+                .map_err(|source| WebBootstrapError::DatabasePortInvalid {
+                    value: port_raw.clone(),
+                    source,
+                })?;
+
+        Ok(Self {
+            host,
+            port,
+            name,
+            username,
+            password,
+        })
+    }
+
+    /// Builds a libpq-compatible PostgreSQL connection URL from the configured fields.
+    pub fn connection_string(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/{}",
+            self.username, self.password, self.host, self.port, self.name
+        )
+    }
+}
+
+/// Reads the log level from the process environment.
+pub fn read_log_level() -> Result<LogLevel, WebBootstrapError> {
+    read_log_level_from_reader(|key| std::env::var(key).ok())
+}
+
+fn read_log_level_from_reader(
+    mut read_var: impl FnMut(&str) -> Option<String>,
+) -> Result<LogLevel, WebBootstrapError> {
+    let raw = read_var(LOG_LEVEL_VAR).unwrap_or_else(|| DEFAULT_LOG_LEVEL.to_string());
+    match raw.to_ascii_lowercase().as_str() {
+        "debug" => Ok(LogLevel::Debug),
+        "info" => Ok(LogLevel::Info),
+        "warn" => Ok(LogLevel::Warn),
+        "error" => Ok(LogLevel::Error),
+        _ => Err(WebBootstrapError::LogLevelInvalid { value: raw }),
     }
 }
 

@@ -84,9 +84,13 @@ tasks:
   ###################################################
 
   run:prepare:
-    desc: Ensure the local .data workspace exists
+    desc: Ensure the env file exists
     cmds:
-      - mkdir -p .data
+      - |
+        if [ ! -f .env ]; then
+          echo "Creating .env file from .env.example"
+          cp .env.example .env
+        fi
 
   run:web-frontend:
     desc: Run the web server frontend in development mode
@@ -95,8 +99,6 @@ tasks:
 
   run:web-backend:
     desc: Run the web server backend in development mode
-    env:
-      ONLY_DATA_DIR: .data
     cmds:
       - task: run:prepare
       - cargo run --bin only_web_server

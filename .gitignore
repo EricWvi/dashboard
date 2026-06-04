@@ -11,3 +11,4 @@ packages/contracts/.test-dist/
 /.data
 .tmp
 *.tsbuildinfo
+.env

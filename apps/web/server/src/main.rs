@@ -5,20 +5,23 @@ mod error;
 mod handlers;
 mod routes;
 
-use config::MinioRuntimeConfig;
-use only_logging::only_info;
+use only_logging::{LogOutput, LoggingConfig, init_logging, only_info};
 use tokio_util::sync::CancellationToken;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt::init();
+    // Load .env before reading any environment variables; missing file is not an error.
+    dotenvy::dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL")?;
-    let minio_config = MinioRuntimeConfig::from_env()?;
+    let log_level = config::read_log_level()?;
+    let _logging_guard = init_logging(LoggingConfig::new(log_level, LogOutput::Stdout))?;
+
+    let db_config = config::DatabaseRuntimeConfig::from_env()?;
+    let minio_config = config::MinioRuntimeConfig::from_env()?;
     let cancel = CancellationToken::new();
 
     let (state, _scheduler) =
-        bootstrap::bootstrap(&database_url, minio_config, cancel.clone()).await?;
+        bootstrap::bootstrap(&db_config.connection_string(), minio_config, cancel.clone()).await?;
 
     let router = routes::build_router(state);
 
