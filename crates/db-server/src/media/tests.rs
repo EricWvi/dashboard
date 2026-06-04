@@ -60,6 +60,7 @@ fn new_media(creator_id: i32, key: &str) -> NewMedia {
 
 /// Verifies that a created record can be retrieved by its generated link UUID.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn create_then_find_by_link_returns_equal_media() {
     let _guard = set_trace_logging();
 
@@ -82,6 +83,7 @@ async fn create_then_find_by_link_returns_equal_media() {
 
 /// Verifies that soft-deleting a record causes find_by_link to return None.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn soft_delete_hides_record_from_find_by_link() {
     let _guard = set_trace_logging();
 
@@ -108,6 +110,7 @@ async fn soft_delete_hides_record_from_find_by_link() {
 
 /// Verifies that find_expired_presigns only returns records whose presign time is before the cutoff.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn find_expired_presigns_filters_by_cutoff() {
     let _guard = set_trace_logging();
 
@@ -152,6 +155,7 @@ async fn find_expired_presigns_filters_by_cutoff() {
 
 /// Verifies that update_presigned_url changes both the URL and the refresh timestamp.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn update_presigned_url_sets_new_url_and_timestamp() {
     let _guard = set_trace_logging();
 

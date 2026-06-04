@@ -64,6 +64,7 @@ mod tests {
 
     /// Verifies that upload stores an object at the specified key with the correct byte count.
     #[tokio::test]
+    #[ignore = "requires RUN_TESTCONTAINERS=1"]
     async fn upload_stores_object_with_correct_size() {
         let fixture = start_fixture().await;
         let data = Bytes::from_static(b"hello, minio");
@@ -88,6 +89,7 @@ mod tests {
 
     /// Verifies that delete removes the object so a subsequent stat returns NoSuchKey.
     #[tokio::test]
+    #[ignore = "requires RUN_TESTCONTAINERS=1"]
     async fn delete_removes_object_from_bucket() {
         let fixture = start_fixture().await;
 
@@ -124,6 +126,7 @@ mod tests {
 
     /// Verifies that presign returns a signed URL encoding the object key and an AWS v4 signature.
     #[tokio::test]
+    #[ignore = "requires RUN_TESTCONTAINERS=1"]
     async fn presign_returns_signed_url_for_object() {
         let fixture = start_fixture().await;
 

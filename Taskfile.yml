@@ -66,13 +66,18 @@ tasks:
       - cargo build --workspace
 
   test:
-    desc: Run contract package tests and Rust tests
+    desc: Run contract package tests and Rust tests (set RUN_TESTCONTAINERS=1 to include container tests)
     silent: true
     cmds:
       - task: lint
       - task: export-contracts
       - pnpm --filter @only/contracts test
-      - cargo test --workspace
+      - |
+        if [ "${RUN_TESTCONTAINERS:-0}" = "1" ]; then
+          cargo test --workspace -- --include-ignored
+        else
+          cargo test --workspace
+        fi
 
   ###################################################
   ############# Run Development Servers #############

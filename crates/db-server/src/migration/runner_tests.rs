@@ -63,6 +63,7 @@ async fn applied_versions(location: &DatabaseLocation) -> Vec<String> {
 
 /// Verifies that bootstrapping an empty database applies every migration in catalog order.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn fresh_database_applies_all_migrations() {
     let _guard = set_trace_logging();
 
@@ -82,6 +83,7 @@ async fn fresh_database_applies_all_migrations() {
 
 /// Verifies that running bootstrap twice against an already-migrated database is a no-op.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn reconcile_is_idempotent() {
     let _guard = set_trace_logging();
 
@@ -106,6 +108,7 @@ async fn reconcile_is_idempotent() {
 /// All migration definitions must remain in the catalog so the runner can find their
 /// down-statements even after the target prefix shrinks.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn rollback_removes_trailing_migrations() {
     let _guard = set_trace_logging();
 
@@ -141,6 +144,7 @@ async fn rollback_removes_trailing_migrations() {
 /// Verifies that reconciling against a database whose applied history diverges from the
 /// catalog returns DivergedMigrationHistory at the correct position.
 #[tokio::test]
+#[ignore = "requires RUN_TESTCONTAINERS=1"]
 async fn detects_diverged_migration_history() {
     let _guard = set_trace_logging();
 
