@@ -19,7 +19,7 @@ pub use correlation::{
 pub use error::{FileSystemAction, LoggingInitError};
 pub use guard::LoggingGuard;
 pub use init::init_logging;
-pub use test_support::{with_recorded_trace_logging, with_trace_logging};
+pub use test_support::{set_trace_logging, with_recorded_trace_logging, with_trace_logging};
 
 #[cfg(test)]
 pub(crate) use init::build_dispatch;

@@ -41,8 +41,8 @@ fn rejects_target_versions_that_diverge_from_catalog_prefix() {
         Migration::new("v2.8.0", &[], &[]),
     ];
 
-    let error = MigrationCatalog::with_target_versions(migrations, vec!["v0.1.0", "v2.8.0"])
-        .unwrap_err();
+    let error =
+        MigrationCatalog::with_target_versions(migrations, vec!["v0.1.0", "v2.8.0"]).unwrap_err();
 
     assert_eq!(
         matches!(
@@ -60,7 +60,11 @@ fn rejects_target_versions_that_diverge_from_catalog_prefix() {
 /// Verifies that a migration can be looked up by version string after catalog construction.
 #[test]
 fn catalog_lookup_returns_migration_for_known_version() {
-    let migration = Migration::new("v0.1.0", &["CREATE TABLE foo (id INT);"], &["DROP TABLE foo;"]);
+    let migration = Migration::new(
+        "v0.1.0",
+        &["CREATE TABLE foo (id INT);"],
+        &["DROP TABLE foo;"],
+    );
     let catalog = MigrationCatalog::new(vec![migration.clone()]).unwrap();
 
     assert_eq!(catalog.migration("v0.1.0"), Some(&migration));

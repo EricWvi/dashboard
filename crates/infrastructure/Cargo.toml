@@ -1,10 +1,10 @@
 [package]
-name = "only-db-server"
+name = "only-infrastructure"
 version.workspace = true
 edition.workspace = true
 
 [lib]
-name = "only_db_server"
+name = "only_infrastructure"
 path = "src/lib.rs"
 
 [lints]
@@ -12,17 +12,19 @@ workspace = true
 
 [dependencies]
 only-application = { workspace = true }
-only-domain = { workspace = true }
 only-logging = { workspace = true }
-sqlx = { workspace = true }
+bytes = { workspace = true }
+futures = { workspace = true }
+http = "1"
+mime_guess = { workspace = true }
+minio = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt"] }
 tracing = { workspace = true }
-uuid = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }
 testcontainers = { workspace = true }
 testcontainers-modules = { workspace = true }
-time = { workspace = true }
+tokio = { workspace = true }

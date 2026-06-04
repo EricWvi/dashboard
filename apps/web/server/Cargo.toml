@@ -1,0 +1,33 @@
+[package]
+name = "only-web-server"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "only_web_server"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+only-application = { workspace = true }
+only-db-server = { workspace = true }
+only-infrastructure = { workspace = true }
+only-logging = { workspace = true }
+only-scheduler = { workspace = true }
+axum = { workspace = true }
+bytes = { workspace = true }
+humantime = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

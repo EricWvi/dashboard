@@ -52,7 +52,10 @@ where
         location: &DatabaseLocation,
         catalog: &MigrationCatalog,
     ) -> Result<Database, DatabaseError> {
-        only_info!(message = "opening database pool", operation = "database_open");
+        only_info!(
+            message = "opening database pool",
+            operation = "database_open"
+        );
 
         let pool = match Pool::<Postgres>::connect(location.connection_string()).await {
             Ok(pool) => pool,
@@ -67,7 +70,10 @@ where
             }
         };
 
-        only_info!(message = "opened database pool", operation = "database_open");
+        only_info!(
+            message = "opened database pool",
+            operation = "database_open"
+        );
 
         if let Err(error) =
             migration::reconcile_database(&pool, catalog, &self.timestamp_source).await

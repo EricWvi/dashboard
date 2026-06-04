@@ -96,7 +96,13 @@ where
                     }
                 })?;
 
-            execute_migration(pool, migration, MigrationDirection::Down, /*executed_at=*/ 0).await?;
+            execute_migration(
+                pool,
+                migration,
+                MigrationDirection::Down,
+                /*executed_at=*/ 0,
+            )
+            .await?;
         }
     }
 

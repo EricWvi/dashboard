@@ -1,10 +1,9 @@
+use only_logging::set_trace_logging;
 use pretty_assertions::assert_eq;
 use sqlx::{Pool, Postgres};
 use testcontainers::ImageExt;
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres as PgContainer;
-use tracing_subscriber::filter::LevelFilter;
-use tracing_subscriber::prelude::*;
 
 use crate::{
     DatabaseBootstrapper, DatabaseError, DatabaseLocation, Migration, MigrationCatalog,
@@ -13,7 +12,10 @@ use crate::{
 
 /// Starts a fresh postgres container, enables the extensions required by our migrations,
 /// and returns a handle that keeps the container alive for the duration of the test.
-async fn start_postgres() -> (testcontainers::ContainerAsync<PgContainer>, DatabaseLocation) {
+async fn start_postgres() -> (
+    testcontainers::ContainerAsync<PgContainer>,
+    DatabaseLocation,
+) {
     let container = PgContainer::default()
         .with_tag("17-alpine")
         .start()
@@ -62,8 +64,7 @@ async fn applied_versions(location: &DatabaseLocation) -> Vec<String> {
 /// Verifies that bootstrapping an empty database applies every migration in catalog order.
 #[tokio::test]
 async fn fresh_database_applies_all_migrations() {
-    let subscriber = tracing_subscriber::registry().with(LevelFilter::TRACE);
-    let _guard = tracing::subscriber::set_default(subscriber);
+    let _guard = set_trace_logging();
 
     let (_container, location) = start_postgres().await;
     let catalog = default_migration_catalog().expect("catalog build failed");
@@ -82,8 +83,7 @@ async fn fresh_database_applies_all_migrations() {
 /// Verifies that running bootstrap twice against an already-migrated database is a no-op.
 #[tokio::test]
 async fn reconcile_is_idempotent() {
-    let subscriber = tracing_subscriber::registry().with(LevelFilter::TRACE);
-    let _guard = tracing::subscriber::set_default(subscriber);
+    let _guard = set_trace_logging();
 
     let (_container, location) = start_postgres().await;
     let catalog = default_migration_catalog().expect("catalog build failed");
@@ -107,8 +107,7 @@ async fn reconcile_is_idempotent() {
 /// down-statements even after the target prefix shrinks.
 #[tokio::test]
 async fn rollback_removes_trailing_migrations() {
-    let subscriber = tracing_subscriber::registry().with(LevelFilter::TRACE);
-    let _guard = tracing::subscriber::set_default(subscriber);
+    let _guard = set_trace_logging();
 
     let (_container, location) = start_postgres().await;
     let full_catalog = default_migration_catalog().expect("catalog build failed");
@@ -136,18 +135,14 @@ async fn rollback_removes_trailing_migrations() {
         .await
         .expect("rollback bootstrap failed");
 
-    assert_eq!(
-        applied_versions(&location).await,
-        vec!["v0.1.0", "v2.7.0"]
-    );
+    assert_eq!(applied_versions(&location).await, vec!["v0.1.0", "v2.7.0"]);
 }
 
 /// Verifies that reconciling against a database whose applied history diverges from the
 /// catalog returns DivergedMigrationHistory at the correct position.
 #[tokio::test]
 async fn detects_diverged_migration_history() {
-    let subscriber = tracing_subscriber::registry().with(LevelFilter::TRACE);
-    let _guard = tracing::subscriber::set_default(subscriber);
+    let _guard = set_trace_logging();
 
     let (_container, location) = start_postgres().await;
     let bs = bootstrapper();

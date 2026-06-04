@@ -11,10 +11,12 @@ path = "src/lib.rs"
 workspace = true
 
 [dependencies]
-only-contracts = { workspace = true }
 only-domain = { workspace = true }
 only-logging = { workspace = true }
+only-scheduler = { workspace = true }
+bytes = { workspace = true }
 thiserror = { workspace = true }
+time = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }

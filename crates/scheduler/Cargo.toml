@@ -1,0 +1,21 @@
+[package]
+name = "only-scheduler"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_scheduler"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+only-logging = { workspace = true }
+chrono = { workspace = true }
+cron = { workspace = true }
+futures = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["rt", "time"] }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
