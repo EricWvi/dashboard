@@ -12,11 +12,16 @@ workspace = true
 
 [dependencies]
 only-application = { workspace = true }
+only-contracts = { workspace = true }
 only-db-server = { workspace = true }
+only-domain = { workspace = true }
 only-infrastructure = { workspace = true }
 only-logging = { workspace = true }
 only-scheduler = { workspace = true }
+aes-gcm = { workspace = true }
+sqlx = { workspace = true }
 axum = { workspace = true }
+base64 = { workspace = true }
 bytes = { workspace = true }
 dotenvy = { workspace = true }
 humantime = { workspace = true }

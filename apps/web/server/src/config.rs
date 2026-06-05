@@ -3,6 +3,8 @@ use only_logging::LogLevel;
 
 use crate::error::WebBootstrapError;
 
+pub const ENCRYPT_KEY_VAR: &str = "DASHBOARD_ENCRYPT_KEY";
+
 const DB_HOST_VAR: &str = "DASHBOARD_DB_HOST";
 const DB_PORT_VAR: &str = "DASHBOARD_DB_PORT";
 const DB_NAME_VAR: &str = "DASHBOARD_DB_NAME";

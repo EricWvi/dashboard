@@ -59,4 +59,7 @@ pub enum WebBootstrapError {
 
     #[error("scheduler error: {0}")]
     Scheduler(#[from] only_scheduler::SchedulerError),
+
+    #[error("DASHBOARD_ENCRYPT_KEY is required and must not be empty")]
+    EncryptKeyEmpty,
 }

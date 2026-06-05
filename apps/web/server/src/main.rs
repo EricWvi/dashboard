@@ -3,7 +3,9 @@ mod bootstrap;
 mod config;
 mod error;
 mod handlers;
+mod middleware;
 mod routes;
+mod service;
 
 use only_logging::{LogOutput, LoggingConfig, init_logging, only_info};
 use tokio_util::sync::CancellationToken;
