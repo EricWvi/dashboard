@@ -1,9 +1,14 @@
-use only_infrastructure::MinioConfig;
+use only_infrastructure::{HttpOidcClientConfig, MinioConfig};
 use only_logging::LogLevel;
 
 use crate::error::WebBootstrapError;
 
 pub const ENCRYPT_KEY_VAR: &str = "DASHBOARD_ENCRYPT_KEY";
+
+const OIDC_TOKEN_ENDPOINT_VAR: &str = "DASHBOARD_OIDC_TOKEN_ENDPOINT";
+const OIDC_USERINFO_ENDPOINT_VAR: &str = "DASHBOARD_OIDC_USERINFO_ENDPOINT";
+const OIDC_CLIENT_ID_VAR: &str = "DASHBOARD_OIDC_CLIENT_ID";
+const OIDC_CLIENT_SECRET_VAR: &str = "DASHBOARD_CLIENT_SECRET";
 
 const DB_HOST_VAR: &str = "DASHBOARD_DB_HOST";
 const DB_PORT_VAR: &str = "DASHBOARD_DB_PORT";
@@ -105,6 +110,65 @@ impl MinioRuntimeConfig {
             secret_access_key: self.secret_access_key,
             use_ssl: self.use_ssl,
             presign_expiry: self.presign_expiry,
+        }
+    }
+}
+
+/// Runtime OIDC configuration read from environment variables.
+#[derive(Debug, Clone)]
+pub struct OidcConfig {
+    pub token_endpoint: String,
+    pub userinfo_endpoint: String,
+    pub client_id: String,
+    pub client_secret: String,
+}
+
+impl OidcConfig {
+    /// Reads OIDC configuration from the process environment.
+    pub fn from_env() -> Result<Self, WebBootstrapError> {
+        Self::from_reader(|key| std::env::var(key).ok())
+    }
+
+    /// Reads OIDC configuration from a caller-supplied variable reader, enabling test isolation.
+    pub fn from_reader(
+        mut read_var: impl FnMut(&str) -> Option<String>,
+    ) -> Result<Self, WebBootstrapError> {
+        let token_endpoint = required_non_empty(
+            &mut read_var,
+            OIDC_TOKEN_ENDPOINT_VAR,
+            WebBootstrapError::OidcTokenEndpointEmpty,
+        )?;
+        let userinfo_endpoint = required_non_empty(
+            &mut read_var,
+            OIDC_USERINFO_ENDPOINT_VAR,
+            WebBootstrapError::OidcUserinfoEndpointEmpty,
+        )?;
+        let client_id = required_non_empty(
+            &mut read_var,
+            OIDC_CLIENT_ID_VAR,
+            WebBootstrapError::OidcClientIdEmpty,
+        )?;
+        let client_secret = required_non_empty(
+            &mut read_var,
+            OIDC_CLIENT_SECRET_VAR,
+            WebBootstrapError::OidcClientSecretEmpty,
+        )?;
+
+        Ok(Self {
+            token_endpoint,
+            userinfo_endpoint,
+            client_id,
+            client_secret,
+        })
+    }
+
+    /// Converts this runtime config into the infrastructure-layer `HttpOidcClientConfig`.
+    pub fn into_infra_config(self) -> HttpOidcClientConfig {
+        HttpOidcClientConfig {
+            token_endpoint: self.token_endpoint,
+            userinfo_endpoint: self.userinfo_endpoint,
+            client_id: self.client_id,
+            client_secret: self.client_secret,
         }
     }
 }

@@ -1,10 +1,11 @@
-use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::aead::{Aead, AeadCore, KeyInit};
 use aes_gcm::{Aes256Gcm, Key, Nonce};
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use base64::Engine as _;
+use rand::rngs::OsRng;
 
 use crate::app_state::AppState;
 
@@ -62,6 +63,24 @@ pub async fn auth_middleware(
     next.run(request).await
 }
 
+/// Encrypts `plaintext` with AES-256-GCM and returns a base64-encoded `nonce || ciphertext`
+/// blob compatible with the Go `service.Encrypt` format and readable by `decrypt_token`.
+pub fn encrypt_token(key_bytes: &[u8], plaintext: &str) -> Result<String, EncryptError> {
+    let key = Key::<Aes256Gcm>::from_slice(key_bytes);
+    let cipher = Aes256Gcm::new(key);
+    let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+    let ciphertext = cipher
+        .encrypt(&nonce, plaintext.as_bytes())
+        .map_err(|_| EncryptError)?;
+    let blob: Vec<u8> = nonce
+        .as_slice()
+        .iter()
+        .chain(ciphertext.iter())
+        .copied()
+        .collect();
+    Ok(base64::engine::general_purpose::STANDARD.encode(blob))
+}
+
 /// Decrypts an AES-256-GCM token produced by the Go `service.Encrypt` function.
 ///
 /// The blob is standard-base64-encoded `nonce || ciphertext` where the nonce is 12 bytes.
@@ -89,3 +108,6 @@ fn decrypt_token(key_bytes: &[u8], blob: &str) -> Result<String, DecryptError> {
 
 /// Opaque error for any decryption failure; details are intentionally not leaked to callers.
 struct DecryptError;
+
+/// Opaque error for any encryption failure.
+pub struct EncryptError;

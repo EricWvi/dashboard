@@ -39,6 +39,7 @@ mime_guess = "2"
 minio = "0.4"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 pretty_assertions = "1"
+rand = "0.8"
 r2d2 = "0.8"
 testcontainers = "0.27"
 testcontainers-modules = { version = "0.15", features = ["postgres", "minio"] }

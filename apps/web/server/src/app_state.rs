@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use only_db_server::PostgresMediaRepository;
-use only_infrastructure::MinioObjectStore;
+use only_infrastructure::{HttpOidcClient, MinioObjectStore};
 
 use crate::service::{CollectionApi, UserApi};
 
@@ -12,6 +12,7 @@ pub struct AppState {
     pub media_repository: Arc<PostgresMediaRepository>,
     pub collection_api: Arc<CollectionApi>,
     pub user_api: Arc<UserApi>,
+    pub oidc_client: Arc<HttpOidcClient>,
     /// AES-256-GCM key read from `DASHBOARD_ENCRYPT_KEY`; used by the auth middleware.
     pub encrypt_key: String,
 }
@@ -23,6 +24,7 @@ impl AppState {
         media_repository: Arc<PostgresMediaRepository>,
         collection_api: Arc<CollectionApi>,
         user_api: Arc<UserApi>,
+        oidc_client: Arc<HttpOidcClient>,
         encrypt_key: String,
     ) -> Self {
         Self {
@@ -30,6 +32,7 @@ impl AppState {
             media_repository,
             collection_api,
             user_api,
+            oidc_client,
             encrypt_key,
         }
     }

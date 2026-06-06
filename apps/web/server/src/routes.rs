@@ -2,6 +2,7 @@ use axum::Router;
 use axum::routing::{get, post};
 
 use crate::app_state::AppState;
+use crate::handlers::auth::auth;
 use crate::handlers::collection::{
     create_collection, delete_collection, get_collection, list_all_todos, list_collections,
     list_today_todos, plan_today, update_collection,
@@ -13,7 +14,9 @@ use crate::middleware::auth_middleware;
 ///
 /// Collection and todo routes are protected by the JWT auth middleware.
 pub fn build_router(state: AppState) -> Router {
-    let public_routes = Router::new().route("/api/m/{link}", get(serve_handler));
+    let public_routes = Router::new()
+        .route("/api/m/{link}", get(serve_handler))
+        .route("/api/auth", get(auth));
 
     let protected_routes = Router::new()
         .route("/api/upload", post(upload_handler))

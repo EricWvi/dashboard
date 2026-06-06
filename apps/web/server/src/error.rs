@@ -62,4 +62,16 @@ pub enum WebBootstrapError {
 
     #[error("DASHBOARD_ENCRYPT_KEY is required and must not be empty")]
     EncryptKeyEmpty,
+
+    #[error("DASHBOARD_OIDC_TOKEN_ENDPOINT is required and must not be empty")]
+    OidcTokenEndpointEmpty,
+
+    #[error("DASHBOARD_OIDC_USERINFO_ENDPOINT is required and must not be empty")]
+    OidcUserinfoEndpointEmpty,
+
+    #[error("DASHBOARD_OIDC_CLIENT_ID is required and must not be empty")]
+    OidcClientIdEmpty,
+
+    #[error("DASHBOARD_CLIENT_SECRET is required and must not be empty")]
+    OidcClientSecretEmpty,
 }

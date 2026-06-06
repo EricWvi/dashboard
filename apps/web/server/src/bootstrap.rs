@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use only_application::RePresignExpiredMediaJob;
+use only_infrastructure::HttpOidcClient;
 use only_db_server::{
     Database, DatabaseBootstrapper, DatabaseLocation, PostgresMediaRepository,
     SystemTimestampSource, default_migration_catalog,
@@ -13,7 +14,7 @@ use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
 use crate::app_state::AppState;
-use crate::config::{ENCRYPT_KEY_VAR, MinioRuntimeConfig};
+use crate::config::{ENCRYPT_KEY_VAR, MinioRuntimeConfig, OidcConfig};
 use crate::error::WebBootstrapError;
 use crate::service::{CollectionApi, UserApi};
 
@@ -25,6 +26,7 @@ pub async fn bootstrap(
     cancel: CancellationToken,
 ) -> Result<(AppState, JoinHandle<()>), WebBootstrapError> {
     let encrypt_key = read_encrypt_key()?;
+    let oidc_config = OidcConfig::from_env()?;
     let db = bootstrap_database(database_url).await?;
     let pool = db.into_pool();
 
@@ -44,12 +46,14 @@ pub async fn bootstrap(
 
     let collection_api = Arc::new(CollectionApi::new(pool.clone()));
     let user_api = Arc::new(UserApi::new(pool));
+    let oidc_client = Arc::new(HttpOidcClient::new(oidc_config.into_infra_config()));
 
     let state = AppState::new(
         object_store,
         media_repository,
         collection_api,
         user_api,
+        oidc_client,
         encrypt_key,
     );
 
