@@ -6,32 +6,14 @@ use only_application::{
     DeleteMediaCommand, DeleteMediaHandler, MediaError, ServeMediaCommand, ServeMediaHandler,
     UploadMediaCommand, UploadMediaHandler,
 };
+use only_contracts::{DeleteMediaRequest, DeleteMediaResponse, UploadResponse};
 use only_infrastructure::media::content_type;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use only_logging::only_error;
 
 use crate::app_state::AppState;
 use crate::middleware::AuthenticatedUser;
-
-/// Response body for the upload endpoint.
-#[derive(Serialize)]
-struct UploadResponse {
-    photos: Vec<String>,
-}
-
-/// Request body for the delete endpoint.
-#[derive(Deserialize)]
-pub struct DeleteMediaRequest {
-    ids: Vec<Uuid>,
-}
-
-/// Response body for the delete endpoint.
-#[derive(Serialize)]
-struct DeleteResponse {
-    ids: Vec<Uuid>,
-}
 
 /// `POST /api/upload` — processes a multipart form with `photos[]` files and optional `uuid[]` links.
 ///
@@ -159,7 +141,7 @@ pub async fn delete_handler(
     match handler.handle(cmd).await {
         Ok(result) => (
             StatusCode::OK,
-            Json(DeleteResponse {
+            Json(DeleteMediaResponse {
                 ids: result.deleted,
             }),
         )

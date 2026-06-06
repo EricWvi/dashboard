@@ -12,7 +12,8 @@ workspace = true
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-ts-rs = { workspace = true, features = ["format"] }
+ts-rs = { workspace = true, features = ["format", "uuid-impl"] }
+uuid = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

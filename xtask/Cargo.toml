@@ -1,0 +1,22 @@
+[package]
+name = "only-xtask"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_xtask"
+path = "src/lib.rs"
+
+[[bin]]
+name = "xtask"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+only-contracts = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }

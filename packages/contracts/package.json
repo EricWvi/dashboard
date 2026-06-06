@@ -1,0 +1,16 @@
+{
+  "name": "@only/contracts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./fetch": "./src/fetch.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

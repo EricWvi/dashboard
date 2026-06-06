@@ -3,18 +3,13 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use only_application::CollectionError;
-use only_contracts::{CreateCollectionRequest, PlanTodayRequest, UpdateCollectionRequest};
-use serde::Deserialize;
+use only_contracts::{
+    CollectionPath, CreateCollectionRequest, DeleteCollectionRequest, GetCollectionRequest,
+    PlanTodayRequest, UpdateCollectionRequest,
+};
 
 use crate::app_state::AppState;
 use crate::middleware::AuthenticatedUser;
-
-/// Carries the collection identifier from the URL path segment.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CollectionPath {
-    id: String,
-}
 
 /// Maps a [`CollectionError`] to an HTTP response with an appropriate status code.
 fn collection_error_response(error: CollectionError) -> Response {
@@ -45,9 +40,9 @@ pub async fn create_collection(
 pub async fn get_collection(
     State(state): State<AppState>,
     user: axum::Extension<AuthenticatedUser>,
-    Path(path): Path<CollectionPath>,
+    Path(req): Path<GetCollectionRequest>,
 ) -> Response {
-    match state.collection_api.get(&path.id, user.user_id).await {
+    match state.collection_api.get(&req.id, user.user_id).await {
         Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
         Err(e) => collection_error_response(e),
     }
@@ -85,9 +80,9 @@ pub async fn update_collection(
 pub async fn delete_collection(
     State(state): State<AppState>,
     user: axum::Extension<AuthenticatedUser>,
-    Path(path): Path<CollectionPath>,
+    Path(req): Path<DeleteCollectionRequest>,
 ) -> Response {
-    match state.collection_api.delete(&path.id, user.user_id).await {
+    match state.collection_api.delete(&req.id, user.user_id).await {
         Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
         Err(e) => collection_error_response(e),
     }

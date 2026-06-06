@@ -8,6 +8,7 @@ members = [
     "crates/infrastructure",
     "crates/logging",
     "crates/scheduler",
+    "xtask",
 ]
 resolver = "2"
 
@@ -24,6 +25,7 @@ only-domain = { path = "crates/domain" }
 only-infrastructure = { path = "crates/infrastructure" }
 only-logging = { path = "crates/logging" }
 only-scheduler = { path = "crates/scheduler" }
+only-xtask = { path = "xtask" }
 
 # External
 aes-gcm = "0.10"

@@ -1,24 +1,12 @@
 use only_application::OidcClient;
+use only_contracts::{AuthQuery, AuthResponse};
 use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use serde::{Deserialize, Serialize};
 
 use crate::app_state::AppState;
 use crate::middleware::encrypt_token;
-
-/// Query parameters for the OIDC authorization code callback.
-#[derive(Deserialize)]
-pub struct AuthQuery {
-    pub code: String,
-    pub redirect_uri: String,
-}
-
-#[derive(Serialize)]
-struct AuthResponse {
-    token: String,
-}
 
 /// Handles the OIDC authorization code callback.
 ///
