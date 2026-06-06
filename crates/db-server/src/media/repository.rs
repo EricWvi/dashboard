@@ -39,7 +39,24 @@ impl MediaRepository for PostgresMediaRepository {
         row_to_media(row).map_err(db_error)
     }
 
-    async fn find_by_link(
+    async fn find_by_link(&self, link: &str) -> Result<Option<Media>, MediaRepositoryError> {
+        let row = sqlx::query(
+            r#"
+            SELECT id, creator_id, link::text AS link, key, presigned_url,
+                   last_presigned_time, created_at, updated_at, deleted_at
+            FROM d_media
+            WHERE link = $1::uuid AND deleted_at IS NULL
+            "#,
+        )
+        .bind(link)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(db_error)?;
+
+        row.map(|r| row_to_media(r).map_err(db_error)).transpose()
+    }
+
+    async fn find_by_link_owned(
         &self,
         link: &str,
         creator_id: i32,

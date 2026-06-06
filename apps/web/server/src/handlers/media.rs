@@ -13,6 +13,7 @@ use uuid::Uuid;
 use only_logging::only_error;
 
 use crate::app_state::AppState;
+use crate::middleware::AuthenticatedUser;
 
 /// Response body for the upload endpoint.
 #[derive(Serialize)]
@@ -36,7 +37,11 @@ struct DeleteResponse {
 ///
 /// Content-type is resolved from the filename extension first, falling back to the
 /// multipart part header value to match the Go handler behaviour.
-pub async fn upload_handler(State(state): State<AppState>, mut multipart: Multipart) -> Response {
+pub async fn upload_handler(
+    State(state): State<AppState>,
+    user: axum::Extension<AuthenticatedUser>,
+    mut multipart: Multipart,
+) -> Response {
     let handler = UploadMediaHandler::new(
         std::sync::Arc::clone(&state.object_store),
         std::sync::Arc::clone(&state.media_repository),
@@ -96,8 +101,7 @@ pub async fn upload_handler(State(state): State<AppState>, mut multipart: Multip
         file.3 = uuid_queue.get(i).copied().flatten();
     }
 
-    // Hardcoded creator_id = 1; replace with real auth extraction when auth is wired.
-    let creator_id = 1i32;
+    let creator_id = user.user_id;
 
     let mut links = Vec::with_capacity(files.len());
     for (data, filename, content_type_str, link) in files {
@@ -122,11 +126,8 @@ pub async fn upload_handler(State(state): State<AppState>, mut multipart: Multip
 
 /// `GET /api/m/:link` — redirects to the presigned URL for the media identified by `link`.
 pub async fn serve_handler(State(state): State<AppState>, Path(link): Path<String>) -> Response {
-    // Hardcoded creator_id = 1; replace with real auth extraction when auth is wired.
-    let creator_id = 1i32;
-
     let handler = ServeMediaHandler::new(std::sync::Arc::clone(&state.media_repository));
-    let cmd = ServeMediaCommand { link, creator_id };
+    let cmd = ServeMediaCommand { link };
 
     match handler.handle(cmd).await {
         Ok(url) => axum::response::Redirect::temporary(&url).into_response(),
@@ -141,10 +142,10 @@ pub async fn serve_handler(State(state): State<AppState>, Path(link): Path<Strin
 /// `POST /api/media` — best-effort batch delete; returns the IDs that were successfully removed.
 pub async fn delete_handler(
     State(state): State<AppState>,
+    user: axum::Extension<AuthenticatedUser>,
     Json(body): Json<DeleteMediaRequest>,
 ) -> Response {
-    // Hardcoded creator_id = 1; replace with real auth extraction when auth is wired.
-    let creator_id = 1i32;
+    let creator_id = user.user_id;
 
     let handler = DeleteMediaHandler::new(
         std::sync::Arc::clone(&state.object_store),

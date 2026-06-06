@@ -13,12 +13,11 @@ use crate::middleware::auth_middleware;
 ///
 /// Collection and todo routes are protected by the JWT auth middleware.
 pub fn build_router(state: AppState) -> Router {
-    let media_routes = Router::new()
-        .route("/api/upload", post(upload_handler))
-        .route("/api/m/{link}", get(serve_handler))
-        .route("/api/media", post(delete_handler));
+    let public_routes = Router::new().route("/api/m/{link}", get(serve_handler));
 
     let protected_routes = Router::new()
+        .route("/api/upload", post(upload_handler))
+        .route("/api/media", post(delete_handler))
         .route(
             "/api/collections",
             get(list_collections).post(create_collection),
@@ -37,5 +36,5 @@ pub fn build_router(state: AppState) -> Router {
             auth_middleware,
         ));
 
-    media_routes.merge(protected_routes).with_state(state)
+    public_routes.merge(protected_routes).with_state(state)
 }

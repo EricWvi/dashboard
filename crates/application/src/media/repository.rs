@@ -28,8 +28,14 @@ pub trait MediaRepository: Send + Sync {
         media: &NewMedia,
     ) -> impl Future<Output = Result<Media, MediaRepositoryError>> + Send;
 
-    /// Finds an active (non-deleted) media record by its link UUID and creator.
+    /// Finds an active (non-deleted) media record by its link UUID, regardless of creator.
     fn find_by_link(
+        &self,
+        link: &str,
+    ) -> impl Future<Output = Result<Option<Media>, MediaRepositoryError>> + Send;
+
+    /// Finds an active (non-deleted) media record by its link UUID, scoped to the given creator.
+    fn find_by_link_owned(
         &self,
         link: &str,
         creator_id: i32,
@@ -74,9 +80,16 @@ impl<R: MediaRepository + ?Sized> MediaRepository for std::sync::Arc<R> {
     fn find_by_link(
         &self,
         link: &str,
+    ) -> impl Future<Output = Result<Option<Media>, MediaRepositoryError>> + Send {
+        (**self).find_by_link(link)
+    }
+
+    fn find_by_link_owned(
+        &self,
+        link: &str,
         creator_id: i32,
     ) -> impl Future<Output = Result<Option<Media>, MediaRepositoryError>> + Send {
-        (**self).find_by_link(link, creator_id)
+        (**self).find_by_link_owned(link, creator_id)
     }
 
     fn list_by_creator(

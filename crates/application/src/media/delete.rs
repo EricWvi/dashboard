@@ -56,7 +56,7 @@ impl<O: ObjectStore, R: MediaRepository> DeleteMediaHandler<O, R> {
 
         let media = self
             .repository
-            .find_by_link(&id_str, creator_id)
+            .find_by_link_owned(&id_str, creator_id)
             .await?
             .ok_or(MediaError::NotFound)?;
 

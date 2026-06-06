@@ -73,10 +73,7 @@ async fn create_then_find_by_link_returns_equal_media() {
         .expect("create failed");
 
     let link = created.link.as_deref().expect("link should be set by DB");
-    let found = repo
-        .find_by_link(link, 1)
-        .await
-        .expect("find_by_link failed");
+    let found = repo.find_by_link(link).await.expect("find_by_link failed");
 
     assert_eq!(found, Some(created));
 }
@@ -101,7 +98,7 @@ async fn soft_delete_hides_record_from_find_by_link() {
         .expect("soft_delete failed");
 
     let found = repo
-        .find_by_link(link, 1)
+        .find_by_link(link)
         .await
         .expect("find_by_link after delete failed");
 
@@ -177,7 +174,7 @@ async fn update_presigned_url_sets_new_url_and_timestamp() {
 
     let link = created.link.as_deref().expect("link should be set");
     let updated = repo
-        .find_by_link(link, 1)
+        .find_by_link(link)
         .await
         .expect("find_by_link after update failed")
         .expect("record should still exist");

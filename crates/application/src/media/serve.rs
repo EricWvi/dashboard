@@ -4,7 +4,6 @@ use crate::media::repository::MediaRepository;
 /// Carries the lookup key for a media serve request.
 pub struct ServeMediaCommand {
     pub link: String,
-    pub creator_id: i32,
 }
 
 /// Resolves a media link to its presigned URL for redirect responses.
@@ -25,7 +24,7 @@ impl<R: MediaRepository> ServeMediaHandler<R> {
     pub async fn handle(&self, cmd: ServeMediaCommand) -> Result<String, MediaError> {
         let media = self
             .repository
-            .find_by_link(&cmd.link, cmd.creator_id)
+            .find_by_link(&cmd.link)
             .await?
             .ok_or(MediaError::NotFound)?;
 
