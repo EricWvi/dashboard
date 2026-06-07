@@ -2376,7 +2376,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "only-db-server"
+name = "only-db"
 version = "0.0.0"
 dependencies = [
  "only-application",
@@ -2467,7 +2467,7 @@ dependencies = [
  "humantime",
  "only-application",
  "only-contracts",
- "only-db-server",
+ "only-db",
  "only-domain",
  "only-infrastructure",
  "only-logging",

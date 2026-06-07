@@ -3,7 +3,7 @@ members = [
     "apps/web/server",
     "crates/application",
     "crates/contracts",
-    "crates/db-server",
+    "crates/db",
     "crates/domain",
     "crates/infrastructure",
     "crates/logging",
@@ -20,7 +20,7 @@ edition = "2024"
 # Internal
 only-application = { path = "crates/application" }
 only-contracts = { path = "crates/contracts" }
-only-db-server = { path = "crates/db-server" }
+only-db = { path = "crates/db" }
 only-domain = { path = "crates/domain" }
 only-infrastructure = { path = "crates/infrastructure" }
 only-logging = { path = "crates/logging" }

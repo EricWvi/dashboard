@@ -12,7 +12,7 @@ pub use collection::{
     UpdateCollectionRequest, UpdateCollectionResponse,
 };
 pub use frontend::{
-    FrontendEndpoint, FrontendHttpMethod, FrontendPathParam, COLLECTION_PATH, COLLECTIONS_PATH,
+    COLLECTION_PATH, COLLECTIONS_PATH, FrontendEndpoint, FrontendHttpMethod, FrontendPathParam,
     MEDIA_PATH, TODOS_ALL_PATH, TODOS_PLAN_TODAY_PATH, TODOS_TODAY_PATH, frontend_endpoints,
 };
 pub use media::{DeleteMediaRequest, DeleteMediaResponse, UploadResponse};
@@ -21,7 +21,9 @@ use std::path::Path;
 use ts_rs::{Config, ExportError, TS};
 
 /// Exports every contract DTO family into the shared TypeScript package for frontend consumers.
-pub fn export_typescript_bindings_to(output_directory: impl AsRef<Path>) -> Result<(), ExportError> {
+pub fn export_typescript_bindings_to(
+    output_directory: impl AsRef<Path>,
+) -> Result<(), ExportError> {
     let config = Config::new().with_out_dir(output_directory.as_ref());
 
     AuthQuery::export(&config)?;

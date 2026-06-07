@@ -1,9 +1,9 @@
-use only_application::OidcClient;
-use only_contracts::{AuthQuery, AuthResponse};
 use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use only_application::OidcClient;
+use only_contracts::{AuthQuery, AuthResponse};
 
 use crate::app_state::AppState;
 use crate::middleware::encrypt_token;
@@ -29,7 +29,11 @@ pub async fn auth(State(state): State<AppState>, Query(params): Query<AuthQuery>
         }
     };
 
-    let user_info = match state.oidc_client.get_user_info(&token_resp.access_token).await {
+    let user_info = match state
+        .oidc_client
+        .get_user_info(&token_resp.access_token)
+        .await
+    {
         Ok(u) => u,
         Err(e) => {
             return (

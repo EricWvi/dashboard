@@ -149,9 +149,8 @@ pub fn frontend_endpoints() -> &'static [FrontendEndpoint] {
 #[cfg(test)]
 mod tests {
     use super::{
-        COLLECTION_PATH, COLLECTIONS_PATH, MEDIA_PATH, TODOS_ALL_PATH, TODOS_PLAN_TODAY_PATH,
-        TODOS_TODAY_PATH, FrontendEndpoint, FrontendHttpMethod, FrontendPathParam,
-        frontend_endpoints,
+        COLLECTION_PATH, COLLECTIONS_PATH, FrontendEndpoint, FrontendHttpMethod, FrontendPathParam,
+        MEDIA_PATH, TODOS_ALL_PATH, TODOS_PLAN_TODAY_PATH, TODOS_TODAY_PATH, frontend_endpoints,
     };
     use pretty_assertions::assert_eq;
 

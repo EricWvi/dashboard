@@ -13,7 +13,7 @@ workspace = true
 [dependencies]
 only-application = { workspace = true }
 only-contracts = { workspace = true }
-only-db-server = { workspace = true }
+only-db = { workspace = true }
 only-domain = { workspace = true }
 only-infrastructure = { workspace = true }
 only-logging = { workspace = true }

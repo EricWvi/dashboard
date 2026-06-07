@@ -136,10 +136,18 @@ fn render_endpoints_module(endpoints: &[FrontendEndpoint]) -> String {
         source.push_str(&render_path_params(endpoint.path_params));
         source.push_str(",\n");
         source.push_str("    hasJsonBody: ");
-        source.push_str(if endpoint.has_json_body { "true" } else { "false" });
+        source.push_str(if endpoint.has_json_body {
+            "true"
+        } else {
+            "false"
+        });
         source.push_str(",\n");
         source.push_str("    authenticated: ");
-        source.push_str(if endpoint.authenticated { "true" } else { "false" });
+        source.push_str(if endpoint.authenticated {
+            "true"
+        } else {
+            "false"
+        });
         source.push_str(",\n");
         source.push_str("  },\n");
     }

@@ -1,5 +1,5 @@
 [package]
-name = "only-db-server"
+name = "only-db"
 version.workspace = true
 edition.workspace = true
 

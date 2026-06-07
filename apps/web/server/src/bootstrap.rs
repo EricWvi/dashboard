@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use only_application::RePresignExpiredMediaJob;
-use only_infrastructure::HttpOidcClient;
 use only_db_server::{
     Database, DatabaseBootstrapper, DatabaseLocation, PostgresMediaRepository,
     SystemTimestampSource, default_migration_catalog,
 };
+use only_infrastructure::HttpOidcClient;
 use only_infrastructure::MinioObjectStore;
 use only_logging::only_info;
 use only_scheduler::Job;
