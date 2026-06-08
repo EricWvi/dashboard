@@ -37,6 +37,7 @@ In the crates folder where the rust code lives:
   - When extracting code from a large module, move the related tests and module/type docs toward
     the new implementation so the invariants stay close to the code that owns them.
 - Use local time instead of UTC time.
+- Use only-logging wrapper macros instead of `tracing` macros. 
 
 ## Tests
 
