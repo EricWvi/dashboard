@@ -196,7 +196,7 @@ async fn execute_migration(
     let mut tx = pool.begin().await?;
 
     for statement in statements {
-        sqlx::raw_sql(statement)
+        sqlx::raw_sql(sqlx::AssertSqlSafe(*statement))
             .execute(&mut *tx)
             .await
             .map_err(|source| {
