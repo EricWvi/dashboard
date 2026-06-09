@@ -10,14 +10,12 @@ pub struct HistoryEntryV1 {
 
 /// Wire representation of a Tiptap rich-text document, version 1.
 ///
-/// Both the Android local port and the server map their internal types to/from this struct.
-/// `site` is a numeric code identifying the owning surface (e.g., journal).
+/// Mapped to/from by both the Android local port and the server. Creator identity is
+/// resolved server-side; the owning surface (journal, flomo, etc.) is an app-layer concern
+/// and is not part of the wire format.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TiptapSchemaV1 {
     pub id: String,
-    pub creator_id: i32,
-    /// Numeric code identifying the owning surface. Interpretation is defined by the app layer.
-    pub site: i16,
     pub content: Value,
     pub history: Vec<HistoryEntryV1>,
     pub created_at: i64,

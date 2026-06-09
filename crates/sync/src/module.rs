@@ -5,8 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use only_logging::{only_error, only_info, only_warn};
 
 use crate::error::SyncError;
-use crate::ports::{PushPayload, SyncLocalPort, SyncServerPort};
-use crate::schema::{SchemaName, SUPPORTED_SCHEMAS};
+use crate::ports::{SyncLocalPort, SyncServerPort};
 
 const MAX_WAIT_MS: i64 = 30_000;
 
@@ -65,14 +64,23 @@ pub struct SyncModule<S, L, C = SystemClock> {
     state: Mutex<SyncState>,
 }
 
-impl<S: SyncServerPort, L: SyncLocalPort> SyncModule<S, L, SystemClock> {
+impl<S, L> SyncModule<S, L, SystemClock>
+where
+    L: SyncLocalPort,
+    S: SyncServerPort<L::PushData, L::PullData>,
+{
     /// Creates a sync module with the production system clock and a 3-second base interval.
     pub fn new(server: S, local: L) -> Self {
         Self::with_clock(server, local, SystemClock)
     }
 }
 
-impl<S: SyncServerPort, L: SyncLocalPort, C: Clock> SyncModule<S, L, C> {
+impl<S, L, C> SyncModule<S, L, C>
+where
+    L: SyncLocalPort,
+    S: SyncServerPort<L::PushData, L::PullData>,
+    C: Clock,
+{
     /// Creates a sync module with an injected clock. Intended for tests that need
     /// deterministic time control.
     pub fn with_clock(server: S, local: L, clock: C) -> Self {
@@ -91,10 +99,12 @@ impl<S: SyncServerPort, L: SyncLocalPort, C: Clock> SyncModule<S, L, C> {
         }
     }
 
-    /// Verifies that all schemas in `SUPPORTED_SCHEMAS` are still recognized by the server.
-    /// Called once at Android startup; on `SyncError::SchemaUnsupported` the app should halt.
+    /// Verifies that all schemas returned by `supported_schemas()` are still recognized
+    /// by the server. Called once at Android startup; on `SyncError::SchemaUnsupported`
+    /// the app should halt.
     pub async fn reconcile(&self) -> Result<(), SyncError> {
-        self.server.reconcile(SUPPORTED_SCHEMAS).await
+        let schemas = self.local.supported_schemas();
+        self.server.reconcile(&schemas).await
     }
 
     /// Returns `true` if no prior sync has been performed (`server_version == 0`).
@@ -122,19 +132,13 @@ impl<S: SyncServerPort, L: SyncLocalPort, C: Clock> SyncModule<S, L, C> {
     }
 
     async fn run_full_sync(&self) -> Result<(), SyncError> {
-        let payload = self.server.full_sync(SUPPORTED_SCHEMAS).await?;
+        let schemas = self.local.supported_schemas();
+        let data = self.server.full_sync(&schemas).await?;
         self.local.clear_all_data().await?;
-        self.local.upsert_entries(&payload.entries).await?;
-        self.local.upsert_tags(&payload.tags).await?;
-        self.local.upsert_tiptaps(&payload.tiptaps).await?;
-        self.local.save_server_version(payload.server_version).await?;
-        only_info!(
-            entries = payload.entries.len(),
-            tags = payload.tags.len(),
-            tiptaps = payload.tiptaps.len(),
-            server_version = payload.server_version,
-            "full sync complete"
-        );
+        let version = L::pull_server_version(&data);
+        self.local.apply_pull(data).await?;
+        self.local.save_server_version(version).await?;
+        only_info!(server_version = version, "full sync complete");
         Ok(())
     }
 
@@ -173,63 +177,18 @@ impl<S: SyncServerPort, L: SyncLocalPort, C: Clock> SyncModule<S, L, C> {
     }
 
     async fn run_push(&self) -> Result<PushOutcome, SyncError> {
-        let entries = self.local.pending_entries().await?;
-        let tags = self.local.pending_tags().await?;
-        let tiptaps = self.local.pending_tiptaps().await?;
-
-        let payload = PushPayload { entries, tags, tiptaps };
-        if payload.is_empty() {
+        let data = self.local.pending_push().await?;
+        if L::push_is_empty(&data) {
             return Ok(PushOutcome::NothingToPush);
         }
-
-        // Extract (id, updated_at) pairs before moving payload into the server call.
-        // The pairs are used to mark synced afterwards; extracting here prevents marking
-        // records that were locally modified while the server request was in flight.
-        let entry_pairs: Vec<(String, i64)> = payload
-            .entries
-            .iter()
-            .map(|e| (e.id.clone(), e.updated_at))
-            .collect();
-        let tag_pairs: Vec<(String, i64)> = payload
-            .tags
-            .iter()
-            .map(|t| (t.id.clone(), t.updated_at))
-            .collect();
-        let tiptap_pairs: Vec<(String, i64)> = payload
-            .tiptaps
-            .iter()
-            .map(|t| (t.id.clone(), t.updated_at))
-            .collect();
-
-        let result = self.server.push(SUPPORTED_SCHEMAS, payload).await?;
-
-        for schema in &result.processed_schemas {
-            match schema.name {
-                SchemaName::Entry => {
-                    if let Err(e) = self.local.mark_entries_synced(&entry_pairs).await {
-                        only_warn!(error = %e, "failed to mark entries synced");
-                    }
-                }
-                SchemaName::Tag => {
-                    if let Err(e) = self.local.mark_tags_synced(&tag_pairs).await {
-                        only_warn!(error = %e, "failed to mark tags synced");
-                    }
-                }
-                SchemaName::Tiptap => {
-                    if let Err(e) = self.local.mark_tiptaps_synced(&tiptap_pairs).await {
-                        only_warn!(error = %e, "failed to mark tiptaps synced");
-                    }
-                }
-            }
+        let schemas = self.local.supported_schemas();
+        let result = self.server.push(&schemas, &data).await?;
+        // Mark-synced failures are non-fatal: the server already accepted the records,
+        // so we log a warning rather than treating this as a push failure.
+        if let Err(e) = self.local.apply_push_result(&data, &result).await {
+            only_warn!(error = %e, "failed to mark records synced after push");
         }
-
-        only_info!(
-            entries = entry_pairs.len(),
-            tags = tag_pairs.len(),
-            tiptaps = tiptap_pairs.len(),
-            processed = result.processed_schemas.len(),
-            "push complete"
-        );
+        only_info!(processed = result.processed_schemas.len(), "push complete");
         Ok(PushOutcome::Pushed)
     }
 
@@ -245,30 +204,25 @@ impl<S: SyncServerPort, L: SyncLocalPort, C: Clock> SyncModule<S, L, C> {
         }
 
         let since = self.local.server_version().await?;
-        let payload = self.server.pull(SUPPORTED_SCHEMAS, since).await?;
+        let schemas = self.local.supported_schemas();
+        let data = self.server.pull(&schemas, since).await?;
 
-        if payload.is_empty() {
+        if L::pull_is_empty(&data) {
             self.apply_backoff();
             return Ok(());
         }
 
-        self.local.upsert_entries(&payload.entries).await?;
-        self.local.upsert_tags(&payload.tags).await?;
-        self.local.upsert_tiptaps(&payload.tiptaps).await?;
-        self.local.save_server_version(payload.server_version).await?;
+        let version = L::pull_server_version(&data);
+        self.local.apply_pull(data).await?;
+        self.local.save_server_version(version).await?;
 
         {
-            let mut state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            let mut state =
+                self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
             state.wait_ms = self.base_interval_ms;
         }
 
-        only_info!(
-            entries = payload.entries.len(),
-            tags = payload.tags.len(),
-            tiptaps = payload.tiptaps.len(),
-            server_version = payload.server_version,
-            "pull complete"
-        );
+        only_info!(server_version = version, "pull complete");
         Ok(())
     }
 
@@ -304,7 +258,8 @@ impl<S: SyncServerPort, L: SyncLocalPort, C: Clock> SyncModule<S, L, C> {
     /// Resets backoff and allows pull to run immediately. Test-only.
     #[cfg(test)]
     pub(crate) fn reset_backoff_for_test(&self) {
-        let mut state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut state =
+            self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         state.wait_ms = self.base_interval_ms;
         state.next_pull_ms = 0;
     }
@@ -324,10 +279,8 @@ mod tests {
 
     use super::*;
     use crate::error::SyncError;
-    use crate::ports::{PushPayload, PushResult, SyncLocalPort, SyncPayload, SyncServerPort};
-    use crate::schema::{
-        EntrySchemaV1, SchemaDescriptor, SchemaName, TagSchemaV1, TiptapSchemaV1, SUPPORTED_SCHEMAS,
-    };
+    use crate::ports::{PushResult, SyncLocalPort, SyncServerPort};
+    use only_sync_schema::{EntrySchemaV1, SchemaDescriptor, TagSchemaV1, TiptapSchemaV1};
 
     // ─── mock clock ─────────────────────────────────────────────────────────────
 
@@ -348,26 +301,45 @@ mod tests {
         }
     }
 
+    // ─── test-internal payload types ─────────────────────────────────────────────
+
+    /// Push payload used by tests. Apps define their own equivalent types.
+    #[derive(Debug, Clone, Default)]
+    struct MockPushData {
+        entries: Vec<EntrySchemaV1>,
+        tags: Vec<TagSchemaV1>,
+        tiptaps: Vec<TiptapSchemaV1>,
+    }
+
+    /// Pull payload used by tests. Apps define their own equivalent types.
+    #[derive(Debug, Clone, Default)]
+    struct MockPullData {
+        server_version: i64,
+        entries: Vec<EntrySchemaV1>,
+        tags: Vec<TagSchemaV1>,
+        tiptaps: Vec<TiptapSchemaV1>,
+    }
+
     // ─── mock server ─────────────────────────────────────────────────────────────
 
     #[derive(Default)]
     struct MockServer {
         reconcile_q: Mutex<VecDeque<Result<(), SyncError>>>,
-        full_sync_q: Mutex<VecDeque<Result<SyncPayload, SyncError>>>,
-        pull_q: Mutex<VecDeque<Result<SyncPayload, SyncError>>>,
+        full_sync_q: Mutex<VecDeque<Result<MockPullData, SyncError>>>,
+        pull_q: Mutex<VecDeque<Result<MockPullData, SyncError>>>,
         push_q: Mutex<VecDeque<Result<PushResult, SyncError>>>,
         pull_since_log: Mutex<Vec<i64>>,
-        push_call_log: Mutex<Vec<PushPayload>>,
+        push_call_log: Mutex<Vec<MockPushData>>,
     }
 
     impl MockServer {
         fn enqueue_reconcile(&self, r: Result<(), SyncError>) {
             self.reconcile_q.lock().unwrap().push_back(r);
         }
-        fn enqueue_full_sync(&self, r: Result<SyncPayload, SyncError>) {
+        fn enqueue_full_sync(&self, r: Result<MockPullData, SyncError>) {
             self.full_sync_q.lock().unwrap().push_back(r);
         }
-        fn enqueue_pull(&self, r: Result<SyncPayload, SyncError>) {
+        fn enqueue_pull(&self, r: Result<MockPullData, SyncError>) {
             self.pull_q.lock().unwrap().push_back(r);
         }
         fn enqueue_push(&self, r: Result<PushResult, SyncError>) {
@@ -376,7 +348,7 @@ mod tests {
         fn pull_since_calls(&self) -> Vec<i64> {
             self.pull_since_log.lock().unwrap().clone()
         }
-        fn push_calls(&self) -> Vec<PushPayload> {
+        fn push_calls(&self) -> Vec<MockPushData> {
             self.push_call_log.lock().unwrap().clone()
         }
         fn push_call_count(&self) -> usize {
@@ -384,30 +356,25 @@ mod tests {
         }
     }
 
-    impl SyncServerPort for MockServer {
+    impl SyncServerPort<MockPushData, MockPullData> for MockServer {
         fn reconcile(
             &self,
             _schemas: &[SchemaDescriptor],
         ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            let result = self
-                .reconcile_q
-                .lock()
-                .unwrap()
-                .pop_front()
-                .unwrap_or(Ok(()));
+            let result = self.reconcile_q.lock().unwrap().pop_front().unwrap_or(Ok(()));
             async move { result }
         }
 
         fn full_sync(
             &self,
             _schemas: &[SchemaDescriptor],
-        ) -> impl Future<Output = Result<SyncPayload, SyncError>> + Send {
+        ) -> impl Future<Output = Result<MockPullData, SyncError>> + Send {
             let result = self
                 .full_sync_q
                 .lock()
                 .unwrap()
                 .pop_front()
-                .unwrap_or_else(|| Ok(SyncPayload::default()));
+                .unwrap_or_else(|| Ok(MockPullData::default()));
             async move { result }
         }
 
@@ -415,23 +382,23 @@ mod tests {
             &self,
             _schemas: &[SchemaDescriptor],
             since: i64,
-        ) -> impl Future<Output = Result<SyncPayload, SyncError>> + Send {
+        ) -> impl Future<Output = Result<MockPullData, SyncError>> + Send {
             self.pull_since_log.lock().unwrap().push(since);
             let result = self
                 .pull_q
                 .lock()
                 .unwrap()
                 .pop_front()
-                .unwrap_or_else(|| Ok(SyncPayload::default()));
+                .unwrap_or_else(|| Ok(MockPullData::default()));
             async move { result }
         }
 
         fn push(
             &self,
             _schemas: &[SchemaDescriptor],
-            changes: PushPayload,
+            data: &MockPushData,
         ) -> impl Future<Output = Result<PushResult, SyncError>> + Send {
-            self.push_call_log.lock().unwrap().push(changes);
+            self.push_call_log.lock().unwrap().push(data.clone());
             let result = self
                 .push_q
                 .lock()
@@ -452,14 +419,14 @@ mod tests {
         pending_tags: Mutex<Vec<TagSchemaV1>>,
         pending_tiptaps: Mutex<Vec<TiptapSchemaV1>>,
         upserted_entries: Mutex<Vec<EntrySchemaV1>>,
-        upserted_tags: Mutex<Vec<TagSchemaV1>>,
+        pub upserted_tags: Mutex<Vec<TagSchemaV1>>,
         upserted_tiptaps: Mutex<Vec<TiptapSchemaV1>>,
         marked_entries: Mutex<Vec<(String, i64)>>,
         marked_tags: Mutex<Vec<(String, i64)>>,
         marked_tiptaps: Mutex<Vec<(String, i64)>>,
         cleared_count: Mutex<usize>,
-        // Error injection: if set, the named method returns this error once.
-        upsert_entries_error: Mutex<Option<SyncError>>,
+        // Injects a storage failure into the next `apply_pull` call when set.
+        apply_pull_error: Mutex<Option<SyncError>>,
     }
 
     impl MockLocal {
@@ -478,7 +445,7 @@ mod tests {
             *self.pending_tiptaps.lock().unwrap() = tiptaps;
         }
         fn inject_upsert_entries_error(&self, e: SyncError) {
-            *self.upsert_entries_error.lock().unwrap() = Some(e);
+            *self.apply_pull_error.lock().unwrap() = Some(e);
         }
         fn cleared_count(&self) -> usize {
             *self.cleared_count.lock().unwrap()
@@ -501,93 +468,86 @@ mod tests {
     }
 
     impl SyncLocalPort for MockLocal {
+        type PushData = MockPushData;
+        type PullData = MockPullData;
+
+        fn supported_schemas(&self) -> Vec<SchemaDescriptor> {
+            vec![
+                SchemaDescriptor::new("entry", 1),
+                SchemaDescriptor::new("tag", 1),
+                SchemaDescriptor::new("tiptap", 1),
+            ]
+        }
+
+        fn push_is_empty(data: &MockPushData) -> bool {
+            data.entries.is_empty() && data.tags.is_empty() && data.tiptaps.is_empty()
+        }
+
+        fn pull_is_empty(data: &MockPullData) -> bool {
+            data.entries.is_empty() && data.tags.is_empty() && data.tiptaps.is_empty()
+        }
+
+        fn pull_server_version(data: &MockPullData) -> i64 {
+            data.server_version
+        }
+
+        fn pending_push(&self) -> impl Future<Output = Result<MockPushData, SyncError>> + Send {
+            let entries = self.pending_entries.lock().unwrap().clone();
+            let tags = self.pending_tags.lock().unwrap().clone();
+            let tiptaps = self.pending_tiptaps.lock().unwrap().clone();
+            async move { Ok(MockPushData { entries, tags, tiptaps }) }
+        }
+
+        fn apply_push_result(
+            &self,
+            data: &MockPushData,
+            result: &PushResult,
+        ) -> impl Future<Output = Result<(), SyncError>> + Send {
+            for schema in &result.processed_schemas {
+                match schema.name.as_str() {
+                    "entry" => {
+                        let pairs: Vec<_> =
+                            data.entries.iter().map(|e| (e.id.clone(), e.updated_at)).collect();
+                        self.marked_entries.lock().unwrap().extend(pairs);
+                    }
+                    "tag" => {
+                        let pairs: Vec<_> =
+                            data.tags.iter().map(|t| (t.id.clone(), t.updated_at)).collect();
+                        self.marked_tags.lock().unwrap().extend(pairs);
+                    }
+                    "tiptap" => {
+                        let pairs: Vec<_> =
+                            data.tiptaps.iter().map(|t| (t.id.clone(), t.updated_at)).collect();
+                        self.marked_tiptaps.lock().unwrap().extend(pairs);
+                    }
+                    _ => {}
+                }
+            }
+            async { Ok(()) }
+        }
+
+        fn apply_pull(
+            &self,
+            data: MockPullData,
+        ) -> impl Future<Output = Result<(), SyncError>> + Send {
+            let err = self.apply_pull_error.lock().unwrap().take();
+            if let Some(e) = err {
+                return Pin::from(
+                    Box::new(async move { Err(e) })
+                        as Box<dyn Future<Output = Result<(), SyncError>> + Send>,
+                );
+            }
+            self.upserted_entries.lock().unwrap().extend(data.entries);
+            self.upserted_tags.lock().unwrap().extend(data.tags);
+            self.upserted_tiptaps.lock().unwrap().extend(data.tiptaps);
+            Pin::from(
+                Box::new(async { Ok(()) })
+                    as Box<dyn Future<Output = Result<(), SyncError>> + Send>,
+            )
+        }
+
         fn clear_all_data(&self) -> impl Future<Output = Result<(), SyncError>> + Send {
             *self.cleared_count.lock().unwrap() += 1;
-            async { Ok(()) }
-        }
-
-        fn pending_entries(
-            &self,
-        ) -> impl Future<Output = Result<Vec<EntrySchemaV1>, SyncError>> + Send {
-            let v = self.pending_entries.lock().unwrap().clone();
-            async move { Ok(v) }
-        }
-
-        fn pending_tags(&self) -> impl Future<Output = Result<Vec<TagSchemaV1>, SyncError>> + Send {
-            let v = self.pending_tags.lock().unwrap().clone();
-            async move { Ok(v) }
-        }
-
-        fn pending_tiptaps(
-            &self,
-        ) -> impl Future<Output = Result<Vec<TiptapSchemaV1>, SyncError>> + Send {
-            let v = self.pending_tiptaps.lock().unwrap().clone();
-            async move { Ok(v) }
-        }
-
-        fn mark_entries_synced(
-            &self,
-            records: &[(String, i64)],
-        ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            self.marked_entries
-                .lock()
-                .unwrap()
-                .extend_from_slice(records);
-            async { Ok(()) }
-        }
-
-        fn mark_tags_synced(
-            &self,
-            records: &[(String, i64)],
-        ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            self.marked_tags.lock().unwrap().extend_from_slice(records);
-            async { Ok(()) }
-        }
-
-        fn mark_tiptaps_synced(
-            &self,
-            records: &[(String, i64)],
-        ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            self.marked_tiptaps
-                .lock()
-                .unwrap()
-                .extend_from_slice(records);
-            async { Ok(()) }
-        }
-
-        fn upsert_entries(
-            &self,
-            rows: &[EntrySchemaV1],
-        ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            let err = self.upsert_entries_error.lock().unwrap().take();
-            if let Some(e) = err {
-                return Pin::from(Box::new(async move { Err(e) })
-                    as Box<dyn Future<Output = Result<(), SyncError>> + Send>);
-            }
-            self.upserted_entries
-                .lock()
-                .unwrap()
-                .extend_from_slice(rows);
-            Pin::from(Box::new(async { Ok(()) })
-                as Box<dyn Future<Output = Result<(), SyncError>> + Send>)
-        }
-
-        fn upsert_tags(
-            &self,
-            rows: &[TagSchemaV1],
-        ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            self.upserted_tags.lock().unwrap().extend_from_slice(rows);
-            async { Ok(()) }
-        }
-
-        fn upsert_tiptaps(
-            &self,
-            rows: &[TiptapSchemaV1],
-        ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            self.upserted_tiptaps
-                .lock()
-                .unwrap()
-                .extend_from_slice(rows);
             async { Ok(()) }
         }
 
@@ -610,14 +570,17 @@ mod tests {
 
     fn all_processed() -> PushResult {
         PushResult {
-            processed_schemas: SUPPORTED_SCHEMAS.to_vec(),
+            processed_schemas: vec![
+                SchemaDescriptor::new("entry", 1),
+                SchemaDescriptor::new("tag", 1),
+                SchemaDescriptor::new("tiptap", 1),
+            ],
         }
     }
 
     fn entry(id: &str, updated_at: i64) -> EntrySchemaV1 {
         EntrySchemaV1 {
             id: id.to_string(),
-            creator_id: 1,
             draft: None,
             payload: serde_json::Value::Null,
             word_count: 0,
@@ -634,7 +597,6 @@ mod tests {
     fn tag(id: &str, updated_at: i64) -> TagSchemaV1 {
         TagSchemaV1 {
             id: id.to_string(),
-            creator_id: 1,
             name: "t".to_string(),
             group: "g".to_string(),
             created_at: 0,
@@ -647,8 +609,6 @@ mod tests {
     fn tiptap(id: &str, updated_at: i64) -> TiptapSchemaV1 {
         TiptapSchemaV1 {
             id: id.to_string(),
-            creator_id: 1,
-            site: 1,
             content: serde_json::Value::Null,
             history: vec![],
             created_at: 0,
@@ -680,18 +640,13 @@ mod tests {
     #[tokio::test]
     async fn rc_02_one_schema_unsupported() {
         let m = new_module();
-        let unsupported = vec![SchemaDescriptor {
-            name: SchemaName::Entry,
-            version: 1,
-        }];
+        let unsupported = vec![SchemaDescriptor::new("entry", 1)];
         m.server.enqueue_reconcile(Err(SyncError::SchemaUnsupported {
             schemas: unsupported.clone(),
         }));
         assert_eq!(
             m.reconcile().await,
-            Err(SyncError::SchemaUnsupported {
-                schemas: unsupported
-            })
+            Err(SyncError::SchemaUnsupported { schemas: unsupported })
         );
     }
 
@@ -700,23 +655,15 @@ mod tests {
     async fn rc_03_multiple_schemas_unsupported() {
         let m = new_module();
         let unsupported = vec![
-            SchemaDescriptor {
-                name: SchemaName::Entry,
-                version: 1,
-            },
-            SchemaDescriptor {
-                name: SchemaName::Tag,
-                version: 1,
-            },
+            SchemaDescriptor::new("entry", 1),
+            SchemaDescriptor::new("tag", 1),
         ];
         m.server.enqueue_reconcile(Err(SyncError::SchemaUnsupported {
             schemas: unsupported.clone(),
         }));
         assert_eq!(
             m.reconcile().await,
-            Err(SyncError::SchemaUnsupported {
-                schemas: unsupported
-            })
+            Err(SyncError::SchemaUnsupported { schemas: unsupported })
         );
     }
 
@@ -752,7 +699,7 @@ mod tests {
     #[tokio::test]
     async fn fs_01_server_returns_data() {
         let m = new_module();
-        m.server.enqueue_full_sync(Ok(SyncPayload {
+        m.server.enqueue_full_sync(Ok(MockPullData {
             server_version: 99,
             entries: vec![entry("e1", 10)],
             tags: vec![tag("t1", 20)],
@@ -769,9 +716,9 @@ mod tests {
     #[tokio::test]
     async fn fs_02_empty_dataset() {
         let m = new_module();
-        m.server.enqueue_full_sync(Ok(SyncPayload {
+        m.server.enqueue_full_sync(Ok(MockPullData {
             server_version: 5,
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         assert_eq!(m.full_sync().await, Ok(SyncOutcome::Completed));
@@ -788,17 +735,17 @@ mod tests {
         assert_eq!(m.local.cleared_count(), 0);
     }
 
-    /// FS-04: server returns is_deleted=true records → upsert_* called with those records
+    /// FS-04: server returns is_deleted=true records → apply_pull called with those records
     /// (the port implementation applies LWW + deletion logic internally).
     #[tokio::test]
     async fn fs_04_deleted_records_forwarded_to_port() {
         let m = new_module();
         let mut deleted_entry = entry("e1", 10);
         deleted_entry.is_deleted = true;
-        m.server.enqueue_full_sync(Ok(SyncPayload {
+        m.server.enqueue_full_sync(Ok(MockPullData {
             server_version: 1,
             entries: vec![deleted_entry.clone()],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         assert_eq!(m.full_sync().await, Ok(SyncOutcome::Completed));
@@ -806,18 +753,16 @@ mod tests {
         assert_eq!(m.local.upserted_entries(), vec![deleted_entry]);
     }
 
-    /// FS-05: network failure after clear → local storage empty, error propagated.
+    /// FS-05: storage failure during apply_pull → error propagated.
     #[tokio::test]
     async fn fs_05_network_failure_after_data_fetched() {
         let m = new_module();
-        // Server fetch succeeds but upsert_entries fails (simulates partial failure).
-        m.server.enqueue_full_sync(Ok(SyncPayload {
+        m.server.enqueue_full_sync(Ok(MockPullData {
             server_version: 1,
             entries: vec![entry("e1", 10)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
-        m.local
-            .inject_upsert_entries_error(SyncError::Local("disk full".to_string()));
+        m.local.inject_upsert_entries_error(SyncError::Local("disk full".to_string()));
 
         let result = m.full_sync().await;
         assert!(result.is_err());
@@ -828,9 +773,9 @@ mod tests {
     async fn fs_06_lower_server_version_persisted() {
         let local = MockLocal::with_server_version(100);
         let m = SyncModule::with_clock(MockServer::default(), local, MockClock::at(0));
-        m.server.enqueue_full_sync(Ok(SyncPayload {
+        m.server.enqueue_full_sync(Ok(MockPullData {
             server_version: 1,
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         assert_eq!(m.full_sync().await, Ok(SyncOutcome::Completed));
@@ -843,7 +788,7 @@ mod tests {
     #[tokio::test]
     async fn pu_01_no_pending_records() {
         let m = new_module();
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
         m.sync().await;
         assert_eq!(m.server.push_call_count(), 0);
     }
@@ -856,7 +801,7 @@ mod tests {
         m.local.set_pending_tags(vec![tag("t1", 20)]);
         m.local.set_pending_tiptaps(vec![tiptap("tp1", 30)]);
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -874,7 +819,7 @@ mod tests {
         m.local.set_pending_entries(vec![entry("e1", 10)]);
         // tags and tiptaps remain empty
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -893,17 +838,11 @@ mod tests {
         m.local.set_pending_tags(vec![tag("t1", 200)]);
         m.server.enqueue_push(Ok(PushResult {
             processed_schemas: vec![
-                SchemaDescriptor {
-                    name: SchemaName::Entry,
-                    version: 1,
-                },
-                SchemaDescriptor {
-                    name: SchemaName::Tag,
-                    version: 1,
-                },
+                SchemaDescriptor::new("entry", 1),
+                SchemaDescriptor::new("tag", 1),
             ],
         }));
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -920,12 +859,9 @@ mod tests {
         m.local.set_pending_tiptaps(vec![tiptap("tp1", 20)]);
         // Server only confirms Entry; Tiptap is skipped (no longer supported).
         m.server.enqueue_push(Ok(PushResult {
-            processed_schemas: vec![SchemaDescriptor {
-                name: SchemaName::Entry,
-                version: 1,
-            }],
+            processed_schemas: vec![SchemaDescriptor::new("entry", 1)],
         }));
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -940,7 +876,7 @@ mod tests {
         let m = new_module();
         m.local.set_pending_entries(vec![entry("e1", 555)]);
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -978,10 +914,10 @@ mod tests {
         // Now push succeeds → backoff resets; pull also returns data so wait_ms stays at base.
         m.local.set_pending_entries(vec![entry("e1", 10)]);
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 1,
             entries: vec![entry("e2", 5)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
         m.sync().await;
 
@@ -995,10 +931,10 @@ mod tests {
     async fn pl_01_new_records_applied() {
         let m = new_module();
         m.reset_backoff_for_test();
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 7,
             entries: vec![entry("e1", 10)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         m.sync().await;
@@ -1014,19 +950,16 @@ mod tests {
         m.reset_backoff_for_test();
         let remote_newer = entry("e1", 200);
         let remote_older = entry("e2", 5);
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 10,
             entries: vec![remote_newer.clone(), remote_older.clone()],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         m.sync().await;
 
         // Module passes both records to the port; port decides which to keep.
-        assert_eq!(
-            m.local.upserted_entries(),
-            vec![remote_newer, remote_older]
-        );
+        assert_eq!(m.local.upserted_entries(), vec![remote_newer, remote_older]);
     }
 
     /// PL-04: is_deleted records are forwarded to the port (port owns physical deletion).
@@ -1036,10 +969,10 @@ mod tests {
         m.reset_backoff_for_test();
         let mut deleted = entry("e1", 10);
         deleted.is_deleted = true;
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 2,
             entries: vec![deleted.clone()],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         m.sync().await;
@@ -1052,7 +985,7 @@ mod tests {
     async fn pl_05_empty_response_triggers_backoff() {
         let m = new_module();
         m.reset_backoff_for_test();
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -1095,22 +1028,17 @@ mod tests {
         let m = new_module();
         m.reset_backoff_for_test();
         // Server only returns entries; tags and tiptaps are absent.
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 3,
             entries: vec![entry("e1", 10)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         m.sync().await;
 
         assert_eq!(m.local.saved_versions(), vec![3]);
         assert_eq!(m.local.upserted_entries(), vec![entry("e1", 10)]);
-        assert!(m
-            .local
-            .upserted_tags
-            .lock()
-            .unwrap()
-            .is_empty());
+        assert!(m.local.upserted_tags.lock().unwrap().is_empty());
     }
 
     /// PL-09: record does not exist locally → inserted as synced (handled by port's upsert).
@@ -1118,10 +1046,10 @@ mod tests {
     async fn pl_09_new_record_inserted() {
         let m = new_module();
         m.reset_backoff_for_test();
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 1,
             entries: vec![entry("new_id", 50)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         m.sync().await;
@@ -1135,16 +1063,16 @@ mod tests {
         let m = new_module();
         m.reset_backoff_for_test();
         // Drive backoff up via one empty response.
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
         m.sync().await;
         assert_eq!(m.wait_ms(), 6_000);
 
         // Advance clock past next_pull_ms, then return real data.
         m.clock.advance(10_000);
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 5,
             entries: vec![entry("e1", 10)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
         m.sync().await;
 
@@ -1159,10 +1087,10 @@ mod tests {
         let m = new_module();
         m.local.set_pending_entries(vec![entry("e1", 10)]);
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 20,
             entries: vec![entry("e2", 30)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
 
         m.sync().await;
@@ -1177,7 +1105,7 @@ mod tests {
         let m = new_module();
         m.local.set_pending_entries(vec![entry("e1", 10)]);
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
 
         m.sync().await;
 
@@ -1254,10 +1182,10 @@ mod tests {
         // Successful push + pull → resets.
         m.local.set_pending_entries(vec![entry("e1", 10)]);
         m.server.enqueue_push(Ok(all_processed()));
-        m.server.enqueue_pull(Ok(SyncPayload {
+        m.server.enqueue_pull(Ok(MockPullData {
             server_version: 1,
             entries: vec![entry("e2", 20)],
-            ..SyncPayload::default()
+            ..MockPullData::default()
         }));
         m.sync().await;
 
@@ -1286,10 +1214,10 @@ mod tests {
     #[tokio::test]
     async fn cg_03_guard_released_after_completion() {
         let m = new_module();
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
         m.sync().await;
 
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
         assert_eq!(m.sync().await, SyncOutcome::Completed);
     }
 
@@ -1302,7 +1230,7 @@ mod tests {
         m.sync().await;
 
         // Guard must be released even after an error.
-        m.server.enqueue_pull(Ok(SyncPayload::default()));
+        m.server.enqueue_pull(Ok(MockPullData::default()));
         assert_eq!(m.sync().await, SyncOutcome::Completed);
     }
 
@@ -1312,21 +1240,12 @@ mod tests {
     #[tokio::test]
     async fn sv_01_unsupported_schema_halts_reconcile() {
         let m = new_module();
-        let unsupported = vec![SchemaDescriptor {
-            name: SchemaName::Tiptap,
-            version: 1,
-        }];
+        let unsupported = vec![SchemaDescriptor::new("tiptap", 1)];
         m.server.enqueue_reconcile(Err(SyncError::SchemaUnsupported {
             schemas: unsupported.clone(),
         }));
 
         let err = m.reconcile().await.unwrap_err();
-        assert_eq!(
-            err,
-            SyncError::SchemaUnsupported {
-                schemas: unsupported
-            }
-        );
+        assert_eq!(err, SyncError::SchemaUnsupported { schemas: unsupported });
     }
 }
-

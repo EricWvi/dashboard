@@ -1,4 +1,4 @@
-use crate::schema::SchemaDescriptor;
+use only_sync_schema::SchemaDescriptor;
 
 /// All errors that can arise from sync operations.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

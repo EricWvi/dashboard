@@ -10,6 +10,7 @@ members = [
     "crates/logging",
     "crates/scheduler",
     "crates/sync",
+    "crates/sync-schema",
     "xtask",
 ]
 resolver = "2"
@@ -29,6 +30,7 @@ only-infrastructure = { path = "crates/infrastructure" }
 only-logging = { path = "crates/logging" }
 only-scheduler = { path = "crates/scheduler" }
 only-sync = { path = "crates/sync" }
+only-sync-schema = { path = "crates/sync-schema" }
 only-xtask = { path = "xtask" }
 
 # External

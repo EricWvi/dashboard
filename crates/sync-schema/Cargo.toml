@@ -1,0 +1,15 @@
+[package]
+name = "only-sync-schema"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_sync_schema"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }

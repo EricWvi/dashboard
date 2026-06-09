@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-/// Wire representation of a journal tag, version 1.
+/// Wire representation of a tag, version 1.
 ///
-/// Both the Android local port and the server map their internal types to/from this struct.
+/// Shared across apps that have a tag concept. Creator identity is resolved server-side.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TagSchemaV1 {
     pub id: String,
-    pub creator_id: i32,
     pub name: String,
     /// Logical grouping namespace. Stored as `t_group` in the SQLite schema.
     pub group: String,
