@@ -9,6 +9,7 @@ members = [
     "crates/infrastructure",
     "crates/logging",
     "crates/scheduler",
+    "crates/sync",
     "xtask",
 ]
 resolver = "2"
@@ -27,6 +28,7 @@ only-domain = { path = "crates/domain" }
 only-infrastructure = { path = "crates/infrastructure" }
 only-logging = { path = "crates/logging" }
 only-scheduler = { path = "crates/scheduler" }
+only-sync = { path = "crates/sync" }
 only-xtask = { path = "xtask" }
 
 # External

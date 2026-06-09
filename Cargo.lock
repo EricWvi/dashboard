@@ -2514,6 +2514,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "only-sync"
+version = "0.0.0"
+dependencies = [
+ "only-logging",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "only-web-server"
 version = "0.0.0"
 dependencies = [
