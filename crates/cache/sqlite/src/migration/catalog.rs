@@ -2,9 +2,6 @@ use std::collections::BTreeMap;
 
 use crate::DatabaseError;
 
-use super::schema_v0001;
-use super::schema_v0002;
-
 /// Captures one versioned migration and the SQL needed to move schema state up or down.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Migration {
@@ -55,7 +52,6 @@ impl MigrationCatalog {
     /// Builds a catalog whose active target includes every supplied migration.
     pub fn new(migrations: Vec<Migration>) -> Result<Self, DatabaseError> {
         let target_versions = migrations.iter().map(Migration::version).collect();
-
         Self::with_target_versions(migrations, target_versions)
     }
 
@@ -91,11 +87,6 @@ impl MigrationCatalog {
             .get(version)
             .map(|index| &self.migrations[*index])
     }
-}
-
-/// Builds the default migration catalog shipped by the crate.
-pub fn default_migration_catalog() -> Result<MigrationCatalog, DatabaseError> {
-    MigrationCatalog::new(vec![schema_v0001::migration(), schema_v0002::migration()])
 }
 
 /// Validates that migration versions stay unique and strictly increasing to preserve a linear history.

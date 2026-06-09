@@ -10,8 +10,8 @@ use tracing_subscriber::layer::{Context, Layer};
 use tracing_subscriber::registry::LookupSpan;
 
 use crate::{
-    AppliedMigration, DatabaseBootstrapper, DatabaseError, DatabaseLocation, Migration,
-    MigrationCatalog, MigrationDirection, TimestampSource, default_migration_catalog,
+    AppliedMigration, DatabaseError, Migration, MigrationCatalog, MigrationDirection,
+    RepositoryPool, SystemTimestampSource, TimestampSource,
 };
 
 /// Produces deterministic timestamps so migration bookkeeping tests can assert full records.
@@ -21,45 +21,34 @@ struct FixedTimestampSource {
 }
 
 impl TimestampSource for FixedTimestampSource {
-    /// Returns the preconfigured timestamp for every migration applied in a test step.
     fn current_timestamp_millis(&self) -> i64 {
         self.now
     }
 }
 
-/// Verifies a fresh database bootstrap applies the shipped schema migration and records its timestamp.
+/// Verifies a fresh in-memory bootstrap applies the catalog and records migration timestamps.
 #[test]
-fn bootstraps_empty_database_with_default_catalog() {
-    let catalog = default_migration_catalog().unwrap();
-    let database = with_trace_logging(|| {
-        DatabaseBootstrapper::new(FixedTimestampSource {
-            now: 1_700_000_000_000,
-        })
-        .bootstrap(&DatabaseLocation::in_memory(), &catalog)
+fn bootstraps_empty_database_with_inline_catalog() {
+    let pool = RepositoryPool::in_memory().unwrap();
+    with_trace_logging(|| {
+        pool.bootstrap(
+            &MigrationCatalog::new(vec![create_table_migration("0001", "alpha")]).unwrap(),
+            &FixedTimestampSource {
+                now: 1_700_000_000_000,
+            },
+        )
         .unwrap()
     });
 
-    assert_eq!(
-        load_table_names(database.connection()),
-        vec![
-            "artifacts".to_string(),
-            "migrations".to_string(),
-            "project_work_contexts".to_string(),
-            "projects".to_string(),
-            "sessions".to_string(),
-            "tasks".to_string(),
-            "virtual_entries".to_string(),
-            "virtual_folders".to_string(),
-            "worktrees".to_string(),
-        ]
-    );
-    assert_eq!(
-        load_applied_migrations(database.connection()),
-        vec![
-            AppliedMigration::new("0001", 1_700_000_000_000),
-            AppliedMigration::new("0002", 1_700_000_000_000),
-        ]
-    );
+    pool.with_connection(|conn| {
+        assert_eq!(table_exists(conn, "alpha"), true);
+        assert_eq!(
+            load_applied_migrations(conn),
+            vec![AppliedMigration::new("0001", 1_700_000_000_000)]
+        );
+        Ok(())
+    })
+    .unwrap();
 }
 
 /// Verifies the runner applies only the missing tail of a linear migration history in ascending order.
@@ -75,18 +64,21 @@ fn applies_missing_migrations_in_ascending_order() {
     );
     bootstrap_file_database(&database_path, test_catalog().unwrap(), 200);
 
-    let connection = Connection::open(&database_path).unwrap();
-
-    assert_eq!(
-        load_applied_migrations(&connection),
-        vec![
-            AppliedMigration::new("0001", 100),
-            AppliedMigration::new("0002", 200),
-            AppliedMigration::new("0003", 200),
-        ]
-    );
-    assert_eq!(table_exists(&connection, "beta"), true);
-    assert_eq!(table_exists(&connection, "gamma"), true);
+    let pool = RepositoryPool::new(&database_path).unwrap();
+    pool.with_connection(|conn| {
+        assert_eq!(
+            load_applied_migrations(conn),
+            vec![
+                AppliedMigration::new("0001", 100),
+                AppliedMigration::new("0002", 200),
+                AppliedMigration::new("0003", 200),
+            ]
+        );
+        assert_eq!(table_exists(conn, "beta"), true);
+        assert_eq!(table_exists(conn, "gamma"), true);
+        Ok(())
+    })
+    .unwrap();
 }
 
 /// Verifies the runner rolls back extra targeted versions in descending order while preserving older records.
@@ -102,17 +94,20 @@ fn rolls_back_extra_versions_in_descending_order() {
         400,
     );
 
-    let connection = Connection::open(&database_path).unwrap();
-
-    assert_eq!(
-        load_applied_migrations(&connection),
-        vec![
-            AppliedMigration::new("0001", 300),
-            AppliedMigration::new("0002", 300),
-        ]
-    );
-    assert_eq!(table_exists(&connection, "beta"), true);
-    assert_eq!(table_exists(&connection, "gamma"), false);
+    let pool = RepositoryPool::new(&database_path).unwrap();
+    pool.with_connection(|conn| {
+        assert_eq!(
+            load_applied_migrations(conn),
+            vec![
+                AppliedMigration::new("0001", 300),
+                AppliedMigration::new("0002", 300),
+            ]
+        );
+        assert_eq!(table_exists(conn, "beta"), true);
+        assert_eq!(table_exists(conn, "gamma"), false);
+        Ok(())
+    })
+    .unwrap();
 }
 
 /// Verifies a mismatch inside the shared prefix fails fast instead of guessing at repair steps.
@@ -123,12 +118,9 @@ fn rejects_diverged_history_in_shared_prefix() {
 
     bootstrap_file_database(&database_path, diverged_catalog().unwrap(), 500);
 
+    let pool = RepositoryPool::new(&database_path).unwrap();
     let error = with_trace_logging(|| {
-        DatabaseBootstrapper::new(FixedTimestampSource { now: 600 })
-            .bootstrap(
-                &DatabaseLocation::path(&database_path),
-                &test_catalog().unwrap(),
-            )
+        pool.bootstrap(&test_catalog().unwrap(), &FixedTimestampSource { now: 600 })
             .unwrap_err()
     });
 
@@ -138,7 +130,9 @@ fn rejects_diverged_history_in_shared_prefix() {
                 position,
                 expected,
                 found,
-            } => Some((position, expected, found)),
+            } => {
+                Some((position, expected, found))
+            }
             _ => None,
         },
         Some((1, "0002".to_string(), "0003".to_string()))
@@ -157,27 +151,29 @@ fn leaves_failed_up_migration_unrecorded() {
         700,
     );
 
+    let pool = RepositoryPool::new(&database_path).unwrap();
     let error = with_trace_logging(|| {
-        DatabaseBootstrapper::new(FixedTimestampSource { now: 800 })
-            .bootstrap(
-                &DatabaseLocation::path(&database_path),
-                &MigrationCatalog::new(vec![
-                    create_table_migration("0001", "alpha"),
-                    broken_up_migration("0002"),
-                ])
-                .unwrap(),
-            )
-            .unwrap_err()
+        pool.bootstrap(
+            &MigrationCatalog::new(vec![
+                create_table_migration("0001", "alpha"),
+                broken_up_migration("0002"),
+            ])
+            .unwrap(),
+            &FixedTimestampSource { now: 800 },
+        )
+        .unwrap_err()
     });
 
     assert_migration_step_failed(&error, "0002", MigrationDirection::Up);
 
-    let connection = Connection::open(&database_path).unwrap();
-
-    assert_eq!(
-        load_applied_migrations(&connection),
-        vec![AppliedMigration::new("0001", 700)]
-    );
+    pool.with_connection(|conn| {
+        assert_eq!(
+            load_applied_migrations(conn),
+            vec![AppliedMigration::new("0001", 700)]
+        );
+        Ok(())
+    })
+    .unwrap();
 }
 
 /// Verifies a failing down step keeps the extra version recorded because the rollback never commits.
@@ -196,44 +192,47 @@ fn leaves_failed_down_migration_recorded() {
         800,
     );
 
+    let pool = RepositoryPool::new(&database_path).unwrap();
     let error = with_trace_logging(|| {
-        DatabaseBootstrapper::new(FixedTimestampSource { now: 900 })
-            .bootstrap(
-                &DatabaseLocation::path(&database_path),
-                &MigrationCatalog::with_target_versions(
-                    vec![
-                        create_table_migration("0001", "alpha"),
-                        broken_down_migration("0002"),
-                    ],
-                    vec!["0001"],
-                )
-                .unwrap(),
+        pool.bootstrap(
+            &MigrationCatalog::with_target_versions(
+                vec![
+                    create_table_migration("0001", "alpha"),
+                    broken_down_migration("0002"),
+                ],
+                vec!["0001"],
             )
-            .unwrap_err()
+            .unwrap(),
+            &FixedTimestampSource { now: 900 },
+        )
+        .unwrap_err()
     });
 
     assert_migration_step_failed(&error, "0002", MigrationDirection::Down);
 
-    let connection = Connection::open(&database_path).unwrap();
-
-    assert_eq!(
-        load_applied_migrations(&connection),
-        vec![
-            AppliedMigration::new("0001", 800),
-            AppliedMigration::new("0002", 800),
-        ]
-    );
+    pool.with_connection(|conn| {
+        assert_eq!(
+            load_applied_migrations(conn),
+            vec![
+                AppliedMigration::new("0001", 800),
+                AppliedMigration::new("0002", 800),
+            ]
+        );
+        Ok(())
+    })
+    .unwrap();
 }
 
-/// Verifies bootstrap and migration reconciliation emit structured success and failure events.
+/// Verifies bootstrap emits structured success and failure log events.
 #[test]
 fn emits_structured_bootstrap_and_migration_events() {
     let success_recorder = EventRecorder::default();
     with_recorded_trace_logging(success_recorder.layer(), || {
-        DatabaseBootstrapper::new(FixedTimestampSource { now: 42 })
+        RepositoryPool::in_memory()
+            .unwrap()
             .bootstrap(
-                &DatabaseLocation::in_memory(),
-                &default_migration_catalog().unwrap(),
+                &MigrationCatalog::new(vec![create_table_migration("0001", "alpha")]).unwrap(),
+                &FixedTimestampSource { now: 42 },
             )
             .unwrap();
     });
@@ -243,7 +242,6 @@ fn emits_structured_bootstrap_and_migration_events() {
             event_has_fields(
                 &event,
                 &[
-                    ("method", "bootstrap"),
                     ("message", "database bootstrap complete"),
                     ("operation", "database_bootstrap"),
                 ],
@@ -262,20 +260,21 @@ fn emits_structured_bootstrap_and_migration_events() {
             MigrationCatalog::new(vec![create_table_migration("0001", "alpha")]).unwrap(),
             700,
         );
-        let error = DatabaseBootstrapper::new(FixedTimestampSource { now: 800 }).bootstrap(
-            &DatabaseLocation::path(&database_path),
+        let pool = RepositoryPool::new(&database_path).unwrap();
+        let error = pool.bootstrap(
             &MigrationCatalog::new(vec![
                 create_table_migration("0001", "alpha"),
                 broken_up_migration("0002"),
             ])
             .unwrap(),
+            &FixedTimestampSource { now: 800 },
         );
 
         assert_eq!(
             matches!(
                 error,
                 Err(DatabaseError::MigrationStepFailed {
-                    version,
+                    ref version,
                     direction: MigrationDirection::Up,
                     ..
                 }) if version == "0002"
@@ -292,7 +291,6 @@ fn emits_structured_bootstrap_and_migration_events() {
                     ("direction", "up"),
                     ("error.kind", "migration_step_failed"),
                     ("message", "migration step failed"),
-                    ("method", "execute_migration_step"),
                     ("migration_version", "0002"),
                     ("operation", "migration_execute"),
                 ],
@@ -302,30 +300,14 @@ fn emits_structured_bootstrap_and_migration_events() {
     );
 }
 
-/// Opens a file-backed database through the bootstrapper and drops the handle once reconciliation finishes.
 fn bootstrap_file_database(path: &Path, catalog: MigrationCatalog, now: i64) {
     with_trace_logging(|| {
-        DatabaseBootstrapper::new(FixedTimestampSource { now })
-            .bootstrap(&DatabaseLocation::path(path), &catalog)
+        let pool = RepositoryPool::new(path).unwrap();
+        pool.bootstrap(&catalog, &FixedTimestampSource { now })
             .unwrap();
     });
 }
 
-/// Loads visible user tables in alphabetical order so schema assertions remain stable across SQLite versions.
-fn load_table_names(connection: &Connection) -> Vec<String> {
-    let mut statement = connection
-        .prepare(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC",
-        )
-        .unwrap();
-    let rows = statement
-        .query_map([], |row| row.get::<_, String>(0))
-        .unwrap();
-
-    rows.collect::<Result<Vec<_>, _>>().unwrap()
-}
-
-/// Loads persisted migration rows in the same order used by the reconciliation algorithm.
 fn load_applied_migrations(connection: &Connection) -> Vec<AppliedMigration> {
     let mut statement = connection
         .prepare("SELECT version, executed_at FROM migrations ORDER BY version ASC")
@@ -342,7 +324,6 @@ fn load_applied_migrations(connection: &Connection) -> Vec<AppliedMigration> {
     rows.collect::<Result<Vec<_>, _>>().unwrap()
 }
 
-/// Reports whether a table currently exists so upgrade and rollback tests can assert schema effects directly.
 fn table_exists(connection: &Connection, table_name: &str) -> bool {
     connection
         .query_row(
@@ -354,7 +335,6 @@ fn table_exists(connection: &Connection, table_name: &str) -> bool {
         == 1
 }
 
-/// Verifies a migration-step error identifies the version and direction while preserving the SQL parser context.
 fn assert_migration_step_failed(
     error: &DatabaseError,
     expected_version: &str,
@@ -377,7 +357,6 @@ fn assert_migration_step_failed(
     }
 }
 
-/// Builds the reusable three-step catalog used by upgrade and rollback behavior tests.
 fn test_catalog() -> Result<MigrationCatalog, DatabaseError> {
     MigrationCatalog::new(vec![
         create_table_migration("0001", "alpha"),
@@ -386,7 +365,6 @@ fn test_catalog() -> Result<MigrationCatalog, DatabaseError> {
     ])
 }
 
-/// Builds the same test catalog with a shorter active prefix to simulate a controlled rollback target.
 fn test_catalog_with_target_prefix(
     prefix_length: usize,
 ) -> Result<MigrationCatalog, DatabaseError> {
@@ -404,7 +382,6 @@ fn test_catalog_with_target_prefix(
     MigrationCatalog::with_target_versions(migrations, target_versions)
 }
 
-/// Builds an alternate catalog whose second version intentionally diverges from the main test sequence.
 fn diverged_catalog() -> Result<MigrationCatalog, DatabaseError> {
     MigrationCatalog::new(vec![
         create_table_migration("0001", "alpha"),
@@ -412,7 +389,6 @@ fn diverged_catalog() -> Result<MigrationCatalog, DatabaseError> {
     ])
 }
 
-/// Builds a simple migration that creates and drops one named table.
 fn create_table_migration(version: &'static str, table_name: &'static str) -> Migration {
     let up_sql =
         Box::leak(format!("CREATE TABLE {table_name} (id INTEGER PRIMARY KEY);").into_boxed_str());
@@ -423,14 +399,28 @@ fn create_table_migration(version: &'static str, table_name: &'static str) -> Mi
     Migration::new(version, up_statements, down_statements)
 }
 
-/// Reports whether one recorded event includes all expected field/value pairs.
+fn broken_up_migration(version: &'static str) -> Migration {
+    Migration::new(
+        version,
+        &["THIS IS NOT VALID SQL"],
+        &["DROP TABLE IF EXISTS broken_up;"],
+    )
+}
+
+fn broken_down_migration(version: &'static str) -> Migration {
+    Migration::new(
+        version,
+        &["CREATE TABLE broken_down (id INTEGER PRIMARY KEY);"],
+        &["THIS IS NOT VALID SQL"],
+    )
+}
+
 fn event_has_fields(event: &LoggedEvent, expected_fields: &[(&str, &str)]) -> bool {
     expected_fields.iter().all(|(field_name, expected_value)| {
         event.fields.get(*field_name).map(String::as_str) == Some(*expected_value)
     })
 }
 
-/// Captures one emitted event in a comparison-friendly structure for database logging assertions.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct LoggedEvent {
     level: String,
@@ -438,27 +428,23 @@ struct LoggedEvent {
     fields: BTreeMap<String, String>,
 }
 
-/// Records tracing events into shared memory so database tests can assert structured outcomes.
 #[derive(Clone, Debug, Default)]
 struct EventRecorder {
     events: Arc<Mutex<Vec<LoggedEvent>>>,
 }
 
 impl EventRecorder {
-    /// Builds the recording layer attached to one scoped test subscriber.
     fn layer(&self) -> RecordingLayer {
         RecordingLayer {
             events: self.events.clone(),
         }
     }
 
-    /// Returns every captured event in emission order.
     fn events(&self) -> Vec<LoggedEvent> {
         self.events.lock().unwrap().clone()
     }
 }
 
-/// Pushes each tracing event into the shared recorder without relying on global subscriber state.
 #[derive(Clone, Debug)]
 struct RecordingLayer {
     events: Arc<Mutex<Vec<LoggedEvent>>>,
@@ -468,7 +454,6 @@ impl<S> Layer<S> for RecordingLayer
 where
     S: tracing::Subscriber + for<'lookup> LookupSpan<'lookup>,
 {
-    /// Converts each event into a stable, fully comparable structure for test assertions.
     fn on_event(&self, event: &tracing::Event<'_>, _context: Context<'_, S>) {
         let mut visitor = EventFieldVisitor::default();
         event.record(&mut visitor);
@@ -480,32 +465,27 @@ where
     }
 }
 
-/// Records tracing fields as strings because these tests care about semantic content, not JSON formatting.
 #[derive(Debug, Default)]
 struct EventFieldVisitor {
     fields: BTreeMap<String, String>,
 }
 
 impl tracing::field::Visit for EventFieldVisitor {
-    /// Preserves string fields exactly as database logs emitted them.
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
         self.fields
             .insert(field.name().to_string(), value.to_string());
     }
 
-    /// Preserves signed integers in decimal form for stable assertions.
     fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
         self.fields
             .insert(field.name().to_string(), value.to_string());
     }
 
-    /// Preserves unsigned integers in decimal form for stable assertions.
     fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
         self.fields
             .insert(field.name().to_string(), value.to_string());
     }
 
-    /// Falls back to debug formatting for field types without a more specific visitor hook.
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
         self.fields.insert(
             field.name().to_string(),
@@ -514,20 +494,8 @@ impl tracing::field::Visit for EventFieldVisitor {
     }
 }
 
-/// Builds a migration whose `up` SQL fails immediately so transaction rollback behavior can be asserted.
-fn broken_up_migration(version: &'static str) -> Migration {
-    Migration::new(
-        version,
-        &["THIS IS NOT VALID SQL"],
-        &["DROP TABLE IF EXISTS broken_up;"],
-    )
-}
-
-/// Builds a migration whose `down` SQL fails immediately so rollback bookkeeping can be asserted.
-fn broken_down_migration(version: &'static str) -> Migration {
-    Migration::new(
-        version,
-        &["CREATE TABLE broken_down (id INTEGER PRIMARY KEY);"],
-        &["THIS IS NOT VALID SQL"],
-    )
+// SystemTimestampSource smoke-check: verifies the system clock produces a positive non-zero value.
+#[test]
+fn system_timestamp_source_returns_positive_millis() {
+    assert!(SystemTimestampSource.current_timestamp_millis() > 0);
 }

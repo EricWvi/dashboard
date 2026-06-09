@@ -2,7 +2,9 @@
 members = [
     "apps/web/server",
     "crates/application",
+    "crates/cache/journal",
     "crates/cache/media",
+    "crates/cache/sqlite",
     "crates/contracts",
     "crates/db",
     "crates/domain",
@@ -22,7 +24,9 @@ edition = "2024"
 [workspace.dependencies]
 # Internal
 only-application = { path = "crates/application" }
+only-cache-journal = { path = "crates/cache/journal" }
 only-cache-media = { path = "crates/cache/media" }
+only-cache-sqlite = { path = "crates/cache/sqlite" }
 only-contracts = { path = "crates/contracts" }
 only-db = { path = "crates/db" }
 only-domain = { path = "crates/domain" }

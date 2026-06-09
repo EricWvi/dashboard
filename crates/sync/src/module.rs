@@ -196,7 +196,10 @@ where
     /// An empty server response triggers backoff; a successful response resets the wait interval.
     async fn run_pull(&self) -> Result<(), SyncError> {
         let (now, next_pull_ms) = {
-            let state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            let state = self
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             (self.clock.now_ms(), state.next_pull_ms)
         };
         if now < next_pull_ms {
@@ -217,8 +220,10 @@ where
         self.local.save_server_version(version).await?;
 
         {
-            let mut state =
-                self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+            let mut state = self
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             state.wait_ms = self.base_interval_ms;
         }
 
@@ -228,14 +233,20 @@ where
 
     fn apply_backoff(&self) {
         let now = self.clock.now_ms();
-        let mut state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut state = self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         state.wait_ms = (state.wait_ms * 2).min(MAX_WAIT_MS);
         state.next_pull_ms = now + state.wait_ms;
     }
 
     /// Resets backoff after a successful push so the pull runs immediately.
     fn reset_backoff(&self) {
-        let mut state = self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut state = self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         state.wait_ms = self.base_interval_ms;
         state.next_pull_ms = 0;
     }
@@ -258,8 +269,10 @@ where
     /// Resets backoff and allows pull to run immediately. Test-only.
     #[cfg(test)]
     pub(crate) fn reset_backoff_for_test(&self) {
-        let mut state =
-            self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut state = self
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         state.wait_ms = self.base_interval_ms;
         state.next_pull_ms = 0;
     }
@@ -361,7 +374,12 @@ mod tests {
             &self,
             _schemas: &[SchemaDescriptor],
         ) -> impl Future<Output = Result<(), SyncError>> + Send {
-            let result = self.reconcile_q.lock().unwrap().pop_front().unwrap_or(Ok(()));
+            let result = self
+                .reconcile_q
+                .lock()
+                .unwrap()
+                .pop_front()
+                .unwrap_or(Ok(()));
             async move { result }
         }
 
@@ -495,7 +513,13 @@ mod tests {
             let entries = self.pending_entries.lock().unwrap().clone();
             let tags = self.pending_tags.lock().unwrap().clone();
             let tiptaps = self.pending_tiptaps.lock().unwrap().clone();
-            async move { Ok(MockPushData { entries, tags, tiptaps }) }
+            async move {
+                Ok(MockPushData {
+                    entries,
+                    tags,
+                    tiptaps,
+                })
+            }
         }
 
         fn apply_push_result(
@@ -506,18 +530,27 @@ mod tests {
             for schema in &result.processed_schemas {
                 match schema.name.as_str() {
                     "entry" => {
-                        let pairs: Vec<_> =
-                            data.entries.iter().map(|e| (e.id.clone(), e.updated_at)).collect();
+                        let pairs: Vec<_> = data
+                            .entries
+                            .iter()
+                            .map(|e| (e.id.clone(), e.updated_at))
+                            .collect();
                         self.marked_entries.lock().unwrap().extend(pairs);
                     }
                     "tag" => {
-                        let pairs: Vec<_> =
-                            data.tags.iter().map(|t| (t.id.clone(), t.updated_at)).collect();
+                        let pairs: Vec<_> = data
+                            .tags
+                            .iter()
+                            .map(|t| (t.id.clone(), t.updated_at))
+                            .collect();
                         self.marked_tags.lock().unwrap().extend(pairs);
                     }
                     "tiptap" => {
-                        let pairs: Vec<_> =
-                            data.tiptaps.iter().map(|t| (t.id.clone(), t.updated_at)).collect();
+                        let pairs: Vec<_> = data
+                            .tiptaps
+                            .iter()
+                            .map(|t| (t.id.clone(), t.updated_at))
+                            .collect();
                         self.marked_tiptaps.lock().unwrap().extend(pairs);
                     }
                     _ => {}
@@ -532,18 +565,14 @@ mod tests {
         ) -> impl Future<Output = Result<(), SyncError>> + Send {
             let err = self.apply_pull_error.lock().unwrap().take();
             if let Some(e) = err {
-                return Pin::from(
-                    Box::new(async move { Err(e) })
-                        as Box<dyn Future<Output = Result<(), SyncError>> + Send>,
-                );
+                return Pin::from(Box::new(async move { Err(e) })
+                    as Box<dyn Future<Output = Result<(), SyncError>> + Send>);
             }
             self.upserted_entries.lock().unwrap().extend(data.entries);
             self.upserted_tags.lock().unwrap().extend(data.tags);
             self.upserted_tiptaps.lock().unwrap().extend(data.tiptaps);
-            Pin::from(
-                Box::new(async { Ok(()) })
-                    as Box<dyn Future<Output = Result<(), SyncError>> + Send>,
-            )
+            Pin::from(Box::new(async { Ok(()) })
+                as Box<dyn Future<Output = Result<(), SyncError>> + Send>)
         }
 
         fn clear_all_data(&self) -> impl Future<Output = Result<(), SyncError>> + Send {
@@ -586,10 +615,8 @@ mod tests {
             word_count: 0,
             raw_text: String::new(),
             bookmark: false,
-            review_count: 0,
             created_at: 0,
             updated_at,
-            server_version: 0,
             is_deleted: false,
         }
     }
@@ -598,10 +625,8 @@ mod tests {
         TagSchemaV1 {
             id: id.to_string(),
             name: "t".to_string(),
-            group: "g".to_string(),
             created_at: 0,
             updated_at,
-            server_version: 0,
             is_deleted: false,
         }
     }
@@ -613,13 +638,16 @@ mod tests {
             history: vec![],
             created_at: 0,
             updated_at,
-            server_version: 0,
             is_deleted: false,
         }
     }
 
     fn new_module() -> SyncModule<MockServer, MockLocal, MockClock> {
-        SyncModule::with_clock(MockServer::default(), MockLocal::default(), MockClock::at(0))
+        SyncModule::with_clock(
+            MockServer::default(),
+            MockLocal::default(),
+            MockClock::at(0),
+        )
     }
 
     fn transport_err() -> SyncError {
@@ -641,12 +669,15 @@ mod tests {
     async fn rc_02_one_schema_unsupported() {
         let m = new_module();
         let unsupported = vec![SchemaDescriptor::new("entry", 1)];
-        m.server.enqueue_reconcile(Err(SyncError::SchemaUnsupported {
-            schemas: unsupported.clone(),
-        }));
+        m.server
+            .enqueue_reconcile(Err(SyncError::SchemaUnsupported {
+                schemas: unsupported.clone(),
+            }));
         assert_eq!(
             m.reconcile().await,
-            Err(SyncError::SchemaUnsupported { schemas: unsupported })
+            Err(SyncError::SchemaUnsupported {
+                schemas: unsupported
+            })
         );
     }
 
@@ -658,12 +689,15 @@ mod tests {
             SchemaDescriptor::new("entry", 1),
             SchemaDescriptor::new("tag", 1),
         ];
-        m.server.enqueue_reconcile(Err(SyncError::SchemaUnsupported {
-            schemas: unsupported.clone(),
-        }));
+        m.server
+            .enqueue_reconcile(Err(SyncError::SchemaUnsupported {
+                schemas: unsupported.clone(),
+            }));
         assert_eq!(
             m.reconcile().await,
-            Err(SyncError::SchemaUnsupported { schemas: unsupported })
+            Err(SyncError::SchemaUnsupported {
+                schemas: unsupported
+            })
         );
     }
 
@@ -762,7 +796,8 @@ mod tests {
             entries: vec![entry("e1", 10)],
             ..MockPullData::default()
         }));
-        m.local.inject_upsert_entries_error(SyncError::Local("disk full".to_string()));
+        m.local
+            .inject_upsert_entries_error(SyncError::Local("disk full".to_string()));
 
         let result = m.full_sync().await;
         assert!(result.is_err());
@@ -1241,11 +1276,17 @@ mod tests {
     async fn sv_01_unsupported_schema_halts_reconcile() {
         let m = new_module();
         let unsupported = vec![SchemaDescriptor::new("tiptap", 1)];
-        m.server.enqueue_reconcile(Err(SyncError::SchemaUnsupported {
-            schemas: unsupported.clone(),
-        }));
+        m.server
+            .enqueue_reconcile(Err(SyncError::SchemaUnsupported {
+                schemas: unsupported.clone(),
+            }));
 
         let err = m.reconcile().await.unwrap_err();
-        assert_eq!(err, SyncError::SchemaUnsupported { schemas: unsupported });
+        assert_eq!(
+            err,
+            SyncError::SchemaUnsupported {
+                schemas: unsupported
+            }
+        );
     }
 }

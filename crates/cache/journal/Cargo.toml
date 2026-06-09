@@ -1,0 +1,23 @@
+[package]
+name = "only-cache-journal"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "only_cache_journal"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+only-cache-sqlite = { workspace = true }
+only-logging = { workspace = true }
+only-sync-schema = { workspace = true }
+rusqlite = { workspace = true, features = ["bundled"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

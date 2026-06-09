@@ -19,15 +19,13 @@ impl fmt::Display for MigrationDirection {
     }
 }
 
-/// Describes failures that can occur while validating or reconciling database migrations.
+/// Describes failures that can occur while validating, reconciling, or accessing the database.
 #[derive(Debug, Error)]
 pub enum DatabaseError {
     #[error("sqlite error: {0}")]
     Sqlite(#[from] rusqlite::Error),
     #[error("connection pool error: {0}")]
     ConnectionPool(#[from] r2d2::Error),
-    #[error("domain model error: {0}")]
-    DomainModel(#[from] only_domain::DomainModelError),
     #[error("migration versions must be unique, found duplicate version `{0}`")]
     DuplicateMigrationVersion(String),
     #[error("migration versions must be strictly increasing, found `{current}` after `{previous}`")]
@@ -57,6 +55,4 @@ pub enum DatabaseError {
         #[source]
         source: rusqlite::Error,
     },
-    #[error("pooled sqlite connections require a file-backed database location")]
-    UnsupportedPooledLocation,
 }

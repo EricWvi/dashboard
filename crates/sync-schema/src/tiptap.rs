@@ -20,6 +20,5 @@ pub struct TiptapSchemaV1 {
     pub history: Vec<HistoryEntryV1>,
     pub created_at: i64,
     pub updated_at: i64,
-    pub server_version: i64,
     pub is_deleted: bool,
 }

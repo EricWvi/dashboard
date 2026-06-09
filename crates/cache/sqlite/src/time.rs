@@ -13,10 +13,9 @@ pub struct SystemTimestampSource;
 impl TimestampSource for SystemTimestampSource {
     /// Converts the system clock into the integer millisecond format stored in SQLite.
     fn current_timestamp_millis(&self) -> i64 {
-        let duration = SystemTime::now()
+        SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap_or(std::time::Duration::from_secs(0));
-
-        duration.as_millis() as i64
+            .unwrap_or_default()
+            .as_millis() as i64
     }
 }

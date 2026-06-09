@@ -1,5 +1,4 @@
 pub mod error;
-pub mod migration;
 pub mod module;
 pub mod ports;
 

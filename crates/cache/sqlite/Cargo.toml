@@ -1,25 +1,25 @@
 [package]
-name = "only-db-client"
+name = "only-cache-sqlite"
 version.workspace = true
 edition.workspace = true
 
 [lib]
-name = "only_db_client"
+name = "only_cache_sqlite"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-only-application = { workspace = true }
-only-domain = { workspace = true }
 only-logging = { workspace = true }
 r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
 rusqlite = { workspace = true, features = ["bundled"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+only-logging = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tracing-subscriber = { workspace = true }

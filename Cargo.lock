@@ -2399,6 +2399,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "only-cache-journal"
+version = "0.0.0"
+dependencies = [
+ "only-cache-sqlite",
+ "only-logging",
+ "only-sync-schema",
+ "pretty_assertions",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "only-cache-media"
 version = "0.0.0"
 dependencies = [
@@ -2420,6 +2434,21 @@ dependencies = [
  "tower-http",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "only-cache-sqlite"
+version = "0.0.0"
+dependencies = [
+ "only-logging",
+ "pretty_assertions",
+ "r2d2",
+ "r2d2_sqlite",
+ "rusqlite",
+ "tempfile",
+ "thiserror",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

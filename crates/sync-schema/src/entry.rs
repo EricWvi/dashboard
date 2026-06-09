@@ -14,9 +14,7 @@ pub struct EntrySchemaV1 {
     pub word_count: i32,
     pub raw_text: String,
     pub bookmark: bool,
-    pub review_count: i32,
     pub created_at: i64,
     pub updated_at: i64,
-    pub server_version: i64,
     pub is_deleted: bool,
 }

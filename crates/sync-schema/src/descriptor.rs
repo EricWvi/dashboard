@@ -10,7 +10,10 @@ pub struct SchemaDescriptor {
 
 impl SchemaDescriptor {
     pub fn new(name: impl Into<String>, version: u8) -> Self {
-        Self { name: name.into(), version }
+        Self {
+            name: name.into(),
+            version,
+        }
     }
 }
 

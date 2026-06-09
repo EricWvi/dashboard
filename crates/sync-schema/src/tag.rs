@@ -7,10 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct TagSchemaV1 {
     pub id: String,
     pub name: String,
-    /// Logical grouping namespace. Stored as `t_group` in the SQLite schema.
-    pub group: String,
     pub created_at: i64,
     pub updated_at: i64,
-    pub server_version: i64,
     pub is_deleted: bool,
 }
