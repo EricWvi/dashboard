@@ -1,18 +1,30 @@
 use axum::Router;
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 
 use crate::app_state::AppState;
 use crate::handlers::auth::auth;
+use crate::handlers::bookmark::{
+    click_bookmark, create_bookmark, delete_bookmark, get_bookmark, list_bookmarks, update_bookmark,
+};
 use crate::handlers::collection::{
     create_collection, delete_collection, get_collection, list_all_todos, list_collections,
     list_today_todos, plan_today, update_collection,
 };
+use crate::handlers::entry::{
+    bookmark_entry, create_entry, create_tags, delete_entry, delete_tag, get_entry, list_entries,
+    list_tags, unbookmark_entry, update_entry,
+};
 use crate::handlers::media::{delete_handler, serve_handler, upload_handler};
+use crate::handlers::tiptap::{
+    bottom_quick_note, create_quick_note, create_tiptap, delete_quick_note, get_tiptap,
+    list_quick_notes, list_tiptap_history, restore_tiptap_history, update_quick_note,
+    update_tiptap,
+};
 use crate::middleware::auth_middleware;
 
-/// Builds the application router with media and collection routes registered.
+/// Builds the application router with all routes registered.
 ///
-/// Collection and todo routes are protected by the JWT auth middleware.
+/// All routes except `/api/m/{link}` and `/api/auth` are protected by the JWT auth middleware.
 pub fn build_router(state: AppState) -> Router {
     let public_routes = Router::new()
         .route("/api/m/{link}", get(serve_handler))
@@ -21,6 +33,7 @@ pub fn build_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/upload", post(upload_handler))
         .route("/api/media", post(delete_handler))
+        // Collection + todo
         .route(
             "/api/collections",
             get(list_collections).post(create_collection),
@@ -34,6 +47,46 @@ pub fn build_router(state: AppState) -> Router {
         .route("/api/todos/all", get(list_all_todos))
         .route("/api/todos/today", get(list_today_todos))
         .route("/api/todos/plan-today", post(plan_today))
+        // Entry
+        .route("/api/entries", get(list_entries).post(create_entry))
+        .route(
+            "/api/entries/{id}",
+            get(get_entry).put(update_entry).delete(delete_entry),
+        )
+        .route("/api/entries/{id}/bookmark", post(bookmark_entry))
+        .route("/api/entries/{id}/unbookmark", post(unbookmark_entry))
+        // Tag
+        .route(
+            "/api/tags",
+            get(list_tags).post(create_tags).delete(delete_tag),
+        )
+        // Tiptap
+        .route("/api/tiptaps", post(create_tiptap))
+        .route("/api/tiptaps/{id}", get(get_tiptap).put(update_tiptap))
+        .route("/api/tiptaps/{id}/history", get(list_tiptap_history))
+        .route(
+            "/api/tiptaps/{id}/history/restore",
+            post(restore_tiptap_history),
+        )
+        // QuickNote
+        .route(
+            "/api/quicknotes",
+            get(list_quick_notes).post(create_quick_note),
+        )
+        .route(
+            "/api/quicknotes/{id}",
+            put(update_quick_note).delete(delete_quick_note),
+        )
+        .route("/api/quicknotes/{id}/bottom", post(bottom_quick_note))
+        // Bookmark
+        .route("/api/bookmarks", get(list_bookmarks).post(create_bookmark))
+        .route(
+            "/api/bookmarks/{id}",
+            get(get_bookmark)
+                .put(update_bookmark)
+                .delete(delete_bookmark),
+        )
+        .route("/api/bookmarks/{id}/click", post(click_bookmark))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,

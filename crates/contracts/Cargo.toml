@@ -12,7 +12,8 @@ workspace = true
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-ts-rs = { workspace = true, features = ["format", "uuid-impl"] }
+serde_json = { workspace = true }
+ts-rs = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]

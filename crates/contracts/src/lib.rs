@@ -1,9 +1,19 @@
 mod auth;
+mod bookmark;
 mod collection;
+mod entry;
 mod frontend;
 mod media;
+mod tag;
+mod tiptap;
 
 pub use auth::{AuthQuery, AuthResponse};
+pub use bookmark::{
+    BookmarkPath, BookmarkView, ClickBookmarkRequest, ClickBookmarkResponse, CreateBookmarkRequest,
+    CreateBookmarkResponse, DeleteBookmarkRequest, DeleteBookmarkResponse, GetBookmarkRequest,
+    GetBookmarkResponse, ListBookmarksRequest, ListBookmarksResponse, UpdateBookmarkRequest,
+    UpdateBookmarkResponse,
+};
 pub use collection::{
     CollectionPath, CollectionView, CreateCollectionRequest, CreateCollectionResponse,
     DeleteCollectionRequest, DeleteCollectionResponse, GetCollectionRequest, GetCollectionResponse,
@@ -11,11 +21,33 @@ pub use collection::{
     ListTodayTodosRequest, ListTodayTodosResponse, PlanTodayRequest, PlanTodayResponse, TodoView,
     UpdateCollectionRequest, UpdateCollectionResponse,
 };
+pub use entry::{
+    BookmarkEntryRequest, BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse,
+    DeleteEntryRequest, DeleteEntryResponse, EntryPath, EntryView, GetEntryRequest,
+    GetEntryResponse, ListEntriesRequest, ListEntriesResponse, UnbookmarkEntryRequest,
+    UnbookmarkEntryResponse, UpdateEntryRequest, UpdateEntryResponse,
+};
 pub use frontend::{
-    COLLECTION_PATH, COLLECTIONS_PATH, FrontendEndpoint, FrontendHttpMethod, FrontendPathParam,
-    MEDIA_PATH, TODOS_ALL_PATH, TODOS_PLAN_TODAY_PATH, TODOS_TODAY_PATH, frontend_endpoints,
+    BOOKMARK_CLICK_PATH, BOOKMARK_PATH, BOOKMARKS_PATH, COLLECTION_PATH, COLLECTIONS_PATH,
+    ENTRIES_PATH, ENTRY_BOOKMARK_PATH, ENTRY_PATH, ENTRY_UNBOOKMARK_PATH, FrontendEndpoint,
+    FrontendHttpMethod, FrontendPathParam, MEDIA_PATH, QUICKNOTE_BOTTOM_PATH, QUICKNOTE_PATH,
+    QUICKNOTES_PATH, TAGS_PATH, TIPTAP_HISTORY_PATH, TIPTAP_HISTORY_RESTORE_PATH, TIPTAP_PATH,
+    TIPTAPS_PATH, TODOS_ALL_PATH, TODOS_PLAN_TODAY_PATH, TODOS_TODAY_PATH, frontend_endpoints,
 };
 pub use media::{DeleteMediaRequest, DeleteMediaResponse, UploadResponse};
+pub use tag::{
+    CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest,
+    ListTagsResponse, TagView,
+};
+pub use tiptap::{
+    BottomQuickNoteRequest, BottomQuickNoteResponse, CreateQuickNoteRequest,
+    CreateQuickNoteResponse, CreateTiptapRequest, CreateTiptapResponse, DeleteQuickNoteRequest,
+    DeleteQuickNoteResponse, GetTiptapRequest, GetTiptapResponse, HistoryEntryView,
+    ListQuickNotesRequest, ListQuickNotesResponse, ListTiptapHistoryRequest,
+    ListTiptapHistoryResponse, QuickNotePath, QuickNoteView, RestoreTiptapHistoryRequest,
+    RestoreTiptapHistoryResponse, TiptapPath, TiptapView, UpdateQuickNoteRequest,
+    UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse,
+};
 
 use std::path::Path;
 use ts_rs::{Config, ExportError, TS};
@@ -47,6 +79,68 @@ pub fn export_typescript_bindings_to(
     ListTodayTodosResponse::export(&config)?;
     PlanTodayRequest::export(&config)?;
     PlanTodayResponse::export(&config)?;
+
+    EntryView::export(&config)?;
+    ListEntriesRequest::export(&config)?;
+    ListEntriesResponse::export(&config)?;
+    CreateEntryRequest::export(&config)?;
+    CreateEntryResponse::export(&config)?;
+    GetEntryRequest::export(&config)?;
+    GetEntryResponse::export(&config)?;
+    UpdateEntryRequest::export(&config)?;
+    UpdateEntryResponse::export(&config)?;
+    DeleteEntryRequest::export(&config)?;
+    DeleteEntryResponse::export(&config)?;
+    BookmarkEntryRequest::export(&config)?;
+    BookmarkEntryResponse::export(&config)?;
+    UnbookmarkEntryRequest::export(&config)?;
+    UnbookmarkEntryResponse::export(&config)?;
+
+    TagView::export(&config)?;
+    CreateTagsRequest::export(&config)?;
+    CreateTagsResponse::export(&config)?;
+    ListTagsRequest::export(&config)?;
+    ListTagsResponse::export(&config)?;
+    DeleteTagRequest::export(&config)?;
+    DeleteTagResponse::export(&config)?;
+
+    TiptapView::export(&config)?;
+    HistoryEntryView::export(&config)?;
+    CreateTiptapRequest::export(&config)?;
+    CreateTiptapResponse::export(&config)?;
+    GetTiptapRequest::export(&config)?;
+    GetTiptapResponse::export(&config)?;
+    UpdateTiptapRequest::export(&config)?;
+    UpdateTiptapResponse::export(&config)?;
+    ListTiptapHistoryRequest::export(&config)?;
+    ListTiptapHistoryResponse::export(&config)?;
+    RestoreTiptapHistoryRequest::export(&config)?;
+    RestoreTiptapHistoryResponse::export(&config)?;
+    QuickNoteView::export(&config)?;
+    CreateQuickNoteRequest::export(&config)?;
+    CreateQuickNoteResponse::export(&config)?;
+    ListQuickNotesRequest::export(&config)?;
+    ListQuickNotesResponse::export(&config)?;
+    UpdateQuickNoteRequest::export(&config)?;
+    UpdateQuickNoteResponse::export(&config)?;
+    DeleteQuickNoteRequest::export(&config)?;
+    DeleteQuickNoteResponse::export(&config)?;
+    BottomQuickNoteRequest::export(&config)?;
+    BottomQuickNoteResponse::export(&config)?;
+
+    BookmarkView::export(&config)?;
+    CreateBookmarkRequest::export(&config)?;
+    CreateBookmarkResponse::export(&config)?;
+    GetBookmarkRequest::export(&config)?;
+    GetBookmarkResponse::export(&config)?;
+    ListBookmarksRequest::export(&config)?;
+    ListBookmarksResponse::export(&config)?;
+    UpdateBookmarkRequest::export(&config)?;
+    UpdateBookmarkResponse::export(&config)?;
+    DeleteBookmarkRequest::export(&config)?;
+    DeleteBookmarkResponse::export(&config)?;
+    ClickBookmarkRequest::export(&config)?;
+    ClickBookmarkResponse::export(&config)?;
 
     UploadResponse::export(&config)?;
     DeleteMediaRequest::export(&config)?;

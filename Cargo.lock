@@ -2389,6 +2389,7 @@ dependencies = [
  "only-scheduler",
  "pretty_assertions",
  "serde",
+ "serde_json",
  "thiserror",
  "time",
  "tokio",
@@ -2470,6 +2471,7 @@ dependencies = [
  "only-domain",
  "only-logging",
  "pretty_assertions",
+ "serde_json",
  "sqlx",
  "testcontainers",
  "testcontainers-modules",
@@ -4516,6 +4518,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "756050066659291d47a554a9f558125db17428b073c5ffce1daf5dcb0f7231d8"
 dependencies = [
  "dprint-plugin-typescript",
+ "serde_json",
  "thiserror",
  "ts-rs-macros",
  "uuid",
