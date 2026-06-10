@@ -209,8 +209,8 @@ impl EntryRepository for PostgresEntryRepository {
             r#"
             UPDATE d_entry_v2
             SET draft = $1::uuid, payload = $2::jsonb, word_count = $3, raw_text = $4,
-                bookmark = $5, review_count = $6, updated_at = $7
-            WHERE id = $8::uuid AND creator_id = $9 AND is_deleted = FALSE
+                bookmark = $5, updated_at = $6
+            WHERE id = $7::uuid AND creator_id = $8 AND is_deleted = FALSE
             RETURNING id::text, creator_id, draft::text, payload::text,
                       word_count, raw_text, bookmark, review_count,
                       created_at, updated_at, server_version, is_deleted
@@ -221,7 +221,6 @@ impl EntryRepository for PostgresEntryRepository {
         .bind(entry.word_count)
         .bind(&entry.raw_text)
         .bind(entry.bookmark)
-        .bind(entry.review_count)
         .bind(entry.audit_fields.updated_at)
         .bind(entry.id.as_ref())
         .bind(entry.creator_id)

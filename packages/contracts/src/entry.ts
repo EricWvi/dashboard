@@ -46,7 +46,6 @@ export type EntryView = {
   wordCount: number;
   rawText: string;
   bookmark: boolean;
-  reviewCount: number;
   createdAt: bigint;
   updatedAt: bigint;
 };
@@ -136,7 +135,6 @@ export type UpdateEntryRequest = {
   wordCount: number;
   rawText: string;
   bookmark: boolean;
-  reviewCount: number;
 };
 
 /**

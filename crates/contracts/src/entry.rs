@@ -20,7 +20,6 @@ pub struct EntryView {
     pub word_count: i32,
     pub raw_text: String,
     pub bookmark: bool,
-    pub review_count: i32,
     pub created_at: i64,
     pub updated_at: i64,
 }
@@ -116,7 +115,6 @@ pub struct UpdateEntryRequest {
     pub word_count: i32,
     pub raw_text: String,
     pub bookmark: bool,
-    pub review_count: i32,
 }
 
 /// Returns the updated entry after a successful update.

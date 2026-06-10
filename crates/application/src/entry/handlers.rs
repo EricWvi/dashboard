@@ -27,7 +27,6 @@ fn map_entry(e: Entry) -> EntryView {
         word_count: e.word_count,
         raw_text: e.raw_text,
         bookmark: e.bookmark,
-        review_count: e.review_count,
         created_at: e.audit_fields.created_at,
         updated_at: e.audit_fields.updated_at,
     }
@@ -180,7 +179,7 @@ impl<R: EntryRepository> UpdateEntryHandler<R> {
             request.word_count,
             request.raw_text,
             request.bookmark,
-            request.review_count,
+            existing.review_count,
             AuditFields::new(
                 existing.audit_fields.created_at,
                 now,
