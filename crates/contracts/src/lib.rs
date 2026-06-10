@@ -35,6 +35,7 @@ pub use frontend::{
     TIPTAPS_PATH, TODOS_ALL_PATH, TODOS_PLAN_TODAY_PATH, TODOS_TODAY_PATH, frontend_endpoints,
 };
 pub use media::{DeleteMediaRequest, DeleteMediaResponse, UploadResponse};
+use serde_json::Value;
 pub use tag::{
     CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest,
     ListTagsResponse, TagView,
@@ -57,6 +58,8 @@ pub fn export_typescript_bindings_to(
     output_directory: impl AsRef<Path>,
 ) -> Result<(), ExportError> {
     let config = Config::new().with_out_dir(output_directory.as_ref());
+
+    <Value as TS>::export(&config)?;
 
     AuthQuery::export(&config)?;
     AuthResponse::export(&config)?;

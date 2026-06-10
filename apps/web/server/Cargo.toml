@@ -37,3 +37,6 @@ uuid = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }
+tower = { workspace = true }
+testcontainers = { workspace = true }
+testcontainers-modules = { workspace = true }

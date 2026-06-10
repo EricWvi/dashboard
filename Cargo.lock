@@ -2587,10 +2587,13 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "testcontainers",
+ "testcontainers-modules",
  "thiserror",
  "time",
  "tokio",
  "tokio-util",
+ "tower",
  "tracing",
  "uuid",
 ]

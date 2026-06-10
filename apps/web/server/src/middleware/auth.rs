@@ -110,4 +110,5 @@ fn decrypt_token(key_bytes: &[u8], blob: &str) -> Result<String, DecryptError> {
 struct DecryptError;
 
 /// Opaque error for any encryption failure.
+#[derive(Debug)]
 pub struct EncryptError;

@@ -7,6 +7,9 @@ mod middleware;
 mod routes;
 mod service;
 
+#[cfg(test)]
+mod tests;
+
 use only_logging::{LogOutput, LoggingConfig, init_logging, only_info};
 use tokio_util::sync::CancellationToken;
 
