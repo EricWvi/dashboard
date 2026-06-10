@@ -15,8 +15,12 @@ const DB_PORT_VAR: &str = "DASHBOARD_DB_PORT";
 const DB_NAME_VAR: &str = "DASHBOARD_DB_NAME";
 const DB_USERNAME_VAR: &str = "DASHBOARD_DB_USERNAME";
 const DB_PASSWORD_VAR: &str = "DASHBOARD_DB_PASSWORD";
+const DB_SSL_MODE_VAR: &str = "DASHBOARD_DB_SSL_MODE";
+const DB_TIMEZONE_VAR: &str = "DASHBOARD_DB_TIMEZONE";
 
 const DEFAULT_DB_PORT: &str = "5432";
+const DEFAULT_DB_SSL_MODE: &str = "disable";
+const DEFAULT_DB_TIMEZONE: &str = "UTC";
 
 const LOG_LEVEL_VAR: &str = "DASHBOARD_LOG_LEVEL";
 const DEFAULT_LOG_LEVEL: &str = "info";
@@ -192,6 +196,8 @@ pub struct DatabaseRuntimeConfig {
     name: String,
     username: String,
     password: String,
+    ssl_mode: String,
+    timezone: String,
 }
 
 impl DatabaseRuntimeConfig {
@@ -234,20 +240,31 @@ impl DatabaseRuntimeConfig {
                     source,
                 })?;
 
+        let ssl_mode = read_var(DB_SSL_MODE_VAR).unwrap_or_else(|| DEFAULT_DB_SSL_MODE.to_string());
+        let timezone = read_var(DB_TIMEZONE_VAR).unwrap_or_else(|| DEFAULT_DB_TIMEZONE.to_string());
+
         Ok(Self {
             host,
             port,
             name,
             username,
             password,
+            ssl_mode,
+            timezone,
         })
     }
 
     /// Builds a libpq-compatible PostgreSQL connection URL from the configured fields.
     pub fn connection_string(&self) -> String {
         format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.username, self.password, self.host, self.port, self.name
+            "postgres://{}:{}@{}:{}/{}?sslmode={}&TimeZone={}",
+            self.username,
+            self.password,
+            self.host,
+            self.port,
+            self.name,
+            self.ssl_mode,
+            self.timezone,
         )
     }
 }
@@ -365,5 +382,40 @@ mod tests {
             err,
             WebBootstrapError::MinioPresignExpiryInvalid { value, .. } if value == "not-a-duration"
         ));
+    }
+
+    fn db_vars(key: &str) -> Option<String> {
+        match key {
+            DB_HOST_VAR => Some("localhost".to_string()),
+            DB_NAME_VAR => Some("dashboard".to_string()),
+            DB_USERNAME_VAR => Some("user".to_string()),
+            DB_PASSWORD_VAR => Some("pass".to_string()),
+            _ => None,
+        }
+    }
+
+    /// Verifies that ssl_mode and timezone default to their expected values.
+    #[test]
+    fn db_applies_defaults_for_ssl_and_timezone() {
+        let config = DatabaseRuntimeConfig::from_reader(db_vars).unwrap();
+        assert_eq!(
+            config.connection_string(),
+            "postgres://user:pass@localhost:5432/dashboard?sslmode=disable&TimeZone=UTC"
+        );
+    }
+
+    /// Verifies that custom ssl_mode and timezone override the defaults.
+    #[test]
+    fn db_uses_custom_ssl_mode_and_timezone() {
+        let config = DatabaseRuntimeConfig::from_reader(|key| match key {
+            DB_SSL_MODE_VAR => Some("require".to_string()),
+            DB_TIMEZONE_VAR => Some("Asia/Shanghai".to_string()),
+            _ => db_vars(key),
+        })
+        .unwrap();
+        assert_eq!(
+            config.connection_string(),
+            "postgres://user:pass@localhost:5432/dashboard?sslmode=require&TimeZone=Asia/Shanghai"
+        );
     }
 }
