@@ -149,6 +149,12 @@ mod support {
 
     impl TestBackend {
         pub async fn start() -> Self {
+            Self::start_with_token(TEST_TOKEN).await
+        }
+
+        /// Starts the backend expecting `auth_token` on every request.
+        /// Use a token that differs from `TEST_TOKEN` to simulate a mismatched-credential backend.
+        pub async fn start_with_token(auth_token: &str) -> Self {
             let container = MinIO::default().start().await.unwrap();
             let port = container.get_host_port_ipv4(9000).await.unwrap();
             let endpoint = format!("127.0.0.1:{port}");
@@ -181,7 +187,7 @@ mod support {
                     .unwrap()
                     .with_path_style(),
                 uploads: Arc::clone(&uploads),
-                auth_token: TEST_TOKEN.to_string(),
+                auth_token: auth_token.to_string(),
             };
 
             let app = Router::new()
@@ -394,8 +400,9 @@ mod upload_tests {
     #[tokio::test]
     #[ignore = "requires RUN_TESTCONTAINERS=1"]
     async fn upload_with_wrong_token_is_rejected() {
-        crate::set_auth_token("wrong-token".to_string());
-        let backend = TestBackend::start().await;
+        init_auth(); // global token stays TEST_TOKEN throughout
+        // Backend configured to expect a different token, so TEST_TOKEN is rejected with 401.
+        let backend = TestBackend::start_with_token("not-the-right-token").await;
         let uuid = "ccddee334455";
 
         let tmp = tempfile::tempdir().unwrap();
@@ -406,8 +413,6 @@ mod upload_tests {
             upload_file_to_backend(&uuid, &file_path, "image/png", "x.png", &backend.base_url)
                 .await;
         assert!(result.is_err());
-        // restore
-        crate::set_auth_token(TEST_TOKEN.to_string());
     }
 
     #[tokio::test]
