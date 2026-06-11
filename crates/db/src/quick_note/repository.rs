@@ -200,12 +200,7 @@ fn row_to_quick_note(row: sqlx::postgres::PgRow) -> Result<QuickNote, sqlx::Erro
         Some(TiptapId::new(raw_draft))
     };
 
-    let raw_order: i32 = row.try_get("d_order")?;
-    let order = if raw_order == -1 {
-        None
-    } else {
-        Some(raw_order)
-    };
+    let order = Some(row.try_get::<i32, _>("d_order")?);
 
     Ok(QuickNote::new(
         QuickNoteId::new(row.try_get::<String, _>("id")?),
