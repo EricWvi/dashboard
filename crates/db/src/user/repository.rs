@@ -1,7 +1,7 @@
 use only_application::{UserRepository, UserRepositoryError};
 use only_domain::{User, UserId};
+use only_logging::clock;
 use sqlx::{Pool, Postgres};
-use time::OffsetDateTime;
 
 /// PostgreSQL-backed implementation of [`UserRepository`] against the `d_user_v2` table.
 pub struct PostgresUserRepository {
@@ -17,10 +17,7 @@ impl PostgresUserRepository {
 
 impl UserRepository for PostgresUserRepository {
     async fn find_or_create_by_email(&self, email: &str) -> Result<User, UserRepositoryError> {
-        let now_ms = OffsetDateTime::now_local()
-            .unwrap_or_else(|_| OffsetDateTime::now_utc())
-            .unix_timestamp_nanos() as i64
-            / 1_000_000;
+        let now_ms = clock::now_millis();
 
         // Attempt to insert; if the email already exists, do nothing.
         sqlx::query(

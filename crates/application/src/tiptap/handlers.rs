@@ -6,8 +6,8 @@ use only_contracts::{
     UpdateTiptapRequest, UpdateTiptapResponse,
 };
 use only_domain::{AuditFields, HistoryEntry, QuickNote, QuickNoteId, TiptapId, TiptapV2};
+use only_logging::clock;
 use serde_json::Value;
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::tiptap::error::TiptapError;
@@ -15,10 +15,7 @@ use crate::tiptap::ports::{QuickNoteRepository, TiptapRepository};
 
 /// Returns the current Unix timestamp in milliseconds, preferring local time.
 fn now_millis() -> i64 {
-    OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .unix_timestamp_nanos() as i64
-        / 1_000_000
+    clock::now_millis()
 }
 
 /// Maps a domain TiptapV2 to its public contract view.

@@ -8,10 +8,11 @@ use only_contracts::{
     GetWordsCountResponse, ListEntriesResponse, MonthEntry, UnbookmarkEntryResponse,
     UpdateEntryResponse, YearEntry,
 };
+use only_logging::clock;
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 use sqlx::{Pool, Postgres};
-use time::{Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time};
+use time::{Date, Duration, Month, PrimitiveDateTime, Time};
 use uuid::Uuid;
 
 use super::{bootstrap_test_state_with_pool, send, with_auth};
@@ -308,11 +309,8 @@ async fn get_entry_dates(state: &AppState, email: &str) -> GetEntryDatesResponse
 
 /// Builds a stable local-time timestamp for the given date and clock time.
 fn local_timestamp_millis(date: Date, hour: u8, minute: u8) -> i64 {
-    let local_offset = OffsetDateTime::now_local()
-        .map(|now| now.offset())
-        .unwrap_or(time::UtcOffset::UTC);
     PrimitiveDateTime::new(date, Time::from_hms(hour, minute, 0).unwrap())
-        .assume_offset(local_offset)
+        .assume_offset(clock::local_offset())
         .unix_timestamp_nanos() as i64
         / 1_000_000
 }
@@ -394,9 +392,7 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
         .await
         .expect("failed to create seeded test user");
     let creator_id = user.id.value();
-    let today = OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .date();
+    let today = clock::now_local().date();
     let jan_first = Date::from_calendar_date(today.year(), Month::January, 1)
         .expect("current year Jan 1 must be valid");
     let on_date = today - Duration::days(10);
@@ -697,9 +693,7 @@ async fn seed_boundary_entries(state: &AppState, pool: &Pool<Postgres>) -> Bound
         .await
         .expect("failed to create boundary test user");
     let creator_id = user.id.value();
-    let today = OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .date();
+    let today = clock::now_local().date();
     let yesterday = today - Duration::days(1);
     let tomorrow = today + Duration::days(1);
     let same_day_previous_year = previous_same_month_day(today);
@@ -1359,9 +1353,7 @@ async fn sc_03_daily_counts_use_local_midnight_boundary(
     boundary: &BoundaryFixture,
 ) {
     let body = get_current_year(state, &boundary.email).await;
-    let current_year = OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .year();
+    let current_year = clock::now_local().year();
     let expected_count = if boundary
         .previous_date
         .starts_with(&format!("{current_year}-"))

@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use time::OffsetDateTime;
+use only_logging::clock;
 use uuid::Uuid;
 
 use crate::media::error::{MediaError, MediaRepositoryError};
@@ -39,7 +39,7 @@ impl<O: ObjectStore, R: MediaRepository> UploadMediaHandler<O, R> {
     /// Content-type is resolved from the filename extension first, then falls back to the
     /// caller-supplied header value.
     pub async fn handle(&self, cmd: UploadMediaCommand) -> Result<String, MediaError> {
-        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let now = clock::now_local();
         let key = format!(
             "{}/{:02}/{}_{filename}",
             now.year(),

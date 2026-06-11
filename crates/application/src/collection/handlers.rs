@@ -5,7 +5,7 @@ use only_contracts::{
     UpdateCollectionResponse,
 };
 use only_domain::{AuditFields, Collection, CollectionId, TodoId};
-use time::OffsetDateTime;
+use only_logging::clock;
 use uuid::Uuid;
 
 use crate::collection::error::CollectionError;
@@ -13,10 +13,7 @@ use crate::collection::ports::{CollectionRepository, TodoRepository};
 
 /// Returns the current Unix timestamp in milliseconds, preferring local time.
 fn now_millis() -> i64 {
-    OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .unix_timestamp_nanos() as i64
-        / 1_000_000
+    clock::now_millis()
 }
 
 /// Maps a domain collection to its public contract view.
@@ -288,7 +285,7 @@ impl<TR: TodoRepository> PlanTodayHandler<TR> {
             return Ok(PlanTodayResponse {});
         }
         // Compute start of current local day in milliseconds.
-        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let now = clock::now_local();
         let start_of_day = now
             .replace_time(time::Time::MIDNIGHT)
             .unix_timestamp_nanos() as i64

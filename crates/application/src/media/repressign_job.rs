@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use only_logging::{only_error, only_info};
+use only_logging::{clock, only_error, only_info};
 use only_scheduler::{BoxFuture, Job};
-use time::{Duration, OffsetDateTime};
+use time::Duration;
 
 use crate::media::error::MediaError;
 use crate::media::object_store::ObjectStore;
@@ -42,9 +42,7 @@ where
     /// Re-presigns all expired media, returning the counts of successes and failures.
     async fn repressign_expired(&self) -> (usize, usize) {
         // Cutoff = now - cutoff_days + 10 min to create a small forward buffer.
-        let cutoff = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc())
-            - Duration::days(self.cutoff_days)
-            + BOUNDARY_OFFSET;
+        let cutoff = clock::now_local() - Duration::days(self.cutoff_days) + BOUNDARY_OFFSET;
 
         let expired = match self.repository.find_expired_presigns(cutoff).await {
             Ok(records) => records,
@@ -61,7 +59,7 @@ where
         for media in expired {
             let result: Result<(), MediaError> = async {
                 let url = self.object_store.presign(&media.key).await?;
-                let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+                let now = clock::now_local();
                 self.repository
                     .update_presigned_url(media.id, url, now)
                     .await?;

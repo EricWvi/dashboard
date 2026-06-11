@@ -4,7 +4,7 @@ use only_contracts::{
     UpdateBookmarkResponse,
 };
 use only_domain::{AuditFields, Bookmark, BookmarkId};
-use time::OffsetDateTime;
+use only_logging::clock;
 use uuid::Uuid;
 
 use crate::bookmark::error::BookmarkError;
@@ -12,10 +12,7 @@ use crate::bookmark::ports::BookmarkRepository;
 
 /// Returns the current Unix timestamp in milliseconds, preferring local time.
 fn now_millis() -> i64 {
-    OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .unix_timestamp_nanos() as i64
-        / 1_000_000
+    clock::now_millis()
 }
 
 /// Maps a domain bookmark to its public contract view.

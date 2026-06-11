@@ -6,7 +6,7 @@ use only_contracts::{
     UpdateEntryResponse, YearEntry,
 };
 use only_domain::{AuditFields, Entry, EntryId, TiptapId};
-use time::OffsetDateTime;
+use only_logging::clock;
 use uuid::Uuid;
 
 use crate::entry::error::EntryError;
@@ -14,10 +14,7 @@ use crate::entry::ports::{DailyCount, DateParts, EntryFilter, EntryRepository};
 
 /// Returns the current Unix timestamp in milliseconds, preferring local time.
 fn now_millis() -> i64 {
-    OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .unix_timestamp_nanos() as i64
-        / 1_000_000
+    clock::now_millis()
 }
 
 /// Maps a domain entry to its public contract view.
@@ -329,7 +326,7 @@ impl<R: EntryRepository> GetCurrentYearHandler<R> {
     pub async fn handle(&self, creator_id: i32) -> Result<GetCurrentYearResponse, EntryError> {
         let mut counts: Vec<DailyCount> = self.repository.count_current_year(creator_id).await?;
 
-        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let now = clock::now_local();
         let today_str = format!(
             "{:04}-{:02}-{:02}",
             now.year(),

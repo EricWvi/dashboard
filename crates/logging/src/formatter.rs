@@ -1,11 +1,11 @@
 use serde_json::{Map, Value, json};
-use time::{OffsetDateTime, format_description::well_known::Rfc3339};
+use time::format_description::well_known::Rfc3339;
 use tracing::Event;
 use tracing_subscriber::fmt::FmtContext;
 use tracing_subscriber::fmt::format::{FormatEvent, FormatFields, Writer};
 use tracing_subscriber::registry::LookupSpan;
 
-use crate::correlation::scope_correlation;
+use crate::{clock, correlation::scope_correlation};
 
 /// Formats every tracing event as one JSON line that follows the shared runtime envelope.
 #[derive(Clone, Copy, Debug, Default)]
@@ -31,8 +31,7 @@ where
         payload.insert(
             "timestamp".to_string(),
             json!(
-                OffsetDateTime::now_local()
-                    .unwrap_or_else(|_| OffsetDateTime::now_utc())
+                clock::now_local()
                     .format(&Rfc3339)
                     .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_string())
             ),

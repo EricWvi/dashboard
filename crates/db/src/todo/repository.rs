@@ -1,7 +1,7 @@
 use only_application::{TodoRepository, TodoRepositoryError};
 use only_domain::{AuditFields, CollectionId, TiptapId, Todo, TodoId};
+use only_logging::clock;
 use sqlx::{Pool, Postgres, Row as _};
-use time::OffsetDateTime;
 
 /// Epoch millisecond sentinel equivalent to 2096-10-02 00:00:00 UTC.
 ///
@@ -51,7 +51,7 @@ impl TodoRepository for PostgresTodoRepository {
 
     async fn list_today(&self, creator_id: i32) -> Result<Vec<Todo>, TodoRepositoryError> {
         // Compute local day boundaries in milliseconds for a DB-agnostic range query.
-        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let now = clock::now_local();
         let day_start_ms = now
             .replace_time(time::Time::MIDNIGHT)
             .unix_timestamp_nanos() as i64

@@ -1,7 +1,7 @@
 use only_application::{DailyCount, DateParts, EntryFilter, EntryRepository, EntryRepositoryError};
 use only_domain::{AuditFields, Entry, EntryId, TiptapId};
+use only_logging::clock;
 use sqlx::{Pool, Postgres, QueryBuilder, Row as _};
-use time::OffsetDateTime;
 
 /// Sentinel UUID string meaning "no linked draft".
 const ZERO_UUID: &str = "00000000-0000-0000-0000-000000000000";
@@ -137,7 +137,7 @@ impl EntryRepository for PostgresEntryRepository {
             qb.push_bind(end_ms);
         } else if filter.today {
             // Entries from the same calendar day (month + day) in any year.
-            let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+            let now = clock::now_local();
             let month = now.month() as i32;
             let day = now.day() as i32;
             let local_offset_ms = local_offset_millis();
@@ -316,7 +316,7 @@ impl EntryRepository for PostgresEntryRepository {
         &self,
         creator_id: i32,
     ) -> Result<Vec<DailyCount>, EntryRepositoryError> {
-        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let now = clock::now_local();
         let jan1 = time::Date::from_calendar_date(now.year(), time::Month::January, 1)
             .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
         let year_start_ms = local_day_start_millis(jan1);
@@ -462,23 +462,12 @@ fn row_to_entry(row: sqlx::postgres::PgRow) -> Result<Entry, sqlx::Error> {
 
 /// Returns the Unix timestamp in milliseconds for the start of a local calendar day.
 fn local_day_start_millis(date: time::Date) -> i64 {
-    let local_offset = OffsetDateTime::now_local()
-        .map(OffsetDateTime::offset)
-        .unwrap_or(time::UtcOffset::UTC);
-    time::PrimitiveDateTime::new(date, time::Time::MIDNIGHT)
-        .assume_offset(local_offset)
-        .unix_timestamp()
-        * 1000
+    clock::local_day_start_millis(date)
 }
 
 /// Returns the current local UTC offset in milliseconds so SQL can reconstruct local wall time.
 fn local_offset_millis() -> i64 {
-    i64::from(
-        OffsetDateTime::now_local()
-            .map(OffsetDateTime::offset)
-            .unwrap_or(time::UtcOffset::UTC)
-            .whole_seconds(),
-    ) * 1000
+    clock::local_offset_millis()
 }
 
 /// Parses a YYYY-MM-DD date string and returns the [start_ms, end_ms) range in local time.
