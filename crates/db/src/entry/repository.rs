@@ -129,19 +129,35 @@ impl EntryRepository for PostgresEntryRepository {
             qb.push(" AND created_at < ");
             qb.push_bind(end_ms);
         } else if let Some(before) = &filter.before {
-            // Entries strictly before the start of the given date.
-            let (start_ms, _) =
+            // The `before` filter is inclusive of the given day, so it uses the next local
+            // midnight as the exclusive upper bound.
+            let (_, end_ms) =
                 parse_local_date_range(before).map_err(EntryRepositoryError::OperationFailed)?;
             qb.push(" AND created_at < ");
-            qb.push_bind(start_ms);
+            qb.push_bind(end_ms);
         } else if filter.today {
             // Entries from the same calendar day (month + day) in any year.
             let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
             let month = now.month() as i32;
             let day = now.day() as i32;
-            qb.push(" AND EXTRACT(MONTH FROM to_timestamp(created_at / 1000.0))::int = ");
+            let local_offset_ms = local_offset_millis();
+            qb.push(
+                " AND EXTRACT(MONTH FROM \
+                 (to_timestamp((created_at + ",
+            );
+            qb.push_bind(local_offset_ms);
+            qb.push(
+                ") / 1000.0) AT TIME ZONE 'UTC'))::int = ",
+            );
             qb.push_bind(month);
-            qb.push(" AND EXTRACT(DAY FROM to_timestamp(created_at / 1000.0))::int = ");
+            qb.push(
+                " AND EXTRACT(DAY FROM \
+                 (to_timestamp((created_at + ",
+            );
+            qb.push_bind(local_offset_ms);
+            qb.push(
+                ") / 1000.0) AT TIME ZONE 'UTC'))::int = ",
+            );
             qb.push_bind(day);
         }
 
@@ -305,18 +321,17 @@ impl EntryRepository for PostgresEntryRepository {
         creator_id: i32,
     ) -> Result<Vec<DailyCount>, EntryRepositoryError> {
         let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
-        let year_start_ms = {
-            let jan1 = time::Date::from_calendar_date(now.year(), time::Month::January, 1)
-                .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
-            time::PrimitiveDateTime::new(jan1, time::Time::MIDNIGHT)
-                .assume_utc()
-                .unix_timestamp()
-                * 1000
-        };
+        let jan1 = time::Date::from_calendar_date(now.year(), time::Month::January, 1)
+            .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+        let year_start_ms = local_day_start_millis(jan1);
+        let local_offset_ms = local_offset_millis();
 
         let rows = sqlx::query(
             r#"
-            SELECT TO_CHAR(to_timestamp(created_at / 1000.0), 'YYYY-MM-DD') AS date,
+            SELECT TO_CHAR(
+                       to_timestamp((created_at + $3) / 1000.0) AT TIME ZONE 'UTC',
+                       'YYYY-MM-DD'
+                   ) AS date,
                    COUNT(*)::int AS count
             FROM d_entry_v2
             WHERE creator_id = $1 AND is_deleted = FALSE AND created_at >= $2
@@ -326,6 +341,7 @@ impl EntryRepository for PostgresEntryRepository {
         )
         .bind(creator_id)
         .bind(year_start_ms)
+        .bind(local_offset_ms)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
@@ -345,11 +361,18 @@ impl EntryRepository for PostgresEntryRepository {
     }
 
     async fn list_dates(&self, creator_id: i32) -> Result<Vec<DateParts>, EntryRepositoryError> {
+        let local_offset_ms = local_offset_millis();
         let rows = sqlx::query(
             r#"
-            SELECT EXTRACT(YEAR FROM to_timestamp(created_at / 1000.0))::int AS year,
-                   EXTRACT(MONTH FROM to_timestamp(created_at / 1000.0))::int AS month,
-                   EXTRACT(DAY FROM to_timestamp(created_at / 1000.0))::int AS day
+            SELECT EXTRACT(
+                       YEAR FROM (to_timestamp((created_at + $2) / 1000.0) AT TIME ZONE 'UTC')
+                   )::int AS year,
+                   EXTRACT(
+                       MONTH FROM (to_timestamp((created_at + $2) / 1000.0) AT TIME ZONE 'UTC')
+                   )::int AS month,
+                   EXTRACT(
+                       DAY FROM (to_timestamp((created_at + $2) / 1000.0) AT TIME ZONE 'UTC')
+                   )::int AS day
             FROM d_entry_v2
             WHERE creator_id = $1 AND is_deleted = FALSE
             GROUP BY year, month, day
@@ -357,6 +380,7 @@ impl EntryRepository for PostgresEntryRepository {
             "#,
         )
         .bind(creator_id)
+        .bind(local_offset_ms)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
@@ -383,16 +407,23 @@ impl EntryRepository for PostgresEntryRepository {
         creator_id: i32,
         year: Option<i32>,
     ) -> Result<i64, EntryRepositoryError> {
+        let local_offset_ms = local_offset_millis();
         let row = sqlx::query(
             r#"
             SELECT COUNT(*)::bigint AS total
             FROM d_entry_v2
             WHERE creator_id = $1 AND is_deleted = FALSE
-              AND ($2::int IS NULL OR EXTRACT(YEAR FROM to_timestamp(created_at / 1000.0))::int = $2)
+              AND (
+                    $2::int IS NULL
+                    OR EXTRACT(
+                        YEAR FROM (to_timestamp((created_at + $3) / 1000.0) AT TIME ZONE 'UTC')
+                    )::int = $2
+                  )
             "#,
         )
         .bind(creator_id)
         .bind(year)
+        .bind(local_offset_ms)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
@@ -433,19 +464,35 @@ fn row_to_entry(row: sqlx::postgres::PgRow) -> Result<Entry, sqlx::Error> {
     ))
 }
 
+/// Returns the Unix timestamp in milliseconds for the start of a local calendar day.
+fn local_day_start_millis(date: time::Date) -> i64 {
+    let local_offset = OffsetDateTime::now_local()
+        .map(OffsetDateTime::offset)
+        .unwrap_or(time::UtcOffset::UTC);
+    time::PrimitiveDateTime::new(date, time::Time::MIDNIGHT)
+        .assume_offset(local_offset)
+        .unix_timestamp()
+        * 1000
+}
+
+/// Returns the current local UTC offset in milliseconds so SQL can reconstruct local wall time.
+fn local_offset_millis() -> i64 {
+    i64::from(
+        OffsetDateTime::now_local()
+            .map(OffsetDateTime::offset)
+            .unwrap_or(time::UtcOffset::UTC)
+            .whole_seconds(),
+    ) * 1000
+}
+
 /// Parses a YYYY-MM-DD date string and returns the [start_ms, end_ms) range in local time.
 fn parse_local_date_range(date_str: &str) -> Result<(i64, i64), String> {
-    use time::{Date, Time, format_description};
+    use time::{Date, format_description};
 
     let format = format_description::parse("[year]-[month]-[day]").map_err(|e| e.to_string())?;
     let date = Date::parse(date_str, &format).map_err(|e| e.to_string())?;
 
-    let local_offset = OffsetDateTime::now_local()
-        .map(OffsetDateTime::offset)
-        .unwrap_or(time::UtcOffset::UTC);
-
-    let start = time::PrimitiveDateTime::new(date, Time::MIDNIGHT).assume_offset(local_offset);
-    let start_ms = start.unix_timestamp() * 1000;
+    let start_ms = local_day_start_millis(date);
     let end_ms = start_ms + 86_400_000;
 
     Ok((start_ms, end_ms))

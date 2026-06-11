@@ -29,7 +29,8 @@ pub struct EntryFilter {
     pub bookmarked: Option<bool>,
     /// Restrict to entries created on this calendar date (YYYY-MM-DD, local time).
     pub on: Option<String>,
-    /// Restrict to entries created strictly before this calendar date (YYYY-MM-DD, local time).
+    /// Restrict to entries created before the next calendar date, which includes this day
+    /// (YYYY-MM-DD, local time).
     pub before: Option<String>,
     /// When `true`, restrict to entries from the same calendar day (month + day) in any year.
     pub today: bool,

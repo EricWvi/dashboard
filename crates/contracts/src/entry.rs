@@ -45,7 +45,8 @@ pub struct ListEntriesRequest {
     pub random: Option<bool>,
     /// Return only entries created on this calendar date (YYYY-MM-DD, local time).
     pub on: Option<String>,
-    /// Return only entries created before this calendar date (YYYY-MM-DD, local time).
+    /// Return only entries created before the next calendar date, which includes this day
+    /// (YYYY-MM-DD, local time).
     pub before: Option<String>,
     /// When `true`, return entries from the same calendar day (month + day) in any year.
     pub today: Option<bool>,

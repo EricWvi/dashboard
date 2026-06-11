@@ -35,6 +35,19 @@ const TEST_ENCRYPT_KEY: &str = "dashboard-test-encrypt-key-32by!";
 /// The returned `ContainerAsync` must be held by the caller for the lifetime of the test;
 /// dropping it stops the container.
 pub async fn bootstrap_test_state() -> (ContainerAsync<PgContainer>, AppState) {
+    let (container, state, _pool) = bootstrap_test_state_with_pool().await;
+    (container, state)
+}
+
+/// Starts a Postgres 17 container and returns the test app state together with the shared pool.
+///
+/// Entry handler tests use the pool to seed relative-date fixtures that cannot be expressed
+/// through the HTTP API alone.
+pub async fn bootstrap_test_state_with_pool() -> (
+    ContainerAsync<PgContainer>,
+    AppState,
+    Pool<Postgres>,
+) {
     let _guard = set_trace_logging();
 
     let container = PgContainer::default()
@@ -105,12 +118,12 @@ pub async fn bootstrap_test_state() -> (ContainerAsync<PgContainer>, AppState) {
         tag_api: Arc::new(TagApi::new(pool.clone())),
         tiptap_api: Arc::new(TiptapApi::new(pool.clone())),
         bookmark_api: Arc::new(BookmarkApi::new(pool.clone())),
-        user_api: Arc::new(UserApi::new(pool)),
+        user_api: Arc::new(UserApi::new(pool.clone())),
         oidc_client,
         encrypt_key: TEST_ENCRYPT_KEY.to_string(),
     };
 
-    (container, state)
+    (container, state, pool)
 }
 
 /// Builds an `Onlyquant-Token` header value for the given email using the test key.

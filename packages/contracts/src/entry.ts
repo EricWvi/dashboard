@@ -128,7 +128,8 @@ export type ListEntriesRequest = {
    */
   on: string | null;
   /**
-   * Return only entries created before this calendar date (YYYY-MM-DD, local time).
+   * Return only entries created before the next calendar date, which includes this day
+   * (YYYY-MM-DD, local time).
    */
   before: string | null;
   /**
