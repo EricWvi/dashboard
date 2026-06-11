@@ -11,10 +11,11 @@ use crate::handlers::collection::{
     list_today_todos, plan_today, update_collection,
 };
 use crate::handlers::entry::{
-    bookmark_entry, create_entry, create_tags, delete_entry, delete_tag, get_entry, list_entries,
-    list_tags, unbookmark_entry, update_entry,
+    bookmark_entry, create_entry, delete_entry, get_entry, list_entries, unbookmark_entry,
+    update_entry,
 };
 use crate::handlers::media::{delete_handler, serve_handler, upload_handler};
+use crate::handlers::tag::{create_tags, delete_tag, list_tags};
 use crate::handlers::tiptap::{
     bottom_quick_note, create_quick_note, create_tiptap, delete_quick_note, get_tiptap,
     list_quick_notes, list_tiptap_history, restore_tiptap_history, update_quick_note,

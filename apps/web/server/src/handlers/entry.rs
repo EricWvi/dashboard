@@ -107,39 +107,3 @@ pub async fn unbookmark_entry(
         Err(e) => entry_error_response(e),
     }
 }
-
-/// `GET /api/tags` — lists tags by group.
-pub async fn list_tags(
-    State(state): State<AppState>,
-    user: axum::Extension<AuthenticatedUser>,
-    Query(req): Query<only_contracts::ListTagsRequest>,
-) -> Response {
-    match state.entry_api.list_tags(req, user.user_id).await {
-        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
-}
-
-/// `POST /api/tags` — creates a batch of tags.
-pub async fn create_tags(
-    State(state): State<AppState>,
-    user: axum::Extension<AuthenticatedUser>,
-    Json(body): Json<only_contracts::CreateTagsRequest>,
-) -> Response {
-    match state.entry_api.create_tags(body, user.user_id).await {
-        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
-}
-
-/// `DELETE /api/tags` — soft-deletes a tag by name and group.
-pub async fn delete_tag(
-    State(state): State<AppState>,
-    user: axum::Extension<AuthenticatedUser>,
-    Json(body): Json<only_contracts::DeleteTagRequest>,
-) -> Response {
-    match state.entry_api.delete_tag(body, user.user_id).await {
-        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
-}

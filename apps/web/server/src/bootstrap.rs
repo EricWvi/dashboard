@@ -16,7 +16,7 @@ use tokio_util::sync::CancellationToken;
 use crate::app_state::AppState;
 use crate::config::{ENCRYPT_KEY_VAR, MinioRuntimeConfig, OidcConfig};
 use crate::error::WebBootstrapError;
-use crate::service::{BookmarkApi, CollectionApi, EntryApi, TiptapApi, UserApi};
+use crate::service::{BookmarkApi, CollectionApi, EntryApi, TagApi, TiptapApi, UserApi};
 
 /// Bootstraps all infrastructure components and returns the ready `AppState` plus a
 /// scheduler `JoinHandle` for graceful shutdown.
@@ -46,6 +46,7 @@ pub async fn bootstrap(
 
     let collection_api = Arc::new(CollectionApi::new(pool.clone()));
     let entry_api = Arc::new(EntryApi::new(pool.clone()));
+    let tag_api = Arc::new(TagApi::new(pool.clone()));
     let tiptap_api = Arc::new(TiptapApi::new(pool.clone()));
     let bookmark_api = Arc::new(BookmarkApi::new(pool.clone()));
     let user_api = Arc::new(UserApi::new(pool));
@@ -56,6 +57,7 @@ pub async fn bootstrap(
         media_repository,
         collection_api,
         entry_api,
+        tag_api,
         tiptap_api,
         bookmark_api,
         user_api,

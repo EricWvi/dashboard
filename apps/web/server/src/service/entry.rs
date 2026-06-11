@@ -1,18 +1,16 @@
 use only_application::{
-    BookmarkEntryHandler, CreateEntryHandler, CreateTagsHandler, DeleteEntryHandler,
-    DeleteTagHandler, EntryError, GetEntryHandler, ListEntriesHandler, ListTagsHandler, TagError,
-    UnbookmarkEntryHandler, UpdateEntryHandler,
+    BookmarkEntryHandler, CreateEntryHandler, DeleteEntryHandler, EntryError, GetEntryHandler,
+    ListEntriesHandler, UnbookmarkEntryHandler, UpdateEntryHandler,
 };
 use only_contracts::{
-    BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse, CreateTagsRequest,
-    CreateTagsResponse, DeleteEntryResponse, DeleteTagRequest, DeleteTagResponse, GetEntryResponse,
-    ListEntriesRequest, ListEntriesResponse, ListTagsRequest, ListTagsResponse,
-    UnbookmarkEntryResponse, UpdateEntryRequest, UpdateEntryResponse,
+    BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse, DeleteEntryResponse,
+    GetEntryResponse, ListEntriesRequest, ListEntriesResponse, UnbookmarkEntryResponse,
+    UpdateEntryRequest, UpdateEntryResponse,
 };
-use only_db_server::{PostgresEntryRepository, PostgresTagRepository};
+use only_db_server::PostgresEntryRepository;
 use sqlx::{Pool, Postgres};
 
-/// Groups the transport-facing entry and tag entry points for the web adapter.
+/// Groups the transport-facing entry entry points for the web adapter.
 pub struct EntryApi {
     create: CreateEntryHandler<PostgresEntryRepository>,
     get: GetEntryHandler<PostgresEntryRepository>,
@@ -21,9 +19,6 @@ pub struct EntryApi {
     delete: DeleteEntryHandler<PostgresEntryRepository>,
     bookmark: BookmarkEntryHandler<PostgresEntryRepository>,
     unbookmark: UnbookmarkEntryHandler<PostgresEntryRepository>,
-    create_tags: CreateTagsHandler<PostgresTagRepository>,
-    list_tags: ListTagsHandler<PostgresTagRepository>,
-    delete_tag: DeleteTagHandler<PostgresTagRepository>,
 }
 
 impl EntryApi {
@@ -36,10 +31,7 @@ impl EntryApi {
             update: UpdateEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
             delete: DeleteEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
             bookmark: BookmarkEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
-            unbookmark: UnbookmarkEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
-            create_tags: CreateTagsHandler::new(PostgresTagRepository::new(pool.clone())),
-            list_tags: ListTagsHandler::new(PostgresTagRepository::new(pool.clone())),
-            delete_tag: DeleteTagHandler::new(PostgresTagRepository::new(pool)),
+            unbookmark: UnbookmarkEntryHandler::new(PostgresEntryRepository::new(pool)),
         }
     }
 
@@ -101,32 +93,5 @@ impl EntryApi {
         creator_id: i32,
     ) -> Result<UnbookmarkEntryResponse, EntryError> {
         self.unbookmark.handle(id, creator_id).await
-    }
-
-    /// Delegates a create-tags request to the application handler.
-    pub async fn create_tags(
-        &self,
-        request: CreateTagsRequest,
-        creator_id: i32,
-    ) -> Result<CreateTagsResponse, TagError> {
-        self.create_tags.handle(request, creator_id).await
-    }
-
-    /// Delegates a list-tags request to the application handler.
-    pub async fn list_tags(
-        &self,
-        request: ListTagsRequest,
-        creator_id: i32,
-    ) -> Result<ListTagsResponse, TagError> {
-        self.list_tags.handle(request, creator_id).await
-    }
-
-    /// Delegates a delete-tag request to the application handler.
-    pub async fn delete_tag(
-        &self,
-        request: DeleteTagRequest,
-        creator_id: i32,
-    ) -> Result<DeleteTagResponse, TagError> {
-        self.delete_tag.handle(request, creator_id).await
     }
 }
