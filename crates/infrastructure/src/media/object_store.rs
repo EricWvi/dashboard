@@ -1,61 +1,63 @@
 use bytes::Bytes;
-use futures::stream;
-use http::Method;
-use minio::s3::MinioClient;
-use minio::s3::builders::ObjectContent;
-use minio::s3::creds::StaticProvider;
-use minio::s3::http::BaseUrl;
-use minio::s3::types::S3Api;
 use only_application::ObjectStoreError;
+use s3::Bucket;
+use s3::Region;
+use s3::creds::Credentials;
 use thiserror::Error;
 
 use crate::media::config::MinioConfig;
 
-/// Errors produced during MinIO client initialisation.
+/// Errors produced during S3 client initialisation.
 #[derive(Debug, Error)]
 pub enum MinioInitError {
-    #[error("invalid MinIO endpoint: {source}")]
-    InvalidEndpoint {
+    #[error("invalid S3 credentials: {source}")]
+    Credentials {
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
-    #[error("failed to build MinIO client: {source}")]
-    ClientBuild {
+    #[error("failed to build S3 bucket client: {source}")]
+    BucketBuild {
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 }
 
-/// MinIO-backed implementation of [`only_application::ObjectStore`].
+/// S3-compatible (MinIO) implementation of [`only_application::ObjectStore`].
 pub struct MinioObjectStore {
-    client: MinioClient,
-    bucket: String,
+    bucket: Box<Bucket>,
     presign_expiry: std::time::Duration,
 }
 
 impl MinioObjectStore {
-    /// Builds a connected MinIO client from the provided configuration.
+    /// Builds a connected S3 bucket client from the provided configuration.
     ///
-    /// The endpoint is turned into a full URL so `BaseUrl` can infer the protocol
-    /// based on the `use_ssl` flag.
+    /// Uses a custom endpoint so the client works against MinIO or any
+    /// S3-compatible store, and forces path-style addressing as required by MinIO.
     pub fn new(config: MinioConfig) -> Result<Self, MinioInitError> {
         let scheme = if config.use_ssl { "https" } else { "http" };
-        let base_url: BaseUrl = format!("{scheme}://{}", config.endpoint).parse().map_err(
-            |e: minio::s3::error::ValidationErr| MinioInitError::InvalidEndpoint {
-                source: Box::new(e),
-            },
-        )?;
+        let region = Region::Custom {
+            region: "us-east-1".to_owned(),
+            endpoint: format!("{scheme}://{}", config.endpoint),
+        };
 
-        let provider = StaticProvider::new(&config.access_key_id, &config.secret_access_key, None);
-
-        let client = MinioClient::new(base_url, Some(provider), None, None).map_err(|e| {
-            MinioInitError::ClientBuild {
-                source: Box::new(e),
-            }
+        let credentials = Credentials::new(
+            Some(&config.access_key_id),
+            Some(&config.secret_access_key),
+            None,
+            None,
+            None,
+        )
+        .map_err(|e| MinioInitError::Credentials {
+            source: Box::new(e),
         })?;
 
+        let bucket = Bucket::new(&config.bucket, region, credentials)
+            .map_err(|e| MinioInitError::BucketBuild {
+                source: Box::new(e),
+            })?
+            .with_path_style();
+
         Ok(Self {
-            client,
-            bucket: config.bucket,
+            bucket,
             presign_expiry: config.presign_expiry,
         })
     }
@@ -68,21 +70,8 @@ impl only_application::ObjectStore for MinioObjectStore {
         data: Bytes,
         content_type: &str,
     ) -> Result<(), ObjectStoreError> {
-        let size = data.len() as u64;
-        let content = ObjectContent::new_from_stream(
-            stream::once(async move { Ok::<_, std::io::Error>(data) }),
-            size,
-        );
-
-        self.client
-            .put_object_content(&self.bucket, key, content)
-            .map_err(|e| ObjectStoreError::Upload {
-                key: key.to_string(),
-                source: Box::new(e),
-            })?
-            .content_type(Some(content_type.to_string()))
-            .build()
-            .send()
+        self.bucket
+            .put_object_with_content_type(key, &data, content_type)
             .await
             .map_err(|e| ObjectStoreError::Upload {
                 key: key.to_string(),
@@ -93,14 +82,8 @@ impl only_application::ObjectStore for MinioObjectStore {
     }
 
     async fn delete(&self, key: &str) -> Result<(), ObjectStoreError> {
-        self.client
-            .delete_object(&self.bucket, key)
-            .map_err(|e| ObjectStoreError::Delete {
-                key: key.to_string(),
-                source: Box::new(e),
-            })?
-            .build()
-            .send()
+        self.bucket
+            .delete_object(key)
             .await
             .map_err(|e| ObjectStoreError::Delete {
                 key: key.to_string(),
@@ -113,22 +96,12 @@ impl only_application::ObjectStore for MinioObjectStore {
     async fn presign(&self, key: &str) -> Result<String, ObjectStoreError> {
         let expiry_secs = self.presign_expiry.as_secs() as u32;
 
-        let resp = self
-            .client
-            .get_presigned_object_url(&self.bucket, key, Method::GET)
-            .map_err(|e| ObjectStoreError::Presign {
-                key: key.to_string(),
-                source: Box::new(e),
-            })?
-            .expiry_seconds(Some(expiry_secs))
-            .build()
-            .send()
+        self.bucket
+            .presign_get(key, expiry_secs, None)
             .await
             .map_err(|e| ObjectStoreError::Presign {
                 key: key.to_string(),
                 source: Box::new(e),
-            })?;
-
-        Ok(resp.url)
+            })
     }
 }

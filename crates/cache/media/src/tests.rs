@@ -6,8 +6,8 @@
 // ── Test backend server ───────────────────────────────────────────────────────
 //
 // A small axum server that mimics the remote API used by the media cache:
-//   POST /api/upload  — accepts multipart `uuid` + `photos` fields, stores in MinIO
-//   GET  /api/m/{uuid} — fetches from MinIO and streams back
+//   POST /api/upload  — accepts multipart `uuid` + `photos` fields, stores in S3
+//   GET  /api/m/{uuid} — fetches from S3 and streams back
 //
 // The server validates the `Onlyquant-Token` header against a fixed token so
 // auth-rejection tests work without touching the global AUTH_TOKEN.
@@ -24,12 +24,8 @@ mod support {
     use axum::response::IntoResponse;
     use axum::routing::{get, post};
     use bytes::Bytes;
-    use minio::s3::MinioClient;
-    use minio::s3::creds::StaticProvider;
-    use minio::s3::http::BaseUrl;
-    use minio::s3::response_traits::HasS3Fields;
-    use minio::s3::segmented_bytes::SegmentedBytes;
-    use minio::s3::types::S3Api;
+    use s3::creds::Credentials;
+    use s3::{Bucket, BucketConfiguration, Region};
     use testcontainers::ContainerAsync;
     use testcontainers::runners::AsyncRunner;
     use testcontainers_modules::minio::MinIO;
@@ -42,9 +38,8 @@ mod support {
 
     #[derive(Clone)]
     pub struct BackendState {
-        pub minio: MinioClient,
-        /// Mapping from uuid → content-type for uploads received without MinIO
-        /// (used by tests that don't care about MinIO storage verification).
+        pub bucket: Box<Bucket>,
+        /// Mapping from uuid → (bytes, content-type) for all uploads received.
         pub uploads: Arc<RwLock<HashMap<String, (Bytes, String)>>>,
         pub auth_token: String,
     }
@@ -87,13 +82,9 @@ mod support {
             return StatusCode::BAD_REQUEST.into_response();
         };
 
-        // Store both in MinIO and in the in-memory map for flexible test verification.
         let _ = state
-            .minio
-            .put_object(BUCKET, &uuid, SegmentedBytes::from(bytes.clone()))
-            .unwrap()
-            .build()
-            .send()
+            .bucket
+            .put_object_with_content_type(&uuid, &bytes, &content_type)
             .await;
 
         state
@@ -118,9 +109,8 @@ mod support {
             return StatusCode::UNAUTHORIZED.into_response();
         }
 
-        // Check in-memory map first — it preserves the content-type accurately.
-        // MinIO's basic put_object API doesn't accept content-type, so we can't
-        // rely on the response header from MinIO for the correct type.
+        // Check in-memory map first — it accurately preserves the content-type
+        // for uploads that used an empty content-type string.
         if let Some((bytes, ct)) = state.uploads.read().await.get(&uuid).cloned() {
             return (
                 StatusCode::OK,
@@ -130,22 +120,15 @@ mod support {
                 .into_response();
         }
 
-        // Fall back to MinIO for objects not in the in-memory map.
-        if let Ok(resp) = state
-            .minio
-            .get_object(BUCKET, &uuid)
-            .unwrap()
-            .build()
-            .send()
-            .await
-        {
+        // Fall back to S3 for objects not in the in-memory map.
+        if let Ok(resp) = state.bucket.get_object(&uuid).await {
             let ct = resp
                 .headers()
                 .get("content-type")
-                .and_then(|v| v.to_str().ok())
+                .map(|v| v.as_str())
                 .unwrap_or("application/octet-stream")
                 .to_string();
-            let data = resp.into_bytes().await.unwrap_or_default();
+            let data = Bytes::copy_from_slice(resp.bytes());
             return (
                 StatusCode::OK,
                 [(axum::http::header::CONTENT_TYPE, ct)],
@@ -160,7 +143,7 @@ mod support {
     pub struct TestBackend {
         pub _container: ContainerAsync<MinIO>,
         pub base_url: String,
-        pub minio: MinioClient,
+        pub bucket: Box<Bucket>,
         pub uploads: Arc<RwLock<HashMap<String, (Bytes, String)>>>,
     }
 
@@ -169,25 +152,34 @@ mod support {
             let container = MinIO::default().start().await.unwrap();
             let port = container.get_host_port_ipv4(9000).await.unwrap();
             let endpoint = format!("127.0.0.1:{port}");
-            let base_url_parsed: BaseUrl = format!("http://{endpoint}").parse().unwrap();
-            let provider = StaticProvider::new(ACCESS_KEY, SECRET_KEY, None);
-            let admin =
-                MinioClient::new(base_url_parsed.clone(), Some(provider.clone()), None, None)
-                    .unwrap();
 
-            admin
-                .create_bucket(BUCKET)
+            let region = Region::Custom {
+                region: "us-east-1".to_owned(),
+                endpoint: format!("http://{endpoint}"),
+            };
+            let credentials =
+                Credentials::new(Some(ACCESS_KEY), Some(SECRET_KEY), None, None, None).unwrap();
+
+            Bucket::create_with_path_style(
+                BUCKET,
+                region.clone(),
+                credentials.clone(),
+                BucketConfiguration::default(),
+            )
+            .await
+            .unwrap();
+
+            let admin = Bucket::new(BUCKET, region.clone(), credentials.clone())
                 .unwrap()
-                .build()
-                .send()
-                .await
-                .unwrap();
+                .with_path_style();
 
             let uploads: Arc<RwLock<HashMap<String, (Bytes, String)>>> =
                 Arc::new(RwLock::new(HashMap::new()));
 
             let state = BackendState {
-                minio: MinioClient::new(base_url_parsed, Some(provider), None, None).unwrap(),
+                bucket: Bucket::new(BUCKET, region, credentials)
+                    .unwrap()
+                    .with_path_style(),
                 uploads: Arc::clone(&uploads),
                 auth_token: TEST_TOKEN.to_string(),
             };
@@ -206,22 +198,19 @@ mod support {
             TestBackend {
                 _container: container,
                 base_url: format!("http://127.0.0.1:{server_port}"),
-                minio: admin,
+                bucket: admin,
                 uploads,
             }
         }
 
-        /// Pre-seeds MinIO with an object so it can be downloaded in tests.
+        /// Pre-seeds S3 with an object so it can be downloaded in tests.
         /// Also records the content-type in the in-memory map so the download
-        /// handler can return it accurately (MinIO's basic put_object API does
-        /// not accept a content-type on the builder).
+        /// handler can return it accurately for objects seeded with an empty
+        /// content-type string.
         pub async fn seed(&self, uuid: &str, bytes: &[u8], content_type: &str) {
             let body = Bytes::copy_from_slice(bytes);
-            self.minio
-                .put_object(BUCKET, uuid, SegmentedBytes::from(body.clone()))
-                .unwrap()
-                .build()
-                .send()
+            self.bucket
+                .put_object_with_content_type(uuid, bytes, content_type)
                 .await
                 .unwrap();
             self.uploads

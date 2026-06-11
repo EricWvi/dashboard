@@ -14,10 +14,8 @@ workspace = true
 only-application = { workspace = true }
 only-logging = { workspace = true }
 bytes = { workspace = true }
-futures = { workspace = true }
-http = "1"
 mime_guess = { workspace = true }
-minio = { workspace = true }
+rust-s3 = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

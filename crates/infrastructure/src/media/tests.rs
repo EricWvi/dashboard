@@ -1,14 +1,10 @@
 #[cfg(test)]
 mod tests {
     use bytes::Bytes;
-    use minio::s3::MinioClient;
-    use minio::s3::creds::StaticProvider;
-    use minio::s3::error::{Error as MinioError, S3ServerError};
-    use minio::s3::http::BaseUrl;
-    use minio::s3::types::S3Api;
-    use minio::s3::types::minio_error_response::MinioErrorCode;
     use only_application::ObjectStore;
     use pretty_assertions::assert_eq;
+    use s3::creds::Credentials;
+    use s3::{Bucket, BucketConfiguration, Region};
     use testcontainers::ContainerAsync;
     use testcontainers::runners::AsyncRunner;
     use testcontainers_modules::minio::MinIO;
@@ -24,7 +20,11 @@ mod tests {
         /// Keeps the container alive for the duration of each test.
         _container: ContainerAsync<MinIO>,
         store: MinioObjectStore,
-        admin: MinioClient,
+        admin: Box<Bucket>,
+    }
+
+    fn make_credentials() -> Credentials {
+        Credentials::new(Some(ACCESS_KEY), Some(SECRET_KEY), None, None, None).unwrap()
     }
 
     /// Starts a containerized MinIO instance, creates the test bucket, and returns a ready fixture.
@@ -33,17 +33,23 @@ mod tests {
         let port = container.get_host_port_ipv4(9000).await.unwrap();
         let endpoint = format!("127.0.0.1:{port}");
 
-        let base_url: BaseUrl = format!("http://{endpoint}").parse().unwrap();
-        let provider = StaticProvider::new(ACCESS_KEY, SECRET_KEY, None);
-        let admin = MinioClient::new(base_url, Some(provider), None, None).unwrap();
+        let region = Region::Custom {
+            region: "us-east-1".to_owned(),
+            endpoint: format!("http://{endpoint}"),
+        };
 
-        admin
-            .create_bucket(BUCKET)
+        Bucket::create_with_path_style(
+            BUCKET,
+            region.clone(),
+            make_credentials(),
+            BucketConfiguration::default(),
+        )
+        .await
+        .unwrap();
+
+        let admin = Bucket::new(BUCKET, region, make_credentials())
             .unwrap()
-            .build()
-            .send()
-            .await
-            .unwrap();
+            .with_path_style();
 
         let store = MinioObjectStore::new(MinioConfig {
             endpoint,
@@ -75,19 +81,12 @@ mod tests {
             .await
             .unwrap();
 
-        let stat = fixture
-            .admin
-            .stat_object(BUCKET, "images/hello.jpg")
-            .unwrap()
-            .build()
-            .send()
-            .await
-            .unwrap();
+        let (head, _status) = fixture.admin.head_object("images/hello.jpg").await.unwrap();
 
-        assert_eq!(stat.size().unwrap(), data.len() as u64);
+        assert_eq!(head.content_length, Some(data.len() as i64));
     }
 
-    /// Verifies that delete removes the object so a subsequent stat returns NoSuchKey.
+    /// Verifies that delete removes the object so a subsequent head returns a 404 error.
     #[tokio::test]
     #[ignore = "requires RUN_TESTCONTAINERS=1"]
     async fn delete_removes_object_from_bucket() {
@@ -105,23 +104,8 @@ mod tests {
 
         fixture.store.delete("files/remove-me.txt").await.unwrap();
 
-        let error = fixture
-            .admin
-            .stat_object(BUCKET, "files/remove-me.txt")
-            .unwrap()
-            .build()
-            .send()
-            .await
-            .unwrap_err();
-
-        assert_eq!(
-            matches!(
-                &error,
-                MinioError::S3Server(S3ServerError::S3Error(resp))
-                    if resp.code() == MinioErrorCode::NoSuchKey
-            ),
-            true
-        );
+        let result = fixture.admin.head_object("files/remove-me.txt").await;
+        assert!(result.is_err());
     }
 
     /// Verifies that presign returns a signed URL encoding the object key and an AWS v4 signature.
