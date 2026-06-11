@@ -4,7 +4,8 @@ mod ports;
 
 pub use error::{EntryError, EntryRepositoryError};
 pub use handlers::{
-    BookmarkEntryHandler, CreateEntryHandler, DeleteEntryHandler, GetEntryHandler,
+    BookmarkEntryHandler, CreateEntryHandler, DeleteEntryHandler, GetCurrentYearHandler,
+    GetEntriesCountHandler, GetEntryDatesHandler, GetEntryHandler, GetWordsCountHandler,
     ListEntriesHandler, UnbookmarkEntryHandler, UpdateEntryHandler,
 };
-pub use ports::{EntryFilter, EntryRepository};
+pub use ports::{DailyCount, DateParts, EntryFilter, EntryRepository};

@@ -4,6 +4,19 @@ use only_domain::{Entry, EntryId};
 
 use crate::entry::error::EntryRepositoryError;
 
+/// A single day's entry count returned by the current-year activity query.
+pub struct DailyCount {
+    pub date: String,
+    pub count: i32,
+}
+
+/// The year, month, and day components of an entry's creation date.
+pub struct DateParts {
+    pub year: i32,
+    pub month: i32,
+    pub day: i32,
+}
+
 /// Optional filter criteria for paginated entry listing.
 ///
 /// All fields are additive (AND-combined). When none are set, all visible entries are returned.
@@ -78,4 +91,30 @@ pub trait EntryRepository: Send + Sync {
         bookmark: bool,
         updated_at: i64,
     ) -> impl Future<Output = Result<bool, EntryRepositoryError>> + Send;
+
+    /// Returns the total word count across all non-deleted entries for the creator.
+    fn count_words(
+        &self,
+        creator_id: i32,
+    ) -> impl Future<Output = Result<i64, EntryRepositoryError>> + Send;
+
+    /// Returns per-day entry counts for the current calendar year, ordered by date ascending.
+    fn count_current_year(
+        &self,
+        creator_id: i32,
+    ) -> impl Future<Output = Result<Vec<DailyCount>, EntryRepositoryError>> + Send;
+
+    /// Returns distinct year/month/day date groups for all non-deleted entries,
+    /// ordered year DESC, month DESC, day DESC.
+    fn list_dates(
+        &self,
+        creator_id: i32,
+    ) -> impl Future<Output = Result<Vec<DateParts>, EntryRepositoryError>> + Send;
+
+    /// Returns the count of non-deleted entries, optionally restricted to a specific year.
+    fn count_by_year(
+        &self,
+        creator_id: i32,
+        year: Option<i32>,
+    ) -> impl Future<Output = Result<i64, EntryRepositoryError>> + Send;
 }

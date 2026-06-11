@@ -19,9 +19,10 @@ pub use collection::{
     UpdateCollectionHandler,
 };
 pub use entry::{
-    BookmarkEntryHandler, CreateEntryHandler, DeleteEntryHandler, EntryError, EntryFilter,
-    EntryRepository, EntryRepositoryError, GetEntryHandler, ListEntriesHandler,
-    UnbookmarkEntryHandler, UpdateEntryHandler,
+    BookmarkEntryHandler, CreateEntryHandler, DailyCount, DateParts, DeleteEntryHandler,
+    EntryError, EntryFilter, EntryRepository, EntryRepositoryError, GetCurrentYearHandler,
+    GetEntriesCountHandler, GetEntryDatesHandler, GetEntryHandler, GetWordsCountHandler,
+    ListEntriesHandler, UnbookmarkEntryHandler, UpdateEntryHandler,
 };
 pub use oidc::{OidcClient, OidcClientError, TokenResponse, UserInfo};
 pub use tag::{

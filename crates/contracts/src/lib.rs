@@ -23,9 +23,11 @@ pub use collection::{
 };
 pub use entry::{
     BookmarkEntryRequest, BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse,
-    DeleteEntryRequest, DeleteEntryResponse, EntryPath, EntryView, GetEntryRequest,
-    GetEntryResponse, ListEntriesRequest, ListEntriesResponse, UnbookmarkEntryRequest,
-    UnbookmarkEntryResponse, UpdateEntryRequest, UpdateEntryResponse,
+    DailyCount, DeleteEntryRequest, DeleteEntryResponse, EntryPath, EntryView,
+    GetCurrentYearResponse, GetEntriesCountRequest, GetEntriesCountResponse, GetEntryDatesResponse,
+    GetEntryRequest, GetEntryResponse, GetWordsCountResponse, ListEntriesRequest,
+    ListEntriesResponse, MonthEntry, UnbookmarkEntryRequest, UnbookmarkEntryResponse,
+    UpdateEntryRequest, UpdateEntryResponse, YearEntry,
 };
 pub use frontend::{
     BOOKMARK_CLICK_PATH, BOOKMARK_PATH, BOOKMARKS_PATH, COLLECTION_PATH, COLLECTIONS_PATH,
@@ -98,6 +100,14 @@ pub fn export_typescript_bindings_to(
     BookmarkEntryResponse::export(&config)?;
     UnbookmarkEntryRequest::export(&config)?;
     UnbookmarkEntryResponse::export(&config)?;
+    DailyCount::export(&config)?;
+    GetCurrentYearResponse::export(&config)?;
+    GetEntriesCountRequest::export(&config)?;
+    GetEntriesCountResponse::export(&config)?;
+    MonthEntry::export(&config)?;
+    YearEntry::export(&config)?;
+    GetEntryDatesResponse::export(&config)?;
+    GetWordsCountResponse::export(&config)?;
 
     TagView::export(&config)?;
     CreateTagsRequest::export(&config)?;

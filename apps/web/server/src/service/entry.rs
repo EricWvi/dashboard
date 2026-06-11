@@ -1,10 +1,12 @@
 use only_application::{
-    BookmarkEntryHandler, CreateEntryHandler, DeleteEntryHandler, EntryError, GetEntryHandler,
-    ListEntriesHandler, UnbookmarkEntryHandler, UpdateEntryHandler,
+    BookmarkEntryHandler, CreateEntryHandler, DeleteEntryHandler, EntryError,
+    GetCurrentYearHandler, GetEntriesCountHandler, GetEntryDatesHandler, GetEntryHandler,
+    GetWordsCountHandler, ListEntriesHandler, UnbookmarkEntryHandler, UpdateEntryHandler,
 };
 use only_contracts::{
     BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse, DeleteEntryResponse,
-    GetEntryResponse, ListEntriesRequest, ListEntriesResponse, UnbookmarkEntryResponse,
+    GetCurrentYearResponse, GetEntriesCountResponse, GetEntryDatesResponse, GetEntryResponse,
+    GetWordsCountResponse, ListEntriesRequest, ListEntriesResponse, UnbookmarkEntryResponse,
     UpdateEntryRequest, UpdateEntryResponse,
 };
 use only_db_server::PostgresEntryRepository;
@@ -19,6 +21,10 @@ pub struct EntryApi {
     delete: DeleteEntryHandler<PostgresEntryRepository>,
     bookmark: BookmarkEntryHandler<PostgresEntryRepository>,
     unbookmark: UnbookmarkEntryHandler<PostgresEntryRepository>,
+    get_words_count: GetWordsCountHandler<PostgresEntryRepository>,
+    get_current_year: GetCurrentYearHandler<PostgresEntryRepository>,
+    get_entries_count: GetEntriesCountHandler<PostgresEntryRepository>,
+    get_entry_dates: GetEntryDatesHandler<PostgresEntryRepository>,
 }
 
 impl EntryApi {
@@ -31,7 +37,15 @@ impl EntryApi {
             update: UpdateEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
             delete: DeleteEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
             bookmark: BookmarkEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
-            unbookmark: UnbookmarkEntryHandler::new(PostgresEntryRepository::new(pool)),
+            unbookmark: UnbookmarkEntryHandler::new(PostgresEntryRepository::new(pool.clone())),
+            get_words_count: GetWordsCountHandler::new(PostgresEntryRepository::new(pool.clone())),
+            get_current_year: GetCurrentYearHandler::new(PostgresEntryRepository::new(
+                pool.clone(),
+            )),
+            get_entries_count: GetEntriesCountHandler::new(PostgresEntryRepository::new(
+                pool.clone(),
+            )),
+            get_entry_dates: GetEntryDatesHandler::new(PostgresEntryRepository::new(pool)),
         }
     }
 
@@ -93,5 +107,38 @@ impl EntryApi {
         creator_id: i32,
     ) -> Result<UnbookmarkEntryResponse, EntryError> {
         self.unbookmark.handle(id, creator_id).await
+    }
+
+    /// Returns the total word count for all non-deleted entries owned by the creator.
+    pub async fn get_words_count(
+        &self,
+        creator_id: i32,
+    ) -> Result<GetWordsCountResponse, EntryError> {
+        self.get_words_count.handle(creator_id).await
+    }
+
+    /// Returns the current-year activity heatmap for the creator.
+    pub async fn get_current_year(
+        &self,
+        creator_id: i32,
+    ) -> Result<GetCurrentYearResponse, EntryError> {
+        self.get_current_year.handle(creator_id).await
+    }
+
+    /// Returns the count of entries, optionally filtered to a specific year.
+    pub async fn get_entries_count(
+        &self,
+        creator_id: i32,
+        year: Option<i32>,
+    ) -> Result<GetEntriesCountResponse, EntryError> {
+        self.get_entries_count.handle(creator_id, year).await
+    }
+
+    /// Returns the hierarchical date structure for all non-deleted entries.
+    pub async fn get_entry_dates(
+        &self,
+        creator_id: i32,
+    ) -> Result<GetEntryDatesResponse, EntryError> {
+        self.get_entry_dates.handle(creator_id).await
     }
 }

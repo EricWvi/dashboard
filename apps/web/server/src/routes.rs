@@ -11,8 +11,8 @@ use crate::handlers::collection::{
     list_today_todos, plan_today, update_collection,
 };
 use crate::handlers::entry::{
-    bookmark_entry, create_entry, delete_entry, get_entry, list_entries, unbookmark_entry,
-    update_entry,
+    bookmark_entry, create_entry, delete_entry, get_current_year, get_entries_count, get_entry,
+    get_entry_dates, get_words_count, list_entries, unbookmark_entry, update_entry,
 };
 use crate::handlers::media::{delete_handler, serve_handler, upload_handler};
 use crate::handlers::tag::{create_tags, delete_tag, list_tags};
@@ -50,6 +50,10 @@ pub fn build_router(state: AppState) -> Router {
         .route("/api/todos/plan-today", post(plan_today))
         // Entry
         .route("/api/entries", get(list_entries).post(create_entry))
+        .route("/api/entries/stats/words", get(get_words_count))
+        .route("/api/entries/stats/current-year", get(get_current_year))
+        .route("/api/entries/stats/count", get(get_entries_count))
+        .route("/api/entries/stats/dates", get(get_entry_dates))
         .route(
             "/api/entries/{id}",
             get(get_entry).put(update_entry).delete(delete_entry),

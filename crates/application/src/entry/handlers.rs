@@ -1,14 +1,16 @@
 use only_contracts::{
-    BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse, DeleteEntryResponse, EntryView,
-    GetEntryResponse, ListEntriesRequest, ListEntriesResponse, UnbookmarkEntryResponse,
-    UpdateEntryRequest, UpdateEntryResponse,
+    BookmarkEntryResponse, CreateEntryRequest, CreateEntryResponse, DailyCount as DailyCountDto,
+    DeleteEntryResponse, EntryView, GetCurrentYearResponse, GetEntriesCountResponse,
+    GetEntryDatesResponse, GetEntryResponse, GetWordsCountResponse, ListEntriesRequest,
+    ListEntriesResponse, MonthEntry, UnbookmarkEntryResponse, UpdateEntryRequest,
+    UpdateEntryResponse, YearEntry,
 };
 use only_domain::{AuditFields, Entry, EntryId, TiptapId};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::entry::error::EntryError;
-use crate::entry::ports::{EntryFilter, EntryRepository};
+use crate::entry::ports::{DailyCount, DateParts, EntryFilter, EntryRepository};
 
 /// Returns the current Unix timestamp in milliseconds, preferring local time.
 fn now_millis() -> i64 {
@@ -289,4 +291,153 @@ impl<R: EntryRepository> UnbookmarkEntryHandler<R> {
         }
         Ok(UnbookmarkEntryResponse {})
     }
+}
+
+/// Returns the total word count across all non-deleted entries.
+pub struct GetWordsCountHandler<R> {
+    repository: R,
+}
+
+impl<R> GetWordsCountHandler<R> {
+    pub fn new(repository: R) -> Self {
+        Self { repository }
+    }
+}
+
+impl<R: EntryRepository> GetWordsCountHandler<R> {
+    /// Sums the `word_count` column for all visible entries belonging to the creator.
+    pub async fn handle(&self, creator_id: i32) -> Result<GetWordsCountResponse, EntryError> {
+        let count = self.repository.count_words(creator_id).await?;
+        Ok(GetWordsCountResponse { count })
+    }
+}
+
+/// Returns the per-day entry count heatmap for the current calendar year.
+pub struct GetCurrentYearHandler<R> {
+    repository: R,
+}
+
+impl<R> GetCurrentYearHandler<R> {
+    pub fn new(repository: R) -> Self {
+        Self { repository }
+    }
+}
+
+impl<R: EntryRepository> GetCurrentYearHandler<R> {
+    /// Queries current-year activity and pads the result to always include the year-start
+    /// and today, matching the Go handler's contract.
+    pub async fn handle(&self, creator_id: i32) -> Result<GetCurrentYearResponse, EntryError> {
+        let mut counts: Vec<DailyCount> = self.repository.count_current_year(creator_id).await?;
+
+        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let today_str = format!(
+            "{:04}-{:02}-{:02}",
+            now.year(),
+            now.month() as u8,
+            now.day()
+        );
+        let year_start_str = format!("{:04}-01-01", now.year());
+
+        if counts.is_empty() || counts.last().map(|c| c.date.as_str()) != Some(&today_str) {
+            counts.push(DailyCount {
+                date: today_str,
+                count: 0,
+            });
+        }
+        if counts.is_empty() || counts.first().map(|c| c.date.as_str()) != Some(&year_start_str) {
+            counts.insert(
+                0,
+                DailyCount {
+                    date: year_start_str,
+                    count: 0,
+                },
+            );
+        }
+
+        let total = counts.iter().map(|c| c.count).sum();
+        let activity = counts
+            .into_iter()
+            .map(|c| DailyCountDto {
+                date: c.date,
+                count: c.count,
+            })
+            .collect();
+
+        Ok(GetCurrentYearResponse {
+            activity,
+            count: total,
+        })
+    }
+}
+
+/// Returns the count of entries for the creator, optionally restricted to a specific year.
+pub struct GetEntriesCountHandler<R> {
+    repository: R,
+}
+
+impl<R> GetEntriesCountHandler<R> {
+    pub fn new(repository: R) -> Self {
+        Self { repository }
+    }
+}
+
+impl<R: EntryRepository> GetEntriesCountHandler<R> {
+    /// Counts all non-deleted entries, scoped to `year` when provided.
+    pub async fn handle(
+        &self,
+        creator_id: i32,
+        year: Option<i32>,
+    ) -> Result<GetEntriesCountResponse, EntryError> {
+        let count = self.repository.count_by_year(creator_id, year).await?;
+        Ok(GetEntriesCountResponse { count })
+    }
+}
+
+/// Returns the hierarchical date structure (year → month → days) for all entries.
+pub struct GetEntryDatesHandler<R> {
+    repository: R,
+}
+
+impl<R> GetEntryDatesHandler<R> {
+    pub fn new(repository: R) -> Self {
+        Self { repository }
+    }
+}
+
+impl<R: EntryRepository> GetEntryDatesHandler<R> {
+    /// Loads all distinct entry dates and groups them into a year → month → days hierarchy.
+    pub async fn handle(&self, creator_id: i32) -> Result<GetEntryDatesResponse, EntryError> {
+        let dates: Vec<DateParts> = self.repository.list_dates(creator_id).await?;
+        let total = dates.len() as i32;
+        let entry_dates = group_dates(dates);
+        Ok(GetEntryDatesResponse { total, entry_dates })
+    }
+}
+
+/// Groups a flat list of `DateParts` (ordered year DESC, month DESC, day DESC) into
+/// the nested `YearEntry → MonthEntry → days` contract structure.
+fn group_dates(dates: Vec<DateParts>) -> Vec<YearEntry> {
+    let mut result: Vec<YearEntry> = Vec::new();
+
+    for part in dates {
+        if result.last().map(|y: &YearEntry| y.year) != Some(part.year) {
+            result.push(YearEntry {
+                year: part.year,
+                months: Vec::new(),
+            });
+        }
+
+        let year_idx = result.len() - 1;
+        if result[year_idx].months.last().map(|m: &MonthEntry| m.month) != Some(part.month) {
+            result[year_idx].months.push(MonthEntry {
+                month: part.month,
+                days: Vec::new(),
+            });
+        }
+
+        let month_idx = result[year_idx].months.len() - 1;
+        result[year_idx].months[month_idx].days.push(part.day);
+    }
+
+    result
 }

@@ -4,8 +4,8 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use only_application::EntryError;
 use only_contracts::{
-    CreateEntryRequest, DeleteEntryRequest, EntryPath, GetEntryRequest, ListEntriesRequest,
-    UpdateEntryRequest,
+    CreateEntryRequest, DeleteEntryRequest, EntryPath, GetEntriesCountRequest, GetEntryRequest,
+    ListEntriesRequest, UpdateEntryRequest,
 };
 
 use crate::app_state::AppState;
@@ -103,6 +103,55 @@ pub async fn unbookmark_entry(
     Path(path): Path<EntryPath>,
 ) -> Response {
     match state.entry_api.unbookmark(&path.id, user.user_id).await {
+        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
+        Err(e) => entry_error_response(e),
+    }
+}
+
+/// `GET /api/entries/stats/words` — returns the total word count for the authenticated user.
+pub async fn get_words_count(
+    State(state): State<AppState>,
+    user: axum::Extension<AuthenticatedUser>,
+) -> Response {
+    match state.entry_api.get_words_count(user.user_id).await {
+        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
+        Err(e) => entry_error_response(e),
+    }
+}
+
+/// `GET /api/entries/stats/current-year` — returns the current-year activity heatmap.
+pub async fn get_current_year(
+    State(state): State<AppState>,
+    user: axum::Extension<AuthenticatedUser>,
+) -> Response {
+    match state.entry_api.get_current_year(user.user_id).await {
+        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
+        Err(e) => entry_error_response(e),
+    }
+}
+
+/// `GET /api/entries/stats/count` — returns the entry count, optionally filtered by year.
+pub async fn get_entries_count(
+    State(state): State<AppState>,
+    user: axum::Extension<AuthenticatedUser>,
+    Query(req): Query<GetEntriesCountRequest>,
+) -> Response {
+    match state
+        .entry_api
+        .get_entries_count(user.user_id, req.year)
+        .await
+    {
+        Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
+        Err(e) => entry_error_response(e),
+    }
+}
+
+/// `GET /api/entries/stats/dates` — returns the hierarchical year → month → days structure.
+pub async fn get_entry_dates(
+    State(state): State<AppState>,
+    user: axum::Extension<AuthenticatedUser>,
+) -> Response {
+    match state.entry_api.get_entry_dates(user.user_id).await {
         Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
         Err(e) => entry_error_response(e),
     }

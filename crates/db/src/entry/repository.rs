@@ -1,4 +1,4 @@
-use only_application::{EntryFilter, EntryRepository, EntryRepositoryError};
+use only_application::{DailyCount, DateParts, EntryFilter, EntryRepository, EntryRepositoryError};
 use only_domain::{AuditFields, Entry, EntryId, TiptapId};
 use sqlx::{Pool, Postgres, QueryBuilder, Row as _};
 use time::OffsetDateTime;
@@ -281,6 +281,124 @@ impl EntryRepository for PostgresEntryRepository {
         .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    async fn count_words(&self, creator_id: i32) -> Result<i64, EntryRepositoryError> {
+        let row = sqlx::query(
+            r#"
+            SELECT COALESCE(SUM(word_count), 0)::bigint AS total
+            FROM d_entry_v2
+            WHERE creator_id = $1 AND is_deleted = FALSE
+            "#,
+        )
+        .bind(creator_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+
+        row.try_get::<i64, _>("total")
+            .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))
+    }
+
+    async fn count_current_year(
+        &self,
+        creator_id: i32,
+    ) -> Result<Vec<DailyCount>, EntryRepositoryError> {
+        let now = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+        let year_start_ms = {
+            let jan1 = time::Date::from_calendar_date(now.year(), time::Month::January, 1)
+                .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+            time::PrimitiveDateTime::new(jan1, time::Time::MIDNIGHT)
+                .assume_utc()
+                .unix_timestamp()
+                * 1000
+        };
+
+        let rows = sqlx::query(
+            r#"
+            SELECT TO_CHAR(to_timestamp(created_at / 1000.0), 'YYYY-MM-DD') AS date,
+                   COUNT(*)::int AS count
+            FROM d_entry_v2
+            WHERE creator_id = $1 AND is_deleted = FALSE AND created_at >= $2
+            GROUP BY date
+            ORDER BY date ASC
+            "#,
+        )
+        .bind(creator_id)
+        .bind(year_start_ms)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+
+        rows.into_iter()
+            .map(|row| {
+                Ok(DailyCount {
+                    date: row
+                        .try_get::<String, _>("date")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                    count: row
+                        .try_get::<i32, _>("count")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                })
+            })
+            .collect()
+    }
+
+    async fn list_dates(&self, creator_id: i32) -> Result<Vec<DateParts>, EntryRepositoryError> {
+        let rows = sqlx::query(
+            r#"
+            SELECT EXTRACT(YEAR FROM to_timestamp(created_at / 1000.0))::int AS year,
+                   EXTRACT(MONTH FROM to_timestamp(created_at / 1000.0))::int AS month,
+                   EXTRACT(DAY FROM to_timestamp(created_at / 1000.0))::int AS day
+            FROM d_entry_v2
+            WHERE creator_id = $1 AND is_deleted = FALSE
+            GROUP BY year, month, day
+            ORDER BY year DESC, month DESC, day DESC
+            "#,
+        )
+        .bind(creator_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+
+        rows.into_iter()
+            .map(|row| {
+                Ok(DateParts {
+                    year: row
+                        .try_get::<i32, _>("year")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                    month: row
+                        .try_get::<i32, _>("month")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                    day: row
+                        .try_get::<i32, _>("day")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                })
+            })
+            .collect()
+    }
+
+    async fn count_by_year(
+        &self,
+        creator_id: i32,
+        year: Option<i32>,
+    ) -> Result<i64, EntryRepositoryError> {
+        let row = sqlx::query(
+            r#"
+            SELECT COUNT(*)::bigint AS total
+            FROM d_entry_v2
+            WHERE creator_id = $1 AND is_deleted = FALSE
+              AND ($2::int IS NULL OR EXTRACT(YEAR FROM to_timestamp(created_at / 1000.0))::int = $2)
+            "#,
+        )
+        .bind(creator_id)
+        .bind(year)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+
+        row.try_get::<i64, _>("total")
+            .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))
     }
 }
 

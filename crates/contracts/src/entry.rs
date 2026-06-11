@@ -168,3 +168,72 @@ pub struct UnbookmarkEntryRequest {
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "entry.ts")]
 pub struct UnbookmarkEntryResponse {}
+
+/// A single day's entry count within the current-year activity heatmap.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct DailyCount {
+    pub date: String,
+    pub count: i32,
+}
+
+/// Returns the current-year activity heatmap and total entry count.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct GetCurrentYearResponse {
+    pub activity: Vec<DailyCount>,
+    pub count: i32,
+}
+
+/// Query parameters for counting entries, optionally filtered to a specific year.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct GetEntriesCountRequest {
+    pub year: Option<i32>,
+}
+
+/// Returns the count of entries matching the optional year filter.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct GetEntriesCountResponse {
+    pub count: i64,
+}
+
+/// A single month within a year entry, holding the days that contain at least one entry.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct MonthEntry {
+    pub month: i32,
+    pub days: Vec<i32>,
+}
+
+/// A single year in the hierarchical entry-date structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct YearEntry {
+    pub year: i32,
+    pub months: Vec<MonthEntry>,
+}
+
+/// Returns the hierarchical date structure (year → month → days) and total entry count.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct GetEntryDatesResponse {
+    pub total: i32,
+    pub entry_dates: Vec<YearEntry>,
+}
+
+/// Returns the total word count across all non-deleted entries.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "entry.ts")]
+pub struct GetWordsCountResponse {
+    pub count: i64,
+}

@@ -27,6 +27,11 @@ export type CreateEntryRequest = {
 export type CreateEntryResponse = { entry: EntryView };
 
 /**
+ * A single day's entry count within the current-year activity heatmap.
+ */
+export type DailyCount = { date: string; count: number };
+
+/**
  * Identifies the entry to soft-delete.
  */
 export type DeleteEntryRequest = { id: string };
@@ -51,6 +56,32 @@ export type EntryView = {
 };
 
 /**
+ * Returns the current-year activity heatmap and total entry count.
+ */
+export type GetCurrentYearResponse = {
+  activity: Array<DailyCount>;
+  count: number;
+};
+
+/**
+ * Query parameters for counting entries, optionally filtered to a specific year.
+ */
+export type GetEntriesCountRequest = { year: number | null };
+
+/**
+ * Returns the count of entries matching the optional year filter.
+ */
+export type GetEntriesCountResponse = { count: bigint };
+
+/**
+ * Returns the hierarchical date structure (year → month → days) and total entry count.
+ */
+export type GetEntryDatesResponse = {
+  total: number;
+  entryDates: Array<YearEntry>;
+};
+
+/**
  * Identifies a single entry to fetch.
  */
 export type GetEntryRequest = { id: string };
@@ -59,6 +90,11 @@ export type GetEntryRequest = { id: string };
  * Returns a single entry by id.
  */
 export type GetEntryResponse = { entry: EntryView };
+
+/**
+ * Returns the total word count across all non-deleted entries.
+ */
+export type GetWordsCountResponse = { count: bigint };
 
 /**
  * Query parameters for listing entries with optional filters.
@@ -110,6 +146,11 @@ export type ListEntriesResponse = {
 };
 
 /**
+ * A single month within a year entry, holding the days that contain at least one entry.
+ */
+export type MonthEntry = { month: number; days: Array<number> };
+
+/**
  * Sets `bookmark = false` on the identified entry.
  */
 export type UnbookmarkEntryRequest = { id: string };
@@ -141,3 +182,8 @@ export type UpdateEntryRequest = {
  * Returns the updated entry after a successful update.
  */
 export type UpdateEntryResponse = { entry: EntryView };
+
+/**
+ * A single year in the hierarchical entry-date structure.
+ */
+export type YearEntry = { year: number; months: Array<MonthEntry> };
