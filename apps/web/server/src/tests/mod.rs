@@ -1,6 +1,7 @@
 mod bookmark;
 mod collection;
 mod entry;
+mod tag;
 mod tiptap;
 
 use std::sync::Arc;
@@ -23,7 +24,7 @@ use tower::ServiceExt;
 use crate::app_state::AppState;
 use crate::middleware::encrypt_token;
 use crate::routes::build_router;
-use crate::service::{BookmarkApi, CollectionApi, EntryApi, TiptapApi, UserApi};
+use crate::service::{BookmarkApi, CollectionApi, EntryApi, TagApi, TiptapApi, UserApi};
 
 /// A 32-byte AES-256 key used exclusively in tests.
 const TEST_ENCRYPT_KEY: &str = "dashboard-test-encrypt-key-32by!";
@@ -101,6 +102,7 @@ pub async fn bootstrap_test_state() -> (ContainerAsync<PgContainer>, AppState) {
         media_repository,
         collection_api: Arc::new(CollectionApi::new(pool.clone())),
         entry_api: Arc::new(EntryApi::new(pool.clone())),
+        tag_api: Arc::new(TagApi::new(pool.clone())),
         tiptap_api: Arc::new(TiptapApi::new(pool.clone())),
         bookmark_api: Arc::new(BookmarkApi::new(pool.clone())),
         user_api: Arc::new(UserApi::new(pool)),
