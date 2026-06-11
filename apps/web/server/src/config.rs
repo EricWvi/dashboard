@@ -257,15 +257,14 @@ impl DatabaseRuntimeConfig {
     /// Builds a libpq-compatible PostgreSQL connection URL from the configured fields.
     pub fn connection_string(&self) -> String {
         format!(
-            "postgres://{}:{}@{}:{}/{}?sslmode={}&TimeZone={}",
-            self.username,
-            self.password,
-            self.host,
-            self.port,
-            self.name,
-            self.ssl_mode,
-            self.timezone,
+            "postgres://{}:{}@{}:{}/{}?sslmode={}",
+            self.username, self.password, self.host, self.port, self.name, self.ssl_mode,
         )
+    }
+
+    /// Returns the configured PostgreSQL session timezone to apply in pool connection hooks.
+    pub fn timezone(&self) -> &str {
+        &self.timezone
     }
 }
 
@@ -400,8 +399,9 @@ mod tests {
         let config = DatabaseRuntimeConfig::from_reader(db_vars).unwrap();
         assert_eq!(
             config.connection_string(),
-            "postgres://user:pass@localhost:5432/dashboard?sslmode=disable&TimeZone=UTC"
+            "postgres://user:pass@localhost:5432/dashboard?sslmode=disable"
         );
+        assert_eq!(config.timezone(), "UTC");
     }
 
     /// Verifies that custom ssl_mode and timezone override the defaults.
@@ -415,7 +415,8 @@ mod tests {
         .unwrap();
         assert_eq!(
             config.connection_string(),
-            "postgres://user:pass@localhost:5432/dashboard?sslmode=require&TimeZone=Asia/Shanghai"
+            "postgres://user:pass@localhost:5432/dashboard?sslmode=require"
         );
+        assert_eq!(config.timezone(), "Asia/Shanghai");
     }
 }

@@ -22,12 +22,13 @@ use crate::service::{BookmarkApi, CollectionApi, EntryApi, TagApi, TiptapApi, Us
 /// scheduler `JoinHandle` for graceful shutdown.
 pub async fn bootstrap(
     database_url: &str,
+    database_timezone: &str,
     minio_config: MinioRuntimeConfig,
     cancel: CancellationToken,
 ) -> Result<(AppState, JoinHandle<()>), WebBootstrapError> {
     let encrypt_key = read_encrypt_key()?;
     let oidc_config = OidcConfig::from_env()?;
-    let db = bootstrap_database(database_url).await?;
+    let db = bootstrap_database(database_url, database_timezone).await?;
     let pool = db.into_pool();
 
     let media_repository = Arc::new(PostgresMediaRepository::new(pool.clone()));
@@ -68,12 +69,15 @@ pub async fn bootstrap(
     Ok((state, scheduler_handle))
 }
 
-async fn bootstrap_database(database_url: &str) -> Result<Database, WebBootstrapError> {
+async fn bootstrap_database(
+    database_url: &str,
+    database_timezone: &str,
+) -> Result<Database, WebBootstrapError> {
     let catalog = default_migration_catalog()?;
     let location = DatabaseLocation::new(database_url.to_string());
 
     DatabaseBootstrapper::<SystemTimestampSource>::system()
-        .bootstrap(&location, &catalog)
+        .bootstrap_with_timezone(&location, &catalog, Some(database_timezone))
         .await
         .map_err(WebBootstrapError::Database)
 }

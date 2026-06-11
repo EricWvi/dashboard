@@ -14,7 +14,9 @@ use only_db_server::{
 };
 use only_infrastructure::{HttpOidcClient, HttpOidcClientConfig, MinioConfig, MinioObjectStore};
 use only_logging::set_trace_logging;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{Pool, Postgres};
+use std::str::FromStr;
 use testcontainers::ContainerAsync;
 use testcontainers::ImageExt;
 use testcontainers::runners::AsyncRunner;
@@ -28,6 +30,7 @@ use crate::service::{BookmarkApi, CollectionApi, EntryApi, TagApi, TiptapApi, Us
 
 /// A 32-byte AES-256 key used exclusively in tests.
 const TEST_ENCRYPT_KEY: &str = "dashboard-test-encrypt-key-32by!";
+const TEST_DB_TIMEZONE: &str = "Asia/Shanghai";
 
 /// Starts a Postgres 17 container, enables required extensions, runs all migrations,
 /// and returns a fully wired `AppState` backed by the test database.
@@ -43,11 +46,8 @@ pub async fn bootstrap_test_state() -> (ContainerAsync<PgContainer>, AppState) {
 ///
 /// Entry handler tests use the pool to seed relative-date fixtures that cannot be expressed
 /// through the HTTP API alone.
-pub async fn bootstrap_test_state_with_pool() -> (
-    ContainerAsync<PgContainer>,
-    AppState,
-    Pool<Postgres>,
-) {
+pub async fn bootstrap_test_state_with_pool()
+-> (ContainerAsync<PgContainer>, AppState, Pool<Postgres>) {
     let _guard = set_trace_logging();
 
     let container = PgContainer::default()
@@ -61,11 +61,9 @@ pub async fn bootstrap_test_state_with_pool() -> (
         .await
         .expect("postgres port not available");
 
-    let url = format!(
-        "postgres://postgres:postgres@127.0.0.1:{port}/postgres?sslmode=disable&TimeZone=Asia/Shanghai"
-    );
+    let url = format!("postgres://postgres:postgres@127.0.0.1:{port}/postgres?sslmode=disable");
 
-    let setup_pool = Pool::<Postgres>::connect(&url)
+    let setup_pool = connect_test_pool(&url)
         .await
         .expect("failed to connect for extension setup");
     sqlx::raw_sql(
@@ -79,11 +77,11 @@ pub async fn bootstrap_test_state_with_pool() -> (
     let location = DatabaseLocation::new(url.clone());
     let catalog = default_migration_catalog().expect("catalog build failed");
     DatabaseBootstrapper::<SystemTimestampSource>::system()
-        .bootstrap(&location, &catalog)
+        .bootstrap_with_timezone(&location, &catalog, Some(TEST_DB_TIMEZONE))
         .await
         .expect("database bootstrap failed");
 
-    let pool = Pool::<Postgres>::connect(&url)
+    let pool = connect_test_pool(&url)
         .await
         .expect("failed to connect after migration");
 
@@ -124,6 +122,23 @@ pub async fn bootstrap_test_state_with_pool() -> (
     };
 
     (container, state, pool)
+}
+
+/// Opens a test pool and explicitly sets the PostgreSQL session timezone after each connect.
+async fn connect_test_pool(url: &str) -> Result<Pool<Postgres>, sqlx::Error> {
+    let connect_options = PgConnectOptions::from_str(url)?;
+    PgPoolOptions::new()
+        .after_connect(|connection, _meta| {
+            Box::pin(async move {
+                sqlx::query("SELECT pg_catalog.set_config('TimeZone', $1, false)")
+                    .bind(TEST_DB_TIMEZONE)
+                    .execute(connection)
+                    .await?;
+                Ok(())
+            })
+        })
+        .connect_with(connect_options)
+        .await
 }
 
 /// Builds an `Onlyquant-Token` header value for the given email using the test key.

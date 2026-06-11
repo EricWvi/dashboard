@@ -249,7 +249,9 @@ async fn unbookmark_entry(state: &AppState, email: &str, id: &str) -> Response<B
 /// Loads the word-count stats endpoint.
 async fn get_words_count(state: &AppState, email: &str) -> GetWordsCountResponse {
     let req = with_auth(
-        Request::builder().method("GET").uri("/api/entries/stats/words"),
+        Request::builder()
+            .method("GET")
+            .uri("/api/entries/stats/words"),
         email,
     )
     .body(Body::empty())
@@ -317,7 +319,12 @@ fn local_timestamp_millis(date: Date, hour: u8, minute: u8) -> i64 {
 
 /// Formats a local calendar date using the route's `YYYY-MM-DD` convention.
 fn format_date(date: Date) -> String {
-    format!("{:04}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
+    format!(
+        "{:04}-{:02}-{:02}",
+        date.year(),
+        date.month() as u8,
+        date.day()
+    )
 }
 
 /// Finds a previous-year date that preserves the current month/day pair.
@@ -329,7 +336,10 @@ fn previous_same_month_day(today: Date) -> Date {
             return date;
         }
     }
-    panic!("failed to find a valid previous-year date for {}", format_date(today));
+    panic!(
+        "failed to find a valid previous-year date for {}",
+        format_date(today)
+    );
 }
 
 /// Groups distinct seeded date strings into the expected stats response shape.
@@ -340,7 +350,11 @@ fn build_dates_response(entries: &[SeededEntry]) -> GetEntryDatesResponse {
     for date in &unique_dates {
         let parts: Vec<i32> = date
             .split('-')
-            .map(|segment| segment.parse::<i32>().expect("date segment must be numeric"))
+            .map(|segment| {
+                segment
+                    .parse::<i32>()
+                    .expect("date segment must be numeric")
+            })
             .collect();
         years
             .entry(parts[0])
@@ -390,26 +404,186 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
     let same_day_previous_year = previous_same_month_day(today);
 
     let specs = vec![
-        (today, 21, 0, json!({ "tags": ["test1"], "location": ["City", "Downtown"] }), 5, "today alpha entry", false),
-        (today, 20, 0, json!({ "tags": ["test2"], "location": ["City", "Riverside"] }), 7, "today beta bookmark", true),
-        (today - Duration::days(1), 19, 0, json!({ "tags": [] }), 3, "yesterday gamma", false),
-        (today - Duration::days(5), 18, 0, json!({ "tags": ["test1", "test2"] }), 11, "needle-alpha contains keyword", true),
-        (on_date, 17, 0, json!({ "tags": ["test1"] }), 13, "on date first", false),
-        (on_date, 16, 0, json!({ "tags": [] }), 2, "on date second", false),
-        (today - Duration::days(20), 15, 0, json!({ "tags": [] }), 4, "twenty days old", false),
-        (today - Duration::days(40), 14, 0, json!({ "tags": ["travel"] }), 8, "forty days old", false),
-        (today - Duration::days(80), 13, 0, json!({ "tags": ["test2"] }), 6, "eighty days old", true),
-        (today - Duration::days(120), 12, 0, json!({ "tags": [] }), 9, "one twenty", false),
-        (today - Duration::days(160), 11, 0, json!({ "tags": [] }), 10, "one sixty", false),
-        (jan_first, 10, 0, json!({ "tags": [] }), 1, "year start", false),
-        (same_day_previous_year, 9, 0, json!({ "tags": ["anniversary"] }), 12, "previous year same month day", false),
-        (today - Duration::days(370), 8, 0, json!({ "tags": [] }), 14, "three seventy", false),
-        (today - Duration::days(400), 7, 0, json!({ "tags": ["archive"] }), 15, "four hundred", false),
-        (today - Duration::days(500), 6, 0, json!({ "tags": [] }), 16, "five hundred", false),
-        (today - Duration::days(800), 5, 0, json!({ "tags": [] }), 17, "eight hundred", true),
-        (today - Duration::days(1_000), 4, 0, json!({ "tags": ["test1"] }), 18, "one thousand", false),
-        (today - Duration::days(1_200), 3, 0, json!({ "tags": [] }), 19, "twelve hundred", false),
-        (today - Duration::days(1_500), 2, 0, json!({ "tags": [] }), 20, "fifteen hundred", false),
+        (
+            today,
+            21,
+            0,
+            json!({ "tags": ["test1"], "location": ["City", "Downtown"] }),
+            5,
+            "today alpha entry",
+            false,
+        ),
+        (
+            today,
+            20,
+            0,
+            json!({ "tags": ["test2"], "location": ["City", "Riverside"] }),
+            7,
+            "today beta bookmark",
+            true,
+        ),
+        (
+            today - Duration::days(1),
+            19,
+            0,
+            json!({ "tags": [] }),
+            3,
+            "yesterday gamma",
+            false,
+        ),
+        (
+            today - Duration::days(5),
+            18,
+            0,
+            json!({ "tags": ["test1", "test2"] }),
+            11,
+            "needle-alpha contains keyword",
+            true,
+        ),
+        (
+            on_date,
+            17,
+            0,
+            json!({ "tags": ["test1"] }),
+            13,
+            "on date first",
+            false,
+        ),
+        (
+            on_date,
+            16,
+            0,
+            json!({ "tags": [] }),
+            2,
+            "on date second",
+            false,
+        ),
+        (
+            today - Duration::days(20),
+            15,
+            0,
+            json!({ "tags": [] }),
+            4,
+            "twenty days old",
+            false,
+        ),
+        (
+            today - Duration::days(40),
+            14,
+            0,
+            json!({ "tags": ["travel"] }),
+            8,
+            "forty days old",
+            false,
+        ),
+        (
+            today - Duration::days(80),
+            13,
+            0,
+            json!({ "tags": ["test2"] }),
+            6,
+            "eighty days old",
+            true,
+        ),
+        (
+            today - Duration::days(120),
+            12,
+            0,
+            json!({ "tags": [] }),
+            9,
+            "one twenty",
+            false,
+        ),
+        (
+            today - Duration::days(160),
+            11,
+            0,
+            json!({ "tags": [] }),
+            10,
+            "one sixty",
+            false,
+        ),
+        (
+            jan_first,
+            10,
+            0,
+            json!({ "tags": [] }),
+            1,
+            "year start",
+            false,
+        ),
+        (
+            same_day_previous_year,
+            9,
+            0,
+            json!({ "tags": ["anniversary"] }),
+            12,
+            "previous year same month day",
+            false,
+        ),
+        (
+            today - Duration::days(370),
+            8,
+            0,
+            json!({ "tags": [] }),
+            14,
+            "three seventy",
+            false,
+        ),
+        (
+            today - Duration::days(400),
+            7,
+            0,
+            json!({ "tags": ["archive"] }),
+            15,
+            "four hundred",
+            false,
+        ),
+        (
+            today - Duration::days(500),
+            6,
+            0,
+            json!({ "tags": [] }),
+            16,
+            "five hundred",
+            false,
+        ),
+        (
+            today - Duration::days(800),
+            5,
+            0,
+            json!({ "tags": [] }),
+            17,
+            "eight hundred",
+            true,
+        ),
+        (
+            today - Duration::days(1_000),
+            4,
+            0,
+            json!({ "tags": ["test1"] }),
+            18,
+            "one thousand",
+            false,
+        ),
+        (
+            today - Duration::days(1_200),
+            3,
+            0,
+            json!({ "tags": [] }),
+            19,
+            "twelve hundred",
+            false,
+        ),
+        (
+            today - Duration::days(1_500),
+            2,
+            0,
+            json!({ "tags": [] }),
+            20,
+            "fifteen hundred",
+            false,
+        ),
     ];
 
     let mut entries = Vec::with_capacity(specs.len());
@@ -424,7 +598,10 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
 
     entries.sort_by(|left, right| right.created_at.cmp(&left.created_at));
 
-    let total_words = entries.iter().map(|entry| i64::from(entry.word_count)).sum();
+    let total_words = entries
+        .iter()
+        .map(|entry| i64::from(entry.word_count))
+        .sum();
     let page_one_ids = entries
         .iter()
         .take(8)
@@ -464,7 +641,11 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
             let parts = entry
                 .date
                 .split('-')
-                .map(|segment| segment.parse::<i32>().expect("date segment must be numeric"))
+                .map(|segment| {
+                    segment
+                        .parse::<i32>()
+                        .expect("date segment must be numeric")
+                })
                 .collect::<Vec<_>>();
             parts[1] == today.month() as i32 && parts[2] == i32::from(today.day())
         })
@@ -629,10 +810,13 @@ async fn au_02_invalid_token_returns_400(state: &AppState) {
 /// LE-01: no entries exist for user → 200, empty list.
 async fn le_01_empty_list_for_new_user(state: &AppState) {
     let body = list_entries(state, "le01@test.com", "").await;
-    assert_eq!(body, ListEntriesResponse {
-        entries: vec![],
-        has_more: false,
-    });
+    assert_eq!(
+        body,
+        ListEntriesResponse {
+            entries: vec![],
+            has_more: false,
+        }
+    );
 }
 
 /// LE-02: user has entries → 200, entries returned (capped at page size).
@@ -646,10 +830,13 @@ async fn le_02_returns_user_entries(state: &AppState, seed: &SeedFixture) {
 /// LE-03: user A's entries are not visible to user B.
 async fn le_03_entries_isolated_per_user(state: &AppState, seed: &SeedFixture) {
     let other_user = list_entries(state, "le03@test.com", "").await;
-    assert_eq!(other_user, ListEntriesResponse {
-        entries: vec![],
-        has_more: false,
-    });
+    assert_eq!(
+        other_user,
+        ListEntriesResponse {
+            entries: vec![],
+            has_more: false,
+        }
+    );
 
     let seeded_user = list_entries(state, &seed.email, "").await;
     assert_eq!(seeded_user.has_more, true);
@@ -726,7 +913,12 @@ async fn le_12_filter_by_on_date_uses_local_midnight_boundary(
     state: &AppState,
     boundary: &BoundaryFixture,
 ) {
-    let body = list_entries(state, &boundary.email, &format!("on={}", boundary.target_date)).await;
+    let body = list_entries(
+        state,
+        &boundary.email,
+        &format!("on={}", boundary.target_date),
+    )
+    .await;
     assert_eq!(entry_ids(&body.entries), boundary.on_ids);
     assert_eq!(body.has_more, false);
 }
@@ -736,8 +928,12 @@ async fn le_13_filter_by_before_date_includes_local_day_boundary(
     state: &AppState,
     boundary: &BoundaryFixture,
 ) {
-    let body =
-        list_entries(state, &boundary.email, &format!("before={}", boundary.target_date)).await;
+    let body = list_entries(
+        state,
+        &boundary.email,
+        &format!("before={}", boundary.target_date),
+    )
+    .await;
     assert_eq!(entry_ids(&body.entries), boundary.before_ids);
     assert_eq!(body.has_more, false);
 }
@@ -825,21 +1021,18 @@ async fn ge_01_existing_id_returns_entry(state: &AppState) {
 
 /// GE-02: non-existent id → 404.
 async fn ge_02_missing_id_returns_404(state: &AppState) {
-    let resp = get_entry(state, "ge02@test.com", "00000000-0000-0000-0000-000000000000").await;
+    let resp = get_entry(
+        state,
+        "ge02@test.com",
+        "00000000-0000-0000-0000-000000000000",
+    )
+    .await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
 /// GE-03: id belonging to another user → 404.
 async fn ge_03_other_user_id_returns_404(state: &AppState) {
-    let entry = create_entry(
-        state,
-        "ge03a@test.com",
-        None,
-        json!({}),
-        1,
-        "private entry",
-    )
-    .await;
+    let entry = create_entry(state, "ge03a@test.com", None, json!({}), 1, "private entry").await;
     let resp = get_entry(state, "ge03b@test.com", &entry.id).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
@@ -924,15 +1117,7 @@ async fn ue_03_other_user_id_returns_404(state: &AppState) {
 
 /// DE-01: existing entry → 200, response contains deleted id.
 async fn de_01_existing_id_returns_deleted_id(state: &AppState) {
-    let entry = create_entry(
-        state,
-        "de01@test.com",
-        None,
-        json!({}),
-        1,
-        "delete me",
-    )
-    .await;
+    let entry = create_entry(state, "de01@test.com", None, json!({}), 1, "delete me").await;
     let resp = delete_entry(state, "de01@test.com", &entry.id).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let body: DeleteEntryResponse = parse_json(resp).await;
@@ -975,7 +1160,12 @@ async fn de_03_deleted_entry_returns_404_on_get(state: &AppState) {
 
 /// DE-04: non-existent id → 404.
 async fn de_04_missing_id_returns_404(state: &AppState) {
-    let resp = delete_entry(state, "de04@test.com", "00000000-0000-0000-0000-000000000000").await;
+    let resp = delete_entry(
+        state,
+        "de04@test.com",
+        "00000000-0000-0000-0000-000000000000",
+    )
+    .await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
@@ -998,15 +1188,7 @@ async fn de_05_other_user_id_returns_404(state: &AppState) {
 
 /// BK-01: existing entry → 200, entry bookmark flag set to true.
 async fn bk_01_bookmark_sets_flag_true(state: &AppState) {
-    let entry = create_entry(
-        state,
-        "bk01@test.com",
-        None,
-        json!({}),
-        1,
-        "bookmark me",
-    )
-    .await;
+    let entry = create_entry(state, "bk01@test.com", None, json!({}), 1, "bookmark me").await;
     let resp = bookmark_entry(state, "bk01@test.com", &entry.id).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let _: BookmarkEntryResponse = parse_json(resp).await;
@@ -1036,7 +1218,12 @@ async fn bk_02_bookmarked_entry_in_filter(state: &AppState) {
 
 /// BK-03: non-existent id → 404.
 async fn bk_03_missing_id_returns_404(state: &AppState) {
-    let resp = bookmark_entry(state, "bk03@test.com", "00000000-0000-0000-0000-000000000000").await;
+    let resp = bookmark_entry(
+        state,
+        "bk03@test.com",
+        "00000000-0000-0000-0000-000000000000",
+    )
+    .await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
@@ -1059,15 +1246,7 @@ async fn bk_04_other_user_id_returns_404(state: &AppState) {
 
 /// UB-01: bookmarked entry → 200, entry bookmark flag set to false.
 async fn ub_01_unbookmark_sets_flag_false(state: &AppState) {
-    let entry = create_entry(
-        state,
-        "ub01@test.com",
-        None,
-        json!({}),
-        1,
-        "unbookmark me",
-    )
-    .await;
+    let entry = create_entry(state, "ub01@test.com", None, json!({}), 1, "unbookmark me").await;
     let resp = bookmark_entry(state, "ub01@test.com", &entry.id).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
@@ -1102,8 +1281,12 @@ async fn ub_02_unbookmarked_entry_excluded_from_filter(state: &AppState) {
 
 /// UB-03: non-existent id → 404.
 async fn ub_03_missing_id_returns_404(state: &AppState) {
-    let resp =
-        unbookmark_entry(state, "ub03@test.com", "00000000-0000-0000-0000-000000000000").await;
+    let resp = unbookmark_entry(
+        state,
+        "ub03@test.com",
+        "00000000-0000-0000-0000-000000000000",
+    )
+    .await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
@@ -1165,11 +1348,7 @@ async fn sc_02_daily_counts_returned(state: &AppState, seed: &SeedFixture) {
         body.activity.last(),
         Some(&DailyCount {
             date: seed.current_year_last_date.clone(),
-            count: body
-                .activity
-                .last()
-                .expect("today entry must exist")
-                .count,
+            count: body.activity.last().expect("today entry must exist").count,
         })
     );
 }
@@ -1183,18 +1362,25 @@ async fn sc_03_daily_counts_use_local_midnight_boundary(
     let current_year = OffsetDateTime::now_local()
         .unwrap_or_else(|_| OffsetDateTime::now_utc())
         .year();
-    let expected_count = if boundary.previous_date.starts_with(&format!("{current_year}-")) {
+    let expected_count = if boundary
+        .previous_date
+        .starts_with(&format!("{current_year}-"))
+    {
         3
     } else {
         2
     };
     assert_eq!(body.count, expected_count);
-    assert!(body.activity.iter().any(|day| {
-        day.date == boundary.previous_date && day.count == 1
-    }));
-    assert!(body.activity.iter().any(|day| {
-        day.date == boundary.target_date && day.count == 1
-    }));
+    assert!(
+        body.activity
+            .iter()
+            .any(|day| { day.date == boundary.previous_date && day.count == 1 })
+    );
+    assert!(
+        body.activity
+            .iter()
+            .any(|day| { day.date == boundary.target_date && day.count == 1 })
+    );
 }
 
 // ─── SN: stats count ─────────────────────────────────────────────────────────
@@ -1216,10 +1402,13 @@ async fn sn_02_count_matches_entries(state: &AppState, seed: &SeedFixture) {
 /// SD-01: user with no entries → 200, empty list.
 async fn sd_01_no_entries_dates_empty(state: &AppState) {
     let body = get_entry_dates(state, "sd01@test.com").await;
-    assert_eq!(body, GetEntryDatesResponse {
-        total: 0,
-        entry_dates: vec![],
-    });
+    assert_eq!(
+        body,
+        GetEntryDatesResponse {
+            total: 0,
+            entry_dates: vec![],
+        }
+    );
 }
 
 /// SD-02: user with entries → 200, distinct date parts returned.

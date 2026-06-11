@@ -25,8 +25,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let minio_config = config::MinioRuntimeConfig::from_env()?;
     let cancel = CancellationToken::new();
 
-    let (state, _scheduler) =
-        bootstrap::bootstrap(&db_config.connection_string(), minio_config, cancel.clone()).await?;
+    let (state, _scheduler) = bootstrap::bootstrap(
+        &db_config.connection_string(),
+        db_config.timezone(),
+        minio_config,
+        cancel.clone(),
+    )
+    .await?;
 
     let router = routes::build_router(state);
 

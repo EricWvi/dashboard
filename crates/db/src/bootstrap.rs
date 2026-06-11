@@ -1,5 +1,7 @@
 use only_logging::{only_error, only_info};
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{Pool, Postgres};
+use std::str::FromStr;
 
 use crate::{
     DatabaseError, DatabaseLocation, MigrationCatalog, SystemTimestampSource, TimestampSource,
@@ -52,12 +54,23 @@ where
         location: &DatabaseLocation,
         catalog: &MigrationCatalog,
     ) -> Result<Database, DatabaseError> {
+        self.bootstrap_with_timezone(location, catalog, None).await
+    }
+
+    /// Opens a connection pool, applies an optional session timezone, reconciles it with the
+    /// target migration prefix, and returns the ready database.
+    pub async fn bootstrap_with_timezone(
+        &self,
+        location: &DatabaseLocation,
+        catalog: &MigrationCatalog,
+        timezone: Option<&str>,
+    ) -> Result<Database, DatabaseError> {
         only_info!(
             message = "opening database pool",
             operation = "database_open"
         );
 
-        let pool = match Pool::<Postgres>::connect(location.connection_string()).await {
+        let pool = match open_pool(location, timezone).await {
             Ok(pool) => pool,
             Err(error) => {
                 only_error!(
@@ -94,4 +107,28 @@ where
 
         Ok(Database { pool })
     }
+}
+
+/// Opens a PostgreSQL pool and applies the configured session timezone on every new connection.
+async fn open_pool(
+    location: &DatabaseLocation,
+    timezone: Option<&str>,
+) -> Result<Pool<Postgres>, sqlx::Error> {
+    let connect_options = PgConnectOptions::from_str(location.connection_string())?;
+    let pool_options = if let Some(timezone) = timezone.map(str::to_owned) {
+        PgPoolOptions::new().after_connect(move |connection, _meta| {
+            let timezone = timezone.clone();
+            Box::pin(async move {
+                sqlx::query("SELECT pg_catalog.set_config('TimeZone', $1, false)")
+                    .bind(timezone)
+                    .execute(connection)
+                    .await?;
+                Ok(())
+            })
+        })
+    } else {
+        PgPoolOptions::new()
+    };
+
+    pool_options.connect_with(connect_options).await
 }

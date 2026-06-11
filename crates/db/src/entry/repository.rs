@@ -146,18 +146,14 @@ impl EntryRepository for PostgresEntryRepository {
                  (to_timestamp((created_at + ",
             );
             qb.push_bind(local_offset_ms);
-            qb.push(
-                ") / 1000.0) AT TIME ZONE 'UTC'))::int = ",
-            );
+            qb.push(") / 1000.0) AT TIME ZONE 'UTC'))::int = ");
             qb.push_bind(month);
             qb.push(
                 " AND EXTRACT(DAY FROM \
                  (to_timestamp((created_at + ",
             );
             qb.push_bind(local_offset_ms);
-            qb.push(
-                ") / 1000.0) AT TIME ZONE 'UTC'))::int = ",
-            );
+            qb.push(") / 1000.0) AT TIME ZONE 'UTC'))::int = ");
             qb.push_bind(day);
         }
 
