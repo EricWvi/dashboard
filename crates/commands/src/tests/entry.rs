@@ -623,6 +623,204 @@ fn le_17_filter_by_location_three_components() {
     });
 }
 
+const CHAN_RAW_TEXT: &str = "我是陈冠希呀，我现在在LA啊，我遇到一些很坏很坏的人，一些gangster， you know？现在我需要你的帮助，微信转账300块，帮我回到香港，你懂我意思吗，我对你敬礼啊，Salute";
+
+#[test]
+fn le_20_search_mixed_cjk_and_latin_queries() {
+    with_trace_logging(|| {
+        let commands = make_db();
+        let id = commands
+            .add_entry(None, json!({}), 30, CHAN_RAW_TEXT.to_string())
+            .unwrap();
+        commands
+            .add_entry(None, json!({}), 2, "nothing here".to_string())
+            .unwrap();
+
+        for query in &[
+            "香",
+            "香港",
+            "陈冠希",
+            "微信转账",
+            "LA",
+            "you know",
+            "转账300",
+        ] {
+            let results = commands
+                .search_entries(query, &EntryFilter::default())
+                .unwrap();
+            assert_eq!(
+                results.len(),
+                1,
+                "query {query:?} should match exactly one entry"
+            );
+            assert_eq!(
+                results[0].id, id,
+                "query {query:?} should return the target entry"
+            );
+        }
+    });
+}
+
+#[test]
+fn le_18_combined_filter_list_tag_location_bookmarked_on() {
+    with_trace_logging(|| {
+        let today = clock::now_local().date();
+        let yesterday = today - time::Duration::days(1);
+        let base_ts = 1_750_000_000_000_i64;
+
+        let commands = seed_entries(vec![
+            // e1: matches all four filters
+            make_entry(
+                "e1",
+                local_ts(today, 12, 0),
+                1,
+                "rust home today",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                true,
+            ),
+            // e2: wrong tag
+            make_entry(
+                "e2",
+                local_ts(today, 11, 0),
+                1,
+                "go home today",
+                json!({"tags": ["go"], "location": ["Home"]}),
+                true,
+            ),
+            // e3: wrong location
+            make_entry(
+                "e3",
+                local_ts(today, 10, 0),
+                1,
+                "rust work today",
+                json!({"tags": ["rust"], "location": ["Work"]}),
+                true,
+            ),
+            // e4: not bookmarked
+            make_entry(
+                "e4",
+                local_ts(today, 9, 0),
+                1,
+                "rust home today unbookmarked",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                false,
+            ),
+            // e5: wrong date (yesterday)
+            make_entry(
+                "e5",
+                local_ts(yesterday, 12, 0),
+                1,
+                "rust home yesterday",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                true,
+            ),
+            // e6: no tag at all (ensure base_ts ordering doesn't collide)
+            make_entry("e6", base_ts, 1, "no tag no loc", json!({}), false),
+        ]);
+
+        let filter = EntryFilter {
+            tag: Some("rust".to_string()),
+            location: vec!["Home".to_string()],
+            bookmarked: true,
+            on: Some(format!(
+                "{:04}-{:02}-{:02}",
+                today.year(),
+                today.month() as u8,
+                today.day()
+            )),
+            ..Default::default()
+        };
+        let (entries, _) = commands
+            .list_entries(/*random=*/ false, &filter, 1)
+            .unwrap();
+        let ids: Vec<&str> = entries.iter().map(|e| e.id.as_str()).collect();
+
+        assert_eq!(ids, vec!["e1"]);
+    });
+}
+
+#[test]
+fn le_19_combined_filter_search_query_tag_location_bookmarked_on() {
+    with_trace_logging(|| {
+        let today = clock::now_local().date();
+        let yesterday = today - time::Duration::days(1);
+
+        let commands = seed_entries(vec![
+            // e1: matches query + all four filters
+            make_entry(
+                "e1",
+                local_ts(today, 12, 0),
+                3,
+                "horizon rust home",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                true,
+            ),
+            // e2: query miss — no "horizon"
+            make_entry(
+                "e2",
+                local_ts(today, 11, 0),
+                3,
+                "zenith rust home",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                true,
+            ),
+            // e3: wrong tag
+            make_entry(
+                "e3",
+                local_ts(today, 10, 0),
+                3,
+                "horizon go home",
+                json!({"tags": ["go"], "location": ["Home"]}),
+                true,
+            ),
+            // e4: wrong location
+            make_entry(
+                "e4",
+                local_ts(today, 9, 0),
+                3,
+                "horizon rust work",
+                json!({"tags": ["rust"], "location": ["Work"]}),
+                true,
+            ),
+            // e5: not bookmarked
+            make_entry(
+                "e5",
+                local_ts(today, 8, 0),
+                3,
+                "horizon rust home",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                false,
+            ),
+            // e6: wrong date (yesterday)
+            make_entry(
+                "e6",
+                local_ts(yesterday, 12, 0),
+                3,
+                "horizon rust home",
+                json!({"tags": ["rust"], "location": ["Home"]}),
+                true,
+            ),
+        ]);
+
+        let filter = EntryFilter {
+            tag: Some("rust".to_string()),
+            location: vec!["Home".to_string()],
+            bookmarked: true,
+            on: Some(format!(
+                "{:04}-{:02}-{:02}",
+                today.year(),
+                today.month() as u8,
+                today.day()
+            )),
+            ..Default::default()
+        };
+        let results = commands.search_entries("horizon", &filter).unwrap();
+        let ids: Vec<&str> = results.iter().map(|e| e.id.as_str()).collect();
+
+        assert_eq!(ids, vec!["e1"]);
+    });
+}
+
 // ─── CE — add entry ───────────────────────────────────────────────────────────
 
 #[test]

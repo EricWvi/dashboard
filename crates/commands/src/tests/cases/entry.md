@@ -75,6 +75,45 @@ fn le_16_filter_by_location_two_components
 /// LE-17: filter by location=["A","B B","C"] returns only entries starting with ["A","B B","C"]:
 /// ["A","B B","C"] is included; ["A","B B"], ["A","B B","D"] are excluded.
 fn le_17_filter_by_location_three_components
+
+/// LE-18: list_entries with tag + location + bookmarked + on all set → only the single entry
+/// satisfying every dimension is returned.
+/// Setup — 6 entries (base_ts offsets 5000..0), each failing exactly one filter:
+///   e1: tag=rust, location=["Home"], bookmarked=true,  on=today     → MATCH
+///   e2: tag=go,   location=["Home"], bookmarked=true,  on=today     → wrong tag
+///   e3: tag=rust, location=["Work"], bookmarked=true,  on=today     → wrong location
+///   e4: tag=rust, location=["Home"], bookmarked=false, on=today     → not bookmarked
+///   e5: tag=rust, location=["Home"], bookmarked=true,  on=yesterday → wrong date
+///   e6: tag=rust, location=["Home"], bookmarked=true,  on=today     (no raw_text match needed)
+/// Filter: tag="rust", location=["Home"], bookmarked=true, on=today.
+/// Expected: entries == [e1].
+fn le_18_combined_filter_list_tag_location_bookmarked_on
+
+/// LE-19: search_entries with query + tag + location + bookmarked + on all set → only the
+/// single entry satisfying all five conditions is returned.
+/// Setup — 6 entries (base_ts offsets 5000..0), each failing exactly one condition:
+///   e1: raw_text="horizon rust home",  tag=rust, location=["Home"], bookmarked=true,  on=today     → MATCH
+///   e2: raw_text="zenith rust home",   tag=rust, location=["Home"], bookmarked=true,  on=today     → query miss
+///   e3: raw_text="horizon go home",    tag=go,   location=["Home"], bookmarked=true,  on=today     → wrong tag
+///   e4: raw_text="horizon rust work",  tag=rust, location=["Work"], bookmarked=true,  on=today     → wrong location
+///   e5: raw_text="horizon rust home",  tag=rust, location=["Home"], bookmarked=false, on=today     → not bookmarked
+///   e6: raw_text="horizon rust home",  tag=rust, location=["Home"], bookmarked=true,  on=yesterday → wrong date
+/// Filter: query="horizon", tag="rust", location=["Home"], bookmarked=true, on=today.
+/// Expected: results == [e1].
+fn le_19_combined_filter_search_query_tag_location_bookmarked_on
+
+/// LE-20: search_entries with mixed CJK and Latin queries on a single seeded entry.
+/// raw_text: "我是陈冠希呀，我现在在LA啊，我遇到一些很坏很坏的人，一些gangster，
+///  you know？现在我需要你的帮助，微信转账300块，帮我回到香港，你懂我意思吗，我对你敬礼啊，Salute"
+/// Alongside an unrelated "nothing here" entry, each of these queries must return
+/// exactly the target entry:
+///   "香"      — single CJK character
+///   "香港"    — two CJK characters
+///   "陈冠希"  — three-character name
+///   "微信转账" — four-character phrase
+///   "LA"      — Latin abbreviation
+///   "you know" — multi-word Latin phrase
+fn le_20_search_mixed_cjk_and_latin_queries
 ```
 
 ---

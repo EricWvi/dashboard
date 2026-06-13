@@ -25,6 +25,15 @@ pub struct EntryFilter {
     pub today: bool,
 }
 
+/// Selects the text-search strategy used by [`EntryRepository::query`].
+enum TextSearch<'a> {
+    /// Full-text search via FTS5 MATCH. Suitable for queries with ≥ 3 characters.
+    Fts(&'a str),
+    /// Substring match via LIKE `%query%`. Used for short queries that the FTS5
+    /// tokenizer cannot process (< 3 characters).
+    Like(&'a str),
+}
+
 /// Provides CRUD access to the entries table backed by a shared connection pool.
 pub struct EntryRepository<'a> {
     pool: &'a RepositoryPool,
@@ -82,17 +91,24 @@ impl<'a> EntryRepository<'a> {
 
     /// Returns non-deleted entries matching `filter`, ordered by creation time descending.
     pub fn list(&self, filter: &EntryFilter) -> Result<Vec<EntrySchemaV1>, JournalError> {
-        self.query(/*fts_query=*/ None, filter)
+        self.query(None, filter)
     }
 
-    /// Returns non-deleted entries matching the FTS5 `query` and `filter`,
-    /// ordered by creation time descending.
+    /// Returns non-deleted entries matching `query` and `filter`, ordered by creation time
+    /// descending. Short queries (< 3 chars) use LIKE substring matching because the FTS5
+    /// tokenizer cannot produce a meaningful token from them.
     pub fn search(
         &self,
         query: &str,
         filter: &EntryFilter,
     ) -> Result<Vec<EntrySchemaV1>, JournalError> {
-        self.query(Some(query), filter)
+        let trimmed = query.trim();
+        let mode = if trimmed.chars().count() < 3 {
+            TextSearch::Like(trimmed)
+        } else {
+            TextSearch::Fts(trimmed)
+        };
+        self.query(Some(mode), filter)
     }
 
     /// Returns all entries (including deleted) with the given sync state.
@@ -203,11 +219,13 @@ impl<'a> EntryRepository<'a> {
 
     /// Shared SQL builder used by both `list` and `search`.
     ///
-    /// When `fts_query` is Some the FROM clause joins `entries_fts` and a MATCH predicate
-    /// is prepended so that SQLite can use the FTS5 index before evaluating the other filters.
+    /// When `search` is `Some(TextSearch::Fts(_))` the FROM clause joins `entries_fts` and a
+    /// MATCH predicate is prepended. When it is `Some(TextSearch::Like(_))` a LIKE substring
+    /// predicate on `raw_text` is used instead, which handles short queries the FTS tokenizer
+    /// cannot process.
     fn query(
         &self,
-        fts_query: Option<&str>,
+        search: Option<TextSearch<'_>>,
         filter: &EntryFilter,
     ) -> Result<Vec<EntrySchemaV1>, JournalError> {
         Ok(self.pool.with_connection(|conn| {
@@ -215,10 +233,17 @@ impl<'a> EntryRepository<'a> {
             // Positional bind values; Box<dyn ToSql> lets us mix types without generics.
             let mut values: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
 
-            // FTS MATCH must be first so SQLite evaluates the index before other predicates.
-            if let Some(q) = fts_query {
-                where_parts.push("entries_fts MATCH ?".to_string());
-                values.push(Box::new(q.to_string()));
+            match &search {
+                Some(TextSearch::Fts(q)) => {
+                    // FTS MATCH must be first so SQLite evaluates the index before other predicates.
+                    where_parts.push("entries_fts MATCH ?".to_string());
+                    values.push(Box::new(q.to_string()));
+                }
+                Some(TextSearch::Like(q)) => {
+                    where_parts.push("e.raw_text LIKE ?".to_string());
+                    values.push(Box::new(format!("%{q}%")));
+                }
+                None => {}
             }
 
             if let Some(tag) = &filter.tag {
@@ -263,7 +288,7 @@ impl<'a> EntryRepository<'a> {
                 );
             }
 
-            let from = if fts_query.is_some() {
+            let from = if matches!(search, Some(TextSearch::Fts(_))) {
                 "entries e JOIN entries_fts ON e.id = entries_fts.id"
             } else {
                 "entries e"

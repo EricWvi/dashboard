@@ -218,9 +218,30 @@ fn sd_02_dates_returned_for_entries() {
         let last_year = Date::from_calendar_date(today.year() - 1, Month::June, 15).unwrap();
 
         let commands = seed_entries(vec![
-            make_entry("e1", local_ts(today, 10, 0), 1, "today entry", json!({}), false),
-            make_entry("e2", local_ts(today, 14, 0), 1, "today entry 2", json!({}), false),
-            make_entry("e3", local_ts(yesterday, 12, 0), 1, "yesterday entry", json!({}), false),
+            make_entry(
+                "e1",
+                local_ts(today, 10, 0),
+                1,
+                "today entry",
+                json!({}),
+                false,
+            ),
+            make_entry(
+                "e2",
+                local_ts(today, 14, 0),
+                1,
+                "today entry 2",
+                json!({}),
+                false,
+            ),
+            make_entry(
+                "e3",
+                local_ts(yesterday, 12, 0),
+                1,
+                "yesterday entry",
+                json!({}),
+                false,
+            ),
             make_entry(
                 "e4",
                 local_ts(last_year, 12, 0),
