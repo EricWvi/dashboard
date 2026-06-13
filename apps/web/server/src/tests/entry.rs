@@ -11,7 +11,7 @@ use only_contracts::{
 use only_logging::clock;
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Row as _};
 use time::{Date, Duration, Month, PrimitiveDateTime, Time};
 use uuid::Uuid;
 
@@ -37,7 +37,6 @@ struct SeedFixture {
     page_one_ids: Vec<String>,
     tag_test1_ids: Vec<String>,
     bookmarked_ids: Vec<String>,
-    random_expected_len: usize,
     contains_id: String,
     on_date: String,
     on_date_ids: Vec<String>,
@@ -668,7 +667,6 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
         page_one_ids,
         tag_test1_ids,
         bookmarked_ids,
-        random_expected_len: 8,
         contains_id,
         on_date: on_date_string,
         on_date_ids,
@@ -923,15 +921,37 @@ async fn le_06_filter_bookmarked(state: &AppState, seed: &SeedFixture) {
     assert_eq!(body.has_more, false);
 }
 
-/// LE-07: filter random=true → a random subset of entries returned.
-async fn le_07_filter_random(state: &AppState, seed: &SeedFixture) {
+/// LE-07: random=true → entries from min-review-count days returned without duplicates,
+/// and their review_count is incremented to 1 in the background.
+async fn le_07_filter_random(state: &AppState, pool: &Pool<Postgres>, seed: &SeedFixture) {
     let body = list_entries(state, &seed.email, "random=true").await;
     let returned_ids = entry_ids(&body.entries);
     let unique_ids = returned_ids.iter().cloned().collect::<HashSet<_>>();
-    assert_eq!(returned_ids.len(), seed.random_expected_len);
-    assert_eq!(unique_ids.len(), seed.random_expected_len);
+
+    assert!(!returned_ids.is_empty());
+    assert_eq!(returned_ids.len(), unique_ids.len());
     assert_eq!(body.has_more, false);
     assert!(unique_ids.iter().all(|id| seed.all_ids.contains(id)));
+
+    // The review_count increment runs in a background tokio::spawn; give it time to commit.
+    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+    let rows = sqlx::query(
+        "SELECT review_count FROM d_entry_v2 WHERE id::text = ANY($1) AND is_deleted = FALSE",
+    )
+    .bind(&returned_ids[..])
+    .fetch_all(pool)
+    .await
+    .expect("failed to query review counts after random fetch");
+
+    assert_eq!(
+        rows.iter()
+            .map(|row| row
+                .try_get::<i32, _>("review_count")
+                .expect("review_count column"))
+            .collect::<Vec<_>>(),
+        vec![1_i32; returned_ids.len()],
+    );
 }
 
 /// LE-08: filter by on (date) → only entries created on that date returned.
@@ -1520,7 +1540,7 @@ async fn entry_handler_tests() {
     le_04_filter_by_tag(&state, &seed).await;
     le_05_filter_by_contains(&state, &seed).await;
     le_06_filter_bookmarked(&state, &seed).await;
-    le_07_filter_random(&state, &seed).await;
+    le_07_filter_random(&state, &pool, &seed).await;
     le_08_filter_by_on_date(&state, &seed).await;
     le_09_filter_by_before_date(&state, &seed).await;
     le_10_filter_today(&state, &seed).await;

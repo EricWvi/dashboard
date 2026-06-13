@@ -193,28 +193,141 @@ impl EntryRepository for PostgresEntryRepository {
     }
 
     async fn list_random(&self, creator_id: i32) -> Result<Vec<Entry>, EntryRepositoryError> {
-        let rows = sqlx::query(
+        // Step 1: Identify the minimum review_count across all live entries.
+        // NULL means the creator has no entries at all.
+        let min_row = sqlx::query(
             r#"
-            SELECT id::text, creator_id, draft::text, payload::text,
-                   word_count, raw_text, bookmark, review_count,
-                   created_at, updated_at, server_version, is_deleted
+            SELECT MIN(review_count)::int AS min_count
             FROM d_entry_v2
             WHERE creator_id = $1 AND is_deleted = FALSE
-            ORDER BY RANDOM()
-            LIMIT $2
             "#,
         )
         .bind(creator_id)
-        .bind(RANDOM_SIZE)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+
+        let Some(min_review_count) = min_row
+            .try_get::<Option<i32>, _>("min_count")
+            .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?
+        else {
+            return Ok(vec![]);
+        };
+
+        // Step 2: Collect every distinct local calendar day that contains at least one
+        // entry at the minimum review count. Using local time mirrors the Go implementation.
+        let local_offset_ms = local_offset_millis();
+        let date_rows = sqlx::query(
+            r#"
+            SELECT DISTINCT
+                EXTRACT(YEAR  FROM (to_timestamp((created_at + $2) / 1000.0) AT TIME ZONE 'UTC'))::int AS year,
+                EXTRACT(MONTH FROM (to_timestamp((created_at + $2) / 1000.0) AT TIME ZONE 'UTC'))::int AS month,
+                EXTRACT(DAY   FROM (to_timestamp((created_at + $2) / 1000.0) AT TIME ZONE 'UTC'))::int AS day
+            FROM d_entry_v2
+            WHERE creator_id = $1 AND is_deleted = FALSE AND review_count = $3
+            "#,
+        )
+        .bind(creator_id)
+        .bind(local_offset_ms)
+        .bind(min_review_count)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
 
-        rows.into_iter()
+        if date_rows.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let mut dates: Vec<DateParts> = date_rows
+            .into_iter()
+            .map(|row| {
+                Ok(DateParts {
+                    year: row
+                        .try_get::<i32, _>("year")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                    month: row
+                        .try_get::<i32, _>("month")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                    day: row
+                        .try_get::<i32, _>("day")
+                        .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?,
+                })
+            })
+            .collect::<Result<Vec<_>, EntryRepositoryError>>()?;
+
+        // Step 3: Shuffle the date list and keep at most RANDOM_SIZE days, matching
+        // the Go implementation which randomises at the date granularity rather than
+        // the entry granularity.
+        use rand::seq::SliceRandom as _;
+        dates.shuffle(&mut rand::thread_rng());
+        dates.truncate(RANDOM_SIZE as usize);
+
+        // Step 4: Fetch all entries that fall within the selected local-day ranges
+        // and still carry the minimum review count (a concurrent request may have
+        // bumped some entries between steps 1 and 4).
+        let mut qb = QueryBuilder::<Postgres>::new(
+            r#"SELECT id::text, creator_id, draft::text, payload::text,
+                      word_count, raw_text, bookmark, review_count,
+                      created_at, updated_at, server_version, is_deleted
+               FROM d_entry_v2
+               WHERE creator_id = "#,
+        );
+        qb.push_bind(creator_id);
+        qb.push(" AND is_deleted = FALSE AND review_count = ");
+        qb.push_bind(min_review_count);
+        qb.push(" AND (");
+
+        for (i, date) in dates.iter().enumerate() {
+            if i > 0 {
+                qb.push(" OR ");
+            }
+            let month = time::Month::try_from(date.month as u8)
+                .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+            let d = time::Date::from_calendar_date(date.year, month, date.day as u8)
+                .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+            let start_ms = local_day_start_millis(d);
+            let end_ms = start_ms + 86_400_000;
+            qb.push("(created_at >= ");
+            qb.push_bind(start_ms);
+            qb.push(" AND created_at < ");
+            qb.push_bind(end_ms);
+            qb.push(")");
+        }
+        qb.push(") ORDER BY created_at DESC");
+
+        let rows = qb
+            .build()
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
+
+        let entries: Vec<Entry> = rows
+            .into_iter()
             .map(|r| {
                 row_to_entry(r).map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))
             })
-            .collect()
+            .collect::<Result<_, _>>()?;
+
+        // Step 5: Bump review_count for returned entries in the background, mirroring
+        // the goroutine in the Go implementation.
+        if !entries.is_empty() {
+            let pool = self.pool.clone();
+            let ids: Vec<String> = entries.iter().map(|e| e.id.as_ref().to_string()).collect();
+            tokio::spawn(async move {
+                let _ = sqlx::query(
+                    r#"
+                    UPDATE d_entry_v2
+                    SET review_count = review_count + 1
+                    WHERE id::text = ANY($1)
+                    "#,
+                )
+                .bind(&ids[..])
+                .execute(&pool)
+                .await;
+            });
+        }
+
+        Ok(entries)
     }
 
     async fn update(&self, entry: Entry) -> Result<Option<Entry>, EntryRepositoryError> {

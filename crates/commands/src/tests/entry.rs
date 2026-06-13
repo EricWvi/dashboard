@@ -14,9 +14,7 @@ use super::{local_ts, make_db, make_entry, seed_entries};
 fn le_01_empty_list_when_no_entries() {
     with_trace_logging(|| {
         let commands = make_db();
-        let (entries, has_more) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 1)
-            .unwrap();
+        let (entries, has_more) = commands.list_entries(&EntryFilter::default(), 1).unwrap();
         assert_eq!(entries, vec![]);
         assert_eq!(has_more, false);
     });
@@ -40,9 +38,7 @@ fn le_02_returns_first_page_of_entries() {
             .collect();
         let commands = seed_entries(entries);
 
-        let (page, has_more) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 1)
-            .unwrap();
+        let (page, has_more) = commands.list_entries(&EntryFilter::default(), 1).unwrap();
 
         assert_eq!(page.len(), 8);
         assert_eq!(has_more, true);
@@ -80,9 +76,7 @@ fn le_04_filter_by_tag() {
             tag: Some("rust".to_string()),
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "e1");
@@ -122,39 +116,10 @@ fn le_06_filter_bookmarked() {
             bookmarked: true,
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "e1");
-    });
-}
-
-#[test]
-fn le_07_filter_random() {
-    with_trace_logging(|| {
-        let base_ts = 1_750_000_000_000_i64;
-        let entries: Vec<_> = (0..10)
-            .map(|i| {
-                make_entry(
-                    &format!("e{i}"),
-                    base_ts + i * 1000,
-                    1,
-                    "text",
-                    json!({}),
-                    false,
-                )
-            })
-            .collect();
-        let commands = seed_entries(entries);
-
-        let (results, has_more) = commands
-            .list_entries(/*random=*/ true, &EntryFilter::default(), 1)
-            .unwrap();
-
-        assert!(results.len() <= 8);
-        assert_eq!(has_more, false);
     });
 }
 
@@ -192,9 +157,7 @@ fn le_08_filter_by_on_date() {
             )),
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "today");
@@ -235,9 +198,7 @@ fn le_09_filter_by_before_date() {
             )),
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "today");
@@ -288,9 +249,7 @@ fn le_10_filter_today() {
             today: true,
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         let ids: Vec<&str> = entries.iter().map(|e| e.id.as_str()).collect();
         assert!(ids.contains(&"today"), "today must be included");
@@ -325,15 +284,9 @@ fn le_11_pagination() {
             .collect();
         let commands = seed_entries(entries);
 
-        let (p1, p1_more) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 1)
-            .unwrap();
-        let (p2, p2_more) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 2)
-            .unwrap();
-        let (p3, p3_more) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 3)
-            .unwrap();
+        let (p1, p1_more) = commands.list_entries(&EntryFilter::default(), 1).unwrap();
+        let (p2, p2_more) = commands.list_entries(&EntryFilter::default(), 2).unwrap();
+        let (p3, p3_more) = commands.list_entries(&EntryFilter::default(), 3).unwrap();
 
         assert_eq!(p1.len(), 8);
         assert_eq!(p1_more, true);
@@ -373,9 +326,7 @@ fn le_12_filter_by_on_date_uses_local_midnight_boundary() {
             )),
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &today_filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&today_filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "new_day");
@@ -418,9 +369,7 @@ fn le_13_filter_by_before_date_includes_local_day_boundary() {
             )),
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "today_early");
@@ -449,9 +398,7 @@ fn le_14_filter_today_uses_local_month_day_boundary() {
             today: true,
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "today");
@@ -510,9 +457,7 @@ fn le_15_filter_by_location_single_component() {
             location: vec!["A".to_string()],
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
         let ids: Vec<&str> = entries.iter().map(|e| e.id.as_str()).collect();
 
         assert_eq!(ids, vec!["e1", "e2", "e3", "e4"]);
@@ -570,9 +515,7 @@ fn le_16_filter_by_location_two_components() {
             location: vec!["A".to_string(), "B B".to_string()],
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
         let ids: Vec<&str> = entries.iter().map(|e| e.id.as_str()).collect();
 
         assert_eq!(ids, vec!["e1", "e2", "e3"]);
@@ -614,9 +557,7 @@ fn le_17_filter_by_location_three_components() {
             location: vec!["A".to_string(), "B B".to_string(), "C".to_string()],
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
         let ids: Vec<&str> = entries.iter().map(|e| e.id.as_str()).collect();
 
         assert_eq!(ids, vec!["e1"]);
@@ -730,9 +671,7 @@ fn le_18_combined_filter_list_tag_location_bookmarked_on() {
             )),
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
         let ids: Vec<&str> = entries.iter().map(|e| e.id.as_str()).collect();
 
         assert_eq!(ids, vec!["e1"]);
@@ -855,9 +794,7 @@ fn ce_03_added_entry_visible_in_list() {
             .add_entry(None, json!({}), 1, "visible".to_string())
             .unwrap();
 
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&EntryFilter::default(), 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, id);
@@ -952,9 +889,7 @@ fn de_02_deleted_entry_absent_from_list() {
             .unwrap();
         commands.delete_entry(&id).unwrap();
 
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &EntryFilter::default(), 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&EntryFilter::default(), 1).unwrap();
 
         assert_eq!(entries, vec![]);
     });
@@ -1011,9 +946,7 @@ fn bk_02_bookmarked_entry_in_filter() {
             bookmarked: true,
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, id);
@@ -1060,9 +993,7 @@ fn ub_02_unbookmarked_entry_excluded_from_filter() {
             bookmarked: true,
             ..Default::default()
         };
-        let (entries, _) = commands
-            .list_entries(/*random=*/ false, &filter, 1)
-            .unwrap();
+        let (entries, _) = commands.list_entries(&filter, 1).unwrap();
 
         assert_eq!(entries, vec![]);
     });

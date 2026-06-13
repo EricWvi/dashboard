@@ -37,9 +37,6 @@ fn le_05_search_by_raw_text
 /// LE-06: filter bookmarked=true → only bookmarked entries returned.
 fn le_06_filter_bookmarked
 
-/// LE-07: random=true → a shuffled sample of up to 8 entries returned, has_more is false.
-fn le_07_filter_random
-
 /// LE-08: filter by on (date) → only entries created on that date returned.
 fn le_08_filter_by_on_date
 

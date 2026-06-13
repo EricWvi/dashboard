@@ -1,13 +1,11 @@
 use only_cache_journal::{EntryFilter, SyncStatus};
 use only_logging::clock;
 use only_sync_schema::EntrySchemaV1;
-use rand::seq::SliceRandom as _;
 use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{CommandError, JournalCommands};
 
-const RANDOM_SIZE: usize = 8;
 const PAGE_SIZE: usize = 8;
 
 impl JournalCommands {
@@ -18,21 +16,11 @@ impl JournalCommands {
 
     /// Returns a page of non-deleted entries matching the filter, ordered by creation time
     /// descending, along with a flag indicating whether more pages exist.
-    /// When `random` is true, `filter` and `page` are ignored and a shuffled sample of up to
-    /// 8 entries is returned with `has_more` always false.
     pub fn list_entries(
         &self,
-        random: bool,
         filter: &EntryFilter,
         page: u32,
     ) -> Result<(Vec<EntrySchemaV1>, bool), CommandError> {
-        if random {
-            let mut entries = self.db.entries().list(&EntryFilter::default())?;
-            let mut rng = rand::thread_rng();
-            entries.shuffle(&mut rng);
-            entries.truncate(RANDOM_SIZE);
-            return Ok((entries, false));
-        }
         let all = self.db.entries().list(filter)?;
         let page = page.max(1) as usize;
         let start = (page - 1) * PAGE_SIZE;

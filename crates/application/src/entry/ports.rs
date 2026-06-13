@@ -66,7 +66,9 @@ pub trait EntryRepository: Send + Sync {
         page: u32,
     ) -> impl Future<Output = Result<(Vec<Entry>, bool), EntryRepositoryError>> + Send;
 
-    /// Returns a random sample of entries (simplified spaced-repetition selection).
+    /// Returns entries for spaced-repetition review. Selects up to `RANDOM_SIZE` calendar
+    /// days at random from those with the minimum `review_count`, returns all matching
+    /// entries ordered by creation date, and increments their `review_count` in the background.
     fn list_random(
         &self,
         creator_id: i32,
