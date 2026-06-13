@@ -1,5 +1,5 @@
 import { useTTContext } from "@/components/editor";
-import { TableOfContents } from "@/components/tiptap-node/toc-node";
+import { TableOfContents } from "@only/editor";
 import {
   EditorToolbar,
   SimpleEditor,

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/tiptap-ui-primitive/button/button";
+import { Button, RestoreIcon, diffJSONContent } from "@only/editor";
 import { Skeleton, Button as UIButton, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@only/ui";
 
 import { History } from "lucide-react";
@@ -8,10 +8,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ReadOnlyTiptap } from "./simple-editor";
 import { dateString } from "@/lib/utils";
-import { RestoreIcon } from "@/components/tiptap-icons/restore-icon";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
-import { diffJSONContent } from "@/lib/tiptap-diff";
 import { Editor, type JSONContent } from "@tiptap/react";
 
 type ListHistoryFn = () => Promise<number[]>;

@@ -1,6 +1,8 @@
 import { useEditorState } from "@/hooks/use-editor-state";
 import { Editor, EditorContext } from "@tiptap/react";
 import { useSimpleEditor } from "@/components/tiptap-editor/simple-editor";
+import { EditorProvider } from "@only/editor";
+import { useUserContextV2 } from "@/user-provider";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { debounce, type DebouncedFunc } from "lodash";
 import { EditorState as ProseMirrorState } from "prosemirror-state";
@@ -20,6 +22,7 @@ interface TiptapProviderProps {
 }
 
 export function TiptapProvider({ children, persistence }: TiptapProviderProps) {
+  const { language } = useUserContextV2();
   const draftIdRef = useRef<string | null>(null);
 
   const debouncedSync = useMemo(
@@ -54,9 +57,11 @@ export function TiptapProvider({ children, persistence }: TiptapProviderProps) {
         debouncedSync={debouncedSync}
         persistence={persistence}
       />
-      <EditorContext.Provider value={{ editor }}>
-        {children}
-      </EditorContext.Provider>
+      <EditorProvider language={language}>
+        <EditorContext.Provider value={{ editor }}>
+          {children}
+        </EditorContext.Provider>
+      </EditorProvider>
     </>
   );
 }

@@ -13,6 +13,7 @@
     "paths": {
       "@only/contracts": ["../packages/contracts/dist/index.d.ts"],
       "@only/contracts/fetch": ["../packages/contracts/dist/fetch.d.ts"],
+      "@only/editor": ["../packages/editor/dist/index.d.ts"],
       "@only/ui": ["../packages/ui/dist/index.d.ts"],
       "@/*": ["./src/*"]
     },

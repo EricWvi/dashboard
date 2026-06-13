@@ -27,6 +27,7 @@ tasks:
       - pnpm install
       - pnpm --filter @only/contracts build
       - pnpm --filter @only/ui build
+      - pnpm --filter @only/editor build
 
   install:backend:
     desc: Install dependencies for the Rust backend

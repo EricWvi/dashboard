@@ -3,7 +3,6 @@ import { Editor, EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
-import { CachedImage } from "@/components/tiptap-node/image-node/cached-image-extension";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
@@ -12,58 +11,42 @@ import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Selection } from "@tiptap/extensions";
 
-// --- UI Primitives ---
-import { Button } from "@/components/tiptap-ui-primitive/button";
-import { Spacer } from "@/components/tiptap-ui-primitive/spacer";
+// --- @only/editor ---
 import {
+  EditorProvider,
+  CachedImage,
+  HorizontalRule,
+  EmojiExtension,
+  VideoExtension,
+  DiffExtension,
+  TOCExtension,
+  ImageUploadNode,
+  Button,
+  Spacer,
   Toolbar,
   ToolbarGroup,
   ToolbarSeparator,
-} from "@/components/tiptap-ui-primitive/toolbar";
-
-// --- Tiptap Node ---
-import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
-import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
-import { EmojiExtension } from "@/components/tiptap-node/emoji-node";
-import { VideoExtension } from "@/components/tiptap-node/video-node";
-import { DiffExtension } from "@/components/tiptap-node/diff-node";
-import { TOCExtension } from "@/components/tiptap-node/toc-node";
-import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
-import "@/components/tiptap-node/code-block-node/code-block-node.scss";
-import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
-import "@/components/tiptap-node/list-node/list-node.scss";
-import "@/components/tiptap-node/image-node/image-node.scss";
-import "@/components/tiptap-node/heading-node/heading-node.scss";
-import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
-import "@/components/tiptap-node/video-node/video-node.scss";
-import "@/components/tiptap-node/diff-node/diff.scss";
-
-// --- Tiptap UI ---
-import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
-import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
-import { VideoUploadButton } from "@/components/tiptap-ui/video-upload-button";
-import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
-import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
-import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
-import {
+  HeadingDropdownMenu,
+  ImageUploadButton,
+  VideoUploadButton,
+  ListDropdownMenu,
+  BlockquoteButton,
+  CodeBlockButton,
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
   ColorHighlightPopoverButton,
-} from "@/components/tiptap-ui/color-highlight-popover";
-import {
   LinkPopover,
   LinkContent,
   LinkButton,
-} from "@/components/tiptap-ui/link-popover";
-import { MarkButton } from "@/components/tiptap-ui/mark-button";
-import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
-import { EmojiPopover } from "@/components/tiptap-ui/emoji-popover/emoji-popover";
-
-// --- Icons ---
-import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
-import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon";
-import { LinkIcon } from "@/components/tiptap-icons/link-icon";
+  MarkButton,
+  TextAlignButton,
+  UndoRedoButton,
+  EmojiPopover,
+  ArrowLeftIcon,
+  HighlighterIcon,
+  LinkIcon,
+  useTiptapEditor,
+} from "@only/editor";
 
 // --- Hooks ---
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -72,7 +55,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { HistoryPopover } from "@/components/tiptap-editor/history-popover";
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
+import { handleImageUpload, handleVideoUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
+import { formatMediaUrl } from "@/lib/utils";
 
 // --- Styles ---
 import "@/components/tiptap-editor/simple-editor.scss";
@@ -82,7 +66,6 @@ import { Eraser, Minimize2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { useEditorState } from "@/hooks/use-editor-state";
 
 type ListHistoryFn = () => Promise<number[]>;
@@ -149,7 +132,7 @@ const MainToolbarContent = React.memo(
         {isMobile && (
           <ToolbarGroup>
             <ImageUploadButton />
-            <VideoUploadButton />
+            <VideoUploadButton upload={handleVideoUpload} />
             <EmojiPopover />
           </ToolbarGroup>
         )}
@@ -203,7 +186,7 @@ const MainToolbarContent = React.memo(
           <>
             <ToolbarGroup>
               <ImageUploadButton />
-              <VideoUploadButton />
+              <VideoUploadButton upload={handleVideoUpload} />
             </ToolbarGroup>
 
             <Spacer />
@@ -416,12 +399,12 @@ export const extensionSetup = [
   TaskList,
   TaskItem.configure({ nested: true }),
   Highlight.configure({ multicolor: true }),
-  CachedImage,
+  CachedImage.configure({ formatUrl: formatMediaUrl }),
   Typography,
   Superscript,
   Subscript,
   EmojiExtension,
-  VideoExtension,
+  VideoExtension.configure({ formatUrl: formatMediaUrl }),
   Selection,
 ];
 
@@ -434,6 +417,7 @@ export function ReadOnlyTiptap({
   style?: string;
   diffView?: boolean;
 }) {
+  const { language } = useUserContextV2();
   const editor = useEditor({
     editable: false,
     editorProps: {
@@ -450,15 +434,17 @@ export function ReadOnlyTiptap({
     content: draft,
   });
   return (
-    <div className="simple-editor-wrapper">
-      <EditorContext.Provider value={{ editor }}>
-        <EditorContent
-          editor={editor}
-          role="presentation"
-          className="simple-editor-content"
-        />
-      </EditorContext.Provider>
-    </div>
+    <EditorProvider language={language}>
+      <div className="simple-editor-wrapper">
+        <EditorContext.Provider value={{ editor }}>
+          <EditorContent
+            editor={editor}
+            role="presentation"
+            className="simple-editor-content"
+          />
+        </EditorContext.Provider>
+      </div>
+    </EditorProvider>
   );
 }
 

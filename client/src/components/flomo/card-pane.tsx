@@ -2,7 +2,7 @@ import { CardHeader } from "./card-header";
 import { CardContent } from "./card-content";
 import { FlomoHome } from "./home-page";
 import { useEditorState } from "@/hooks/use-editor-state";
-import { TableOfContents } from "@/components/tiptap-node/toc-node";
+import { TableOfContents } from "@only/editor";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@only/ui";
 

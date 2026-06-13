@@ -1,13 +1,17 @@
-# 重构任务清单
+# Refactoring Task List
 
-## 当前任务：`packages/editor`
+## Current Task: `packages/editor`
 
-提取 Tiptap 富文本编辑器封装。涉及文件均在 `client/src/components/tiptap-*` 和 `client/src/lib/tiptap-*.ts`。
+Extract the Tiptap rich-text editor wrapper into a dedicated library package.
+Source files are under `client/src/components/tiptap-*` and `client/src/lib/tiptap-*.ts`.
 
-### 范围映射
+Follow the same build pattern established by `packages/ui`: tsup compiles TypeScript
+to `dist/` (ESM + `.d.ts`), and `package.json` exports point to `dist/`.
 
-| 来源 | 目标 |
-|------|------|
+### File Mapping
+
+| Source | Target |
+|--------|--------|
 | `client/src/components/tiptap-ui-primitive/` | `packages/editor/src/primitive/` |
 | `client/src/components/tiptap-node/` | `packages/editor/src/node/` |
 | `client/src/components/tiptap-ui/` | `packages/editor/src/ui/` |
@@ -18,42 +22,79 @@
 | `client/src/components/tiptap-editor/theme-toggle.tsx` | `packages/editor/src/editor/theme-toggle.tsx` |
 | `client/src/components/tiptap-editor/simple-editor.scss` | `packages/editor/src/editor/simple-editor.scss` |
 
-> `simple-editor.tsx` 和 `history-popover.tsx` 含客户端业务逻辑（`useUserContextV2`、`UserLangEnum`、`useEditorState` 等），**暂留在 client**，待后续拆分。
+> `simple-editor.tsx` and `history-popover.tsx` contain client-side business logic
+> (`useUserContextV2`, `UserLangEnum`, `useEditorState`, etc.) and stay in `client`
+> for now, pending a later split.
 
-### 子任务
+### Subtasks
 
-- [ ] 新建 `packages/editor/package.json`
-  - name: `@only/editor`
-  - exports: `./src/index.ts`
-  - dependencies: `@only/ui`、`@tiptap/react`、`@tiptap/pm`、`@tiptap/starter-kit`、`@tiptap/extensions`、`@tiptap/extension-highlight`、`@tiptap/extension-horizontal-rule`、`@tiptap/extension-image`、`@tiptap/extension-list`、`@tiptap/extension-subscript`、`@tiptap/extension-superscript`、`@tiptap/extension-text-align`、`@tiptap/extension-typography`、`browser-image-compression`、`lodash`
-  - peerDependencies: `react`、`react-dom`
+- [x] Create `packages/editor/package.json`
+  - `name`: `@only/editor`
+  - `exports`: `{ ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } }`
+  - `scripts`: `{ "build": "tsup", "dev": "tsup --watch" }`
+  - `dependencies`: `@only/ui`, `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`,
+    `@tiptap/extension-highlight`, `@tiptap/extension-horizontal-rule`,
+    `@tiptap/extension-image`, `@tiptap/extension-list`, `@tiptap/extension-subscript`,
+    `@tiptap/extension-superscript`, `@tiptap/extension-text-align`,
+    `@tiptap/extension-typography`, `browser-image-compression`, `lodash`
+  - `peerDependencies`: `react`, `react-dom`
 
-- [ ] 新建 `packages/editor/tsconfig.json`（参考 `packages/ui/tsconfig.json`，添加 SCSS 相关配置）
+- [x] Create `packages/editor/tsup.config.ts` (mirror `packages/ui/tsup.config.ts`; add SCSS/CSS handling via `esbuild-sass-plugin`)
 
-- [ ] 解耦 `tiptap-utils.ts` 中对 `mediaServerBaseUrl` 的硬编码依赖
-  - 将 `handleImageUpload` / `handleVideoUpload` 改为接受 `uploadUrl: string` 参数
-  - 使 `packages/editor/src/utils.ts` 不再 import 任何 `@/lib/*`
+- [x] Create `packages/editor/tsconfig.json` (mirror `packages/ui/tsconfig.json`)
 
-- [ ] 复制文件并更新 import 路径
-  - `@/components/tiptap-ui-primitive/*` → `../primitive/*`（或对应相对路径）
-  - `@/components/tiptap-node/*` → `../node/*`
-  - `@/components/tiptap-ui/*` → `../ui/*`
-  - `@/components/tiptap-icons/*` → `../icons/*`
-  - `@/lib/tiptap-utils` → `../utils`（或 `./utils`）
-  - `@/lib/tiptap-diff` → `../diff`
-  - `@/components/ui/*` → `@only/ui`（仅 `theme-toggle.tsx` 有此依赖）
+- [x] Decouple dependencies on client internals
+  - `packages/editor/src/utils.ts` has no imports from `@/lib/*`
+  - `handleImageUpload` / `handleVideoUpload` / `MAX_FILE_SIZE` stay in `client/src/lib/tiptap-utils.ts`
+  - `CachedImage` / `VideoExtension` accept `formatUrl?` option; `formatMediaUrl` passed from client
+  - `VideoUploadButton` / `useVideoUpload` accept `upload?` callback; `handleVideoUpload` passed from client
+  - `useUserContextV2` replaced by `EditorLanguageContext` (`EditorProvider` + `useEditorLanguage()`) inside package
 
-- [ ] 新建 `packages/editor/src/index.ts`，re-export 全部组件
+- [x] Copy files and update import paths
+  - `@/components/tiptap-ui-primitive/*` → relative paths within the package
+  - `@/components/tiptap-node/*` → relative paths within the package
+  - `@/components/tiptap-ui/*` → relative paths within the package
+  - `@/components/tiptap-icons/*` → relative paths within the package
+  - `@/lib/tiptap-utils` → `../../utils`
+  - `@/lib/tiptap-diff` → `../../diff`
+  - `@/lib/model` → `../../types`
+  - `@/user-provider` → `../../context` (uses `useEditorLanguage()`)
 
-- [ ] tsc 检查 editor 包
+- [x] Create `packages/editor/src/index.ts` — explicit named exports (avoids name conflicts from `shouldShowButton` exported by multiple ui modules)
 
-- [ ] 更新 client 中对上述文件的 import，改为从 `@only/editor` 引入
-  - `simple-editor.tsx` 和 `history-popover.tsx` 保留原路径引用不变（暂不迁移）
-  - 其余消费方更新为 `@only/editor`
+- [x] Package builds successfully (`npx tsup` passes, DTS generated)
+
+- [x] Add `packages/editor` build step to `install:frontend` task in `Taskfile.yml`
+
+- [x] Update vite configs and `tsconfig.app.json` in client to resolve `@only/editor`
+  - Vite alias: `"@only/editor"` → `packages/editor/src/index.ts`
+  - TS path: `"@only/editor"` → `packages/editor/dist/index.d.ts`
+
+- [x] Update `client` imports to consume from `@only/editor`
+  - `simple-editor.tsx` updated: all tiptap component imports → `@only/editor`; wrapped `ReadOnlyTiptap` with `EditorProvider`; passes `formatMediaUrl` to `CachedImage`/`VideoExtension`, `handleVideoUpload` to `VideoUploadButton`
+  - `history-popover.tsx` updated: `Button`, `RestoreIcon`, `diffJSONContent` from `@only/editor`
+  - `theme-toggle.tsx` updated: `Button`, `MoonStarIcon`, `SunIcon` from `@only/editor`
+  - `editor-provider.tsx` updated: wraps children with `<EditorProvider language={language}>`
+  - `flomo/card-pane.tsx`, `journal/entry-editor.tsx`: `TableOfContents` from `@only/editor`
+  - Deleted from client: `tiptap-ui/`, `tiptap-ui-primitive/`, `tiptap-node/`, `tiptap-icons/`, `hooks/use-tiptap-editor.ts`, `hooks/use-menu-navigation.ts`, `lib/tiptap-diff.ts`
+
+- [x] Client TypeScript type check passes (`tsc --noEmit`)
+- [x] Client Vite build passes (`vite build --config vite.dashboard.config.ts`)
 
 ---
 
-## 下一个任务：`apps/client`（待定）
+## Next Task: `apps/client`
 
-将 `client/` 目录迁移为 `apps/client`（pnpm workspace app），
-依赖 `@only/ui` 和 `@only/editor`，完成 workspace 整体联通。
+Move the `client/` directory into `apps/client` to become a proper pnpm workspace app.
+
+**Prerequisites:** `packages/editor` complete and consumed by `client`. ✅
+
+### Subtasks
+
+- [ ] Move `client/` → `apps/web/client/`
+- [ ] Update `pnpm-workspace.yaml` if needed (`apps/**` already matches)
+- [ ] Update all root-level Taskfile references to `client/` paths
+- [ ] Update Go backend static file references if they embed client build output
+- [ ] Verify `pnpm install` resolves `@only/ui`, `@only/contracts`, `@only/editor`
+  workspace links correctly from the new location
+- [ ] Confirm `task run:web-backend` and frontend builds still work end-to-end
