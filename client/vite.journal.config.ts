@@ -1,7 +1,20 @@
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
+
+// Strip IE6/7 star-hack properties (e.g. `*zoom: 1`) from odometer's CSS so
+// esbuild doesn't warn about invalid syntax during minification.
+function stripOdometerStarHacks(): Plugin {
+  return {
+    name: "strip-odometer-star-hacks",
+    transform(code, id) {
+      if (id.includes("odometer") && id.endsWith(".css")) {
+        return { code: code.replace(/^\s*\*[a-zA-Z-]+\s*:[^;]+;/gm, "") };
+      }
+    },
+  };
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -27,7 +40,7 @@ export default defineConfig({
       },
     },
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), stripOdometerStarHacks()],
   resolve: {
     alias: {
       "@only/contracts": path.resolve(__dirname, "../packages/contracts/dist/index.js"),
