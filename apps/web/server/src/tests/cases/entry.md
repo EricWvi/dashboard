@@ -73,6 +73,20 @@ async fn le_13_filter_by_before_date_includes_local_day_boundary
 
 /// LE-14: filter today=true matches month/day in Asia/Shanghai local time across midnight.
 async fn le_14_filter_today_uses_local_month_day_boundary
+
+/// LE-15: filter by location=A returns all entries whose location starts with "A":
+/// ["A"], ["A","B B"], ["A","B B","C"], ["A","B B","D"] are included; ["B B"] and [] are excluded.
+async fn le_15_filter_by_location_single_component
+
+/// LE-16: filter by location=A,B%20B returns entries whose location starts with ["A","B B"]:
+/// ["A","B B"], ["A","B B","C"], ["A","B B","D"] are included; ["A"] and ["A","C"] are excluded.
+/// Space in "B B" is percent-encoded as %20 in the query string.
+async fn le_16_filter_by_location_two_components
+
+/// LE-17: filter by location=A,B%20B,C returns only entries starting with ["A","B B","C"]:
+/// ["A","B B","C"] is included; ["A","B B"], ["A","B B","D"] are excluded.
+/// Space in "B B" is percent-encoded as %20 in the query string.
+async fn le_17_filter_by_location_three_components
 ```
 
 ---

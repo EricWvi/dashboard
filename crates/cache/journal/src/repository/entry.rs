@@ -4,6 +4,27 @@ use rusqlite::params;
 
 use crate::{JournalError, SyncStatus};
 
+/// Filter parameters for listing entries; all fields are optional and combined with AND.
+///
+/// Used by both [`EntryRepository::list`] and [`EntryRepository::search`] so callers
+/// can combine FTS search with any subset of the other predicates.
+#[derive(Debug, Default)]
+pub struct EntryFilter {
+    /// Include only entries whose payload.tags array contains this exact tag name.
+    pub tag: Option<String>,
+    /// Include only entries whose payload.location array starts with these path components
+    /// in order. Each element must match the corresponding index exactly.
+    pub location: Vec<String>,
+    /// Include only bookmarked entries when true.
+    pub bookmarked: bool,
+    /// Include only entries created on this calendar date (YYYY-MM-DD, SQLite localtime).
+    pub on: Option<String>,
+    /// Include only entries created on or before this calendar date (YYYY-MM-DD, SQLite localtime).
+    pub before: Option<String>,
+    /// Include only entries whose local month+day matches today's.
+    pub today: bool,
+}
+
 /// Provides CRUD access to the entries table backed by a shared connection pool.
 pub struct EntryRepository<'a> {
     pool: &'a RepositoryPool,
@@ -59,18 +80,19 @@ impl<'a> EntryRepository<'a> {
         })?)
     }
 
-    /// Returns all non-deleted entries ordered by creation time descending.
-    pub fn list(&self) -> Result<Vec<EntrySchemaV1>, JournalError> {
-        Ok(self.pool.with_connection(|conn| {
-            let mut stmt = conn.prepare(
-                "SELECT id, draft, payload, word_count, raw_text, bookmark, \
-                 created_at, updated_at, is_deleted \
-                 FROM entries WHERE is_deleted = 0 ORDER BY created_at DESC",
-            )?;
-            Ok(stmt
-                .query_map([], map_row)?
-                .collect::<Result<Vec<_>, _>>()?)
-        })?)
+    /// Returns non-deleted entries matching `filter`, ordered by creation time descending.
+    pub fn list(&self, filter: &EntryFilter) -> Result<Vec<EntrySchemaV1>, JournalError> {
+        self.query(/*fts_query=*/ None, filter)
+    }
+
+    /// Returns non-deleted entries matching the FTS5 `query` and `filter`,
+    /// ordered by creation time descending.
+    pub fn search(
+        &self,
+        query: &str,
+        filter: &EntryFilter,
+    ) -> Result<Vec<EntrySchemaV1>, JournalError> {
+        self.query(Some(query), filter)
     }
 
     /// Returns all entries (including deleted) with the given sync state.
@@ -106,19 +128,85 @@ impl<'a> EntryRepository<'a> {
         Ok(())
     }
 
-    /// Returns entries whose raw_text matches the FTS5 trigram query.
-    pub fn search(&self, query: &str) -> Result<Vec<EntrySchemaV1>, JournalError> {
+    /// Shared SQL builder used by both `list` and `search`.
+    ///
+    /// When `fts_query` is Some the FROM clause joins `entries_fts` and a MATCH predicate
+    /// is prepended so that SQLite can use the FTS5 index before evaluating the other filters.
+    fn query(
+        &self,
+        fts_query: Option<&str>,
+        filter: &EntryFilter,
+    ) -> Result<Vec<EntrySchemaV1>, JournalError> {
         Ok(self.pool.with_connection(|conn| {
-            let mut stmt = conn.prepare(
+            let mut where_parts: Vec<String> = vec!["e.is_deleted = 0".to_string()];
+            // Positional bind values; Box<dyn ToSql> lets us mix types without generics.
+            let mut values: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+
+            // FTS MATCH must be first so SQLite evaluates the index before other predicates.
+            if let Some(q) = fts_query {
+                where_parts.push("entries_fts MATCH ?".to_string());
+                values.push(Box::new(q.to_string()));
+            }
+
+            if let Some(tag) = &filter.tag {
+                where_parts.push(
+                    "EXISTS (SELECT 1 FROM json_each(json_extract(e.payload, '$.tags')) \
+                     WHERE value = ?)"
+                        .to_string(),
+                );
+                values.push(Box::new(tag.clone()));
+            }
+            if !filter.location.is_empty() {
+                where_parts.push(
+                    "COALESCE(json_array_length(json_extract(e.payload, '$.location')), 0) >= ?"
+                        .to_string(),
+                );
+                values.push(Box::new(filter.location.len() as i64));
+                for (i, component) in filter.location.iter().enumerate() {
+                    where_parts.push(format!("json_extract(e.payload, '$.location[{i}]') = ?"));
+                    values.push(Box::new(component.clone()));
+                }
+            }
+            if filter.bookmarked {
+                where_parts.push("e.bookmark = 1".to_string());
+            }
+            if let Some(on) = &filter.on {
+                where_parts.push(
+                    "strftime('%Y-%m-%d', e.created_at / 1000, 'unixepoch', 'localtime') = ?"
+                        .to_string(),
+                );
+                values.push(Box::new(on.clone()));
+            } else if let Some(before) = &filter.before {
+                where_parts.push(
+                    "strftime('%Y-%m-%d', e.created_at / 1000, 'unixepoch', 'localtime') <= ?"
+                        .to_string(),
+                );
+                values.push(Box::new(before.clone()));
+            } else if filter.today {
+                where_parts.push(
+                    "strftime('%m-%d', e.created_at / 1000, 'unixepoch', 'localtime') \
+                     = strftime('%m-%d', 'now', 'localtime')"
+                        .to_string(),
+                );
+            }
+
+            let from = if fts_query.is_some() {
+                "entries e JOIN entries_fts ON e.id = entries_fts.id"
+            } else {
+                "entries e"
+            };
+            let sql = format!(
                 "SELECT e.id, e.draft, e.payload, e.word_count, e.raw_text, e.bookmark, \
                  e.created_at, e.updated_at, e.is_deleted \
-                 FROM entries e \
-                 JOIN entries_fts f ON e.id = f.id \
-                 WHERE entries_fts MATCH ?1 AND e.is_deleted = 0 \
-                 ORDER BY e.created_at DESC",
-            )?;
+                 FROM {from} WHERE {} ORDER BY e.created_at DESC",
+                where_parts.join(" AND "),
+            );
+
+            let params_refs: Vec<&dyn rusqlite::types::ToSql> =
+                values.iter().map(|v| v.as_ref()).collect();
+            let mut stmt = conn.prepare(&sql)?;
             Ok(stmt
-                .query_map(params![query], map_row)?
+                .query_map(params_refs.as_slice(), map_row)?
                 .collect::<Result<Vec<_>, _>>()?)
         })?)
     }
@@ -152,6 +240,7 @@ mod tests {
     use serde_json::json;
 
     use crate::{JournalDb, SyncStatus};
+    use crate::repository::entry::EntryFilter;
 
     fn entry(id: &str, created_at: i64) -> only_sync_schema::EntrySchemaV1 {
         only_sync_schema::EntrySchemaV1 {
@@ -192,7 +281,7 @@ mod tests {
         db.entries().upsert(&deleted, SyncStatus::Synced).unwrap();
         let ids: Vec<_> = db
             .entries()
-            .list()
+            .list(&EntryFilter::default())
             .unwrap()
             .into_iter()
             .map(|e| e.id)
@@ -235,12 +324,57 @@ mod tests {
     }
 
     #[test]
+    fn list_filter_bookmarked() {
+        let db = JournalDb::in_memory().unwrap();
+        db.entries()
+            .upsert(&entry("e1", 1000), SyncStatus::Synced)
+            .unwrap();
+        let mut bookmarked = entry("e2", 2000);
+        bookmarked.bookmark = true;
+        db.entries()
+            .upsert(&bookmarked, SyncStatus::Synced)
+            .unwrap();
+        let ids: Vec<_> = db
+            .entries()
+            .list(&EntryFilter { bookmarked: true, ..Default::default() })
+            .unwrap()
+            .into_iter()
+            .map(|e| e.id)
+            .collect();
+        assert_eq!(ids, vec!["e2"]);
+    }
+
+    #[test]
+    fn list_filter_tag() {
+        let db = JournalDb::in_memory().unwrap();
+        let mut tagged = entry("e1", 1000);
+        tagged.payload = json!({"tags": ["rust"]});
+        db.entries()
+            .upsert(&tagged, SyncStatus::Synced)
+            .unwrap();
+        db.entries()
+            .upsert(&entry("e2", 2000), SyncStatus::Synced)
+            .unwrap();
+        let ids: Vec<_> = db
+            .entries()
+            .list(&EntryFilter { tag: Some("rust".to_string()), ..Default::default() })
+            .unwrap()
+            .into_iter()
+            .map(|e| e.id)
+            .collect();
+        assert_eq!(ids, vec!["e1"]);
+    }
+
+    #[test]
     fn search_finds_entries_by_raw_text() {
         let db = JournalDb::in_memory().unwrap();
         db.entries()
             .upsert(&entry("e1", 1000), SyncStatus::Synced)
             .unwrap();
-        let results = db.entries().search("hello").unwrap();
+        let results = db
+            .entries()
+            .search("hello", &EntryFilter::default())
+            .unwrap();
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].id, "e1");
     }

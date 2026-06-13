@@ -684,6 +684,72 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
     }
 }
 
+struct LocationFixture {
+    email: String,
+    /// Ids returned when filtering location=["A"]: ["A"], ["A","B B"], ["A","B B","C"], ["A","B B","D"]
+    a_ids: Vec<String>,
+    /// Ids returned when filtering location=["A","B B"]: ["A","B B"], ["A","B B","C"], ["A","B B","D"]
+    ab_ids: Vec<String>,
+    /// Ids returned when filtering location=["A","B B","C"]: ["A","B B","C"] only
+    abc_ids: Vec<String>,
+}
+
+/// Seeds six entries with distinct location arrays for location-filter assertions.
+///
+/// Entries are created at different hours on today so created_at DESC ordering is predictable.
+/// Two entries ("B" root and no location) must be excluded by every ["A"]-prefixed filter.
+async fn seed_location_entries(state: &AppState, pool: &Pool<Postgres>) -> LocationFixture {
+    let email = "le-location@test.com";
+    let user = state
+        .user_api
+        .find_or_create(email)
+        .await
+        .expect("failed to create location test user");
+    let creator_id = user.id.value();
+    let today = clock::now_local().date();
+
+    // Inserted newest-first (descending hour) so the default ORDER BY created_at DESC matches.
+    let specs: &[(&[&str], u8)] = &[
+        (&["A", "B B", "D"], 9),
+        (&["A", "B B", "C"], 8),
+        (&["A", "B B"], 7),
+        (&["A"], 6),
+        (&["B B"], 5),
+        (&[], 4),
+    ];
+
+    let mut entries: Vec<SeededEntry> = Vec::with_capacity(specs.len());
+    for (components, hour) in specs {
+        let loc: Vec<Value> = components.iter().map(|s| json!(s)).collect();
+        entries.push(
+            insert_seed_entry(
+                pool,
+                creator_id,
+                today,
+                *hour,
+                0,
+                json!({ "location": loc }),
+                1,
+                "location entry",
+                false,
+            )
+            .await,
+        );
+    }
+
+    // entries[0]=ABD, [1]=ABC, [2]=AB, [3]=A, [4]=B, [5]=no-location
+    let a_ids = entries[0..4].iter().map(|e| e.id.clone()).collect();
+    let ab_ids = entries[0..3].iter().map(|e| e.id.clone()).collect();
+    let abc_ids = vec![entries[1].id.clone()];
+
+    LocationFixture {
+        email: email.to_string(),
+        a_ids,
+        ab_ids,
+        abc_ids,
+    }
+}
+
 /// Seeds entries around Asia/Shanghai midnight so date-based filters can assert local boundaries.
 async fn seed_boundary_entries(state: &AppState, pool: &Pool<Postgres>) -> BoundaryFixture {
     let email = "entry-boundary@test.com";
@@ -900,6 +966,27 @@ async fn le_11_pagination_page_one(state: &AppState, seed: &SeedFixture) {
     assert_eq!(page_two.has_more, true);
     assert_eq!(page_three.entries.len(), (seed.total_entries as usize) - 16);
     assert_eq!(page_three.has_more, false);
+}
+
+/// LE-15: filter by location=A returns entries whose location starts with "A".
+async fn le_15_filter_by_location_single_component(state: &AppState, loc: &LocationFixture) {
+    let body = list_entries(state, &loc.email, "location=A").await;
+    assert_eq!(entry_ids(&body.entries), loc.a_ids);
+    assert_eq!(body.has_more, false);
+}
+
+/// LE-16: filter by location="A,B B" returns entries whose location starts with ["A","B B"].
+async fn le_16_filter_by_location_two_components(state: &AppState, loc: &LocationFixture) {
+    let body = list_entries(state, &loc.email, "location=A,B%20B").await;
+    assert_eq!(entry_ids(&body.entries), loc.ab_ids);
+    assert_eq!(body.has_more, false);
+}
+
+/// LE-17: filter by location="A,B B,C" returns only entries starting with ["A","B B","C"].
+async fn le_17_filter_by_location_three_components(state: &AppState, loc: &LocationFixture) {
+    let body = list_entries(state, &loc.email, "location=A,B%20B,C").await;
+    assert_eq!(entry_ids(&body.entries), loc.abc_ids);
+    assert_eq!(body.has_more, false);
 }
 
 /// LE-12: filter by on (date) uses Asia/Shanghai local midnight; 00:05 belongs to the new day.
@@ -1423,6 +1510,7 @@ async fn entry_handler_tests() {
     let (_container, state, pool) = bootstrap_test_state_with_pool().await;
     let seed = seed_entries(&state, &pool).await;
     let boundary = seed_boundary_entries(&state, &pool).await;
+    let loc = seed_location_entries(&state, &pool).await;
 
     au_01_no_token_returns_400(&state).await;
     au_02_invalid_token_returns_400(&state).await;
@@ -1440,6 +1528,9 @@ async fn entry_handler_tests() {
     le_12_filter_by_on_date_uses_local_midnight_boundary(&state, &boundary).await;
     le_13_filter_by_before_date_includes_local_day_boundary(&state, &boundary).await;
     le_14_filter_today_uses_local_month_day_boundary(&state, &boundary).await;
+    le_15_filter_by_location_single_component(&state, &loc).await;
+    le_16_filter_by_location_two_components(&state, &loc).await;
+    le_17_filter_by_location_three_components(&state, &loc).await;
     ce_01_valid_payload_returns_entry(&state).await;
     ce_02_invalid_json_returns_400(&state).await;
     ce_03_created_entry_visible_in_list(&state).await;

@@ -27,6 +27,9 @@ pub struct EntryFilter {
     pub contains: Option<String>,
     /// When `Some(true)`, restrict to bookmarked entries.
     pub bookmarked: Option<bool>,
+    /// Restrict to entries whose `payload.location` array starts with these path components
+    /// in order. Each element must match the corresponding index exactly.
+    pub location: Vec<String>,
     /// Restrict to entries created on this calendar date (YYYY-MM-DD, local time).
     pub on: Option<String>,
     /// Restrict to entries created before the next calendar date, which includes this day

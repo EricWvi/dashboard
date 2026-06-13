@@ -2192,6 +2192,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "only-commands"
+version = "0.0.0"
+dependencies = [
+ "only-cache-journal",
+ "only-logging",
+ "only-sync-schema",
+ "rand 0.8.6",
+ "serde_json",
+ "thiserror",
+ "time",
+ "uuid",
+]
+
+[[package]]
 name = "only-contracts"
 version = "0.0.0"
 dependencies = [

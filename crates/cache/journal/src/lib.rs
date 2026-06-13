@@ -8,7 +8,8 @@ pub use only_sync_schema::{
     EntrySchemaV1, HistoryEntryV1, TagSchemaV1, TiptapSchemaV1, UserSchemaV1,
 };
 pub use repository::{
-    EntryRepository, SyncMetaRepository, TagRepository, TiptapRepository, UserRepository,
+    EntryFilter, EntryRepository, SyncMetaRepository, TagRepository, TiptapRepository,
+    UserRepository,
 };
 pub use sync_status::SyncStatus;
 

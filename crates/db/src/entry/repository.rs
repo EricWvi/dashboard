@@ -118,6 +118,15 @@ impl EntryRepository for PostgresEntryRepository {
             qb.push(" AND raw_text ILIKE ");
             qb.push_bind(format!("%{contains}%"));
         }
+        if !filter.location.is_empty() {
+            qb.push(" AND jsonb_array_length(payload->'location') >= ");
+            qb.push_bind(filter.location.len() as i64);
+            for (i, component) in filter.location.iter().enumerate() {
+                qb.push(format!(" AND payload->'location'->{i} = "));
+                qb.push_bind(serde_json::json!(component).to_string());
+                qb.push("::jsonb");
+            }
+        }
         if filter.bookmarked == Some(true) {
             qb.push(" AND bookmark = TRUE");
         }

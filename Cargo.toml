@@ -3,6 +3,7 @@ members = [
     "apps/web/server",
     "crates/application",
     "crates/cache/journal",
+    "crates/commands",
     "crates/cache/media",
     "crates/cache/sqlite",
     "crates/contracts",
@@ -25,6 +26,7 @@ edition = "2024"
 # Internal
 only-application = { path = "crates/application" }
 only-cache-journal = { path = "crates/cache/journal" }
+only-commands = { path = "crates/commands" }
 only-cache-media = { path = "crates/cache/media" }
 only-cache-sqlite = { path = "crates/cache/sqlite" }
 only-contracts = { path = "crates/contracts" }

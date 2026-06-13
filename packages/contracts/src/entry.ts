@@ -116,6 +116,11 @@ export type ListEntriesRequest = {
    */
   contains: string | null;
   /**
+   * Filter entries whose `payload.location` array starts with these path components in order.
+   * Passed as a comma-separated string in query params: `location=A,B,C`.
+   */
+  location: Array<string>;
+  /**
    * When `true`, only return bookmarked entries.
    */
   bookmarked: boolean | null;

@@ -1,0 +1,14 @@
+[package]
+name = "only-commands"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+only-cache-journal = { workspace = true }
+only-logging = { workspace = true }
+only-sync-schema = { workspace = true }
+rand = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+uuid = { workspace = true }

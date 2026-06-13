@@ -128,6 +128,7 @@ impl<R: EntryRepository> ListEntriesHandler<R> {
             tag: request.tag,
             contains: request.contains,
             bookmarked: request.bookmarked,
+            location: request.location,
             on: request.on,
             before: request.before,
             today: request.today.unwrap_or(false),
