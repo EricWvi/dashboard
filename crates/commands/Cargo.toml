@@ -12,3 +12,10 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 uuid = { workspace = true }
+
+[dev-dependencies]
+only-cache-journal = { workspace = true, features = ["test-utils"] }
+only-logging = { workspace = true }
+pretty_assertions = { workspace = true }
+serde_json = { workspace = true }
+time = { workspace = true }

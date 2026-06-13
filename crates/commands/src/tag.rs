@@ -5,9 +5,9 @@ use uuid::Uuid;
 use crate::{CommandError, JournalCommands};
 
 impl JournalCommands {
-    /// Returns the tag with the given id, or None if it does not exist.
+    /// Returns the tag with the given id, or None if it does not exist or has been deleted.
     pub fn get_tag(&self, id: &str) -> Result<Option<TagSchemaV1>, CommandError> {
-        Ok(self.db.tags().find_by_id(id)?)
+        Ok(self.db.tags().find_by_id(id)?.filter(|t| !t.is_deleted))
     }
 
     /// Returns all non-deleted tags ordered by creation time ascending.

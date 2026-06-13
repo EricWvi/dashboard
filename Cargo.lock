@@ -2198,6 +2198,7 @@ dependencies = [
  "only-cache-journal",
  "only-logging",
  "only-sync-schema",
+ "pretty_assertions",
  "rand 0.8.6",
  "serde_json",
  "thiserror",

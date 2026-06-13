@@ -29,7 +29,7 @@ impl JournalDb {
     }
 
     /// Opens a single-connection in-memory database for tests.
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-utils"))]
     pub fn in_memory() -> Result<Self, JournalError> {
         let pool = RepositoryPool::in_memory()?;
         pool.bootstrap(&migration::journal_catalog()?, &SystemTimestampSource)?;

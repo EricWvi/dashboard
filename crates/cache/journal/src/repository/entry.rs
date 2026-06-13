@@ -112,6 +112,79 @@ impl<'a> EntryRepository<'a> {
         })?)
     }
 
+    /// Returns the sum of word_count for all non-deleted entries.
+    pub fn count_words(&self) -> Result<i64, JournalError> {
+        Ok(self.pool.with_connection(|conn| {
+            Ok(conn.query_row(
+                "SELECT COALESCE(SUM(word_count), 0) FROM entries WHERE is_deleted = 0",
+                [],
+                |row| row.get(0),
+            )?)
+        })?)
+    }
+
+    /// Returns the count of all non-deleted entries.
+    pub fn count_all(&self) -> Result<i64, JournalError> {
+        Ok(self.pool.with_connection(|conn| {
+            Ok(conn.query_row(
+                "SELECT COUNT(*) FROM entries WHERE is_deleted = 0",
+                [],
+                |row| row.get(0),
+            )?)
+        })?)
+    }
+
+    /// Returns the count of non-deleted entries whose local creation date falls in the given year.
+    pub fn count_by_year(&self, year: i32) -> Result<i64, JournalError> {
+        Ok(self.pool.with_connection(|conn| {
+            Ok(conn.query_row(
+                "SELECT COUNT(*) FROM entries WHERE is_deleted = 0 \
+                 AND CAST(strftime('%Y', created_at / 1000, 'unixepoch', 'localtime') AS INTEGER) = ?1",
+                params![year],
+                |row| row.get(0),
+            )?)
+        })?)
+    }
+
+    /// Returns per-day entry counts for the current calendar year ordered by date ascending.
+    /// Each tuple is `(date_string, count)`, e.g. `("2026-01-15", 3)`.
+    pub fn count_current_year(&self) -> Result<Vec<(String, i32)>, JournalError> {
+        Ok(self.pool.with_connection(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT strftime('%Y-%m-%d', created_at / 1000, 'unixepoch', 'localtime') AS date, \
+                        COUNT(*) AS cnt \
+                 FROM entries \
+                 WHERE is_deleted = 0 \
+                   AND CAST(strftime('%Y', created_at / 1000, 'unixepoch', 'localtime') AS INTEGER) \
+                       = CAST(strftime('%Y', 'now', 'localtime') AS INTEGER) \
+                 GROUP BY date \
+                 ORDER BY date ASC",
+            )?;
+            Ok(stmt
+                .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+                .collect::<Result<Vec<_>, _>>()?)
+        })?)
+    }
+
+    /// Returns distinct `(year, month, day)` tuples for all non-deleted entries,
+    /// ordered year DESC, month DESC, day DESC.
+    pub fn list_date_parts(&self) -> Result<Vec<(i32, i32, i32)>, JournalError> {
+        Ok(self.pool.with_connection(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT DISTINCT \
+                    CAST(strftime('%Y', created_at / 1000, 'unixepoch', 'localtime') AS INTEGER), \
+                    CAST(strftime('%m', created_at / 1000, 'unixepoch', 'localtime') AS INTEGER), \
+                    CAST(strftime('%d', created_at / 1000, 'unixepoch', 'localtime') AS INTEGER) \
+                 FROM entries \
+                 WHERE is_deleted = 0 \
+                 ORDER BY 1 DESC, 2 DESC, 3 DESC",
+            )?;
+            Ok(stmt
+                .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+                .collect::<Result<Vec<_>, _>>()?)
+        })?)
+    }
+
     /// Updates the sync state of a single entry identified by id.
     pub fn update_sync_status(
         &self,
@@ -203,7 +276,7 @@ impl<'a> EntryRepository<'a> {
             );
 
             let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-                values.iter().map(|v| v.as_ref()).collect();
+                values.iter().map(std::convert::AsRef::as_ref).collect();
             let mut stmt = conn.prepare(&sql)?;
             Ok(stmt
                 .query_map(params_refs.as_slice(), map_row)?
@@ -239,8 +312,8 @@ mod tests {
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
-    use crate::{JournalDb, SyncStatus};
     use crate::repository::entry::EntryFilter;
+    use crate::{JournalDb, SyncStatus};
 
     fn entry(id: &str, created_at: i64) -> only_sync_schema::EntrySchemaV1 {
         only_sync_schema::EntrySchemaV1 {
@@ -336,7 +409,10 @@ mod tests {
             .unwrap();
         let ids: Vec<_> = db
             .entries()
-            .list(&EntryFilter { bookmarked: true, ..Default::default() })
+            .list(&EntryFilter {
+                bookmarked: true,
+                ..Default::default()
+            })
             .unwrap()
             .into_iter()
             .map(|e| e.id)
@@ -349,15 +425,16 @@ mod tests {
         let db = JournalDb::in_memory().unwrap();
         let mut tagged = entry("e1", 1000);
         tagged.payload = json!({"tags": ["rust"]});
-        db.entries()
-            .upsert(&tagged, SyncStatus::Synced)
-            .unwrap();
+        db.entries().upsert(&tagged, SyncStatus::Synced).unwrap();
         db.entries()
             .upsert(&entry("e2", 2000), SyncStatus::Synced)
             .unwrap();
         let ids: Vec<_> = db
             .entries()
-            .list(&EntryFilter { tag: Some("rust".to_string()), ..Default::default() })
+            .list(&EntryFilter {
+                tag: Some("rust".to_string()),
+                ..Default::default()
+            })
             .unwrap()
             .into_iter()
             .map(|e| e.id)

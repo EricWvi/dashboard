@@ -6,9 +6,9 @@ use uuid::Uuid;
 use crate::{CommandError, JournalCommands};
 
 impl JournalCommands {
-    /// Returns the tiptap document with the given id, or None if it does not exist.
+    /// Returns the tiptap document with the given id, or None if it does not exist or has been deleted.
     pub fn get_tiptap(&self, id: &str) -> Result<Option<TiptapSchemaV1>, CommandError> {
-        Ok(self.db.tiptaps().find_by_id(id)?)
+        Ok(self.db.tiptaps().find_by_id(id)?.filter(|t| !t.is_deleted))
     }
 
     /// Returns all non-deleted tiptap documents.
@@ -55,7 +55,7 @@ impl JournalCommands {
         Ok(())
     }
 
-    /// Returns the history timestamps for a tiptap document ordered ascending.
+    /// Returns the history timestamps for a tiptap document ordered descending (most recent first).
     pub fn list_tiptap_history(&self, id: &str) -> Result<Vec<i64>, CommandError> {
         let tiptap = self
             .db
@@ -63,7 +63,7 @@ impl JournalCommands {
             .find_by_id(id)?
             .ok_or_else(|| CommandError::NotFound(id.to_string()))?;
         let mut timestamps: Vec<i64> = tiptap.history.iter().map(|h| h.time).collect();
-        timestamps.sort_unstable();
+        timestamps.sort_unstable_by(|a, b| b.cmp(a));
         Ok(timestamps)
     }
 
