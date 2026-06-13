@@ -1,16 +1,9 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@only/ui";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
 import {
   BlogTableRowActions,
   BookmarkTableRowActions,

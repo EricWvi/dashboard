@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, BookmarkIcon, DashboardIcon, EchoIcon, JourneyIcon, TodoIcon } from "@only/ui";
 import { useTTContext } from "@/components/editor";
 import Todo from "@/pages/Todo";
 import Dashboard from "@/pages/Dashboard";
@@ -10,13 +10,7 @@ import Echo from "@/pages/Echo";
 import Blog from "@/pages/Blog";
 import Bookmark from "@/pages/Bookmark";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  BookmarkIcon,
-  DashboardIcon,
-  EchoIcon,
-  JourneyIcon,
-  TodoIcon,
-} from "@/components/ui/icons";
+
 import { usePageVisibility } from "@/hooks/use-page-visibility";
 import { getSessionStatus, syncSessionStatus } from "@/hooks/use-user";
 import { UserLangEnum } from "@/lib/model";

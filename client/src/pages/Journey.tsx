@@ -3,20 +3,14 @@ import {
   watchedColumns,
 } from "@/components/react-table/data-table-columns";
 import { DataTable } from "@/components/react-table/data-table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Tabs, TabsList, TabsTrigger, Button } from "@only/ui";
+
 import { useWatches } from "@/hooks/dashboard/use-watchv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { WatchingList } from "@/components/dashboard/journey/watching-list";
 import { Package2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import DroppedList from "@/components/dashboard/journey/dropped-watch";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";

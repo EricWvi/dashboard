@@ -2,7 +2,7 @@ import { ReadOnlyTiptap } from "@/components/tiptap-editor/simple-editor";
 import { useEffect, useRef, useState } from "react";
 import { useUserContextV2 } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@only/ui";
 import { toPng } from "html-to-image";
 import { useEntry, type EntryMeta } from "@/hooks/journal/use-entryv2";
 import { MapPin } from "lucide-react";

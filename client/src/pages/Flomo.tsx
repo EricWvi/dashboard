@@ -4,7 +4,7 @@ import { SyncManager, getSyncManager } from "@/lib/flomo/sync-manager";
 import { syncEvents } from "@/lib/sync-events";
 import { AppSidebar } from "@/components/flomo/sidebar";
 import { TiptapProvider } from "@/editor-provider";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@only/ui";
 import { CardPane } from "@/components/flomo/card-pane";
 import { ArchiveFrame } from "@/components/flomo/archive-decoration";
 import { useAppState } from "@/hooks/flomo/use-app-state";

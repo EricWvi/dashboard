@@ -1,7 +1,7 @@
 import { useDraft } from "@/hooks/dashboard/use-tiptapv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@only/ui";
 import { ReadOnlyTiptap } from "@/components/tiptap-editor/simple-editor";
 
 export function ContentRender({ id }: { id: string }) {

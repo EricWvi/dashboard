@@ -11,9 +11,10 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@only/contracts": ["../packages/contracts/dist/index.d.ts"],
+      "@only/contracts/fetch": ["../packages/contracts/dist/fetch.d.ts"],
+      "@only/ui": ["../packages/ui/dist/index.d.ts"],
+      "@/*": ["./src/*"]
     },
     /* Bundler mode */
     "moduleResolution": "bundler",

@@ -1,15 +1,9 @@
 import { useRecoverWatch, useWatches } from "@/hooks/dashboard/use-watchv2";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Skeleton, Button } from "@only/ui";
 import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { dateString } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+
 import { RotateCcw } from "lucide-react";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";

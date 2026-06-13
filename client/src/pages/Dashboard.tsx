@@ -1,7 +1,7 @@
 import QuickNoteList from "@/components/dashboard/quick-note";
 import { Profile } from "@/components/dashboard/profile";
 import { TodayTodoList } from "@/components/todo/todo-list";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@only/ui";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { usePageVisibility } from "@/hooks/use-page-visibility";

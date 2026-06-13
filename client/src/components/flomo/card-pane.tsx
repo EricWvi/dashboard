@@ -4,7 +4,7 @@ import { FlomoHome } from "./home-page";
 import { useEditorState } from "@/hooks/use-editor-state";
 import { TableOfContents } from "@/components/tiptap-node/toc-node";
 import { cn } from "@/lib/utils";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@only/ui";
 
 export function CardPane() {
   const { activeTabId } = useEditorState();

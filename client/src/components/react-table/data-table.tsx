@@ -16,14 +16,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Skeleton } from "@only/ui";
 import {
   WatchedTableToolbar,
   ToWatchTableToolbar,
@@ -32,7 +25,6 @@ import {
 } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

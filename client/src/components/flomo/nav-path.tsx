@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { SidebarGroup, SidebarMenu } from "@/components/ui/sidebar";
+import { SidebarGroup, SidebarMenu } from "@only/ui";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { useFolderPath } from "@/hooks/flomo/use-folders";
 import { ArchiveFolderId, RootFolderId } from "@/lib/flomo/model";

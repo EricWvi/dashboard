@@ -54,6 +54,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      "@only/contracts": path.resolve(__dirname, "../packages/contracts/dist/index.js"),
+      "@only/ui": path.resolve(__dirname, "../packages/ui/src/index.ts"),
       "@": path.resolve(__dirname, "./src"),
     },
   },

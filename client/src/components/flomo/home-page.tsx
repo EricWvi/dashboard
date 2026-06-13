@@ -1,5 +1,5 @@
 import { Plus, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input, Button, useSidebar } from "@only/ui";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { useBookmarkedCards, useRecentCards } from "@/hooks/flomo/use-cards";
@@ -10,8 +10,6 @@ import type { Card } from "@/lib/flomo/model";
 import type { UserLang } from "@/lib/model";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FlomoLogo, FlomoText } from "./icons";
-import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
 
 const RECENT_CARDS_LIMIT = 8;
 

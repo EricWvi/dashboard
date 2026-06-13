@@ -7,8 +7,8 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "@/components/ui/command";
-import * as Icon from "@/components/ui/icons";
+} from "@only/ui";
+import * as Icon from "@only/ui";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 

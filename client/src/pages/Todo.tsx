@@ -5,22 +5,8 @@ import {
   useCreateCollection,
 } from "@/hooks/dashboard/use-todov2";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Input, Button } from "@only/ui";
+
 import { ChevronDown, FolderPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserLangEnum } from "@/lib/model";

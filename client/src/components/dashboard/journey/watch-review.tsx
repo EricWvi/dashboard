@@ -1,10 +1,10 @@
-import ColorThief from "colorthief";
+import ColorThief from "colorthief/dist/color-thief";
 import chroma from "chroma-js";
 import { useEffect, useRef, useState } from "react";
 import { useUserContext } from "@/user-provider";
 import { UserLangEnum, type UserLang } from "@/lib/model";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { StarIcon } from "@/components/ui/icons";
+import { Avatar, AvatarFallback, AvatarImage, StarIcon } from "@only/ui";
+
 import { Share } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useDraft } from "@/hooks/dashboard/use-tiptapv2";

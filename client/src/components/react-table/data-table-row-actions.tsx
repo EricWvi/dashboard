@@ -3,41 +3,10 @@
 import { type Row } from "@tanstack/react-table";
 import { CalendarIcon, MoreHorizontal, Plus, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, Popover, PopoverContent, PopoverTrigger, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Calendar, Label, Slider, Input, Progress } from "@only/ui";
 import { MultiSelect } from "@/components/multi-select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import WatchCheckpoints from "@/components/dashboard/journey/watch-checkpoint";
-import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 
 import { domains, types } from "@/components/react-table/data-table-columns";
 import {

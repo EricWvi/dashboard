@@ -1,5 +1,5 @@
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator, SidebarTrigger, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@only/ui";
+
 import { EditorToolbar } from "@/components/tiptap-editor/simple-editor";
 import { useEditorState } from "@/hooks/use-editor-state";
 import {
@@ -18,7 +18,7 @@ import {
   TextCursorInput,
   Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { useCallback, useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { tiptapRefresh } from "@/hooks/flomo/query-keys";
@@ -29,13 +29,7 @@ import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   RenameCardDialog,
   MoveCardDialog,

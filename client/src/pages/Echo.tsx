@@ -1,6 +1,6 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@only/ui";
 import { WeeklyRetro } from "@/components/dashboard/echo/weekly-retro";
 import { AnnualRetro } from "@/components/dashboard/echo/annual-retro";
 import { DecadeRetro } from "@/components/dashboard/echo/decade-retro";

@@ -1,29 +1,18 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, Skeleton, MarkIcon } from "@only/ui";
+
 import {
   useCreateEcho,
   useEchoes,
   useToggleEchoMark,
   useYears,
 } from "@/hooks/dashboard/use-echov2";
-import { Button } from "@/components/ui/button";
+
 import { useTTContext } from "@/components/editor";
 import { ContentRender } from "@/components/dashboard/content-render";
 import { useEffect, useState } from "react";
 import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { PenLine } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   dateString,
@@ -31,7 +20,7 @@ import {
   getWeekYearPair,
   ZERO_UUID,
 } from "@/lib/utils";
-import { MarkIcon } from "@/components/ui/icons";
+
 import { UserLangEnum, type UserLang } from "@/lib/model";
 import { useUserContext } from "@/user-provider";
 import { EchoEnum } from "@/lib/dashboard/model";

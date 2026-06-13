@@ -2,29 +2,9 @@ import {
   useUpdateWatch,
   useCompleteWatch,
 } from "@/hooks/dashboard/use-watchv2";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Slider, Input, Progress, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Label } from "@only/ui";
 import { types } from "@/components/react-table/data-table-columns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import React, { useRef, useState } from "react";
 import {

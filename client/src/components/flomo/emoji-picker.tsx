@@ -5,7 +5,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@only/ui";
 import { useUserContextV2 } from "@/user-provider";
 import { UserLangEnum } from "@/lib/model";
 

@@ -15,13 +15,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { useTTContext } from "@/components/editor";
 import { UserLangEnum } from "@/lib/model";
 import { useUserContextV2 } from "@/user-provider";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Label, Button } from "@only/ui";
 import {
   Plus,
   TextQuote,
@@ -34,8 +28,7 @@ import {
   Tag,
 } from "@/components/journal/icon";
 import { MultiSelect } from "@/components/multi-select";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+
 import { useEditorState } from "@/hooks/use-editor-state";
 import { useTags } from "@/hooks/journal/use-tagv2";
 import { journalDatabase } from "@/lib/journal/db-interface";

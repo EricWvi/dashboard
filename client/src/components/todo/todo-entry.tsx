@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input, Button, Card, CardContent, Badge, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger, ContextMenuTrigger, Popover, PopoverContent, PopoverTrigger, Calendar, Checkbox, Label } from "@only/ui";
+
 import {
   Trash2,
   Edit,
@@ -23,30 +21,9 @@ import {
   Timer,
   CornerLeftDown,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+
 import PopoverText from "@/components/dashboard/todo/popovertext";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+
 import {
   useBottomTodo,
   useCollections,
@@ -75,8 +52,7 @@ import {
 import { useTTContext } from "@/components/editor";
 import { useKanbanContext } from "@/components/dashboard/todo/kanban";
 import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+
 import { createKanban } from "@/hooks/dashboard/use-kanbanv2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BasicCannon, CannonMix, SchoolPride } from "@/lib/dashboard/confetti";

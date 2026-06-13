@@ -1,16 +1,4 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Skeleton, Button } from "@only/ui";
 
 import {
   useCreateQuestionEcho,
@@ -20,8 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { getDecadePair, ZERO_UUID } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useTTContext } from "@/components/editor";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+
 import { createTiptap } from "@/hooks/dashboard/use-tiptapv2";
 import { PenLine } from "lucide-react";
 import { useUserContext } from "@/user-provider";

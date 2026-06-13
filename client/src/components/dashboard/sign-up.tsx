@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage, Button } from "@only/ui";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSignUp, useUpdateLanguage } from "@/hooks/use-user";
 import { fileUpload } from "@/lib/file-upload";

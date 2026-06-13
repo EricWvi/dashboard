@@ -6,7 +6,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@only/ui";
 import { useEffect, useRef } from "react";
 import React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";

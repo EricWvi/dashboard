@@ -25,6 +25,8 @@ tasks:
     desc: Install dependencies for the frontend packages
     cmds:
       - pnpm install
+      - pnpm --filter @only/contracts build
+      - pnpm --filter @only/ui build
 
   install:backend:
     desc: Install dependencies for the Rust backend

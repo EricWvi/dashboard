@@ -8,7 +8,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@only/ui";
 import { useAppState } from "@/hooks/flomo/use-app-state";
 import { FlomoLogo, FlomoText } from "./icons";
 import { Search } from "lucide-react";
