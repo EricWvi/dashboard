@@ -128,7 +128,11 @@ impl<R: EntryRepository> ListEntriesHandler<R> {
             tag: request.tag,
             contains: request.contains,
             bookmarked: request.bookmarked,
-            location: request.location,
+            location: request
+                .location
+                .filter(|s| !s.is_empty())
+                .map(|s| s.split(',').map(str::to_owned).collect())
+                .unwrap_or_default(),
             on: request.on,
             before: request.before,
             today: request.today.unwrap_or(false),

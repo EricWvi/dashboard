@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use ts_rs::TS;
 
@@ -41,8 +41,8 @@ pub struct ListEntriesRequest {
     pub contains: Option<String>,
     /// Filter entries whose `payload.location` array starts with these path components in order.
     /// Passed as a comma-separated string in query params: `location=A,B,C`.
-    #[serde(default, deserialize_with = "deserialize_csv")]
-    pub location: Vec<String>,
+    /// The application layer splits the value on commas to produce the component list.
+    pub location: Option<String>,
     /// When `true`, only return bookmarked entries.
     pub bookmarked: Option<bool>,
     /// When `true`, return a random sample instead of paginated results.
@@ -58,23 +58,6 @@ pub struct ListEntriesRequest {
 
 fn default_page() -> u32 {
     1
-}
-
-/// Deserializes a comma-separated string into `Vec<String>`.
-///
-/// An absent or empty string produces an empty vec. Handles both plain query-param strings
-/// (from serde_urlencoded) and JSON string values so the same struct works for both
-/// GET query params and POST JSON bodies.
-fn deserialize_csv<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt = Option::<String>::deserialize(deserializer)?;
-    Ok(match opt {
-        None => vec![],
-        Some(s) if s.is_empty() => vec![],
-        Some(s) => s.split(',').map(str::to_owned).collect(),
-    })
 }
 
 /// Returns a page of entries with an indicator of whether more pages exist.
