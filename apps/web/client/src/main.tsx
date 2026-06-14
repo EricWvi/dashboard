@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index-journal.css";
-import App from "./JournalApp.tsx";
+import "./index.css";
+import App from "./App.tsx";
 import { initMediaServerBaseUrl } from "@/lib/utils";
 
 async function bootstrap() {
