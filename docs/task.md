@@ -1,100 +1,120 @@
 # Refactoring Task List
 
-## Current Task: `packages/editor`
+## Current Task: `apps/journal`
 
-Extract the Tiptap rich-text editor wrapper into a dedicated library package.
-Source files are under `client/src/components/tiptap-*` and `client/src/lib/tiptap-*.ts`.
+Extract the journal feature out of `client/` into a standalone pnpm workspace app
+(`apps/web/journal/`) backed by a dedicated library package (`packages/journal`).
+`client/` stays in place; only journal-specific files are moved out.
 
-Follow the same build pattern established by `packages/ui`: tsup compiles TypeScript
-to `dist/` (ESM + `.d.ts`), and `package.json` exports point to `dist/`.
+**Prerequisites:** `packages/editor` complete and consumed by `client`. ✅
 
 ### File Mapping
 
 | Source | Target |
 |--------|--------|
-| `client/src/components/tiptap-ui-primitive/` | `packages/editor/src/primitive/` |
-| `client/src/components/tiptap-node/` | `packages/editor/src/node/` |
-| `client/src/components/tiptap-ui/` | `packages/editor/src/ui/` |
-| `client/src/components/tiptap-styles/` | `packages/editor/src/styles/` |
-| `client/src/components/tiptap-icons/` | `packages/editor/src/icons/` |
-| `client/src/lib/tiptap-utils.ts` | `packages/editor/src/utils.ts` |
-| `client/src/lib/tiptap-diff.ts` | `packages/editor/src/diff.ts` |
-| `client/src/components/tiptap-editor/theme-toggle.tsx` | `packages/editor/src/editor/theme-toggle.tsx` |
-| `client/src/components/tiptap-editor/simple-editor.scss` | `packages/editor/src/editor/simple-editor.scss` |
+| `client/src/components/journal/` | `packages/journal/src/components/` |
+| `client/src/hooks/journal/` | `packages/journal/src/hooks/` |
+| `client/src/lib/journal/` | `packages/journal/src/lib/` |
+| `client/src/pages/Journal.tsx` | `packages/journal/src/pages/journal.tsx` |
+| `client/journal.html` | `apps/web/journal/index.html` |
+| `client/vite.journal.config.ts` | `apps/web/journal/vite.config.ts` |
 
-> `simple-editor.tsx` and `history-popover.tsx` contain client-side business logic
-> (`useUserContextV2`, `UserLangEnum`, `useEditorState`, etc.) and stay in `client`
-> for now, pending a later split.
+> `packages/journal/src/app-shell.tsx` was renamed from `client/src/App.tsx` but still
+> uses `@/` imports; decoupling is the primary remaining work.
 
 ### Subtasks
 
-- [x] Create `packages/editor/package.json`
-  - `name`: `@only/editor`
+- [x] Create `apps/web/journal/` entry point (index.html, src/main.tsx, src/index.css)
+- [x] Create `packages/journal/package.json`, `tsconfig.json`, `src/index.ts`, `src/app-shell.tsx`
+
+- [ ] Complete `packages/journal/package.json`
+  - `name`: `@only/journal`
   - `exports`: `{ ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } }`
   - `scripts`: `{ "build": "tsup", "dev": "tsup --watch" }`
-  - `dependencies`: `@only/ui`, `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`,
-    `@tiptap/extension-highlight`, `@tiptap/extension-horizontal-rule`,
-    `@tiptap/extension-image`, `@tiptap/extension-list`, `@tiptap/extension-subscript`,
-    `@tiptap/extension-superscript`, `@tiptap/extension-text-align`,
-    `@tiptap/extension-typography`, `browser-image-compression`, `lodash`
+  - `dependencies`: `@only/editor`, `@only/ui`, `@only/contracts`, `@tanstack/react-query`,
+    `dexie`, `swiper`, `odometer`, `browser-image-compression`
   - `peerDependencies`: `react`, `react-dom`
 
-- [x] Create `packages/editor/tsup.config.ts` (mirror `packages/ui/tsup.config.ts`; add SCSS/CSS handling via `esbuild-sass-plugin`)
+- [ ] Create `packages/journal/tsup.config.ts` (mirror `packages/editor/tsup.config.ts`)
 
-- [x] Create `packages/editor/tsconfig.json` (mirror `packages/ui/tsconfig.json`)
+- [ ] Move journal source files from `client/` into `packages/journal/src/`
+  - `client/src/components/journal/` → `packages/journal/src/components/`
+  - `client/src/hooks/journal/` → `packages/journal/src/hooks/`
+  - `client/src/lib/journal/` → `packages/journal/src/lib/`
+  - `client/src/pages/Journal.tsx` → `packages/journal/src/pages/journal.tsx`
 
-- [x] Decouple dependencies on client internals
-  - `packages/editor/src/utils.ts` has no imports from `@/lib/*`
-  - `handleImageUpload` / `handleVideoUpload` / `MAX_FILE_SIZE` stay in `client/src/lib/tiptap-utils.ts`
-  - `CachedImage` / `VideoExtension` accept `formatUrl?` option; `formatMediaUrl` passed from client
-  - `VideoUploadButton` / `useVideoUpload` accept `upload?` callback; `handleVideoUpload` passed from client
-  - `useUserContextV2` replaced by `EditorLanguageContext` (`EditorProvider` + `useEditorLanguage()`) inside package
+- [ ] Decouple from client internals
+  - `lib/journal/model.ts`: replace `@/lib/model` import with types from `@only/contracts`
+    or define locally in `packages/journal/src/types.ts`
+  - `app-shell.tsx`: replace all `@/` imports with package-relative paths
+    - `@/lib/queryClient` → local `lib/query-client.ts`
+    - `@/hooks/journal/*` → `./hooks/*`
+    - `@/lib/journal/*` → `./lib/*`
+    - `@/pages/Journal` → `./pages/journal`
+    - `@/user-provider` → `@only/ui` or local context
+    - `@/editor-provider` → `@only/editor` (`EditorProvider`)
+    - `@/components/overlay-controller` → `./components/overlay-controller`
+    - `@/components/editor` → `@only/editor` (`TTOverlayProvider`)
 
-- [x] Copy files and update import paths
-  - `@/components/tiptap-ui-primitive/*` → relative paths within the package
-  - `@/components/tiptap-node/*` → relative paths within the package
-  - `@/components/tiptap-ui/*` → relative paths within the package
-  - `@/components/tiptap-icons/*` → relative paths within the package
-  - `@/lib/tiptap-utils` → `../../utils`
-  - `@/lib/tiptap-diff` → `../../diff`
-  - `@/lib/model` → `../../types`
-  - `@/user-provider` → `../../context` (uses `useEditorLanguage()`)
+- [ ] Update `apps/web/journal/src/main.tsx`
+  - Replace `import App from "./App.tsx"` with `import { AppShell } from "@only/journal"`
+  - Ensure `initMediaServerBaseUrl` is either inlined or imported from a shared util
 
-- [x] Create `packages/editor/src/index.ts` — explicit named exports (avoids name conflicts from `shouldShowButton` exported by multiple ui modules)
+- [ ] Create `apps/web/journal/vite.config.ts` (adapt from `client/vite.journal.config.ts`;
+  update aliases to resolve `@only/journal`, `@only/editor`, `@only/ui`, `@only/contracts`)
 
-- [x] Package builds successfully (`npx tsup` passes, DTS generated)
+- [ ] Create `apps/web/journal/package.json` and `tsconfig.json`
 
-- [x] Add `packages/editor` build step to `install:frontend` task in `Taskfile.yml`
+- [ ] Remove journal files from `client/` after migration:
+  - `client/src/components/journal/`
+  - `client/src/hooks/journal/`
+  - `client/src/lib/journal/`
+  - `client/src/pages/Journal.tsx`
+  - `client/vite.journal.config.ts`
+  - `client/journal.html`
+  - `client/public-journal/`
 
-- [x] Update vite configs and `tsconfig.app.json` in client to resolve `@only/editor`
-  - Vite alias: `"@only/editor"` → `packages/editor/src/index.ts`
-  - TS path: `"@only/editor"` → `packages/editor/dist/index.d.ts`
+- [ ] Add `packages/journal` build step to `Taskfile.yml`; add `apps/web/journal` dev/build scripts
 
-- [x] Update `client` imports to consume from `@only/editor`
-  - `simple-editor.tsx` updated: all tiptap component imports → `@only/editor`; wrapped `ReadOnlyTiptap` with `EditorProvider`; passes `formatMediaUrl` to `CachedImage`/`VideoExtension`, `handleVideoUpload` to `VideoUploadButton`
-  - `history-popover.tsx` updated: `Button`, `RestoreIcon`, `diffJSONContent` from `@only/editor`
-  - `theme-toggle.tsx` updated: `Button`, `MoonStarIcon`, `SunIcon` from `@only/editor`
-  - `editor-provider.tsx` updated: wraps children with `<EditorProvider language={language}>`
-  - `flomo/card-pane.tsx`, `journal/entry-editor.tsx`: `TableOfContents` from `@only/editor`
-  - Deleted from client: `tiptap-ui/`, `tiptap-ui-primitive/`, `tiptap-node/`, `tiptap-icons/`, `hooks/use-tiptap-editor.ts`, `hooks/use-menu-navigation.ts`, `lib/tiptap-diff.ts`
+- [ ] Update Go backend to serve `apps/web/journal` build output for journal routes
 
-- [x] Client TypeScript type check passes (`tsc --noEmit`)
-- [x] Client Vite build passes (`vite build --config vite.dashboard.config.ts`)
+- [ ] `packages/journal` builds successfully (`npx tsup` passes, DTS generated)
+
+- [ ] `apps/web/journal` builds successfully (`vite build` passes)
 
 ---
 
-## Next Task: `apps/client`
+## Future Task: `apps/dashboard`
 
-Move the `client/` directory into `apps/client` to become a proper pnpm workspace app.
+Extract the dashboard SPA from `client/` into a standalone pnpm workspace app
+(`apps/web/dashboard/`). By this point `client/` contains only dashboard-specific code
+(components, hooks, lib for Blog, Bookmark, Echo, Flomo, Journey, Todo, and the main
+Dashboard page) after journal has been extracted.
 
-**Prerequisites:** `packages/editor` complete and consumed by `client`. ✅
+**Prerequisites:** `apps/journal` complete.
+
+### File Mapping
+
+| Source | Target |
+|--------|--------|
+| `client/src/components/dashboard/` | `apps/web/dashboard/src/components/dashboard/` |
+| `client/src/components/echo/` | `apps/web/dashboard/src/components/echo/` |
+| `client/src/components/flomo/` | `apps/web/dashboard/src/components/flomo/` |
+| `client/src/components/todo/` | `apps/web/dashboard/src/components/todo/` |
+| `client/src/lib/flomo/` | `apps/web/dashboard/src/lib/flomo/` |
+| `client/src/pages/` (non-Journal) | `apps/web/dashboard/src/pages/` |
+| `client/src/hooks/` (non-journal) | `apps/web/dashboard/src/hooks/` |
+| `client/vite.dashboard.config.ts` | `apps/web/dashboard/vite.config.ts` |
+| `client/index.html` | `apps/web/dashboard/index.html` |
 
 ### Subtasks
 
-- [ ] Move `client/` → `apps/web/client/`
-- [ ] Update `pnpm-workspace.yaml` if needed (`apps/**` already matches)
-- [ ] Update all root-level Taskfile references to `client/` paths
-- [ ] Update Go backend static file references if they embed client build output
-- [ ] Verify `pnpm install` resolves `@only/ui`, `@only/contracts`, `@only/editor`
-  workspace links correctly from the new location
-- [ ] Confirm `task run:web-backend` and frontend builds still work end-to-end
+- [ ] Create `apps/web/dashboard/` with `package.json`, `tsconfig.json`, `index.html`
+- [ ] Move dashboard source files out of `client/` into `apps/web/dashboard/src/`
+- [ ] Create `apps/web/dashboard/vite.config.ts` (adapt from `client/vite.dashboard.config.ts`;
+  update aliases for `@only/ui`, `@only/contracts`, `@only/editor`)
+- [ ] Update all `@/` import aliases to resolve correctly from the new location
+- [ ] Update Go backend static file embeds to point to `apps/web/dashboard` build output
+- [ ] Update all root-level Taskfile references to `client/` paths that pertain to dashboard
+- [ ] `apps/web/dashboard` builds successfully (`vite build` passes)
+- [ ] Confirm `task run:web-backend` works end-to-end

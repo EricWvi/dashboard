@@ -18,11 +18,11 @@ function stripOdometerStarHacks(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  publicDir: "public-journal",
+  publicDir: "../../public/journal",
   build: {
-    outDir: "journal",
+    outDir: "dist",
     rollupOptions: {
-      input: path.resolve(__dirname, "journal.html"),
+      input: path.resolve(__dirname, "index.html"),
     },
   },
   server: {
@@ -43,8 +43,18 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), stripOdometerStarHacks()],
   resolve: {
     alias: {
-      "@only/contracts": path.resolve(__dirname, "../packages/contracts/dist/index.js"),
-      "@only/editor": path.resolve(__dirname, "../packages/editor/src/index.ts"),
+      "@only/contracts": path.resolve(
+        __dirname,
+        "../packages/contracts/src/index.ts",
+      ),
+      "@only/editor": path.resolve(
+        __dirname,
+        "../packages/editor/src/index.ts",
+      ),
+      "@only/journal": path.resolve(
+        __dirname,
+        "../packages/journal/src/index.ts",
+      ),
       "@only/ui": path.resolve(__dirname, "../packages/ui/src/index.ts"),
       "@": path.resolve(__dirname, "./src"),
     },
