@@ -2,6 +2,20 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use ts_rs::TS;
 
+/// Local client view of a Tiptap document (command layer, Android cache).
+///
+/// Omits server-only fields (`site`, `is_deleted`) that are not part of the local schema.
+/// History entries use [`HistoryEntryView`] which is structurally identical to the sync-schema
+/// wire type.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LocalTiptapView {
+    pub id: String,
+    pub content: Value,
+    pub history: Vec<HistoryEntryView>,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
 /// Carries the tiptap document id from the URL path segment.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

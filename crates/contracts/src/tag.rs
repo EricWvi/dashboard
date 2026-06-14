@@ -1,6 +1,17 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+/// Local client view of a tag (command layer, Android cache).
+///
+/// Omits server-only fields (`group`, `is_deleted`) that are not part of the local schema.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LocalTagView {
+    pub id: String,
+    pub name: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
 /// Public view of a user-defined label.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]

@@ -1,4 +1,5 @@
 use only_cache_journal::{EntryFilter, SyncStatus};
+use only_contracts::EntryView;
 use only_logging::clock;
 use only_sync_schema::EntrySchemaV1;
 use serde_json::Value;
@@ -8,10 +9,28 @@ use crate::{CommandError, JournalCommands};
 
 const PAGE_SIZE: usize = 8;
 
+fn schema_to_view(e: EntrySchemaV1) -> EntryView {
+    EntryView {
+        id: e.id,
+        draft: e.draft,
+        payload: e.payload,
+        word_count: e.word_count,
+        raw_text: e.raw_text,
+        bookmark: e.bookmark,
+        created_at: e.created_at,
+        updated_at: e.updated_at,
+    }
+}
+
 impl JournalCommands {
     /// Returns the entry with the given id, or None if it does not exist or has been deleted.
-    pub fn get_entry(&self, id: &str) -> Result<Option<EntrySchemaV1>, CommandError> {
-        Ok(self.db.entries().find_by_id(id)?.filter(|e| !e.is_deleted))
+    pub fn get_entry(&self, id: &str) -> Result<Option<EntryView>, CommandError> {
+        Ok(self
+            .db
+            .entries()
+            .find_by_id(id)?
+            .filter(|e| !e.is_deleted)
+            .map(schema_to_view))
     }
 
     /// Returns a page of non-deleted entries matching the filter, ordered by creation time
@@ -20,12 +39,17 @@ impl JournalCommands {
         &self,
         filter: &EntryFilter,
         page: u32,
-    ) -> Result<(Vec<EntrySchemaV1>, bool), CommandError> {
+    ) -> Result<(Vec<EntryView>, bool), CommandError> {
         let all = self.db.entries().list(filter)?;
         let page = page.max(1) as usize;
         let start = (page - 1) * PAGE_SIZE;
         let has_more = start + PAGE_SIZE < all.len();
-        let entries = all.into_iter().skip(start).take(PAGE_SIZE).collect();
+        let entries = all
+            .into_iter()
+            .skip(start)
+            .take(PAGE_SIZE)
+            .map(schema_to_view)
+            .collect();
         Ok((entries, has_more))
     }
 
@@ -35,8 +59,14 @@ impl JournalCommands {
         &self,
         query: &str,
         filter: &EntryFilter,
-    ) -> Result<Vec<EntrySchemaV1>, CommandError> {
-        Ok(self.db.entries().search(query, filter)?)
+    ) -> Result<Vec<EntryView>, CommandError> {
+        Ok(self
+            .db
+            .entries()
+            .search(query, filter)?
+            .into_iter()
+            .map(schema_to_view)
+            .collect())
     }
 
     /// Creates a new entry and returns its generated id.

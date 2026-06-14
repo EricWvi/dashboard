@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 only-cache-journal = { workspace = true }
+only-contracts = { workspace = true }
 only-logging = { workspace = true }
 only-sync-schema = { workspace = true }
 serde_json = { workspace = true }

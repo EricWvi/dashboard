@@ -40,16 +40,16 @@ pub use media::{DeleteMediaRequest, DeleteMediaResponse, UploadResponse};
 use serde_json::Value;
 pub use tag::{
     CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest,
-    ListTagsResponse, TagView,
+    ListTagsResponse, LocalTagView, TagView,
 };
 pub use tiptap::{
     BottomQuickNoteRequest, BottomQuickNoteResponse, CreateQuickNoteRequest,
     CreateQuickNoteResponse, CreateTiptapRequest, CreateTiptapResponse, DeleteQuickNoteRequest,
     DeleteQuickNoteResponse, GetTiptapRequest, GetTiptapResponse, HistoryEntryView,
     ListQuickNotesRequest, ListQuickNotesResponse, ListTiptapHistoryRequest,
-    ListTiptapHistoryResponse, QuickNotePath, QuickNoteView, RestoreTiptapHistoryRequest,
-    RestoreTiptapHistoryResponse, TiptapPath, TiptapView, UpdateQuickNoteRequest,
-    UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse,
+    ListTiptapHistoryResponse, LocalTiptapView, QuickNotePath, QuickNoteView,
+    RestoreTiptapHistoryRequest, RestoreTiptapHistoryResponse, TiptapPath, TiptapView,
+    UpdateQuickNoteRequest, UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse,
 };
 
 use std::path::Path;

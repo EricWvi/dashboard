@@ -67,7 +67,6 @@ fn ct_01_add_tag_returns_id() {
         let tag = commands.get_tag(&id).unwrap().unwrap();
         assert_eq!(tag.id, id);
         assert_eq!(tag.name, "rust");
-        assert_eq!(tag.is_deleted, false);
     });
 }
 

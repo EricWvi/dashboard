@@ -782,7 +782,6 @@ fn ce_01_valid_inputs_returns_id() {
         assert_eq!(entry.word_count, 3);
         assert_eq!(entry.raw_text, "hello world rust");
         assert_eq!(entry.bookmark, false);
-        assert_eq!(entry.is_deleted, false);
     });
 }
 

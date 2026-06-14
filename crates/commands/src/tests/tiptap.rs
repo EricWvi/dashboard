@@ -20,7 +20,6 @@ fn ct_01_valid_content_returns_id() {
         assert_eq!(doc.id, id);
         assert_eq!(doc.content, content);
         assert_eq!(doc.history, vec![]);
-        assert_eq!(doc.is_deleted, false);
     });
 }
 

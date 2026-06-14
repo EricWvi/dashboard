@@ -2196,6 +2196,7 @@ name = "only-commands"
 version = "0.0.0"
 dependencies = [
  "only-cache-journal",
+ "only-contracts",
  "only-logging",
  "only-sync-schema",
  "pretty_assertions",

@@ -1,3 +1,4 @@
+use only_contracts::{HistoryEntryView, LocalTiptapView};
 use only_logging::clock;
 use only_sync_schema::{HistoryEntryV1, TiptapSchemaV1};
 use serde_json::Value;
@@ -5,15 +6,43 @@ use uuid::Uuid;
 
 use crate::{CommandError, JournalCommands};
 
+fn history_entry_to_view(h: HistoryEntryV1) -> HistoryEntryView {
+    HistoryEntryView {
+        time: h.time,
+        content: h.content,
+    }
+}
+
+fn schema_to_tiptap_view(t: TiptapSchemaV1) -> LocalTiptapView {
+    LocalTiptapView {
+        id: t.id,
+        content: t.content,
+        history: t.history.into_iter().map(history_entry_to_view).collect(),
+        created_at: t.created_at,
+        updated_at: t.updated_at,
+    }
+}
+
 impl JournalCommands {
     /// Returns the tiptap document with the given id, or None if it does not exist or has been deleted.
-    pub fn get_tiptap(&self, id: &str) -> Result<Option<TiptapSchemaV1>, CommandError> {
-        Ok(self.db.tiptaps().find_by_id(id)?.filter(|t| !t.is_deleted))
+    pub fn get_tiptap(&self, id: &str) -> Result<Option<LocalTiptapView>, CommandError> {
+        Ok(self
+            .db
+            .tiptaps()
+            .find_by_id(id)?
+            .filter(|t| !t.is_deleted)
+            .map(schema_to_tiptap_view))
     }
 
     /// Returns all non-deleted tiptap documents.
-    pub fn list_tiptaps(&self) -> Result<Vec<TiptapSchemaV1>, CommandError> {
-        Ok(self.db.tiptaps().list()?)
+    pub fn list_tiptaps(&self) -> Result<Vec<LocalTiptapView>, CommandError> {
+        Ok(self
+            .db
+            .tiptaps()
+            .list()?
+            .into_iter()
+            .map(schema_to_tiptap_view)
+            .collect())
     }
 
     /// Creates a new tiptap document and returns its generated id.
