@@ -1,17 +1,6 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-/// Local client view of a tag (command layer, Android cache).
-///
-/// Omits server-only fields (`group`, `is_deleted`) that are not part of the local schema.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct LocalTagView {
-    pub id: String,
-    pub name: String,
-    pub created_at: i64,
-    pub updated_at: i64,
-}
-
 /// Public view of a user-defined label.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -19,7 +8,6 @@ pub struct LocalTagView {
 pub struct TagView {
     pub id: String,
     pub name: String,
-    pub group: String,
     pub created_at: i64,
     pub updated_at: i64,
 }
@@ -30,7 +18,6 @@ pub struct TagView {
 #[ts(export, export_to = "tag.ts")]
 pub struct CreateTagsRequest {
     pub tags: Vec<String>,
-    pub group: String,
 }
 
 /// Confirms the batch create completed.
@@ -39,15 +26,13 @@ pub struct CreateTagsRequest {
 #[ts(export, export_to = "tag.ts")]
 pub struct CreateTagsResponse {}
 
-/// Requests all tag names for a given group.
+/// Requests all tags for the current app context (group resolved from `Only-App` header).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "tag.ts")]
-pub struct ListTagsRequest {
-    pub group: String,
-}
+pub struct ListTagsRequest {}
 
-/// Returns all tag names within the requested group.
+/// Returns all tag names for the current app context.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "tag.ts")]
@@ -55,13 +40,12 @@ pub struct ListTagsResponse {
     pub tags: Vec<TagView>,
 }
 
-/// Identifies the tag to soft-delete by name and group.
+/// Identifies the tag to soft-delete by name.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "tag.ts")]
 pub struct DeleteTagRequest {
     pub name: String,
-    pub group: String,
 }
 
 /// Confirms the tag was deleted.

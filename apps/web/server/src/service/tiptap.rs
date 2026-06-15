@@ -58,8 +58,9 @@ impl TiptapApi {
         &self,
         request: CreateTiptapRequest,
         creator_id: i32,
+        site: i16,
     ) -> Result<CreateTiptapResponse, TiptapError> {
-        self.create_tiptap.handle(request, creator_id).await
+        self.create_tiptap.handle(request, creator_id, site).await
     }
 
     /// Delegates a get-tiptap request to the application handler.

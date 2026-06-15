@@ -188,7 +188,10 @@ where
         if let Err(e) = self.local.apply_push_result(&data, &result).await {
             only_warn!(error = %e, "failed to mark records synced after push");
         }
-        only_info!(processed_schemas = result.processed_schemas.len(), "push complete");
+        only_info!(
+            processed_schemas = result.processed_schemas.len(),
+            "push complete"
+        );
         Ok(PushOutcome::Pushed)
     }
 

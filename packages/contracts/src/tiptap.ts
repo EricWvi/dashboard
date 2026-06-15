@@ -24,7 +24,7 @@ export type CreateQuickNoteResponse = { quickNote: QuickNoteView };
 /**
  * Carries the fields required to create a new Tiptap document.
  */
-export type CreateTiptapRequest = { site: number; content: JsonValue };
+export type CreateTiptapRequest = { content: JsonValue };
 
 /**
  * Returns the created Tiptap document.
@@ -112,10 +112,6 @@ export type RestoreTiptapHistoryResponse = Record<symbol, never>;
  */
 export type TiptapView = {
   id: string;
-  /**
-   * Numeric code identifying the owning surface (entry, quicknote, blog, etc.).
-   */
-  site: number;
   content: JsonValue;
   history: Array<HistoryEntryView>;
   createdAt: bigint;

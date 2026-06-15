@@ -26,13 +26,14 @@ async fn parse_json<T: serde::de::DeserializeOwned>(resp: Response<Body>) -> T {
 }
 
 /// Creates a tiptap document via the HTTP handler and returns the saved view.
-async fn create_tiptap(state: &AppState, email: &str, site: i16, content: Value) -> TiptapView {
-    let body = json!({ "site": site, "content": content });
+async fn create_tiptap(state: &AppState, email: &str, app: &str, content: Value) -> TiptapView {
+    let body = json!({ "content": content });
     let req = with_auth(
         Request::builder()
             .method("POST")
             .uri("/api/tiptaps")
-            .header("content-type", "application/json"),
+            .header("content-type", "application/json")
+            .header("only-app", app),
         email,
     )
     .body(Body::from(body.to_string()))
@@ -104,15 +105,16 @@ async fn au_02_invalid_token_returns_400(state: &AppState) {
 
 // ─── CT: create tiptap ────────────────────────────────────────────────────────
 
-/// CT-01: valid payload → 200, response tiptap matches requested site and content.
+/// CT-01: valid payload → 200, response tiptap contains the submitted content.
 async fn ct_01_valid_payload_returns_tiptap(state: &AppState) {
     let content = json!({"type": "doc", "content": []});
-    let body = json!({ "site": 1_i16, "content": content });
+    let body = json!({ "content": content });
     let req = with_auth(
         Request::builder()
             .method("POST")
             .uri("/api/tiptaps")
-            .header("content-type", "application/json"),
+            .header("content-type", "application/json")
+            .header("only-app", "dashboard"),
         "ct01@test.com",
     )
     .body(Body::from(body.to_string()))
@@ -120,7 +122,6 @@ async fn ct_01_valid_payload_returns_tiptap(state: &AppState) {
     let resp = send(state.clone(), req).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let r: CreateTiptapResponse = parse_json(resp).await;
-    assert_eq!(r.tiptap.site, 1);
     assert_eq!(r.tiptap.content, content);
     assert!(r.tiptap.history.is_empty());
 }
@@ -145,7 +146,7 @@ async fn ct_03_created_tiptap_visible_in_get(state: &AppState) {
     let t = create_tiptap(
         state,
         "ct03@test.com",
-        1,
+        "dashboard",
         json!({"type": "doc", "content": []}),
     )
     .await;
@@ -167,7 +168,7 @@ async fn ct_03_created_tiptap_visible_in_get(state: &AppState) {
 
 /// GT-01: existing tiptap → 200, correct document returned.
 async fn gt_01_existing_id_returns_tiptap(state: &AppState) {
-    let t = create_tiptap(state, "gt01@test.com", 1, json!({"type": "doc"})).await;
+    let t = create_tiptap(state, "gt01@test.com", "dashboard", json!({"type": "doc"})).await;
     let req = with_auth(
         Request::builder()
             .method("GET")
@@ -198,7 +199,7 @@ async fn gt_02_missing_id_returns_404(state: &AppState) {
 
 /// GT-03: id belonging to another user → 404.
 async fn gt_03_other_user_id_returns_404(state: &AppState) {
-    let t = create_tiptap(state, "gt03a@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "gt03a@test.com", "dashboard", json!({})).await;
     let req = with_auth(
         Request::builder()
             .method("GET")
@@ -215,7 +216,7 @@ async fn gt_03_other_user_id_returns_404(state: &AppState) {
 
 /// UT-01: valid update payload → 200.
 async fn ut_01_valid_update_returns_200(state: &AppState) {
-    let t = create_tiptap(state, "ut01@test.com", 1, json!({"type": "doc"})).await;
+    let t = create_tiptap(state, "ut01@test.com", "dashboard", json!({"type": "doc"})).await;
     let body = json!({ "content": {"type": "doc", "version": 2}, "ts": TS1 });
     let req = with_auth(
         Request::builder()
@@ -233,7 +234,7 @@ async fn ut_01_valid_update_returns_200(state: &AppState) {
 /// UT-02: previous content is pushed into history after update.
 async fn ut_02_old_content_moved_to_history(state: &AppState) {
     let original = json!({"type": "doc", "text": "original"});
-    let t = create_tiptap(state, "ut02@test.com", 1, original.clone()).await;
+    let t = create_tiptap(state, "ut02@test.com", "dashboard", original.clone()).await;
     update_tiptap(
         state,
         "ut02@test.com",
@@ -275,7 +276,7 @@ async fn ut_03_missing_id_returns_404(state: &AppState) {
 
 /// UT-04: id belonging to another user → 404.
 async fn ut_04_other_user_id_returns_404(state: &AppState) {
-    let t = create_tiptap(state, "ut04a@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "ut04a@test.com", "dashboard", json!({})).await;
     let body = json!({ "content": {}, "ts": TS1 });
     let req = with_auth(
         Request::builder()
@@ -294,7 +295,7 @@ async fn ut_04_other_user_id_returns_404(state: &AppState) {
 
 /// LH-01: newly created document with no updates → 200, empty history list.
 async fn lh_01_no_history_returns_empty_list(state: &AppState) {
-    let t = create_tiptap(state, "lh01@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "lh01@test.com", "dashboard", json!({})).await;
     let req = with_auth(
         Request::builder()
             .method("GET")
@@ -311,7 +312,7 @@ async fn lh_01_no_history_returns_empty_list(state: &AppState) {
 
 /// LH-02: document updated once → 200, history list has exactly one entry.
 async fn lh_02_one_update_history_length_one(state: &AppState) {
-    let t = create_tiptap(state, "lh02@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "lh02@test.com", "dashboard", json!({})).await;
     update_tiptap(state, "lh02@test.com", &t.id, json!({"v": 1}), TS1).await;
     let req = with_auth(
         Request::builder()
@@ -329,7 +330,7 @@ async fn lh_02_one_update_history_length_one(state: &AppState) {
 
 /// LH-03: document updated twice → 200, history list has exactly two entries.
 async fn lh_03_two_updates_history_length_two(state: &AppState) {
-    let t = create_tiptap(state, "lh03@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "lh03@test.com", "dashboard", json!({})).await;
     update_tiptap(state, "lh03@test.com", &t.id, json!({"v": 1}), TS1).await;
     update_tiptap(state, "lh03@test.com", &t.id, json!({"v": 2}), TS2).await;
     let req = with_auth(
@@ -348,7 +349,7 @@ async fn lh_03_two_updates_history_length_two(state: &AppState) {
 
 /// LH-04: document updated multiple times → 200, timestamps returned in descending order.
 async fn lh_04_history_sorted_descending(state: &AppState) {
-    let t = create_tiptap(state, "lh04@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "lh04@test.com", "dashboard", json!({})).await;
     // First update uses TS1 so the second history entry carries time=TS1;
     // second update uses TS2 so the first history entry carries time=TS1 > original created_at.
     update_tiptap(state, "lh04@test.com", &t.id, json!({"v": 1}), TS1).await;
@@ -387,7 +388,7 @@ async fn lh_05_missing_id_returns_404(state: &AppState) {
 
 /// LH-06: id belonging to another user → 404.
 async fn lh_06_other_user_id_returns_404(state: &AppState) {
-    let t = create_tiptap(state, "lh06a@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "lh06a@test.com", "dashboard", json!({})).await;
     let req = with_auth(
         Request::builder()
             .method("GET")
@@ -412,7 +413,7 @@ async fn rh_01_valid_ts_restores_content(state: &AppState) {
     let c1 = json!({"text": "first edit"});
     let c2 = json!({"text": "second edit"});
 
-    let t = create_tiptap(state, "rh01@test.com", 1, c0).await;
+    let t = create_tiptap(state, "rh01@test.com", "dashboard", c0).await;
     update_tiptap(state, "rh01@test.com", &t.id, c1.clone(), TS1).await;
     update_tiptap(state, "rh01@test.com", &t.id, c2, TS2).await;
 
@@ -460,7 +461,7 @@ async fn rh_02_missing_tiptap_returns_404(state: &AppState) {
 
 /// RH-03: ts not present in history → 404.
 async fn rh_03_missing_ts_returns_404(state: &AppState) {
-    let t = create_tiptap(state, "rh03@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "rh03@test.com", "dashboard", json!({})).await;
     let body = json!({ "ts": TS1 });
     let req = with_auth(
         Request::builder()
@@ -477,7 +478,7 @@ async fn rh_03_missing_ts_returns_404(state: &AppState) {
 
 /// RH-04: id belonging to another user → 404.
 async fn rh_04_other_user_id_returns_404(state: &AppState) {
-    let t = create_tiptap(state, "rh04a@test.com", 1, json!({})).await;
+    let t = create_tiptap(state, "rh04a@test.com", "dashboard", json!({})).await;
     update_tiptap(state, "rh04a@test.com", &t.id, json!({"v": 1}), TS1).await;
     let body = json!({ "ts": TS1 });
     let req = with_auth(

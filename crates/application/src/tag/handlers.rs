@@ -1,6 +1,6 @@
 use only_contracts::{
-    CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest,
-    ListTagsResponse, TagView,
+    CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsResponse,
+    TagView,
 };
 use only_domain::{AuditFields, Tag, TagId};
 use only_logging::clock;
@@ -19,7 +19,6 @@ fn map_tag(t: Tag) -> TagView {
     TagView {
         id: t.id.to_string(),
         name: t.name,
-        group: t.group,
         created_at: t.audit_fields.created_at,
         updated_at: t.audit_fields.updated_at,
     }
@@ -37,11 +36,12 @@ impl<R> CreateTagsHandler<R> {
 }
 
 impl<R: TagRepository> CreateTagsHandler<R> {
-    /// Creates one tag record per name in the request batch.
+    /// Creates one tag record per name in the request batch under the given group.
     pub async fn handle(
         &self,
         request: CreateTagsRequest,
         creator_id: i32,
+        group: &str,
     ) -> Result<CreateTagsResponse, TagError> {
         let now = now_millis();
         for name in &request.tags {
@@ -50,7 +50,7 @@ impl<R: TagRepository> CreateTagsHandler<R> {
                 id,
                 creator_id,
                 name,
-                &request.group,
+                group,
                 AuditFields::new(now, now, 0, false),
             );
             self.repository.create(tag).await?;
@@ -72,14 +72,10 @@ impl<R> ListTagsHandler<R> {
 
 impl<R: TagRepository> ListTagsHandler<R> {
     /// Lists all visible tags for the given group.
-    pub async fn handle(
-        &self,
-        request: ListTagsRequest,
-        creator_id: i32,
-    ) -> Result<ListTagsResponse, TagError> {
+    pub async fn handle(&self, creator_id: i32, group: &str) -> Result<ListTagsResponse, TagError> {
         let tags = self
             .repository
-            .list_by_creator_and_group(creator_id, &request.group)
+            .list_by_creator_and_group(creator_id, group)
             .await?;
         Ok(ListTagsResponse {
             tags: tags.into_iter().map(map_tag).collect(),
@@ -99,15 +95,16 @@ impl<R> DeleteTagHandler<R> {
 }
 
 impl<R: TagRepository> DeleteTagHandler<R> {
-    /// Soft-deletes the tag identified by name and group.
+    /// Soft-deletes the tag identified by name within the given group.
     pub async fn handle(
         &self,
         request: DeleteTagRequest,
         creator_id: i32,
+        group: &str,
     ) -> Result<DeleteTagResponse, TagError> {
         let now = now_millis();
         self.repository
-            .soft_delete_by_name_and_group(creator_id, &request.name, &request.group, now)
+            .soft_delete_by_name_and_group(creator_id, &request.name, group, now)
             .await?;
         Ok(DeleteTagResponse {})
     }

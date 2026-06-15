@@ -1,4 +1,4 @@
-use only_contracts::{HistoryEntryView, LocalTiptapView};
+use only_contracts::{HistoryEntryView, TiptapView};
 use only_logging::clock;
 use only_sync_schema::{HistoryEntryV1, TiptapSchemaV1};
 use serde_json::Value;
@@ -13,8 +13,8 @@ fn history_entry_to_view(h: HistoryEntryV1) -> HistoryEntryView {
     }
 }
 
-fn schema_to_tiptap_view(t: TiptapSchemaV1) -> LocalTiptapView {
-    LocalTiptapView {
+fn schema_to_tiptap_view(t: TiptapSchemaV1) -> TiptapView {
+    TiptapView {
         id: t.id,
         content: t.content,
         history: t.history.into_iter().map(history_entry_to_view).collect(),
@@ -25,7 +25,7 @@ fn schema_to_tiptap_view(t: TiptapSchemaV1) -> LocalTiptapView {
 
 impl JournalCommands {
     /// Returns the tiptap document with the given id, or None if it does not exist or has been deleted.
-    pub fn get_tiptap(&self, id: &str) -> Result<Option<LocalTiptapView>, CommandError> {
+    pub fn get_tiptap(&self, id: &str) -> Result<Option<TiptapView>, CommandError> {
         Ok(self
             .db
             .tiptaps()
@@ -35,7 +35,7 @@ impl JournalCommands {
     }
 
     /// Returns all non-deleted tiptap documents.
-    pub fn list_tiptaps(&self) -> Result<Vec<LocalTiptapView>, CommandError> {
+    pub fn list_tiptaps(&self) -> Result<Vec<TiptapView>, CommandError> {
         Ok(self
             .db
             .tiptaps()

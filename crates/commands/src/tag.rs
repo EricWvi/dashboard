@@ -1,12 +1,12 @@
-use only_contracts::LocalTagView;
+use only_contracts::TagView;
 use only_logging::clock;
 use only_sync_schema::TagSchemaV1;
 use uuid::Uuid;
 
 use crate::{CommandError, JournalCommands};
 
-fn schema_to_tag_view(t: TagSchemaV1) -> LocalTagView {
-    LocalTagView {
+fn schema_to_tag_view(t: TagSchemaV1) -> TagView {
+    TagView {
         id: t.id,
         name: t.name,
         created_at: t.created_at,
@@ -16,7 +16,7 @@ fn schema_to_tag_view(t: TagSchemaV1) -> LocalTagView {
 
 impl JournalCommands {
     /// Returns the tag with the given id, or None if it does not exist or has been deleted.
-    pub fn get_tag(&self, id: &str) -> Result<Option<LocalTagView>, CommandError> {
+    pub fn get_tag(&self, id: &str) -> Result<Option<TagView>, CommandError> {
         Ok(self
             .db
             .tags()
@@ -26,7 +26,7 @@ impl JournalCommands {
     }
 
     /// Returns all non-deleted tags ordered by creation time ascending.
-    pub fn list_tags(&self) -> Result<Vec<LocalTagView>, CommandError> {
+    pub fn list_tags(&self) -> Result<Vec<TagView>, CommandError> {
         Ok(self
             .db
             .tags()

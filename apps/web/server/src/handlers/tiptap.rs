@@ -9,7 +9,7 @@ use only_contracts::{
 };
 
 use crate::app_state::AppState;
-use crate::middleware::AuthenticatedUser;
+use crate::middleware::{AppContext, AuthenticatedUser};
 
 /// Maps a [`TiptapError`] to an HTTP response with an appropriate status code.
 fn tiptap_error_response(error: TiptapError) -> Response {
@@ -32,13 +32,18 @@ fn tiptap_error_response(error: TiptapError) -> Response {
     }
 }
 
-/// `POST /api/tiptaps` — creates a new Tiptap document.
+/// `POST /api/tiptaps` — creates a new Tiptap document for the app context resolved from the `Only-App` header.
 pub async fn create_tiptap(
     State(state): State<AppState>,
     user: axum::Extension<AuthenticatedUser>,
+    app: AppContext,
     Json(body): Json<CreateTiptapRequest>,
 ) -> Response {
-    match state.tiptap_api.create_tiptap(body, user.user_id).await {
+    match state
+        .tiptap_api
+        .create_tiptap(body, user.user_id, app.site())
+        .await
+    {
         Ok(resp) => (StatusCode::OK, Json(resp)).into_response(),
         Err(e) => tiptap_error_response(e),
     }

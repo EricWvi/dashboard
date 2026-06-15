@@ -1,7 +1,6 @@
 use only_application::{CreateTagsHandler, DeleteTagHandler, ListTagsHandler, TagError};
 use only_contracts::{
-    CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest,
-    ListTagsResponse,
+    CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsResponse,
 };
 use only_db_server::PostgresTagRepository;
 use sqlx::{Pool, Postgres};
@@ -28,17 +27,18 @@ impl TagApi {
         &self,
         request: CreateTagsRequest,
         creator_id: i32,
+        group: &str,
     ) -> Result<CreateTagsResponse, TagError> {
-        self.create.handle(request, creator_id).await
+        self.create.handle(request, creator_id, group).await
     }
 
     /// Delegates a list-tags request to the application handler.
     pub async fn list_tags(
         &self,
-        request: ListTagsRequest,
         creator_id: i32,
+        group: &str,
     ) -> Result<ListTagsResponse, TagError> {
-        self.list.handle(request, creator_id).await
+        self.list.handle(creator_id, group).await
     }
 
     /// Delegates a delete-tag request to the application handler.
@@ -46,7 +46,8 @@ impl TagApi {
         &self,
         request: DeleteTagRequest,
         creator_id: i32,
+        group: &str,
     ) -> Result<DeleteTagResponse, TagError> {
-        self.delete.handle(request, creator_id).await
+        self.delete.handle(request, creator_id, group).await
     }
 }

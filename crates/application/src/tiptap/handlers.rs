@@ -22,7 +22,6 @@ fn now_millis() -> i64 {
 fn map_tiptap(t: TiptapV2) -> TiptapView {
     TiptapView {
         id: t.id.to_string(),
-        site: t.site,
         content: t.content,
         history: t.history.into_iter().map(map_history_entry).collect(),
         created_at: t.audit_fields.created_at,
@@ -68,13 +67,14 @@ impl<R: TiptapRepository> CreateTiptapHandler<R> {
         &self,
         request: CreateTiptapRequest,
         creator_id: i32,
+        site: i16,
     ) -> Result<CreateTiptapResponse, TiptapError> {
         let now = now_millis();
         let id = TiptapId::new(Uuid::new_v4().to_string());
         let tiptap = TiptapV2::new(
             id,
             creator_id,
-            request.site,
+            site,
             request.content,
             vec![],
             AuditFields::new(now, now, 0, false),

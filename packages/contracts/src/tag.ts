@@ -3,7 +3,7 @@
 /**
  * Requests batch creation of tags under a logical group.
  */
-export type CreateTagsRequest = { tags: Array<string>; group: string };
+export type CreateTagsRequest = { tags: Array<string> };
 
 /**
  * Confirms the batch create completed.
@@ -11,9 +11,9 @@ export type CreateTagsRequest = { tags: Array<string>; group: string };
 export type CreateTagsResponse = Record<symbol, never>;
 
 /**
- * Identifies the tag to soft-delete by name and group.
+ * Identifies the tag to soft-delete by name.
  */
-export type DeleteTagRequest = { name: string; group: string };
+export type DeleteTagRequest = { name: string };
 
 /**
  * Confirms the tag was deleted.
@@ -21,12 +21,12 @@ export type DeleteTagRequest = { name: string; group: string };
 export type DeleteTagResponse = Record<symbol, never>;
 
 /**
- * Requests all tag names for a given group.
+ * Requests all tags for the current app context (group resolved from `Only-App` header).
  */
-export type ListTagsRequest = { group: string };
+export type ListTagsRequest = Record<symbol, never>;
 
 /**
- * Returns all tag names within the requested group.
+ * Returns all tag names for the current app context.
  */
 export type ListTagsResponse = { tags: Array<TagView> };
 
@@ -36,7 +36,6 @@ export type ListTagsResponse = { tags: Array<TagView> };
 export type TagView = {
   id: string;
   name: string;
-  group: string;
   createdAt: bigint;
   updatedAt: bigint;
 };

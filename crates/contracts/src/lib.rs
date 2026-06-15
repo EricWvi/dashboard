@@ -41,16 +41,16 @@ pub use media::{DeleteMediaRequest, DeleteMediaResponse, UploadResponse};
 use serde_json::Value;
 pub use tag::{
     CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest,
-    ListTagsResponse, LocalTagView, TagView,
+    ListTagsResponse, TagView,
 };
 pub use tiptap::{
     BottomQuickNoteRequest, BottomQuickNoteResponse, CreateQuickNoteRequest,
     CreateQuickNoteResponse, CreateTiptapRequest, CreateTiptapResponse, DeleteQuickNoteRequest,
     DeleteQuickNoteResponse, GetTiptapRequest, GetTiptapResponse, HistoryEntryView,
     ListQuickNotesRequest, ListQuickNotesResponse, ListTiptapHistoryRequest,
-    ListTiptapHistoryResponse, LocalTiptapView, QuickNotePath, QuickNoteView,
-    RestoreTiptapHistoryRequest, RestoreTiptapHistoryResponse, TiptapPath, TiptapView,
-    UpdateQuickNoteRequest, UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse,
+    ListTiptapHistoryResponse, QuickNotePath, QuickNoteView, RestoreTiptapHistoryRequest,
+    RestoreTiptapHistoryResponse, TiptapPath, TiptapView, UpdateQuickNoteRequest,
+    UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse,
 };
 pub use user::{GetUserRequest, GetUserResponse, UpdateUserRequest, UpdateUserResponse, UserView};
 
