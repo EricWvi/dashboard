@@ -3,7 +3,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import type { UserLang } from "@/lib/model";
 import type { User } from "@/hooks/use-user";
 
-export { UserProviderV2, useUserContextV2 } from "@only/app-context";
+export { UserProviderV2, useUserContextV2 } from "@only/platform";
 
 type UserContextType = {
   user: User;

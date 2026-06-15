@@ -43,9 +43,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), stripOdometerStarHacks()],
   resolve: {
     alias: {
-      "@only/app-context": path.resolve(
+      "@only/platform": path.resolve(
         __dirname,
-        "../packages/app-context/src/index.ts",
+        "../packages/platform/src/index.ts",
       ),
       "@only/contracts": path.resolve(
         __dirname,

@@ -1,42 +1,38 @@
 import { v4 as uuidv4 } from "uuid";
 import type { AuthResponse } from "@only/contracts";
+import type { PlatformAdapter } from "./adapter.js";
 
-function isTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-}
+/// Web browser adapter — runs the OIDC redirect/callback flow for auth.
+/// Does not support native IPC; `getMediaServerBaseUrl` always returns "".
+export class WebAdapter implements PlatformAdapter {
+  readonly isNative = false as const;
 
-/// Ensures a valid auth token exists, running the OIDC flow when necessary.
-///
-/// In Tauri, delegates to the native `onlyquant_is_logged_in` command.
-/// In web, exchanges the OIDC authorization code for a token and saves it to localStorage.
-/// Redirects to the OIDC authorization endpoint when no token is present.
-export async function checkAuth(): Promise<void> {
-  if (isTauri()) {
-    const { invoke } = await import("@tauri-apps/api/core");
-    await invoke("onlyquant_is_logged_in");
-    return;
+  async checkAuth(): Promise<void> {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const error = urlParams.get("error");
+
+    if (error) {
+      const errorDescription = urlParams.get("error_description");
+      console.error(`Authentication error: ${errorDescription || error}`);
+      return;
+    }
+
+    if (code && !localStorage.getItem("oqAuthToken")) {
+      await handleOidcCallback();
+    }
+
+    if (!localStorage.getItem("oqAuthToken")) {
+      startOidcAuthentication();
+    }
   }
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get("code");
-  const error = urlParams.get("error");
-
-  if (error) {
-    const errorDescription = urlParams.get("error_description");
-    console.error(`Authentication error: ${errorDescription || error}`);
-    return;
-  }
-
-  if (code && !localStorage.getItem("oqAuthToken")) {
-    await handleOidcCallback();
-  }
-
-  if (!localStorage.getItem("oqAuthToken")) {
-    startOidcAuthentication();
+  async getMediaServerBaseUrl(): Promise<string> {
+    return "";
   }
 }
 
-function startOidcAuthentication(): void {
+export function startOidcAuthentication(): void {
   const state = uuidv4();
   sessionStorage.setItem("oidc_state", state);
   const redirectUri = encodeURIComponent(

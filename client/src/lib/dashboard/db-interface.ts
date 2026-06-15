@@ -29,7 +29,7 @@ import {
   type User,
   type UserField,
 } from "@/lib/model";
-import { isTauri } from "@/lib/utils";
+import { platform } from "@only/platform";
 
 // Database abstraction interface
 export interface IDashboardDatabase {
@@ -662,7 +662,7 @@ export class RefreshDecorator implements IDashboardDatabase {
 
 // Create base database based on runtime environment
 function createBaseDatabase(): IDashboardDatabase {
-  if (isTauri()) {
+  if (platform.isNative) {
     return new SqliteDashboardDatabase();
   }
   return new DexieDashboardDatabase();

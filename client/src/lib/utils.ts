@@ -1,13 +1,9 @@
 import { UserLangEnum, type UserLang } from "@/lib/model";
-import { invoke } from "@tauri-apps/api/core";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { platform } from "@only/platform";
 
-export { checkAuth } from "@only/app-context";
-
-export function isTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-}
+export { platform } from "@only/platform";
 
 export const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -20,13 +16,12 @@ export const isTouchDevice = window.matchMedia("(hover: none)").matches;
 export let mediaServerBaseUrl = "";
 
 export async function initMediaServerBaseUrl(): Promise<void> {
-  if (!isTauri() || mediaServerBaseUrl) {
+  if (!platform.isNative || mediaServerBaseUrl) {
     return;
   }
 
   try {
-    const port = await invoke<number>("get_local_media_server_port");
-    mediaServerBaseUrl = `http://localhost:${port}`;
+    mediaServerBaseUrl = await platform.getMediaServerBaseUrl();
   } catch (err) {
     console.error("Failed to get local media server port", err);
   }

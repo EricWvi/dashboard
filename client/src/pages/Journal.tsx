@@ -34,7 +34,7 @@ import { useTags } from "@/hooks/journal/use-tagv2";
 import { journalDatabase } from "@/lib/journal/db-interface";
 import { getSyncManager, type SyncManager } from "@/lib/journal/sync-manager";
 import { syncEvents } from "@/lib/sync-events";
-import { checkAuth } from "@/lib/utils";
+import { platform } from "@only/platform";
 
 type entryWrapper = {
   entry: EntryMeta;
@@ -228,7 +228,7 @@ export default function Journal() {
     syncManagerRef.current = manager;
 
     const initSync = async () => {
-      await checkAuth();
+      await platform.checkAuth();
       if (await manager.needFullSync()) {
         // First time use - perform full sync
         console.log("performing full sync");

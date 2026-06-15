@@ -17,7 +17,7 @@ import {
   type TiptapV2Field,
   type User,
 } from "@/lib/model";
-import { isTauri } from "@/lib/utils";
+import { platform } from "@only/platform";
 import { setJournalStatisticsDatabase } from "./statistics";
 
 // Database abstraction interface
@@ -296,7 +296,7 @@ export class RefreshDecorator implements IJournalDatabase {
 }
 
 export function createBaseJournalDatabase(): IJournalDatabase {
-  if (isTauri()) {
+  if (platform.isNative) {
     return new SqliteJournalDatabase();
   }
   return new DexieJournalDatabase();

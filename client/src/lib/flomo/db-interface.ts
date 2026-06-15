@@ -14,7 +14,7 @@ import {
   type TiptapV2Field,
   type User,
 } from "@/lib/model";
-import { isTauri } from "@/lib/utils";
+import { platform } from "@only/platform";
 
 // Database abstraction interface
 export interface IFlomoDatabase {
@@ -301,7 +301,7 @@ export class RefreshDecorator implements IFlomoDatabase {
 
 // Create base database based on runtime environment
 function createBaseDatabase(): IFlomoDatabase {
-  if (isTauri()) {
+  if (platform.isNative) {
     return new SqliteFlomoDatabase();
   }
   return new DexieFlomoDatabase();

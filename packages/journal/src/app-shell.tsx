@@ -5,7 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import { TTOverlayProvider } from "@/components/editor";
 import { OverlayController } from "@/components/overlay-controller";
 import { syncDraft, getContent } from "@/hooks/journal/use-tiptapv2";
-import { UserProviderV2 } from "@only/app-context";
+import { UserProviderV2 } from "@only/platform";
 import Journal from "@/pages/Journal";
 import { TiptapProvider } from "@/editor-provider";
 import { EntryEditor } from "@/components/journal/entry-editor";

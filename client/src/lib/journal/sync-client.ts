@@ -7,7 +7,7 @@ import {
 } from "./model";
 import { type Tag, type TiptapV2, type User } from "@/lib/model";
 import { getRequest, postRequest } from "@/lib/queryClient";
-import { isTauri } from "@/lib/utils";
+import { platform } from "@only/platform";
 import { invoke } from "@tauri-apps/api/core";
 import { journalDatabase } from "./db-interface";
 
@@ -147,7 +147,7 @@ export class TauriSyncClient implements ISyncClient {
 }
 
 function createSyncClient(): ISyncClient {
-  if (isTauri()) {
+  if (platform.isNative) {
     return new TauriSyncClient();
   }
   return new WebSyncClient();
