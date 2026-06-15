@@ -62,6 +62,8 @@ pub const BOOKMARKS_PATH: &str = "/api/bookmarks";
 pub const BOOKMARK_PATH: &str = "/api/bookmarks/{id}";
 pub const BOOKMARK_CLICK_PATH: &str = "/api/bookmarks/{id}/click";
 
+pub const USER_PATH: &str = "/api/user";
+
 // ── Path param descriptors ─────────────────────────────────────────────────
 
 const ID_PATH_PARAM: FrontendPathParam = FrontendPathParam {
@@ -432,6 +434,27 @@ const FRONTEND_ENDPOINTS: &[FrontendEndpoint] = &[
         has_json_body: true,
         authenticated: true,
     },
+    // ── User ────────────────────────────────────────────────────────────────
+    FrontendEndpoint {
+        operation_name: "getUser",
+        method: FrontendHttpMethod::Get,
+        path_template: USER_PATH,
+        request_type: "GetUserRequest",
+        response_type: "GetUserResponse",
+        path_params: NO_PATH_PARAMS,
+        has_json_body: false,
+        authenticated: true,
+    },
+    FrontendEndpoint {
+        operation_name: "updateUser",
+        method: FrontendHttpMethod::Put,
+        path_template: USER_PATH,
+        request_type: "UpdateUserRequest",
+        response_type: "UpdateUserResponse",
+        path_params: NO_PATH_PARAMS,
+        has_json_body: true,
+        authenticated: true,
+    },
 ];
 
 /// Returns the Rust-owned endpoint metadata exported to the generated frontend SDK.
@@ -447,8 +470,8 @@ mod tests {
     /// Verifies the endpoint manifest has the expected count and correct first/last entries.
     #[test]
     fn exports_expected_endpoint_count() {
-        // 5 collection + 3 todo + 7 entry + 3 tag + 5 tiptap + 5 quicknote + 6 bookmark + 1 media
-        assert_eq!(frontend_endpoints().len(), 35);
+        // 5 collection + 3 todo + 7 entry + 3 tag + 5 tiptap + 5 quicknote + 6 bookmark + 1 media + 2 user
+        assert_eq!(frontend_endpoints().len(), 37);
     }
 
     /// Verifies the manifest is non-empty and each entry has a non-empty operation name.

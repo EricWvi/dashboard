@@ -21,6 +21,7 @@ use crate::handlers::tiptap::{
     list_quick_notes, list_tiptap_history, restore_tiptap_history, update_quick_note,
     update_tiptap,
 };
+use crate::handlers::user::{get_user, update_user};
 use crate::middleware::auth_middleware;
 
 /// Builds the application router with all routes registered.
@@ -32,6 +33,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/api/auth", get(auth));
 
     let protected_routes = Router::new()
+        .route("/api/user", get(get_user).put(update_user))
         .route("/api/upload", post(upload_handler))
         .route("/api/media", post(delete_handler))
         // Collection + todo

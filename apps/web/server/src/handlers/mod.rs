@@ -5,3 +5,4 @@ pub mod entry;
 pub mod media;
 pub mod tag;
 pub mod tiptap;
+pub mod user;

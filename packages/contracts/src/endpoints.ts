@@ -5,6 +5,7 @@ import type { BookmarkEntryRequest, BookmarkEntryResponse, CreateEntryRequest, C
 import type { DeleteMediaRequest, DeleteMediaResponse } from "./media.js";
 import type { CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsRequest, ListTagsResponse } from "./tag.js";
 import type { BottomQuickNoteRequest, BottomQuickNoteResponse, CreateQuickNoteRequest, CreateQuickNoteResponse, CreateTiptapRequest, CreateTiptapResponse, DeleteQuickNoteRequest, DeleteQuickNoteResponse, GetTiptapRequest, GetTiptapResponse, ListQuickNotesRequest, ListQuickNotesResponse, ListTiptapHistoryRequest, ListTiptapHistoryResponse, RestoreTiptapHistoryRequest, RestoreTiptapHistoryResponse, UpdateQuickNoteRequest, UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse } from "./tiptap.js";
+import type { GetUserRequest, GetUserResponse, UpdateUserRequest, UpdateUserResponse } from "./user.js";
 import type { HttpMethod } from "./transport.js";
 
 export type EndpointPathParam = {
@@ -59,6 +60,8 @@ export type RequestByOperation = {
   deleteBookmark: DeleteBookmarkRequest;
   clickBookmark: ClickBookmarkRequest;
   deleteMedia: DeleteMediaRequest;
+  getUser: GetUserRequest;
+  updateUser: UpdateUserRequest;
 };
 
 export type ResponseByOperation = {
@@ -97,6 +100,8 @@ export type ResponseByOperation = {
   deleteBookmark: DeleteBookmarkResponse;
   clickBookmark: ClickBookmarkResponse;
   deleteMedia: DeleteMediaResponse;
+  getUser: GetUserResponse;
+  updateUser: UpdateUserResponse;
 };
 
 export type EndpointOperation = keyof RequestByOperation;
@@ -448,6 +453,26 @@ export const endpoints = {
     pathTemplate: "/api/media",
     requestType: "DeleteMediaRequest",
     responseType: "DeleteMediaResponse",
+    pathParams: [],
+    hasJsonBody: true,
+    authenticated: true,
+  },
+  getUser: {
+    operationName: "getUser",
+    method: "GET",
+    pathTemplate: "/api/user",
+    requestType: "GetUserRequest",
+    responseType: "GetUserResponse",
+    pathParams: [],
+    hasJsonBody: false,
+    authenticated: true,
+  },
+  updateUser: {
+    operationName: "updateUser",
+    method: "PUT",
+    pathTemplate: "/api/user",
+    requestType: "UpdateUserRequest",
+    responseType: "UpdateUserResponse",
     pathParams: [],
     hasJsonBody: true,
     authenticated: true,

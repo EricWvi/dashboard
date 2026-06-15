@@ -30,6 +30,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
+      "@only/app-context": path.resolve(__dirname, "../packages/app-context/src/index.ts"),
       "@only/contracts": path.resolve(__dirname, "../packages/contracts/dist/index.js"),
       "@only/editor": path.resolve(__dirname, "../packages/editor/src/index.ts"),
       "@only/ui": path.resolve(__dirname, "../packages/ui/src/index.ts"),

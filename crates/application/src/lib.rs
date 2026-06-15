@@ -35,7 +35,10 @@ pub use tiptap::{
     QuickNoteRepositoryError, RestoreTiptapHistoryHandler, TiptapError, TiptapRepository,
     TiptapRepositoryError, UpdateQuickNoteHandler, UpdateTiptapHandler,
 };
-pub use user::{FindOrCreateUserHandler, UserError, UserRepository, UserRepositoryError};
+pub use user::{
+    FindOrCreateUserHandler, GetUserHandler, UpdateUserHandler, UserError, UserRepository,
+    UserRepositoryError,
+};
 
 pub use media::{
     DeleteMediaCommand, DeleteMediaHandler, DeleteMediaResponse, MediaError, MediaRepository,

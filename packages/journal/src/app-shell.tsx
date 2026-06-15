@@ -5,9 +5,8 @@ import { queryClient } from "@/lib/queryClient";
 import { TTOverlayProvider } from "@/components/editor";
 import { OverlayController } from "@/components/overlay-controller";
 import { syncDraft, getContent } from "@/hooks/journal/use-tiptapv2";
-import { UserProviderV2 } from "@/user-provider";
+import { UserProviderV2 } from "@only/app-context";
 import Journal from "@/pages/Journal";
-import { journalDatabase } from "@/lib/journal/db-interface";
 import { TiptapProvider } from "@/editor-provider";
 import { EntryEditor } from "@/components/journal/entry-editor";
 
@@ -19,9 +18,7 @@ export function AppShell({ client }: AppShellProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProviderV2
-        getUserFn={() => {
-          return journalDatabase.getUser();
-        }}
+        getUserFn={() => client.getUser({}).then((r) => r.user)}
       >
         <TTOverlayProvider>
           <TiptapProvider persistence={{ syncDraft, getContent }}>

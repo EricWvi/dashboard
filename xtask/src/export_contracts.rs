@@ -412,6 +412,7 @@ fn render_index_module() -> String {
     source.push_str("export * from \"./endpoints.js\";\n");
     source.push_str("export * from \"./media.js\";\n");
     source.push_str("export * from \"./transport.js\";\n");
+    source.push_str("export * from \"./user.js\";\n");
 
     source
 }
@@ -504,6 +505,7 @@ fn contract_module_for_type(type_name: &str) -> &'static str {
         | "DeleteQuickNoteResponse"
         | "BottomQuickNoteRequest"
         | "BottomQuickNoteResponse" => "tiptap",
+        "GetUserRequest" | "GetUserResponse" | "UpdateUserRequest" | "UpdateUserResponse" => "user",
         other => panic!("unknown contract type `{other}`"),
     }
 }

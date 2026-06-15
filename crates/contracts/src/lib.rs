@@ -6,6 +6,7 @@ mod frontend;
 mod media;
 mod tag;
 mod tiptap;
+mod user;
 
 pub use auth::{AuthQuery, AuthResponse};
 pub use bookmark::{
@@ -51,6 +52,7 @@ pub use tiptap::{
     RestoreTiptapHistoryRequest, RestoreTiptapHistoryResponse, TiptapPath, TiptapView,
     UpdateQuickNoteRequest, UpdateQuickNoteResponse, UpdateTiptapRequest, UpdateTiptapResponse,
 };
+pub use user::{GetUserRequest, GetUserResponse, UpdateUserRequest, UpdateUserResponse, UserView};
 
 use std::path::Path;
 use ts_rs::{Config, ExportError, TS};
@@ -158,6 +160,12 @@ pub fn export_typescript_bindings_to(
     UploadResponse::export(&config)?;
     DeleteMediaRequest::export(&config)?;
     DeleteMediaResponse::export(&config)?;
+
+    UserView::export(&config)?;
+    GetUserRequest::export(&config)?;
+    GetUserResponse::export(&config)?;
+    UpdateUserRequest::export(&config)?;
+    UpdateUserResponse::export(&config)?;
 
     Ok(())
 }

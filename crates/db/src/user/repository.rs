@@ -48,6 +48,53 @@ impl UserRepository for PostgresUserRepository {
 
         Ok(row_to_user(row))
     }
+
+    async fn find_by_id(&self, id: i32) -> Result<Option<User>, UserRepositoryError> {
+        let row = sqlx::query_as::<_, UserRow>(
+            r#"
+            SELECT id, email, updated_at, server_version, avatar, username,
+                   rss_token, email_token, email_feed, language
+            FROM d_user_v2
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| UserRepositoryError::OperationFailed(e.to_string()))?;
+
+        Ok(row.map(row_to_user))
+    }
+
+    async fn update_profile(
+        &self,
+        id: i32,
+        username: &str,
+        avatar: &str,
+        language: &str,
+    ) -> Result<User, UserRepositoryError> {
+        let now_ms = clock::now_millis();
+
+        let row = sqlx::query_as::<_, UserRow>(
+            r#"
+            UPDATE d_user_v2
+            SET username = $2, avatar = $3, language = $4, updated_at = $5
+            WHERE id = $1
+            RETURNING id, email, updated_at, server_version, avatar, username,
+                      rss_token, email_token, email_feed, language
+            "#,
+        )
+        .bind(id)
+        .bind(username)
+        .bind(avatar)
+        .bind(language)
+        .bind(now_ms)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| UserRepositoryError::OperationFailed(e.to_string()))?;
+
+        Ok(row_to_user(row))
+    }
 }
 
 /// Intermediate row type used by sqlx for mapping `d_user_v2` result sets.

@@ -16,4 +16,20 @@ pub trait UserRepository: Send + Sync {
         &self,
         email: &str,
     ) -> impl Future<Output = Result<User, UserRepositoryError>> + Send;
+
+    /// Returns the user with the given id, or `None` if no such row exists.
+    fn find_by_id(
+        &self,
+        id: i32,
+    ) -> impl Future<Output = Result<Option<User>, UserRepositoryError>> + Send;
+
+    /// Updates the mutable profile fields (username, avatar, language) for the given user id
+    /// and returns the full updated user record.
+    fn update_profile(
+        &self,
+        id: i32,
+        username: &str,
+        avatar: &str,
+        language: &str,
+    ) -> impl Future<Output = Result<User, UserRepositoryError>> + Send;
 }

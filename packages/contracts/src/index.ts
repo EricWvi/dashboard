@@ -5,3 +5,4 @@ export * from "./collection.js";
 export * from "./endpoints.js";
 export * from "./media.js";
 export * from "./transport.js";
+export * from "./user.js";

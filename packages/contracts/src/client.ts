@@ -45,6 +45,8 @@ export function createContractsClient(transport: ContractTransport): ContractsCl
     deleteBookmark: (request) => executeOperation("deleteBookmark", request, transport),
     clickBookmark: (request) => executeOperation("clickBookmark", request, transport),
     deleteMedia: (request) => executeOperation("deleteMedia", request, transport),
+    getUser: (request) => executeOperation("getUser", request, transport),
+    updateUser: (request) => executeOperation("updateUser", request, transport),
   };
 }
 
