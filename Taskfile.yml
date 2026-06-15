@@ -65,14 +65,14 @@ tasks:
     desc: Build all crates
     cmds:
       - cargo build --workspace
-  
+
   build:packages:
     desc: Build all frontend packages
     cmds:
       - pnpm --filter @only/contracts build
       - pnpm --filter @only/ui build
       - pnpm --filter @only/editor build
-      - pnpm --filter @only/app-context build
+      - pnpm --filter @only/platform build
 
   test:
     desc: Run contract package tests and Rust tests (set RUN_TESTCONTAINERS=1 to include container tests)

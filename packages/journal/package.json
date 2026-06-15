@@ -10,6 +10,7 @@
     "@only/platform": "workspace:*",
     "@only/contracts": "workspace:*",
     "@only/ui": "workspace:*",
+    "@tanstack/react-query": "^5.83.0",
     "lucide-react": "^0.511.0"
   },
   "peerDependencies": {
