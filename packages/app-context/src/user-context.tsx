@@ -32,7 +32,7 @@ export function UserProviderV2({
   const { data: userInfo } = useQuery<UserView>({
     queryKey: ["user"],
     queryFn: async () => (await getUserFn()) ?? defaultUser,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
     placeholderData: (previousData) => previousData,
   });
 

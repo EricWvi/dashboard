@@ -2,9 +2,12 @@ import { UserLangEnum, type UserLang } from "@/lib/model";
 import { invoke } from "@tauri-apps/api/core";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { isTauri } from "@only/app-context";
 
-export { checkAuth, isTauri } from "@only/app-context";
+export { checkAuth } from "@only/app-context";
+
+export function isTauri(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
 
 export const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
 

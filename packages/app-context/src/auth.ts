@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import type { AuthResponse } from "@only/contracts";
 
-export function isTauri(): boolean {
+function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 

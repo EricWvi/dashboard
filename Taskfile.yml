@@ -25,9 +25,7 @@ tasks:
     desc: Install dependencies for the frontend packages
     cmds:
       - pnpm install
-      - pnpm --filter @only/contracts build
-      - pnpm --filter @only/ui build
-      - pnpm --filter @only/editor build
+      - task: build:packages
 
   install:backend:
     desc: Install dependencies for the Rust backend
@@ -63,10 +61,18 @@ tasks:
     cmds:
       - cargo xtask export-contracts
 
-  build:
+  build:crates:
     desc: Build all crates
     cmds:
       - cargo build --workspace
+  
+  build:packages:
+    desc: Build all frontend packages
+    cmds:
+      - pnpm --filter @only/contracts build
+      - pnpm --filter @only/ui build
+      - pnpm --filter @only/editor build
+      - pnpm --filter @only/app-context build
 
   test:
     desc: Run contract package tests and Rust tests (set RUN_TESTCONTAINERS=1 to include container tests)
