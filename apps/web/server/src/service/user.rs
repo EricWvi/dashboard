@@ -1,6 +1,6 @@
 use only_application::{FindOrCreateUserHandler, GetUserHandler, UpdateUserHandler, UserError};
 use only_db_server::PostgresUserRepository;
-use only_domain::User;
+use only_domain::{User, UserId};
 use sqlx::{Pool, Postgres};
 
 /// Groups the transport-facing user entry points for the web adapter.
@@ -26,14 +26,14 @@ impl UserApi {
     }
 
     /// Returns the user record for the given id.
-    pub async fn find_by_id(&self, user_id: i32) -> Result<User, UserError> {
+    pub async fn find_by_id(&self, user_id: UserId) -> Result<User, UserError> {
         self.get.handle(user_id).await
     }
 
     /// Updates username, avatar, and language for the given user id and returns the updated record.
     pub async fn update_profile(
         &self,
-        user_id: i32,
+        user_id: UserId,
         username: &str,
         avatar: &str,
         language: &str,

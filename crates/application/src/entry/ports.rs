@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use only_domain::{Entry, EntryId};
+use only_domain::{Entry, EntryId, UserId};
 
 use crate::entry::error::EntryRepositoryError;
 
@@ -54,14 +54,14 @@ pub trait EntryRepository: Send + Sync {
     fn find_by_id_and_creator(
         &self,
         id: &EntryId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Option<Entry>, EntryRepositoryError>> + Send;
 
     /// Returns a page of entries matching the filter, plus a flag indicating whether
     /// more pages exist. `page` is 1-indexed.
     fn list(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         filter: &EntryFilter,
         page: u32,
     ) -> impl Future<Output = Result<(Vec<Entry>, bool), EntryRepositoryError>> + Send;
@@ -71,7 +71,7 @@ pub trait EntryRepository: Send + Sync {
     /// entries ordered by creation date, and increments their `review_count` in the background.
     fn list_random(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<Entry>, EntryRepositoryError>> + Send;
 
     /// Replaces all mutable entry fields and returns the updated snapshot.
@@ -85,7 +85,7 @@ pub trait EntryRepository: Send + Sync {
     fn soft_delete(
         &self,
         id: &EntryId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> impl Future<Output = Result<bool, EntryRepositoryError>> + Send;
 
@@ -93,7 +93,7 @@ pub trait EntryRepository: Send + Sync {
     fn set_bookmark(
         &self,
         id: &EntryId,
-        creator_id: i32,
+        creator_id: UserId,
         bookmark: bool,
         updated_at: i64,
     ) -> impl Future<Output = Result<bool, EntryRepositoryError>> + Send;
@@ -101,26 +101,26 @@ pub trait EntryRepository: Send + Sync {
     /// Returns the total word count across all non-deleted entries for the creator.
     fn count_words(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<i64, EntryRepositoryError>> + Send;
 
     /// Returns per-day entry counts for the current calendar year, ordered by date ascending.
     fn count_current_year(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<DailyCount>, EntryRepositoryError>> + Send;
 
     /// Returns distinct year/month/day date groups for all non-deleted entries,
     /// ordered year DESC, month DESC, day DESC.
     fn list_dates(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<DateParts>, EntryRepositoryError>> + Send;
 
     /// Returns the count of non-deleted entries, optionally restricted to a specific year.
     fn count_by_year(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         year: Option<i32>,
     ) -> impl Future<Output = Result<i64, EntryRepositoryError>> + Send;
 }

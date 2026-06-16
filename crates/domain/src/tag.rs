@@ -1,11 +1,11 @@
-use crate::{AuditFields, TagId};
+use crate::{AuditFields, TagId, UserId};
 use serde::{Deserialize, Serialize};
 
 /// Represents a user-defined label that can be attached to entries and other content.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Tag {
     pub id: TagId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     pub name: String,
     /// Logical grouping namespace for the tag. Stored as `t_group` in the schema.
     pub group: String,
@@ -16,7 +16,7 @@ impl Tag {
     /// Creates a tag snapshot together with its persistence-managed audit metadata.
     pub fn new(
         id: TagId,
-        creator_id: i32,
+        creator_id: UserId,
         name: impl Into<String>,
         group: impl Into<String>,
         audit_fields: AuditFields,

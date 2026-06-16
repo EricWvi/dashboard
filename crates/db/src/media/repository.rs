@@ -1,5 +1,5 @@
 use only_application::{MediaRepository, MediaRepositoryError, NewMedia};
-use only_domain::{Media, MediaId};
+use only_domain::{Media, MediaId, UserId};
 use sqlx::{Pool, Postgres};
 use time::OffsetDateTime;
 
@@ -59,7 +59,7 @@ impl MediaRepository for PostgresMediaRepository {
     async fn find_by_link_owned(
         &self,
         link: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Option<Media>, MediaRepositoryError> {
         let row = sqlx::query(
             r#"
@@ -78,7 +78,10 @@ impl MediaRepository for PostgresMediaRepository {
         row.map(|r| row_to_media(r).map_err(db_error)).transpose()
     }
 
-    async fn list_by_creator(&self, creator_id: i32) -> Result<Vec<Media>, MediaRepositoryError> {
+    async fn list_by_creator(
+        &self,
+        creator_id: UserId,
+    ) -> Result<Vec<Media>, MediaRepositoryError> {
         let rows = sqlx::query(
             r#"
             SELECT id, creator_id, link::text AS link, key, presigned_url,
@@ -97,7 +100,11 @@ impl MediaRepository for PostgresMediaRepository {
             .collect()
     }
 
-    async fn soft_delete(&self, id: MediaId, creator_id: i32) -> Result<(), MediaRepositoryError> {
+    async fn soft_delete(
+        &self,
+        id: MediaId,
+        creator_id: UserId,
+    ) -> Result<(), MediaRepositoryError> {
         sqlx::query(
             r#"
             UPDATE d_media
@@ -105,7 +112,7 @@ impl MediaRepository for PostgresMediaRepository {
             WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL
             "#,
         )
-        .bind(id.value())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -151,7 +158,7 @@ impl MediaRepository for PostgresMediaRepository {
         )
         .bind(&url)
         .bind(refreshed_at)
-        .bind(id.value())
+        .bind(id)
         .execute(&self.pool)
         .await
         .map_err(db_error)?;
@@ -165,7 +172,7 @@ fn row_to_media(row: sqlx::postgres::PgRow) -> Result<Media, sqlx::Error> {
     use sqlx::Row as _;
 
     Ok(Media::new(
-        MediaId::new(row.try_get::<i32, _>("id")?),
+        row.try_get::<MediaId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get("link")?,
         row.try_get::<String, _>("key")?,

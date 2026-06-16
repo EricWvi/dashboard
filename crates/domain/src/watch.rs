@@ -1,4 +1,4 @@
-use crate::{AuditFields, WatchId};
+use crate::{AuditFields, UserId, WatchId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -6,7 +6,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Watch {
     pub id: WatchId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// Free-form media type classifier stored in the `w_type` column.
     pub watch_type: String,
     pub title: String,
@@ -26,7 +26,7 @@ impl Watch {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: WatchId,
-        creator_id: i32,
+        creator_id: UserId,
         watch_type: impl Into<String>,
         title: impl Into<String>,
         status: impl Into<String>,

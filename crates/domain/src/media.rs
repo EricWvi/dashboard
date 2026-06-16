@@ -1,4 +1,4 @@
-use crate::MediaId;
+use crate::{MediaId, UserId};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -8,7 +8,7 @@ use time::OffsetDateTime;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Media {
     pub id: MediaId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// A shareable UUID link alias distinct from the storage key.
     pub link: Option<String>,
     /// The unique storage key identifying the object in the backing object store.
@@ -27,7 +27,7 @@ impl Media {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: MediaId,
-        creator_id: i32,
+        creator_id: UserId,
         link: Option<String>,
         key: impl Into<String>,
         presigned_url: Option<String>,

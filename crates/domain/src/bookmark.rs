@@ -1,4 +1,4 @@
-use crate::{AuditFields, BookmarkId};
+use crate::{AuditFields, BookmarkId, UserId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -6,7 +6,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Bookmark {
     pub id: BookmarkId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     pub url: String,
     pub title: String,
     /// Cumulative click count used for popularity ranking.
@@ -21,7 +21,7 @@ impl Bookmark {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
         url: impl Into<String>,
         title: impl Into<String>,
         click: i32,

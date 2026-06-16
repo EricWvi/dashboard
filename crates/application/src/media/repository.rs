@@ -1,13 +1,13 @@
 use std::future::Future;
 
-use only_domain::{Media, MediaId};
+use only_domain::{Media, MediaId, UserId};
 use time::OffsetDateTime;
 
 use crate::media::error::MediaRepositoryError;
 
 /// Carries the fields required to persist a new media upload.
 pub struct NewMedia {
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// Optional UUID link alias; when `None` the database generates one.
     pub link: Option<String>,
     pub key: String,
@@ -38,20 +38,20 @@ pub trait MediaRepository: Send + Sync {
     fn find_by_link_owned(
         &self,
         link: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Option<Media>, MediaRepositoryError>> + Send;
 
     /// Lists all active media records for a given creator.
     fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<Media>, MediaRepositoryError>> + Send;
 
     /// Soft-deletes a media record owned by `creator_id`.
     fn soft_delete(
         &self,
         id: MediaId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<(), MediaRepositoryError>> + Send;
 
     /// Returns active media whose presigned URL was last refreshed before `cutoff`.
@@ -87,14 +87,14 @@ impl<R: MediaRepository + ?Sized> MediaRepository for std::sync::Arc<R> {
     fn find_by_link_owned(
         &self,
         link: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Option<Media>, MediaRepositoryError>> + Send {
         (**self).find_by_link_owned(link, creator_id)
     }
 
     fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<Media>, MediaRepositoryError>> + Send {
         (**self).list_by_creator(creator_id)
     }
@@ -102,7 +102,7 @@ impl<R: MediaRepository + ?Sized> MediaRepository for std::sync::Arc<R> {
     fn soft_delete(
         &self,
         id: MediaId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<(), MediaRepositoryError>> + Send {
         (**self).soft_delete(id, creator_id)
     }

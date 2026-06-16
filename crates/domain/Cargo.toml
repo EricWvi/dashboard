@@ -10,9 +10,13 @@ path = "src/lib.rs"
 [lints]
 workspace = true
 
+[features]
+sqlx = ["dep:sqlx"]
+
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+sqlx = { workspace = true, optional = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 

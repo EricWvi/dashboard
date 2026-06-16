@@ -1,11 +1,11 @@
-use crate::{AuditFields, CollectionId, TiptapId, TodoId};
+use crate::{AuditFields, CollectionId, TiptapId, TodoId, UserId};
 use serde::{Deserialize, Serialize};
 
 /// Represents a todo item that may belong to a collection, a kanban board, and carry scheduling metadata.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Todo {
     pub id: TodoId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     pub title: String,
     pub completed: bool,
     /// `None` when the zero-UUID sentinel is stored, meaning the todo is in `Inbox`.
@@ -32,7 +32,7 @@ impl Todo {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: TodoId,
-        creator_id: i32,
+        creator_id: UserId,
         title: impl Into<String>,
         completed: bool,
         collection_id: Option<CollectionId>,

@@ -1,5 +1,5 @@
 use only_application::{QuickNoteRepository, QuickNoteRepositoryError};
-use only_domain::{AuditFields, QuickNote, QuickNoteId, TiptapId};
+use only_domain::{AuditFields, QuickNote, QuickNoteId, TiptapId, UserId};
 use sqlx::{Pool, Postgres, Row as _};
 
 /// Sentinel UUID string meaning "no linked draft".
@@ -22,7 +22,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
         let draft_str = note
             .draft
             .as_ref()
-            .map(|d| d.as_ref().to_string())
+            .map(ToString::to_string)
             .unwrap_or_else(|| ZERO_UUID.to_string());
         let order = note.order.unwrap_or(-1);
 
@@ -35,7 +35,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
                       created_at, updated_at, server_version, is_deleted
             "#,
         )
-        .bind(note.id.as_ref())
+        .bind(&note.id)
         .bind(note.creator_id)
         .bind(&note.title)
         .bind(&draft_str)
@@ -51,7 +51,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
 
     async fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Vec<QuickNote>, QuickNoteRepositoryError> {
         let rows = sqlx::query(
             r#"
@@ -75,7 +75,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
             .collect()
     }
 
-    async fn max_order(&self, creator_id: i32) -> Result<i32, QuickNoteRepositoryError> {
+    async fn max_order(&self, creator_id: UserId) -> Result<i32, QuickNoteRepositoryError> {
         let row = sqlx::query(
             r#"
             SELECT COALESCE(MAX(d_order), 0) AS max_order
@@ -91,7 +91,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
         Ok(row.try_get("max_order").unwrap_or(0))
     }
 
-    async fn min_order(&self, creator_id: i32) -> Result<i32, QuickNoteRepositoryError> {
+    async fn min_order(&self, creator_id: UserId) -> Result<i32, QuickNoteRepositoryError> {
         let row = sqlx::query(
             r#"
             SELECT COALESCE(MIN(d_order), 0) AS min_order
@@ -111,7 +111,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
         let draft_str = note
             .draft
             .as_ref()
-            .map(|d| d.as_ref().to_string())
+            .map(ToString::to_string)
             .unwrap_or_else(|| ZERO_UUID.to_string());
         let order = note.order.unwrap_or(-1);
 
@@ -128,7 +128,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
         .bind(&draft_str)
         .bind(order)
         .bind(note.audit_fields.updated_at)
-        .bind(note.id.as_ref())
+        .bind(&note.id)
         .bind(note.creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -145,7 +145,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
     async fn set_order(
         &self,
         id: &QuickNoteId,
-        creator_id: i32,
+        creator_id: UserId,
         order: i32,
         updated_at: i64,
     ) -> Result<bool, QuickNoteRepositoryError> {
@@ -158,7 +158,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
         )
         .bind(order)
         .bind(updated_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -170,7 +170,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
     async fn soft_delete(
         &self,
         id: &QuickNoteId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> Result<bool, QuickNoteRepositoryError> {
         let result = sqlx::query(
@@ -181,7 +181,7 @@ impl QuickNoteRepository for PostgresQuickNoteRepository {
             "#,
         )
         .bind(deleted_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -203,7 +203,7 @@ fn row_to_quick_note(row: sqlx::postgres::PgRow) -> Result<QuickNote, sqlx::Erro
     let order = Some(row.try_get::<i32, _>("d_order")?);
 
     Ok(QuickNote::new(
-        QuickNoteId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<QuickNoteId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get::<String, _>("title")?,
         draft,

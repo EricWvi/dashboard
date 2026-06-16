@@ -1,5 +1,5 @@
 use only_application::{BookmarkRepository, BookmarkRepositoryError};
-use only_domain::{AuditFields, Bookmark, BookmarkId};
+use only_domain::{AuditFields, Bookmark, BookmarkId, UserId};
 use sqlx::{Pool, Postgres, Row as _};
 
 /// PostgreSQL-backed implementation of [`BookmarkRepository`] against `d_bookmark_v2`.
@@ -28,7 +28,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
                       created_at, updated_at, server_version, is_deleted
             "#,
         )
-        .bind(bookmark.id.as_ref())
+        .bind(&bookmark.id)
         .bind(bookmark.creator_id)
         .bind(&bookmark.url)
         .bind(&bookmark.title)
@@ -47,7 +47,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
     async fn find_by_id_and_creator(
         &self,
         id: &BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Option<Bookmark>, BookmarkRepositoryError> {
         let row = sqlx::query(
             r#"
@@ -57,7 +57,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
             WHERE id = $1::uuid AND creator_id = $2 AND is_deleted = FALSE
             "#,
         )
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -71,7 +71,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
 
     async fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Vec<Bookmark>, BookmarkRepositoryError> {
         let rows = sqlx::query(
             r#"
@@ -116,7 +116,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
         .bind(&bookmark.domain)
         .bind(&payload_str)
         .bind(bookmark.audit_fields.updated_at)
-        .bind(bookmark.id.as_ref())
+        .bind(&bookmark.id)
         .bind(bookmark.creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -133,7 +133,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
     async fn soft_delete(
         &self,
         id: &BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> Result<bool, BookmarkRepositoryError> {
         let result = sqlx::query(
@@ -144,7 +144,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
             "#,
         )
         .bind(deleted_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -156,7 +156,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
     async fn increment_click(
         &self,
         id: &BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
         updated_at: i64,
     ) -> Result<bool, BookmarkRepositoryError> {
         let result = sqlx::query(
@@ -167,7 +167,7 @@ impl BookmarkRepository for PostgresBookmarkRepository {
             "#,
         )
         .bind(updated_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -184,7 +184,7 @@ fn row_to_bookmark(row: sqlx::postgres::PgRow) -> Result<Bookmark, sqlx::Error> 
         .unwrap_or(serde_json::Value::Object(serde_json::Map::default()));
 
     Ok(Bookmark::new(
-        BookmarkId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<BookmarkId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get::<String, _>("url")?,
         row.try_get::<String, _>("title")?,

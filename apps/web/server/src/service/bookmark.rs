@@ -7,6 +7,7 @@ use only_contracts::{
     GetBookmarkResponse, ListBookmarksResponse, UpdateBookmarkRequest, UpdateBookmarkResponse,
 };
 use only_db_server::PostgresBookmarkRepository;
+use only_domain::UserId;
 use sqlx::{Pool, Postgres};
 
 /// Groups the transport-facing bookmark entry points for the web adapter.
@@ -36,7 +37,7 @@ impl BookmarkApi {
     pub async fn create(
         &self,
         request: CreateBookmarkRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<CreateBookmarkResponse, BookmarkError> {
         self.create.handle(request, creator_id).await
     }
@@ -45,13 +46,13 @@ impl BookmarkApi {
     pub async fn get(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<GetBookmarkResponse, BookmarkError> {
         self.get.handle(id, creator_id).await
     }
 
     /// Delegates a list-bookmarks request to the application handler.
-    pub async fn list(&self, creator_id: i32) -> Result<ListBookmarksResponse, BookmarkError> {
+    pub async fn list(&self, creator_id: UserId) -> Result<ListBookmarksResponse, BookmarkError> {
         self.list.handle(creator_id).await
     }
 
@@ -60,7 +61,7 @@ impl BookmarkApi {
         &self,
         id: &str,
         request: UpdateBookmarkRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateBookmarkResponse, BookmarkError> {
         self.update.handle(id, request, creator_id).await
     }
@@ -69,7 +70,7 @@ impl BookmarkApi {
     pub async fn delete(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<DeleteBookmarkResponse, BookmarkError> {
         self.delete.handle(id, creator_id).await
     }
@@ -78,7 +79,7 @@ impl BookmarkApi {
     pub async fn click(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<ClickBookmarkResponse, BookmarkError> {
         self.click.handle(id, creator_id).await
     }

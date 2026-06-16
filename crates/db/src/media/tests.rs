@@ -1,4 +1,5 @@
 use only_application::{MediaRepository, NewMedia};
+use only_domain::UserId;
 use only_logging::{clock, set_trace_logging};
 use pretty_assertions::assert_eq;
 use sqlx::{Pool, Postgres};
@@ -47,7 +48,7 @@ async fn bootstrap_test_db() -> (testcontainers::ContainerAsync<PgContainer>, Po
     (container, pool)
 }
 
-fn new_media(creator_id: i32, key: &str) -> NewMedia {
+fn new_media(creator_id: UserId, key: &str) -> NewMedia {
     NewMedia {
         creator_id,
         link: None,
@@ -67,7 +68,7 @@ async fn create_then_find_by_link_returns_equal_media() {
     let repo = PostgresMediaRepository::new(pool);
 
     let created = repo
-        .create(&new_media(1, "2024/01/1704067200_photo.jpg"))
+        .create(&new_media(UserId::new(1), "2024/01/1704067200_photo.jpg"))
         .await
         .expect("create failed");
 
@@ -87,12 +88,12 @@ async fn soft_delete_hides_record_from_find_by_link() {
     let repo = PostgresMediaRepository::new(pool);
 
     let created = repo
-        .create(&new_media(1, "2024/01/1704067201_photo.jpg"))
+        .create(&new_media(UserId::new(1), "2024/01/1704067201_photo.jpg"))
         .await
         .expect("create failed");
 
     let link = created.link.as_deref().expect("link should be set");
-    repo.soft_delete(created.id, 1)
+    repo.soft_delete(created.id, UserId::new(1))
         .await
         .expect("soft_delete failed");
 
@@ -117,14 +118,14 @@ async fn find_expired_presigns_filters_by_cutoff() {
     let recent_time = clock::now_local();
 
     let old_media = NewMedia {
-        creator_id: 1,
+        creator_id: UserId::new(1),
         link: None,
         key: "2024/01/111_old.jpg".to_string(),
         presigned_url: Some("https://example.com/old".to_string()),
         last_presigned_time: old_time,
     };
     let recent_media = NewMedia {
-        creator_id: 1,
+        creator_id: UserId::new(1),
         link: None,
         key: "2024/01/222_recent.jpg".to_string(),
         presigned_url: Some("https://example.com/recent".to_string()),
@@ -157,7 +158,7 @@ async fn update_presigned_url_sets_new_url_and_timestamp() {
     let repo = PostgresMediaRepository::new(pool);
 
     let created = repo
-        .create(&new_media(1, "2024/01/1704067203_photo.jpg"))
+        .create(&new_media(UserId::new(1), "2024/01/1704067203_photo.jpg"))
         .await
         .expect("create failed");
 

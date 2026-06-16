@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use only_domain::{QuickNote, QuickNoteId, TiptapId, TiptapV2};
+use only_domain::{QuickNote, QuickNoteId, TiptapId, TiptapV2, UserId};
 use serde_json::Value;
 
 use crate::tiptap::error::{QuickNoteRepositoryError, TiptapRepositoryError};
@@ -20,7 +20,7 @@ pub trait TiptapRepository: Send + Sync {
     fn find_by_id_and_creator(
         &self,
         id: &TiptapId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Option<TiptapV2>, TiptapRepositoryError>> + Send;
 
     /// Atomically backs up the current content into `history`, then replaces `content`
@@ -29,7 +29,7 @@ pub trait TiptapRepository: Send + Sync {
     fn update_content(
         &self,
         id: &TiptapId,
-        creator_id: i32,
+        creator_id: UserId,
         content: Value,
         updated_at: i64,
     ) -> impl Future<Output = Result<Option<TiptapV2>, TiptapRepositoryError>> + Send;
@@ -49,21 +49,21 @@ pub trait QuickNoteRepository: Send + Sync {
     /// Lists all visible quick notes for the creator, ordered by `d_order` descending.
     fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<QuickNote>, QuickNoteRepositoryError>> + Send;
 
     /// Returns the maximum `d_order` value among all live quick notes for the creator,
     /// or `0` when no notes exist.
     fn max_order(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<i32, QuickNoteRepositoryError>> + Send;
 
     /// Returns the minimum `d_order` value among all live quick notes for the creator,
     /// or `0` when no notes exist.
     fn min_order(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<i32, QuickNoteRepositoryError>> + Send;
 
     /// Replaces the mutable fields of an existing quick note.
@@ -77,7 +77,7 @@ pub trait QuickNoteRepository: Send + Sync {
     fn set_order(
         &self,
         id: &QuickNoteId,
-        creator_id: i32,
+        creator_id: UserId,
         order: i32,
         updated_at: i64,
     ) -> impl Future<Output = Result<bool, QuickNoteRepositoryError>> + Send;
@@ -86,7 +86,7 @@ pub trait QuickNoteRepository: Send + Sync {
     fn soft_delete(
         &self,
         id: &QuickNoteId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> impl Future<Output = Result<bool, QuickNoteRepositoryError>> + Send;
 }

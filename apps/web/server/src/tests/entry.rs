@@ -8,6 +8,7 @@ use only_contracts::{
     GetWordsCountResponse, ListEntriesResponse, MonthEntry, UnbookmarkEntryResponse,
     UpdateEntryResponse, YearEntry,
 };
+use only_domain::UserId;
 use only_logging::clock;
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
@@ -71,7 +72,7 @@ async fn parse_json<T: serde::de::DeserializeOwned>(resp: Response<Body>) -> T {
 /// Inserts one seeded entry row directly so tests can control precise local-day boundaries.
 async fn insert_seed_entry(
     pool: &Pool<Postgres>,
-    creator_id: i32,
+    creator_id: UserId,
     date: Date,
     hour: u8,
     minute: u8,
@@ -390,7 +391,7 @@ async fn seed_entries(state: &AppState, pool: &Pool<Postgres>) -> SeedFixture {
         .find_or_create(SEEDED_EMAIL)
         .await
         .expect("failed to create seeded test user");
-    let creator_id = user.id.value();
+    let creator_id = user.id;
     let today = clock::now_local().date();
     let jan_first = Date::from_calendar_date(today.year(), Month::January, 1)
         .expect("current year Jan 1 must be valid");
@@ -703,7 +704,7 @@ async fn seed_location_entries(state: &AppState, pool: &Pool<Postgres>) -> Locat
         .find_or_create(email)
         .await
         .expect("failed to create location test user");
-    let creator_id = user.id.value();
+    let creator_id = user.id;
     let today = clock::now_local().date();
 
     // Inserted newest-first (descending hour) so the default ORDER BY created_at DESC matches.
@@ -756,7 +757,7 @@ async fn seed_boundary_entries(state: &AppState, pool: &Pool<Postgres>) -> Bound
         .find_or_create(email)
         .await
         .expect("failed to create boundary test user");
-    let creator_id = user.id.value();
+    let creator_id = user.id;
     let today = clock::now_local().date();
     let yesterday = today - Duration::days(1);
     let tomorrow = today + Duration::days(1);

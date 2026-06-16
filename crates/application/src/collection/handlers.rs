@@ -4,7 +4,7 @@ use only_contracts::{
     PlanTodayRequest, PlanTodayResponse, TodoView, UpdateCollectionRequest,
     UpdateCollectionResponse,
 };
-use only_domain::{AuditFields, Collection, CollectionId, TodoId};
+use only_domain::{AuditFields, Collection, CollectionId, TodoId, UserId};
 use only_logging::clock;
 use uuid::Uuid;
 
@@ -62,7 +62,7 @@ impl<R: CollectionRepository> CreateCollectionHandler<R> {
     pub async fn handle(
         &self,
         request: CreateCollectionRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<CreateCollectionResponse, CollectionError> {
         let now = now_millis();
         let id = CollectionId::new(Uuid::new_v4().to_string());
@@ -95,7 +95,7 @@ impl<R: CollectionRepository> GetCollectionHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<GetCollectionResponse, CollectionError> {
         let collection_id = CollectionId::new(id);
         let collection = self
@@ -126,7 +126,7 @@ impl<R: CollectionRepository> ListCollectionsHandler<R> {
     /// Lists every visible collection for the authenticated user.
     pub async fn handle(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<ListCollectionsResponse, CollectionError> {
         let collections = self.repository.list_by_creator(creator_id).await?;
         Ok(ListCollectionsResponse {
@@ -152,7 +152,7 @@ impl<R: CollectionRepository> UpdateCollectionHandler<R> {
         &self,
         id: &str,
         request: UpdateCollectionRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateCollectionResponse, CollectionError> {
         let collection_id = CollectionId::new(id);
         let existing = self
@@ -202,7 +202,7 @@ impl<CR: CollectionRepository, TR: TodoRepository> DeleteCollectionHandler<CR, T
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<DeleteCollectionResponse, CollectionError> {
         let collection_id = CollectionId::new(id);
         let now = now_millis();
@@ -233,7 +233,10 @@ impl<TR> ListAllTodosHandler<TR> {
 
 impl<TR: TodoRepository> ListAllTodosHandler<TR> {
     /// Lists all planned, non-inbox, incomplete todos for the authenticated user.
-    pub async fn handle(&self, creator_id: i32) -> Result<ListAllTodosResponse, CollectionError> {
+    pub async fn handle(
+        &self,
+        creator_id: UserId,
+    ) -> Result<ListAllTodosResponse, CollectionError> {
         let todos = self.repository.list_all_planned(creator_id).await?;
         Ok(ListAllTodosResponse {
             todos: todos.into_iter().map(map_todo).collect(),
@@ -254,7 +257,10 @@ impl<TR> ListTodayTodosHandler<TR> {
 
 impl<TR: TodoRepository> ListTodayTodosHandler<TR> {
     /// Lists all todos whose schedule falls within the current local day.
-    pub async fn handle(&self, creator_id: i32) -> Result<ListTodayTodosResponse, CollectionError> {
+    pub async fn handle(
+        &self,
+        creator_id: UserId,
+    ) -> Result<ListTodayTodosResponse, CollectionError> {
         let todos = self.repository.list_today(creator_id).await?;
         Ok(ListTodayTodosResponse {
             todos: todos.into_iter().map(map_todo).collect(),
@@ -278,7 +284,7 @@ impl<TR: TodoRepository> PlanTodayHandler<TR> {
     pub async fn handle(
         &self,
         request: PlanTodayRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<PlanTodayResponse, CollectionError> {
         let ids: Vec<TodoId> = request.ids.iter().map(TodoId::new).collect();
         if ids.is_empty() {

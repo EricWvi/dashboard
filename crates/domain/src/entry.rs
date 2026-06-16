@@ -1,4 +1,4 @@
-use crate::{AuditFields, EntryId, TiptapId};
+use crate::{AuditFields, EntryId, TiptapId, UserId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -6,7 +6,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Entry {
     pub id: EntryId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// `None` when the zero-UUID sentinel is stored, meaning no draft is attached.
     pub draft: Option<TiptapId>,
     pub payload: Value,
@@ -22,7 +22,7 @@ impl Entry {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: EntryId,
-        creator_id: i32,
+        creator_id: UserId,
         draft: Option<TiptapId>,
         payload: Value,
         word_count: i32,

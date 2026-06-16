@@ -3,7 +3,7 @@ use only_contracts::{
     DeleteBookmarkResponse, GetBookmarkResponse, ListBookmarksResponse, UpdateBookmarkRequest,
     UpdateBookmarkResponse,
 };
-use only_domain::{AuditFields, Bookmark, BookmarkId};
+use only_domain::{AuditFields, Bookmark, BookmarkId, UserId};
 use only_logging::clock;
 use uuid::Uuid;
 
@@ -45,7 +45,7 @@ impl<R: BookmarkRepository> CreateBookmarkHandler<R> {
     pub async fn handle(
         &self,
         request: CreateBookmarkRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<CreateBookmarkResponse, BookmarkError> {
         let now = now_millis();
         let id = BookmarkId::new(Uuid::new_v4().to_string());
@@ -82,7 +82,7 @@ impl<R: BookmarkRepository> GetBookmarkHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<GetBookmarkResponse, BookmarkError> {
         let bookmark_id = BookmarkId::new(id);
         let bookmark = self
@@ -111,7 +111,7 @@ impl<R> ListBookmarksHandler<R> {
 
 impl<R: BookmarkRepository> ListBookmarksHandler<R> {
     /// Returns all visible bookmarks for the creator.
-    pub async fn handle(&self, creator_id: i32) -> Result<ListBookmarksResponse, BookmarkError> {
+    pub async fn handle(&self, creator_id: UserId) -> Result<ListBookmarksResponse, BookmarkError> {
         let bookmarks = self.repository.list_by_creator(creator_id).await?;
         Ok(ListBookmarksResponse {
             bookmarks: bookmarks.into_iter().map(map_bookmark).collect(),
@@ -136,7 +136,7 @@ impl<R: BookmarkRepository> UpdateBookmarkHandler<R> {
         &self,
         id: &str,
         request: UpdateBookmarkRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateBookmarkResponse, BookmarkError> {
         let now = now_millis();
         let bookmark_id = BookmarkId::new(id);
@@ -188,7 +188,7 @@ impl<R: BookmarkRepository> DeleteBookmarkHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<DeleteBookmarkResponse, BookmarkError> {
         let bookmark_id = BookmarkId::new(id);
         let now = now_millis();
@@ -219,7 +219,7 @@ impl<R: BookmarkRepository> ClickBookmarkHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<ClickBookmarkResponse, BookmarkError> {
         let bookmark_id = BookmarkId::new(id);
         let now = now_millis();

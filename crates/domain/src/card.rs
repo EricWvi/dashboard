@@ -1,4 +1,4 @@
-use crate::{AuditFields, CardId, FolderId, TiptapId};
+use crate::{AuditFields, CardId, FolderId, TiptapId, UserId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -6,7 +6,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Card {
     pub id: CardId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// `None` when the zero-UUID sentinel is stored, meaning the card is at the root level.
     pub folder_id: Option<FolderId>,
     pub title: String,
@@ -26,7 +26,7 @@ impl Card {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: CardId,
-        creator_id: i32,
+        creator_id: UserId,
         folder_id: Option<FolderId>,
         title: impl Into<String>,
         draft: TiptapId,

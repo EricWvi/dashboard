@@ -1,7 +1,6 @@
 use only_application::{CollectionRepository, CollectionRepositoryError};
-use only_domain::{AuditFields, Collection, CollectionId};
+use only_domain::{AuditFields, Collection, CollectionId, UserId};
 use sqlx::{Pool, Postgres, Row as _};
-use uuid::Uuid;
 
 /// PostgreSQL-backed implementation of [`CollectionRepository`] against the `d_collection_v2` table.
 pub struct PostgresCollectionRepository {
@@ -20,19 +19,14 @@ impl CollectionRepository for PostgresCollectionRepository {
         &self,
         collection: Collection,
     ) -> Result<Collection, CollectionRepositoryError> {
-        let id: Uuid =
-            collection.id.as_ref().parse().map_err(|e: uuid::Error| {
-                CollectionRepositoryError::OperationFailed(e.to_string())
-            })?;
-
         let row = sqlx::query(
             r#"
             INSERT INTO d_collection_v2 (id, creator_id, name, created_at, updated_at, is_deleted)
-            VALUES ($1, $2, $3, $4, $5, FALSE)
+            VALUES ($1::uuid, $2, $3, $4, $5, FALSE)
             RETURNING id::text, creator_id, name, created_at, updated_at, server_version, is_deleted
             "#,
         )
-        .bind(id)
+        .bind(&collection.id)
         .bind(collection.creator_id)
         .bind(&collection.name)
         .bind(collection.audit_fields.created_at)
@@ -48,7 +42,7 @@ impl CollectionRepository for PostgresCollectionRepository {
     async fn find_by_id_and_creator(
         &self,
         id: &CollectionId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Option<Collection>, CollectionRepositoryError> {
         let row = sqlx::query(
             r#"
@@ -57,7 +51,7 @@ impl CollectionRepository for PostgresCollectionRepository {
             WHERE id = $1::uuid AND creator_id = $2 AND is_deleted = FALSE
             "#,
         )
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -72,7 +66,7 @@ impl CollectionRepository for PostgresCollectionRepository {
 
     async fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Vec<Collection>, CollectionRepositoryError> {
         let rows = sqlx::query(
             r#"
@@ -109,7 +103,7 @@ impl CollectionRepository for PostgresCollectionRepository {
         )
         .bind(&collection.name)
         .bind(collection.audit_fields.updated_at)
-        .bind(collection.id.as_ref())
+        .bind(&collection.id)
         .bind(collection.creator_id)
         .fetch_one(&self.pool)
         .await
@@ -122,7 +116,7 @@ impl CollectionRepository for PostgresCollectionRepository {
     async fn soft_delete_by_id_and_creator(
         &self,
         id: &CollectionId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> Result<bool, CollectionRepositoryError> {
         let result = sqlx::query(
@@ -133,7 +127,7 @@ impl CollectionRepository for PostgresCollectionRepository {
             "#,
         )
         .bind(deleted_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -146,7 +140,7 @@ impl CollectionRepository for PostgresCollectionRepository {
 /// Maps a raw `d_collection_v2` row to the [`Collection`] domain model.
 fn row_to_collection(row: sqlx::postgres::PgRow) -> Result<Collection, sqlx::Error> {
     Ok(Collection::new(
-        CollectionId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<CollectionId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get::<String, _>("name")?,
         AuditFields::new(

@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use only_domain::{Bookmark, BookmarkId};
+use only_domain::{Bookmark, BookmarkId, UserId};
 
 use crate::bookmark::error::BookmarkRepositoryError;
 
@@ -19,13 +19,13 @@ pub trait BookmarkRepository: Send + Sync {
     fn find_by_id_and_creator(
         &self,
         id: &BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Option<Bookmark>, BookmarkRepositoryError>> + Send;
 
     /// Lists all visible bookmarks for the creator, ordered by creation time descending.
     fn list_by_creator(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> impl Future<Output = Result<Vec<Bookmark>, BookmarkRepositoryError>> + Send;
 
     /// Replaces all mutable bookmark fields and returns the updated snapshot.
@@ -39,7 +39,7 @@ pub trait BookmarkRepository: Send + Sync {
     fn soft_delete(
         &self,
         id: &BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> impl Future<Output = Result<bool, BookmarkRepositoryError>> + Send;
 
@@ -47,7 +47,7 @@ pub trait BookmarkRepository: Send + Sync {
     fn increment_click(
         &self,
         id: &BookmarkId,
-        creator_id: i32,
+        creator_id: UserId,
         updated_at: i64,
     ) -> impl Future<Output = Result<bool, BookmarkRepositoryError>> + Send;
 }

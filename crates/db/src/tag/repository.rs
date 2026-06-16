@@ -1,5 +1,5 @@
 use only_application::{TagRepository, TagRepositoryError};
-use only_domain::{AuditFields, Tag, TagId};
+use only_domain::{AuditFields, Tag, TagId, UserId};
 use sqlx::{Pool, Postgres, Row as _};
 
 /// PostgreSQL-backed implementation of [`TagRepository`] against the `d_tag_v2` table.
@@ -23,7 +23,7 @@ impl TagRepository for PostgresTagRepository {
             RETURNING id::text, creator_id, name, t_group, created_at, updated_at, server_version, is_deleted
             "#,
         )
-        .bind(tag.id.as_ref())
+        .bind(&tag.id)
         .bind(tag.creator_id)
         .bind(&tag.name)
         .bind(&tag.group)
@@ -38,7 +38,7 @@ impl TagRepository for PostgresTagRepository {
 
     async fn list_by_creator_and_group(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         group: &str,
     ) -> Result<Vec<Tag>, TagRepositoryError> {
         let rows = sqlx::query(
@@ -62,7 +62,7 @@ impl TagRepository for PostgresTagRepository {
 
     async fn soft_delete_by_name_and_group(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         name: &str,
         group: &str,
         deleted_at: i64,
@@ -89,7 +89,7 @@ impl TagRepository for PostgresTagRepository {
 /// Maps a raw `d_tag_v2` row to the [`Tag`] domain model.
 fn row_to_tag(row: sqlx::postgres::PgRow) -> Result<Tag, sqlx::Error> {
     Ok(Tag::new(
-        TagId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<TagId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get::<String, _>("name")?,
         row.try_get::<String, _>("t_group")?,

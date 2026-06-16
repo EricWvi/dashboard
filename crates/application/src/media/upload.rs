@@ -5,12 +5,13 @@ use uuid::Uuid;
 use crate::media::error::{MediaError, MediaRepositoryError};
 use crate::media::object_store::ObjectStore;
 use crate::media::repository::{MediaRepository, NewMedia};
+use only_domain::UserId;
 
 const MAX_KEY_LEN: usize = 1000;
 
 /// Carries the data for a single file upload from a client request.
 pub struct UploadMediaCommand {
-    pub creator_id: i32,
+    pub creator_id: UserId,
     pub filename: String,
     pub content_type: String,
     pub data: Bytes,

@@ -7,12 +7,14 @@ use axum::response::{IntoResponse, Response};
 use base64::Engine as _;
 use rand::rngs::OsRng;
 
+use only_domain::UserId;
+
 use crate::app_state::AppState;
 
 /// Carries the resolved user identity injected into request extensions by the auth middleware.
 #[derive(Clone, Debug)]
 pub struct AuthenticatedUser {
-    pub user_id: i32,
+    pub user_id: UserId,
 }
 
 /// Axum middleware that validates the `Onlyquant-Token` header and injects an `AuthenticatedUser`
@@ -56,9 +58,9 @@ pub async fn auth_middleware(
         }
     };
 
-    request.extensions_mut().insert(AuthenticatedUser {
-        user_id: user.id.value(),
-    });
+    request
+        .extensions_mut()
+        .insert(AuthenticatedUser { user_id: user.id });
 
     next.run(request).await
 }

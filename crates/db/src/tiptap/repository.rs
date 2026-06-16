@@ -1,5 +1,5 @@
 use only_application::{TiptapRepository, TiptapRepositoryError};
-use only_domain::{AuditFields, HistoryEntry, TiptapId, TiptapV2};
+use only_domain::{AuditFields, HistoryEntry, TiptapId, TiptapV2, UserId};
 use serde_json::Value;
 use sqlx::{Pool, Postgres, Row as _};
 
@@ -29,7 +29,7 @@ impl TiptapRepository for PostgresTiptapRepository {
                       created_at, updated_at, server_version, is_deleted
             "#,
         )
-        .bind(tiptap.id.as_ref())
+        .bind(&tiptap.id)
         .bind(tiptap.creator_id)
         .bind(tiptap.site)
         .bind(&content_str)
@@ -45,7 +45,7 @@ impl TiptapRepository for PostgresTiptapRepository {
     async fn find_by_id_and_creator(
         &self,
         id: &TiptapId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Option<TiptapV2>, TiptapRepositoryError> {
         let row = sqlx::query(
             r#"
@@ -55,7 +55,7 @@ impl TiptapRepository for PostgresTiptapRepository {
             WHERE id = $1::uuid AND creator_id = $2 AND is_deleted = FALSE
             "#,
         )
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -70,7 +70,7 @@ impl TiptapRepository for PostgresTiptapRepository {
     async fn update_content(
         &self,
         id: &TiptapId,
-        creator_id: i32,
+        creator_id: UserId,
         content: Value,
         updated_at: i64,
     ) -> Result<Option<TiptapV2>, TiptapRepositoryError> {
@@ -94,7 +94,7 @@ impl TiptapRepository for PostgresTiptapRepository {
         )
         .bind(&content_str)
         .bind(updated_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -117,7 +117,7 @@ fn row_to_tiptap(row: sqlx::postgres::PgRow) -> Result<TiptapV2, sqlx::Error> {
     let history = parse_history(&history_text);
 
     Ok(TiptapV2::new(
-        TiptapId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<TiptapId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get("site")?,
         content,

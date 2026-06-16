@@ -49,7 +49,7 @@ impl UserRepository for PostgresUserRepository {
         Ok(row_to_user(row))
     }
 
-    async fn find_by_id(&self, id: i32) -> Result<Option<User>, UserRepositoryError> {
+    async fn find_by_id(&self, id: UserId) -> Result<Option<User>, UserRepositoryError> {
         let row = sqlx::query_as::<_, UserRow>(
             r#"
             SELECT id, email, updated_at, server_version, avatar, username,
@@ -68,7 +68,7 @@ impl UserRepository for PostgresUserRepository {
 
     async fn update_profile(
         &self,
-        id: i32,
+        id: UserId,
         username: &str,
         avatar: &str,
         language: &str,
@@ -100,7 +100,7 @@ impl UserRepository for PostgresUserRepository {
 /// Intermediate row type used by sqlx for mapping `d_user_v2` result sets.
 #[derive(sqlx::FromRow)]
 struct UserRow {
-    id: i32,
+    id: UserId,
     email: String,
     updated_at: i64,
     server_version: i64,
@@ -115,7 +115,7 @@ struct UserRow {
 /// Maps a raw `d_user_v2` row to the [`User`] domain model.
 fn row_to_user(row: UserRow) -> User {
     User::new(
-        UserId::new(row.id),
+        row.id,
         row.email,
         row.updated_at,
         row.server_version,

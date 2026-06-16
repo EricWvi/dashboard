@@ -24,6 +24,33 @@ macro_rules! define_uuid_id {
                 f.write_str(&self.0)
             }
         }
+
+        #[cfg(feature = "sqlx")]
+        impl<'q> sqlx::Encode<'q, sqlx::Postgres> for $name {
+            fn encode_by_ref(
+                &self,
+                buf: &mut <sqlx::Postgres as sqlx::Database>::ArgumentBuffer,
+            ) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
+                <&str as sqlx::Encode<sqlx::Postgres>>::encode_by_ref(&&self.0[..], buf)
+            }
+        }
+
+        #[cfg(feature = "sqlx")]
+        impl<'r> sqlx::Decode<'r, sqlx::Postgres> for $name {
+            fn decode(
+                value: <sqlx::Postgres as sqlx::Database>::ValueRef<'r>,
+            ) -> Result<Self, sqlx::error::BoxDynError> {
+                let s = <String as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
+                Ok(Self(s))
+            }
+        }
+
+        #[cfg(feature = "sqlx")]
+        impl sqlx::Type<sqlx::Postgres> for $name {
+            fn type_info() -> <sqlx::Postgres as sqlx::Database>::TypeInfo {
+                <str as sqlx::Type<sqlx::Postgres>>::type_info()
+            }
+        }
     };
 }
 
@@ -48,6 +75,33 @@ macro_rules! define_int_id {
         impl Display for $name {
             fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.0)
+            }
+        }
+
+        #[cfg(feature = "sqlx")]
+        impl<'q> sqlx::Encode<'q, sqlx::Postgres> for $name {
+            fn encode_by_ref(
+                &self,
+                buf: &mut <sqlx::Postgres as sqlx::Database>::ArgumentBuffer,
+            ) -> Result<sqlx::encode::IsNull, sqlx::error::BoxDynError> {
+                <$inner as sqlx::Encode<sqlx::Postgres>>::encode_by_ref(&self.0, buf)
+            }
+        }
+
+        #[cfg(feature = "sqlx")]
+        impl<'r> sqlx::Decode<'r, sqlx::Postgres> for $name {
+            fn decode(
+                value: <sqlx::Postgres as sqlx::Database>::ValueRef<'r>,
+            ) -> Result<Self, sqlx::error::BoxDynError> {
+                let v = <$inner as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
+                Ok(Self(v))
+            }
+        }
+
+        #[cfg(feature = "sqlx")]
+        impl sqlx::Type<sqlx::Postgres> for $name {
+            fn type_info() -> <sqlx::Postgres as sqlx::Database>::TypeInfo {
+                <$inner as sqlx::Type<sqlx::Postgres>>::type_info()
             }
         }
     };

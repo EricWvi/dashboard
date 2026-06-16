@@ -1,5 +1,5 @@
 use only_application::{DailyCount, DateParts, EntryFilter, EntryRepository, EntryRepositoryError};
-use only_domain::{AuditFields, Entry, EntryId, TiptapId};
+use only_domain::{AuditFields, Entry, EntryId, TiptapId, UserId};
 use only_logging::clock;
 use sqlx::{Pool, Postgres, QueryBuilder, Row as _};
 
@@ -26,11 +26,10 @@ impl PostgresEntryRepository {
 
 impl EntryRepository for PostgresEntryRepository {
     async fn create(&self, entry: Entry) -> Result<Entry, EntryRepositoryError> {
-        let id_str = entry.id.as_ref();
         let draft_str = entry
             .draft
             .as_ref()
-            .map(|d| d.as_ref().to_string())
+            .map(ToString::to_string)
             .unwrap_or_else(|| ZERO_UUID.to_string());
         let payload_str = serde_json::to_string(&entry.payload)
             .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
@@ -47,7 +46,7 @@ impl EntryRepository for PostgresEntryRepository {
                       created_at, updated_at, server_version, is_deleted
             "#,
         )
-        .bind(id_str)
+        .bind(&entry.id)
         .bind(entry.creator_id)
         .bind(&draft_str)
         .bind(&payload_str)
@@ -67,7 +66,7 @@ impl EntryRepository for PostgresEntryRepository {
     async fn find_by_id_and_creator(
         &self,
         id: &EntryId,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Option<Entry>, EntryRepositoryError> {
         let row = sqlx::query(
             r#"
@@ -78,7 +77,7 @@ impl EntryRepository for PostgresEntryRepository {
             WHERE id = $1::uuid AND creator_id = $2 AND is_deleted = FALSE
             "#,
         )
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -92,7 +91,7 @@ impl EntryRepository for PostgresEntryRepository {
 
     async fn list(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         filter: &EntryFilter,
         page: u32,
     ) -> Result<(Vec<Entry>, bool), EntryRepositoryError> {
@@ -192,7 +191,7 @@ impl EntryRepository for PostgresEntryRepository {
         Ok((entries, has_more))
     }
 
-    async fn list_random(&self, creator_id: i32) -> Result<Vec<Entry>, EntryRepositoryError> {
+    async fn list_random(&self, creator_id: UserId) -> Result<Vec<Entry>, EntryRepositoryError> {
         // Step 1: Identify the minimum review_count across all live entries.
         // NULL means the creator has no entries at all.
         let min_row = sqlx::query(
@@ -312,7 +311,7 @@ impl EntryRepository for PostgresEntryRepository {
         // the goroutine in the Go implementation.
         if !entries.is_empty() {
             let pool = self.pool.clone();
-            let ids: Vec<String> = entries.iter().map(|e| e.id.as_ref().to_string()).collect();
+            let ids: Vec<String> = entries.iter().map(|e| e.id.to_string()).collect();
             tokio::spawn(async move {
                 let _ = sqlx::query(
                     r#"
@@ -334,7 +333,7 @@ impl EntryRepository for PostgresEntryRepository {
         let draft_str = entry
             .draft
             .as_ref()
-            .map(|d| d.as_ref().to_string())
+            .map(ToString::to_string)
             .unwrap_or_else(|| ZERO_UUID.to_string());
         let payload_str = serde_json::to_string(&entry.payload)
             .map_err(|e| EntryRepositoryError::OperationFailed(e.to_string()))?;
@@ -356,7 +355,7 @@ impl EntryRepository for PostgresEntryRepository {
         .bind(&entry.raw_text)
         .bind(entry.bookmark)
         .bind(entry.audit_fields.updated_at)
-        .bind(entry.id.as_ref())
+        .bind(&entry.id)
         .bind(entry.creator_id)
         .fetch_optional(&self.pool)
         .await
@@ -372,7 +371,7 @@ impl EntryRepository for PostgresEntryRepository {
     async fn soft_delete(
         &self,
         id: &EntryId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> Result<bool, EntryRepositoryError> {
         let result = sqlx::query(
@@ -383,7 +382,7 @@ impl EntryRepository for PostgresEntryRepository {
             "#,
         )
         .bind(deleted_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -395,7 +394,7 @@ impl EntryRepository for PostgresEntryRepository {
     async fn set_bookmark(
         &self,
         id: &EntryId,
-        creator_id: i32,
+        creator_id: UserId,
         bookmark: bool,
         updated_at: i64,
     ) -> Result<bool, EntryRepositoryError> {
@@ -408,7 +407,7 @@ impl EntryRepository for PostgresEntryRepository {
         )
         .bind(bookmark)
         .bind(updated_at)
-        .bind(id.as_ref())
+        .bind(id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -417,7 +416,7 @@ impl EntryRepository for PostgresEntryRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    async fn count_words(&self, creator_id: i32) -> Result<i64, EntryRepositoryError> {
+    async fn count_words(&self, creator_id: UserId) -> Result<i64, EntryRepositoryError> {
         let row = sqlx::query(
             r#"
             SELECT COALESCE(SUM(word_count), 0)::bigint AS total
@@ -436,7 +435,7 @@ impl EntryRepository for PostgresEntryRepository {
 
     async fn count_current_year(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<Vec<DailyCount>, EntryRepositoryError> {
         let now = clock::now_local();
         let jan1 = time::Date::from_calendar_date(now.year(), time::Month::January, 1)
@@ -478,7 +477,7 @@ impl EntryRepository for PostgresEntryRepository {
             .collect()
     }
 
-    async fn list_dates(&self, creator_id: i32) -> Result<Vec<DateParts>, EntryRepositoryError> {
+    async fn list_dates(&self, creator_id: UserId) -> Result<Vec<DateParts>, EntryRepositoryError> {
         let local_offset_ms = local_offset_millis();
         let rows = sqlx::query(
             r#"
@@ -522,7 +521,7 @@ impl EntryRepository for PostgresEntryRepository {
 
     async fn count_by_year(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         year: Option<i32>,
     ) -> Result<i64, EntryRepositoryError> {
         let local_offset_ms = local_offset_millis();
@@ -565,7 +564,7 @@ fn row_to_entry(row: sqlx::postgres::PgRow) -> Result<Entry, sqlx::Error> {
         .unwrap_or(serde_json::Value::Object(serde_json::Map::default()));
 
     Ok(Entry::new(
-        EntryId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<EntryId, _>("id")?,
         row.try_get("creator_id")?,
         draft,
         payload,

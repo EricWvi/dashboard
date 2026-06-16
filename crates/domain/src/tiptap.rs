@@ -1,4 +1,4 @@
-use crate::{AuditFields, TiptapId};
+use crate::{AuditFields, TiptapId, UserId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -14,7 +14,7 @@ pub struct HistoryEntry {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TiptapV2 {
     pub id: TiptapId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// Numeric code identifying the owning surface. Interpretation is defined by the application layer.
     pub site: i16,
     pub content: Value,
@@ -26,7 +26,7 @@ impl TiptapV2 {
     /// Creates a Tiptap document snapshot together with its persistence-managed audit metadata.
     pub fn new(
         id: TiptapId,
-        creator_id: i32,
+        creator_id: UserId,
         site: i16,
         content: Value,
         history: Vec<HistoryEntry>,

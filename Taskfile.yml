@@ -19,7 +19,7 @@ tasks:
     cmds:
       - task: install:frontend
       - task: install:backend
-      - task: build
+      - task: build:packages
 
   install:frontend:
     desc: Install dependencies for the frontend packages

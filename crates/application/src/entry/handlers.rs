@@ -5,7 +5,7 @@ use only_contracts::{
     ListEntriesResponse, MonthEntry, UnbookmarkEntryResponse, UpdateEntryRequest,
     UpdateEntryResponse, YearEntry,
 };
-use only_domain::{AuditFields, Entry, EntryId, TiptapId};
+use only_domain::{AuditFields, Entry, EntryId, TiptapId, UserId};
 use only_logging::clock;
 use uuid::Uuid;
 
@@ -47,7 +47,7 @@ impl<R: EntryRepository> CreateEntryHandler<R> {
     pub async fn handle(
         &self,
         request: CreateEntryRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<CreateEntryResponse, EntryError> {
         let now = now_millis();
         let id = EntryId::new(Uuid::new_v4().to_string());
@@ -83,7 +83,11 @@ impl<R> GetEntryHandler<R> {
 
 impl<R: EntryRepository> GetEntryHandler<R> {
     /// Loads one visible entry or returns a stable not-found error.
-    pub async fn handle(&self, id: &str, creator_id: i32) -> Result<GetEntryResponse, EntryError> {
+    pub async fn handle(
+        &self,
+        id: &str,
+        creator_id: UserId,
+    ) -> Result<GetEntryResponse, EntryError> {
         let entry_id = EntryId::new(id);
         let entry = self
             .repository
@@ -114,7 +118,7 @@ impl<R: EntryRepository> ListEntriesHandler<R> {
     pub async fn handle(
         &self,
         request: ListEntriesRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<ListEntriesResponse, EntryError> {
         if request.random.unwrap_or(false) {
             let entries = self.repository.list_random(creator_id).await?;
@@ -163,7 +167,7 @@ impl<R: EntryRepository> UpdateEntryHandler<R> {
         &self,
         id: &str,
         request: UpdateEntryRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateEntryResponse, EntryError> {
         let now = now_millis();
         let entry_id = EntryId::new(id);
@@ -218,7 +222,7 @@ impl<R: EntryRepository> DeleteEntryHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<DeleteEntryResponse, EntryError> {
         let entry_id = EntryId::new(id);
         let now = now_millis();
@@ -249,7 +253,7 @@ impl<R: EntryRepository> BookmarkEntryHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<BookmarkEntryResponse, EntryError> {
         let entry_id = EntryId::new(id);
         let now = now_millis();
@@ -280,7 +284,7 @@ impl<R: EntryRepository> UnbookmarkEntryHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UnbookmarkEntryResponse, EntryError> {
         let entry_id = EntryId::new(id);
         let now = now_millis();
@@ -308,7 +312,7 @@ impl<R> GetWordsCountHandler<R> {
 
 impl<R: EntryRepository> GetWordsCountHandler<R> {
     /// Sums the `word_count` column for all visible entries belonging to the creator.
-    pub async fn handle(&self, creator_id: i32) -> Result<GetWordsCountResponse, EntryError> {
+    pub async fn handle(&self, creator_id: UserId) -> Result<GetWordsCountResponse, EntryError> {
         let count = self.repository.count_words(creator_id).await?;
         Ok(GetWordsCountResponse { count })
     }
@@ -328,7 +332,7 @@ impl<R> GetCurrentYearHandler<R> {
 impl<R: EntryRepository> GetCurrentYearHandler<R> {
     /// Queries current-year activity and pads the result to always include the year-start
     /// and today, matching the Go handler's contract.
-    pub async fn handle(&self, creator_id: i32) -> Result<GetCurrentYearResponse, EntryError> {
+    pub async fn handle(&self, creator_id: UserId) -> Result<GetCurrentYearResponse, EntryError> {
         let mut counts: Vec<DailyCount> = self.repository.count_current_year(creator_id).await?;
 
         let now = clock::now_local();
@@ -387,7 +391,7 @@ impl<R: EntryRepository> GetEntriesCountHandler<R> {
     /// Counts all non-deleted entries, scoped to `year` when provided.
     pub async fn handle(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         year: Option<i32>,
     ) -> Result<GetEntriesCountResponse, EntryError> {
         let count = self.repository.count_by_year(creator_id, year).await?;
@@ -408,7 +412,7 @@ impl<R> GetEntryDatesHandler<R> {
 
 impl<R: EntryRepository> GetEntryDatesHandler<R> {
     /// Loads all distinct entry dates and groups them into a year → month → days hierarchy.
-    pub async fn handle(&self, creator_id: i32) -> Result<GetEntryDatesResponse, EntryError> {
+    pub async fn handle(&self, creator_id: UserId) -> Result<GetEntryDatesResponse, EntryError> {
         let dates: Vec<DateParts> = self.repository.list_dates(creator_id).await?;
         let total = dates.len() as i32;
         let entry_dates = group_dates(dates);

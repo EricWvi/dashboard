@@ -1,5 +1,5 @@
 use only_application::{TodoRepository, TodoRepositoryError};
-use only_domain::{AuditFields, CollectionId, TiptapId, Todo, TodoId};
+use only_domain::{AuditFields, CollectionId, TiptapId, Todo, TodoId, UserId};
 use only_logging::clock;
 use sqlx::{Pool, Postgres, Row as _};
 
@@ -22,7 +22,7 @@ impl PostgresTodoRepository {
 }
 
 impl TodoRepository for PostgresTodoRepository {
-    async fn list_all_planned(&self, creator_id: i32) -> Result<Vec<Todo>, TodoRepositoryError> {
+    async fn list_all_planned(&self, creator_id: UserId) -> Result<Vec<Todo>, TodoRepositoryError> {
         let rows = sqlx::query(
             r#"
             SELECT id::text, creator_id, title, completed, collection_id::text,
@@ -49,7 +49,7 @@ impl TodoRepository for PostgresTodoRepository {
             .collect()
     }
 
-    async fn list_today(&self, creator_id: i32) -> Result<Vec<Todo>, TodoRepositoryError> {
+    async fn list_today(&self, creator_id: UserId) -> Result<Vec<Todo>, TodoRepositoryError> {
         // Compute local day boundaries in milliseconds for a DB-agnostic range query.
         let now = clock::now_local();
         let day_start_ms = now
@@ -89,7 +89,7 @@ impl TodoRepository for PostgresTodoRepository {
         &self,
         ids: &[TodoId],
         schedule_ms: i64,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<(), TodoRepositoryError> {
         if ids.is_empty() {
             return Ok(());
@@ -119,7 +119,7 @@ impl TodoRepository for PostgresTodoRepository {
     async fn soft_delete_by_collection(
         &self,
         collection_id: &CollectionId,
-        creator_id: i32,
+        creator_id: UserId,
         deleted_at: i64,
     ) -> Result<(), TodoRepositoryError> {
         sqlx::query(
@@ -130,7 +130,7 @@ impl TodoRepository for PostgresTodoRepository {
             "#,
         )
         .bind(deleted_at)
-        .bind(collection_id.as_ref())
+        .bind(collection_id)
         .bind(creator_id)
         .execute(&self.pool)
         .await
@@ -182,7 +182,7 @@ fn row_to_todo(row: sqlx::postgres::PgRow) -> Result<Todo, sqlx::Error> {
     let order = Some(raw_order);
 
     Ok(Todo::new(
-        TodoId::new(row.try_get::<String, _>("id")?),
+        row.try_get::<TodoId, _>("id")?,
         row.try_get("creator_id")?,
         row.try_get::<String, _>("title")?,
         row.try_get("completed")?,

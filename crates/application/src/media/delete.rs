@@ -3,10 +3,11 @@ use uuid::Uuid;
 use crate::media::error::MediaError;
 use crate::media::object_store::ObjectStore;
 use crate::media::repository::MediaRepository;
+use only_domain::UserId;
 
 /// Carries the IDs of media records the caller wants to remove.
 pub struct DeleteMediaCommand {
-    pub creator_id: i32,
+    pub creator_id: UserId,
     pub ids: Vec<Uuid>,
 }
 
@@ -51,7 +52,7 @@ impl<O: ObjectStore, R: MediaRepository> DeleteMediaHandler<O, R> {
         Ok(DeleteMediaResponse { deleted, failed })
     }
 
-    async fn delete_one(&self, id: Uuid, creator_id: i32) -> Result<(), MediaError> {
+    async fn delete_one(&self, id: Uuid, creator_id: UserId) -> Result<(), MediaError> {
         let id_str = id.to_string();
 
         let media = self

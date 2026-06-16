@@ -1,11 +1,11 @@
-use crate::{AuditFields, EchoId, TiptapId};
+use crate::{AuditFields, EchoId, TiptapId, UserId};
 use serde::{Deserialize, Serialize};
 
 /// Represents an echo record keyed by type, year, and sub-index, optionally backed by a Tiptap draft.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Echo {
     pub id: EchoId,
-    pub creator_id: i32,
+    pub creator_id: UserId,
     /// Free-form type classifier stored in the `e_type` column.
     pub echo_type: String,
     pub year: i32,
@@ -21,7 +21,7 @@ impl Echo {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: EchoId,
-        creator_id: i32,
+        creator_id: UserId,
         echo_type: impl Into<String>,
         year: i32,
         sub: i32,

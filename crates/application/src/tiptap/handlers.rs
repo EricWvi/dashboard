@@ -5,7 +5,7 @@ use only_contracts::{
     RestoreTiptapHistoryResponse, TiptapView, UpdateQuickNoteRequest, UpdateQuickNoteResponse,
     UpdateTiptapRequest, UpdateTiptapResponse,
 };
-use only_domain::{AuditFields, HistoryEntry, QuickNote, QuickNoteId, TiptapId, TiptapV2};
+use only_domain::{AuditFields, HistoryEntry, QuickNote, QuickNoteId, TiptapId, TiptapV2, UserId};
 use only_logging::clock;
 use serde_json::Value;
 use uuid::Uuid;
@@ -66,7 +66,7 @@ impl<R: TiptapRepository> CreateTiptapHandler<R> {
     pub async fn handle(
         &self,
         request: CreateTiptapRequest,
-        creator_id: i32,
+        creator_id: UserId,
         site: i16,
     ) -> Result<CreateTiptapResponse, TiptapError> {
         let now = now_millis();
@@ -102,7 +102,7 @@ impl<R: TiptapRepository> GetTiptapHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<GetTiptapResponse, TiptapError> {
         let tiptap_id = TiptapId::new(id);
         let tiptap = self
@@ -138,7 +138,7 @@ impl<R: TiptapRepository> UpdateTiptapHandler<R> {
         &self,
         id: &str,
         request: UpdateTiptapRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateTiptapResponse, TiptapError> {
         let tiptap_id = TiptapId::new(id);
         let saved = self
@@ -168,7 +168,7 @@ impl<R: TiptapRepository> ListTiptapHistoryHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<ListTiptapHistoryResponse, TiptapError> {
         let tiptap_id = TiptapId::new(id);
         let tiptap = self
@@ -203,7 +203,7 @@ impl<R: TiptapRepository> RestoreTiptapHistoryHandler<R> {
         &self,
         id: &str,
         request: RestoreTiptapHistoryRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<RestoreTiptapHistoryResponse, TiptapError> {
         let tiptap_id = TiptapId::new(id);
         let tiptap = self
@@ -246,7 +246,7 @@ impl<R: QuickNoteRepository> CreateQuickNoteHandler<R> {
     pub async fn handle(
         &self,
         request: CreateQuickNoteRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<CreateQuickNoteResponse, TiptapError> {
         let now = now_millis();
         let max_order = self.repository.max_order(creator_id).await?;
@@ -282,7 +282,7 @@ impl<R> ListQuickNotesHandler<R> {
 
 impl<R: QuickNoteRepository> ListQuickNotesHandler<R> {
     /// Lists quick notes ordered by display order descending.
-    pub async fn handle(&self, creator_id: i32) -> Result<ListQuickNotesResponse, TiptapError> {
+    pub async fn handle(&self, creator_id: UserId) -> Result<ListQuickNotesResponse, TiptapError> {
         let notes = self.repository.list_by_creator(creator_id).await?;
         Ok(ListQuickNotesResponse {
             quick_notes: notes.into_iter().map(map_quick_note).collect(),
@@ -307,7 +307,7 @@ impl<R: QuickNoteRepository> UpdateQuickNoteHandler<R> {
         &self,
         id: &str,
         request: UpdateQuickNoteRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateQuickNoteResponse, TiptapError> {
         let now = now_millis();
         let note_id = QuickNoteId::new(id);
@@ -344,7 +344,7 @@ impl<R: QuickNoteRepository> DeleteQuickNoteHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<DeleteQuickNoteResponse, TiptapError> {
         let note_id = QuickNoteId::new(id);
         let now = now_millis();
@@ -375,7 +375,7 @@ impl<R: QuickNoteRepository> BottomQuickNoteHandler<R> {
     pub async fn handle(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<BottomQuickNoteResponse, TiptapError> {
         let note_id = QuickNoteId::new(id);
         let now = now_millis();

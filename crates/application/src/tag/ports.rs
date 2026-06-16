@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use only_domain::Tag;
+use only_domain::{Tag, UserId};
 
 use crate::tag::error::TagRepositoryError;
 
@@ -15,7 +15,7 @@ pub trait TagRepository: Send + Sync {
     /// Lists all visible tags for the given creator and group, ordered by creation time.
     fn list_by_creator_and_group(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         group: &str,
     ) -> impl Future<Output = Result<Vec<Tag>, TagRepositoryError>> + Send;
 
@@ -23,7 +23,7 @@ pub trait TagRepository: Send + Sync {
     /// Returns `true` if at least one row was affected.
     fn soft_delete_by_name_and_group(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
         name: &str,
         group: &str,
         deleted_at: i64,

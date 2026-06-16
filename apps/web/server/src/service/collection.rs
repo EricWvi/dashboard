@@ -9,6 +9,7 @@ use only_contracts::{
     PlanTodayRequest, PlanTodayResponse, UpdateCollectionRequest, UpdateCollectionResponse,
 };
 use only_db_server::{PostgresCollectionRepository, PostgresTodoRepository};
+use only_domain::UserId;
 use sqlx::{Pool, Postgres};
 
 /// Groups the transport-facing collection and related-todo entry points for the web adapter.
@@ -45,7 +46,7 @@ impl CollectionApi {
     pub async fn create(
         &self,
         request: CreateCollectionRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<CreateCollectionResponse, CollectionError> {
         self.create.handle(request, creator_id).await
     }
@@ -54,13 +55,16 @@ impl CollectionApi {
     pub async fn get(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<GetCollectionResponse, CollectionError> {
         self.get.handle(id, creator_id).await
     }
 
     /// Delegates a list-collections request to the application handler.
-    pub async fn list(&self, creator_id: i32) -> Result<ListCollectionsResponse, CollectionError> {
+    pub async fn list(
+        &self,
+        creator_id: UserId,
+    ) -> Result<ListCollectionsResponse, CollectionError> {
         self.list.handle(creator_id).await
     }
 
@@ -69,7 +73,7 @@ impl CollectionApi {
         &self,
         id: &str,
         request: UpdateCollectionRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<UpdateCollectionResponse, CollectionError> {
         self.update.handle(id, request, creator_id).await
     }
@@ -78,20 +82,23 @@ impl CollectionApi {
     pub async fn delete(
         &self,
         id: &str,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<DeleteCollectionResponse, CollectionError> {
         self.delete.handle(id, creator_id).await
     }
 
     /// Delegates a list-all-todos request to the application handler.
-    pub async fn list_all(&self, creator_id: i32) -> Result<ListAllTodosResponse, CollectionError> {
+    pub async fn list_all(
+        &self,
+        creator_id: UserId,
+    ) -> Result<ListAllTodosResponse, CollectionError> {
         self.list_all.handle(creator_id).await
     }
 
     /// Delegates a list-today-todos request to the application handler.
     pub async fn list_today(
         &self,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<ListTodayTodosResponse, CollectionError> {
         self.list_today.handle(creator_id).await
     }
@@ -100,7 +107,7 @@ impl CollectionApi {
     pub async fn plan_today(
         &self,
         request: PlanTodayRequest,
-        creator_id: i32,
+        creator_id: UserId,
     ) -> Result<PlanTodayResponse, CollectionError> {
         self.plan_today.handle(request, creator_id).await
     }

@@ -1,4 +1,4 @@
-use only_domain::User;
+use only_domain::{User, UserId};
 
 use crate::user::error::{UserError, UserRepositoryError};
 use crate::user::ports::UserRepository;
@@ -39,7 +39,7 @@ impl<R> GetUserHandler<R> {
 
 impl<R: UserRepository> GetUserHandler<R> {
     /// Returns the user record for the given id, or an error if not found.
-    pub async fn handle(&self, user_id: i32) -> Result<User, UserError> {
+    pub async fn handle(&self, user_id: UserId) -> Result<User, UserError> {
         self.repository
             .find_by_id(user_id)
             .await
@@ -67,7 +67,7 @@ impl<R: UserRepository> UpdateUserHandler<R> {
     /// Applies the given profile patch and returns the updated user record.
     pub async fn handle(
         &self,
-        user_id: i32,
+        user_id: UserId,
         username: &str,
         avatar: &str,
         language: &str,

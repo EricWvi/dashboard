@@ -2,7 +2,7 @@ use only_contracts::{
     CreateTagsRequest, CreateTagsResponse, DeleteTagRequest, DeleteTagResponse, ListTagsResponse,
     TagView,
 };
-use only_domain::{AuditFields, Tag, TagId};
+use only_domain::{AuditFields, Tag, TagId, UserId};
 use only_logging::clock;
 use uuid::Uuid;
 
@@ -40,7 +40,7 @@ impl<R: TagRepository> CreateTagsHandler<R> {
     pub async fn handle(
         &self,
         request: CreateTagsRequest,
-        creator_id: i32,
+        creator_id: UserId,
         group: &str,
     ) -> Result<CreateTagsResponse, TagError> {
         let now = now_millis();
@@ -72,7 +72,11 @@ impl<R> ListTagsHandler<R> {
 
 impl<R: TagRepository> ListTagsHandler<R> {
     /// Lists all visible tags for the given group.
-    pub async fn handle(&self, creator_id: i32, group: &str) -> Result<ListTagsResponse, TagError> {
+    pub async fn handle(
+        &self,
+        creator_id: UserId,
+        group: &str,
+    ) -> Result<ListTagsResponse, TagError> {
         let tags = self
             .repository
             .list_by_creator_and_group(creator_id, group)
@@ -99,7 +103,7 @@ impl<R: TagRepository> DeleteTagHandler<R> {
     pub async fn handle(
         &self,
         request: DeleteTagRequest,
-        creator_id: i32,
+        creator_id: UserId,
         group: &str,
     ) -> Result<DeleteTagResponse, TagError> {
         let now = now_millis();
