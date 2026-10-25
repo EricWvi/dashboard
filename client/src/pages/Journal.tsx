@@ -585,7 +585,14 @@ export default function Journal() {
               </main>
 
               {/* Add Entry Button */}
-              <div className="floating-backdrop pointer-events-none fixed right-0 bottom-0 left-0 z-20 h-40 lg:hidden"></div>
+              <div className="floating-backdrop pointer-events-none fixed right-0 bottom-0 left-0 z-20 h-40 lg:hidden" aria-hidden="true">
+                <i></i>
+                <i></i>
+                <i></i>
+                <i></i>
+                <i></i>
+                <i></i>
+              </div>
               <div className="fixed right-1/2 bottom-6 z-40 translate-x-1/2 lg:right-6 lg:translate-x-0">
                 <button
                   className="bg-add-entry-button add-entry-button-shadow flex size-18 cursor-pointer items-center justify-center rounded-full"

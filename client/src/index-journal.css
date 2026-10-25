@@ -206,56 +206,49 @@
     border-width: 1px;
   }
 
+  /* Progressive blur: six stacked layers, each doubling the blur radius and
+     masked to its own band, so the blur grows smoothly toward the bottom.
+     The container itself must not have mask, filter, opacity or
+     backdrop-filter, or the layers can only blur inside it. */
   .floating-backdrop {
-    /* Apply the blur to the entire element */
-    filter: blur(8px);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-
-    /* Semi-transparent background */
-    background: oklch(0.9525 0.0102 325.66 / 0.2);
-
-    /* KEY: Mask that fades from opaque to transparent */
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.05) 5%,
-      rgba(0, 0, 0, 0.12) 10%,
-      rgba(0, 0, 0, 0.22) 15%,
-      rgba(0, 0, 0, 0.35) 20%,
-      rgba(0, 0, 0, 0.45) 25%,
-      rgba(0, 0, 0, 0.55) 30%,
-      rgba(0, 0, 0, 0.65) 35%,
-      rgba(0, 0, 0, 0.75) 45%,
-      rgba(0, 0, 0, 0.82) 50%,
-      rgba(0, 0, 0, 0.88) 55%,
-      rgba(0, 0, 0, 0.92) 60%,
-      rgba(0, 0, 0, 0.96) 70%,
-      rgba(0, 0, 0, 1) 88%,
-      rgba(0, 0, 0, 1) 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.05) 5%,
-      rgba(0, 0, 0, 0.12) 10%,
-      rgba(0, 0, 0, 0.22) 15%,
-      rgba(0, 0, 0, 0.35) 20%,
-      rgba(0, 0, 0, 0.45) 25%,
-      rgba(0, 0, 0, 0.55) 30%,
-      rgba(0, 0, 0, 0.65) 35%,
-      rgba(0, 0, 0, 0.75) 45%,
-      rgba(0, 0, 0, 0.82) 50%,
-      rgba(0, 0, 0, 0.88) 55%,
-      rgba(0, 0, 0, 0.92) 60%,
-      rgba(0, 0, 0, 0.96) 70%,
-      rgba(0, 0, 0, 1) 88%,
-      rgba(0, 0, 0, 1) 100%
-    );
+    --tint: oklch(0.9525 0.0102 325.66);
+    --tint-alpha: 55%;
 
     @media (prefers-color-scheme: dark) {
-      background: oklch(29.255% 0.05316 318.178 / 0.6);
+      --tint: oklch(29.255% 0.05316 318.178);
+      --tint-alpha: 65%;
     }
+  }
+
+  /* Each layer: blur radius --b; mask fades in, holds, fades out, one step (~14.3%) lower than the previous layer */
+  .floating-backdrop > i {
+    position: absolute;
+    inset: 0;
+    -webkit-backdrop-filter: blur(var(--b));
+    backdrop-filter: blur(var(--b));
+    -webkit-mask-image: var(--m);
+    mask-image: var(--m);
+  }
+  .floating-backdrop > i:nth-child(1) { --b: 0.5px; --m: linear-gradient(transparent 0%, #000 14.3%, #000 28.6%, transparent 42.9%); }
+  .floating-backdrop > i:nth-child(2) { --b: 1px; --m: linear-gradient(transparent 14.3%, #000 28.6%, #000 42.9%, transparent 57.1%); }
+  .floating-backdrop > i:nth-child(3) { --b: 2px; --m: linear-gradient(transparent 28.6%, #000 42.9%, #000 57.1%, transparent 71.4%); }
+  .floating-backdrop > i:nth-child(4) { --b: 4px; --m: linear-gradient(transparent 42.9%, #000 57.1%, #000 71.4%, transparent 85.7%); }
+  .floating-backdrop > i:nth-child(5) { --b: 8px; --m: linear-gradient(transparent 57.1%, #000 71.4%, #000 85.7%, transparent 100%); }
+  .floating-backdrop > i:nth-child(6) { --b: 16px; --m: linear-gradient(transparent 71.4%, #000 85.7%); }
+
+  /* Tint: eased from transparent to --tint-alpha, to calm the content behind the button */
+  .floating-backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      color-mix(in oklch, var(--tint) 0%, transparent) 0%,
+      color-mix(in oklch, var(--tint) calc(var(--tint-alpha) * 0.08), transparent) 20%,
+      color-mix(in oklch, var(--tint) calc(var(--tint-alpha) * 0.28), transparent) 40%,
+      color-mix(in oklch, var(--tint) calc(var(--tint-alpha) * 0.6), transparent) 60%,
+      color-mix(in oklch, var(--tint) calc(var(--tint-alpha) * 0.88), transparent) 80%,
+      color-mix(in oklch, var(--tint) var(--tint-alpha), transparent) 100%
+    );
   }
 
   .add-entry-button-shadow {
